@@ -1,5 +1,5 @@
 # Goo
-Goo is a Blender library for modeling biological cells, tissues, and embryos. 
+Goo is a Python package for etending Blender for modeling biological cells, tissues, and embryos. 
 
 Goo is a modeling environment for creating physics based simulations of biological cells, tissues, and whole embryos. Goo contains built-in models for basic cell properties such as growth, division, and adhesion. Goo creates realistic models of cells in 3D based on surface meshes enclosing compresible fluid. Goo is meant to fill a void in currently available models such as vertex and particle based models which are too simplified to capture essential featuers of cells, are often 2D, and can be difficult for new users to use.
 
