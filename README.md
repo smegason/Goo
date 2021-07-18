@@ -10,6 +10,6 @@ Goo is open source and currently being developed by the Megason lab at Harvard U
 Our grand Driving Biological Problem is to simulate the first 24 hours of zebrafish development. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding embryonic development, growth of organoids, or tissue engineering.
 
 Contributors
-Sean Megason, Harvard University
-Daniel Oo, Amherst University
-Kali Konstantinopoulos, Indiana University
+<li>Sean Megason, Harvard University
+<li>Daniel Oo, Amherst University
+<li>Kali Konstantinopoulos, Indiana University
