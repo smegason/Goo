@@ -256,6 +256,9 @@ def add_material(mat):
     bpy.context.object.active_material.diffuse_color = mat.diffuse_color
     bpy.context.object.active_material.metallic = mat.metallic
     bpy.context.object.active_material.roughness = mat.roughness
+    bpy.ops.node.add_node(type="ShaderNodeTexNoise", use_transform=True)
+    bpy.ops.node.select(wait_to_deselect_others=True, mouse_x=114, mouse_y=765, extend=False, deselect_all=True)
+    bpy.ops.node.link(detach=False)
 
 class Material():
     def __init__(self):
