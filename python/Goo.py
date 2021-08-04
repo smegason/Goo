@@ -35,8 +35,21 @@ def get_major_axis(obj): # obj = bpy.context.object
     major_axis = (major_x, major_y, major_z)
     return major_axis
 
+def get_division_angles(axis):
+    z_axis = np.array((0, 0, 1))
+    division_axis = axis/np.linalg.norm(axis)
+    dot_product = np.dot(z_axis, division_axis)
+    phi = np.arccos(dot_product)
+
+    proj_axis_on_z = dot_product*z_axis
+    proj_xy_axis = division_axis - proj_axis_on_z
+    proj_xy_axis = proj_xy_axis/np.linalg.norm(proj_xy_axis)
+    dot_product = np.dot((1, 0, 0), proj_xy_axis)
+    theta = np.arccos(dot_product)
+
+    return phi, theta
+
 def calculate_contact_area(obj): # obj = bpy.context.object
-    obj = bpy.context.active_object
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
     mesh_from_eval = obj_eval.to_mesh()
@@ -44,9 +57,11 @@ def calculate_contact_area(obj): # obj = bpy.context.object
     bm.from_mesh(mesh_from_eval)
 
     contact_area = 0
+    for face in bm.faces:
+        face.select = False
 
     for edge in bm.edges:
-        angle = edge.calc_face_angle()
+        angle = edge.calc_face_angle_signed()
         if angle < 0.01:
             for face in edge.link_faces:
                 face.select = True
@@ -83,6 +98,8 @@ def divide(obj): # obj = bpy.context.object
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     major_axis = get_major_axis(obj)
+    #phi, theta = get_division_angles(major_axis)
+    #print(mother_name + " PHI: " + str(phi) + ", THETA: " + str(theta))
     bpy.ops.mesh.bisect(plane_co = COM, plane_no = major_axis, use_fill=False, flip=False)
     bpy.ops.object.mode_set(mode = 'OBJECT')
     # Separate the object
@@ -117,6 +134,7 @@ def divide(obj): # obj = bpy.context.object
     bpy.data.objects[daughter_name].select_set(False)
     bpy.context.object.name = mother_name + "1"
 
+
 def mitosis_handler(scene):
     num_cells = len(bpy.data.collections["Cells"].objects)
     for i in range(num_cells):
@@ -130,7 +148,10 @@ def make_cell(cell):
     #mesh = bpy.data.meshes.new()
     #cell = bmesh.ops.create_icosphere(mesh, 2, 2.0, insert_matrix_here, calc_uv = True)
     #bpy.ops.mesh.primitive_ico_sphere_add(radius = cell.radius, enter_editmode = cell.enter_editmode, align = cell.align, location = cell.location, scale = cell.scale)
-    bpy.ops.mesh.primitive_round_cube_add(change=True, radius=cell.radius, size= cell.size, arc_div= cell.arcdiv, lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False)
+    #bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.radius, size= cell.size, arc_div= cell.arcdiv, lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.location)
+    bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
+    bpy.context.object.name = cell.name
+    bpy.context.view_layer.objects.active = bpy.data.objects[cell.name]
     bpy.ops.object.modifier_add(type = 'SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.subdiv
     #bpy.ops.object.modifier_add(type = 'SOFT_BODY')
@@ -166,7 +187,7 @@ def make_cell(cell):
     #bpy.context.object.field.strength = -800
     bpy.context.object.field.strength = -1
     bpy.context.object.field.shape = 'SURFACE'
-    bpy.context.object.name = cell.name
+    #bpy.context.object.name = cell.name
     
 class Cell():
     def __init__(self, name_string, loc):
@@ -175,10 +196,11 @@ class Cell():
         self.enter_editmode = False
         self.align = 'WORLD'
         self.location = loc
-        self.size = (2, 2, 2)
+        #self.size = (2, 2, 2)
+        self.size = 2.0
         self.scale = (1, 1, 1)
         self.arcdiv = 8
-        self.subdiv = 2
+        self.subdiv = 8
         self.vertex_mass = 0.3
         self.density = 1.0
         #self.init_volume = ((4/3)*np.pi*(self.radius)**3)*(10**-12) # fix to be in cm^3
