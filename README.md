@@ -13,3 +13,5 @@ Contributors
 <li>Sean Megason, Harvard University
 <li>Daniel Oo, Amherst University
 <li>Kali Konstantinopoulos, Indiana University
+<li>Michael Mitsch, Indiana University
+<ii>Drew Willis, Indiana University
