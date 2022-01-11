@@ -81,36 +81,33 @@ def calculate_contact_area(obj): # obj = bpy.context.object
 # Repair hole: after cell division, add new face and re-triangulate mesh
 # may want to consider
 def repair_hole(obj): 
-    bpy.context.view_layer.objects.active = obj
+    #bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_mode(type="EDGE") 
     bpy.ops.mesh.select_all(action = 'SELECT')
     bpy.ops.mesh.edge_face_add()
+    bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.object.mode_set(mode = 'OBJECT')
-    #bpy.ops.mesh.select_all(action = 'DESELECT')
-    #bpy.ops.object.mode_set(mode = 'OBJECT')
-    #bpy.ops.object.modifier_add(type='REMESH')
-    #bpy.context.object.modifiers["Remesh"].voxel_size = 0.1
-    #bpy.ops.object.modifier_apply(modifier="Remesh")
-    #bpy.ops.object.modifier_add(type='TRIANGULATE')
-    #bpy.ops.object.modifier_apply(modifier="Triangulate")
+    bpy.ops.object.modifier_add(type='REMESH')
+    bpy.context.object.modifiers["Remesh"].voxel_size = 0.2
+    bpy.ops.object.modifier_apply(modifier="Remesh")
 
 #def divide(obj, tree): # obj = bpy.context.object
-def divide(obj):
+def sep(obj):
     # Get Center of Mass
     bpy.ops.object.mode_set(mode='OBJECT')
     dg = bpy.context.evaluated_depsgraph_get()
     obj = obj.evaluated_get(dg)
     mother_name = obj.name
     daughter_name = mother_name + ".001"
-    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
+    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     COM = obj.location
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     # Get Major Axis
     major_axis = get_major_axis(obj)
-    phi, theta = get_division_angles(major_axis)
-    print(mother_name + " PHI: " + str(phi) + ", THETA: " + str(theta))
+    #phi, theta = get_division_angles(major_axis)
+    #print(mother_name + " PHI: " + str(phi) + ", THETA: " + str(theta))
     bpy.ops.mesh.bisect(plane_co = COM, plane_no = major_axis, use_fill=False, flip=False)
     bpy.ops.object.mode_set(mode = 'OBJECT')
     # Separate the object
@@ -135,19 +132,55 @@ def divide(obj):
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.data.objects[mother_name].select_set(False)
     bpy.data.objects[daughter_name].select_set(False)
-    bpy.context.view_layer.objects.active = obj
-    repair_hole(obj)
-    bpy.data.objects[mother_name].select_set(False)
-    bpy.context.object.name = mother_name + "0"
+    bpy.data.objects[mother_name].select_set(True)
+    return mother_name, daughter_name, COM, major_axis
+
+def select_translate_cell(obj, COM, major_axis):
+    com = np.copy(COM)
+    print("OLD COM: " + str(COM))
+    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+    new_COM = obj.location
+    print("NEW COM: " + str(new_COM))
+    print(com)
+    distance = mathutils.geometry.distance_point_to_plane(new_COM, com, major_axis)
+    print(distance)
+    if distance > 0:
+        return 0
+    else:
+        return 1
+
+def translate_cell(obj, major_axis):
+    magnitude = ((major_axis[0])**2 + (major_axis[1])**2 + (major_axis[2])**2)**(0.5)
+    new_vec = (0.1*major_axis[0]/magnitude, 0.1*major_axis[1]/magnitude, 0.1*major_axis[2]/magnitude)
+    bpy.ops.transform.translate(value = new_vec)
+
+def divide(obj):
+    obj.select_set(True)
+    m_name, d_name, COM, major_axis = sep(obj)
+    print(major_axis)
+    val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
+    if val == 0:
+        translate_cell(bpy.data.objects[m_name], major_axis)
+        bpy.data.objects[m_name].select_set(False)
+    else:
+        bpy.data.objects[d_name].select_set(True)
+        bpy.data.objects[m_name].select_set(False)
+        translate_cell(bpy.data.objects[d_name], major_axis)
+        bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+        bpy.data.objects[d_name].select_set(False)
+    bpy.data.objects[m_name].select_set(True)
+    repair_hole(bpy.data.objects[m_name])
+    bpy.data.objects[m_name].select_set(False)
+    bpy.context.object.name = m_name + "0"
     daughter1 = Cell(bpy.context.object.name, loc = bpy.context.object.location)
-    daughter1.data['mother'] = mother_name
+    daughter1.data['mother'] = m_name
     daughter1.data['daughters'] = ['none', 'none']
-    bpy.context.view_layer.objects.active = bpy.data.objects[daughter_name]
-    repair_hole(bpy.data.objects[daughter_name])
-    bpy.data.objects[daughter_name].select_set(False)
-    bpy.context.object.name = mother_name + "1"
+    bpy.context.view_layer.objects.active = bpy.data.objects[d_name]
+    repair_hole(bpy.data.objects[d_name])
+    bpy.data.objects[d_name].select_set(False)
+    bpy.context.object.name = m_name + "1"
     daughter2 = Cell(bpy.context.object.name, loc = bpy.context.object.location)
-    daughter2.data['mother'] = mother_name
+    daughter2.data['mother'] = m_name
     daughter2.data['daughters'] = ['none', 'none']
     return daughter1, daughter2
     
