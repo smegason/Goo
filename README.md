@@ -7,9 +7,11 @@ Goo is built on top of Blender. Blender is a truly amazing open source computer 
 
 Goo is open source and currently being developed by the <a href="http://www.digitalfish.org">Megason lab at Harvard University</a>. We would love for you to contribute! Please contact me if you are interested. megason AT hms.harvard.edu .
 
-Our grand Driving Biological Problem is to simulate the first <a href= "https://www.youtube.com/watch?v=RQ6vkDr_Dec">24 hours of zebrafish development</a>. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding embryonic development, growth of organoids, or tissue engineering.
+Our grand Driving Biological Problem is to simulate the first <a href= "https://www.youtube.com/watch?v=RQ6vkDr_Dec">24 hours of zebrafish development</a>. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding morphogenesis, embryonic development, growth of organoids, tissue engineering, and artificial life.
 
 Contributors
 <li>Sean Megason, Harvard University
 <li>Daniel Oo, Amherst University
 <li>Kali Konstantinopoulos, Indiana University
+<li>Michael Mitsch, Indiana University
+<li>Drew Willis, Indiana University
