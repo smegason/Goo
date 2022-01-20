@@ -184,7 +184,64 @@ def divide(obj):
     daughter2.data['daughters'] = ['none', 'none']
     return daughter1, daughter2
     
+def make_mesh(cell):
+    bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.data['radius'], size= cell.data['size'], arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.data['location'])
+    #bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
+    bpy.context.object.name = cell.data['name']
+    bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
+    bpy.ops.object.modifier_add(type = 'SUBSURF')
+    bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
     
+def turn_off_physics():
+    bpy.ops.object.modifier_remove(modifier="Cloth")
+    
+def turn_on_physics_mother():
+    bpy.ops.object.modifier_add(type = 'CLOTH')
+    bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
+    bpy.context.object.modifiers["Cloth"].settings.quality = 5
+    bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
+    bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
+    bpy.context.object.modifiers["Cloth"].settings.air_damping = cell.data['air_damping']
+    bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
+    bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
+    bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
+    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 15
+    bpy.context.object.modifiers["Cloth"].settings.tension_damping = 5
+    bpy.context.object.modifiers["Cloth"].settings.compression_damping = 5
+    bpy.context.object.modifiers["Cloth"].settings.shear_damping = 5
+    bpy.context.object.modifiers["Cloth"].settings.bending_damping = 0.5
+    bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
+    bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 2.8
+    bpy.context.object.modifiers["Cloth"].settings.pressure_factor = 1
+    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
+    bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
+    bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
+    bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
+    
+def turn_on_physics_daughter():
+    bpy.ops.object.modifier_add(type = 'CLOTH')
+    bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
+    bpy.context.object.modifiers["Cloth"].settings.quality = 5
+    bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
+    bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
+    bpy.context.object.modifiers["Cloth"].settings.air_damping = cell.data['air_damping']
+    bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
+    bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
+    bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
+    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 15
+    bpy.context.object.modifiers["Cloth"].settings.tension_damping = 5
+    bpy.context.object.modifiers["Cloth"].settings.compression_damping = 5
+    bpy.context.object.modifiers["Cloth"].settings.shear_damping = 5
+    bpy.context.object.modifiers["Cloth"].settings.bending_damping = 0.5
+    bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
+    bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 2.8
+    bpy.context.object.modifiers["Cloth"].settings.pressure_factor = 1
+    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
+    bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
+    bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
+    bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
+    bpy.ops.object.modifier_add(type='COLLISION')
+    bpy.context.object.collision.use_culling = False    
 
 
 #def mitosis_handler(scene, tree):
@@ -197,7 +254,29 @@ def mitosis_handler(scene):
         if volume > .3:
             cell_tree = divide(cell, cell_tree)
     cell_tree.show()
-  
+
+def div_handler(scene):
+    num_cells = len(bpy.data.collections["Cells"].objects)
+    current_frame = bpy.data.scenes[0].frame_current
+    if current_frame % 30 == 0:
+        print("DIVIDING CELLS")
+        for i in range(num_cells):
+            cell_name = bpy.data.collections["Cells"].objects[i].name
+            cell = bpy.data.objects[cell_name]
+            bpy.data.objects[cell_name].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
+            print(cell_name)
+            turn_off_physics()
+            d1, d2 = new_divide(cell)
+            bpy.data.objects[d1.data["name"]].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
+            turn_on_physics_mother()
+            bpy.data.objects[d1.data["name"]].select_set(False)
+            bpy.data.objects[d2.data["name"]].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects[d2.data["name"]]
+            turn_on_physics_daughter()
+            bpy.data.objects[d2.data["name"]].select_set(False)
+
 def make_cell(cell):
     #mesh = bpy.data.meshes.new()
     #cell = bmesh.ops.create_icosphere(mesh, 2, 2.0, insert_matrix_here, calc_uv = True)
