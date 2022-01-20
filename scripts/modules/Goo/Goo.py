@@ -200,8 +200,8 @@ def turn_on_physics_mother():
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
-    bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
-    bpy.context.object.modifiers["Cloth"].settings.air_damping = cell.data['air_damping']
+    bpy.context.object.modifiers["Cloth"].settings.mass = 0.3
+    bpy.context.object.modifiers["Cloth"].settings.air_damping = 10
     bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
@@ -217,14 +217,15 @@ def turn_on_physics_mother():
     bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
-    
+     
+
 def turn_on_physics_daughter():
     bpy.ops.object.modifier_add(type = 'CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
-    bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
-    bpy.context.object.modifiers["Cloth"].settings.air_damping = cell.data['air_damping']
+    bpy.context.object.modifiers["Cloth"].settings.mass = 0.3
+    bpy.context.object.modifiers["Cloth"].settings.air_damping = 10
     bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
@@ -242,7 +243,11 @@ def turn_on_physics_daughter():
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
     bpy.ops.object.modifier_add(type='COLLISION')
     bpy.context.object.collision.use_culling = False    
-
+    #bpy.ops.object.forcefield_toggle()
+    #bpy.context.object.field.type = 'FORCE'
+    #bpy.context.object.field.strength = -800
+    #bpy.context.object.field.strength = -100
+    b#py.context.object.field.shape = 'POINT'
 
 #def mitosis_handler(scene, tree):
 def mitosis_handler(scene):
@@ -269,6 +274,7 @@ def div_handler(scene):
             turn_off_physics()
             d1, d2 = divide(cell)
             bpy.data.objects[d1.data["name"]].select_set(True)
+            bpy.data.objects[d2.data["name"]].select_set(False)
             bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
             turn_on_physics_mother()
             bpy.data.objects[d1.data["name"]].select_set(False)
@@ -315,11 +321,11 @@ def make_cell(cell):
     #bpy.context.object.collision.thickness_outer = 0.02
    # bpy.context.object.collision.thickness_inner = 0.2
     #bpy.context.object.collision.cloth_friction = 5
-    bpy.ops.object.forcefield_toggle()
-    bpy.context.object.field.type = 'FORCE'
+    #bpy.ops.object.forcefield_toggle()
+    #bpy.context.object.field.type = 'FORCE'
     #bpy.context.object.field.strength = -800
-    bpy.context.object.field.strength = -600
-    bpy.context.object.field.shape = 'POINT'
+    #bpy.context.object.field.strength = -100
+    #bpy.context.object.field.shape = 'POINT'
     #bpy.context.object.name = cell.name
     
 class Cell():
