@@ -267,7 +267,7 @@ def div_handler(scene):
             bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
             print(cell_name)
             turn_off_physics()
-            d1, d2 = new_divide(cell)
+            d1, d2 = divide(cell)
             bpy.data.objects[d1.data["name"]].select_set(True)
             bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
             turn_on_physics_mother()
