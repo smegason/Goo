@@ -28,10 +28,14 @@ ___
 ![add mesh](img/blender_add_mesh.png)
 
 4. Then, in `Edit>Preferences`, go to the `File Paths` tab and add the `<location>/Goo/scripts/modules/` folder to `Scripts`
+
+
 ![add path](img/blender_add_path.png)
 
 ### Usage
 ---
+In a new 'General' Project, delete the default cube.
+
 In the Scripting tab use the cell functions
 
 Example script (Create cell):
