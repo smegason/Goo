@@ -169,16 +169,18 @@ def divide(obj):
         bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
         bpy.data.objects[d_name].select_set(False)
     bpy.data.objects[m_name].select_set(True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
     repair_hole(bpy.data.objects[m_name])
-    bpy.data.objects[m_name].select_set(False)
     bpy.context.object.name = m_name + "0"
-    daughter1 = Cell(bpy.context.object.name, loc = bpy.context.object.location)
+    daughter1 = Cell(m_name + "0", loc = bpy.context.object.location)
     daughter1.data['mother'] = m_name
     daughter1.data['daughters'] = ['none', 'none']
+    bpy.data.objects[m_name + "0"].select_set(False)
+    bpy.data.objects[d_name].select_set(True)
     bpy.context.view_layer.objects.active = bpy.data.objects[d_name]
     repair_hole(bpy.data.objects[d_name])
-    bpy.data.objects[d_name].select_set(False)
     bpy.context.object.name = m_name + "1"
+    bpy.data.objects[m_name + "1"].select_set(False)
     daughter2 = Cell(bpy.context.object.name, loc = bpy.context.object.location)
     daughter2.data['mother'] = m_name
     daughter2.data['daughters'] = ['none', 'none']
@@ -195,7 +197,7 @@ def make_mesh(cell):
 def turn_off_physics():
     bpy.ops.object.modifier_remove(modifier="Cloth")
     
-def turn_on_physics_mother():
+def turn_on_physics():
     bpy.ops.object.modifier_add(type = 'CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
@@ -218,36 +220,6 @@ def turn_on_physics_mother():
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
      
-
-def turn_on_physics_daughter():
-    bpy.ops.object.modifier_add(type = 'CLOTH')
-    bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
-    bpy.context.object.modifiers["Cloth"].settings.quality = 5
-    bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
-    bpy.context.object.modifiers["Cloth"].settings.mass = 0.3
-    bpy.context.object.modifiers["Cloth"].settings.air_damping = 10
-    bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
-    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.tension_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.compression_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.shear_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.bending_damping = 0.5
-    bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 2.8
-    bpy.context.object.modifiers["Cloth"].settings.pressure_factor = 1
-    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
-    bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
-    bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
-    bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
-    bpy.ops.object.modifier_add(type='COLLISION')
-    bpy.context.object.collision.use_culling = False    
-    #bpy.ops.object.forcefield_toggle()
-    #bpy.context.object.field.type = 'FORCE'
-    #bpy.context.object.field.strength = -800
-    #bpy.context.object.field.strength = -100
-    b#py.context.object.field.shape = 'POINT'
 
 #def mitosis_handler(scene, tree):
 def mitosis_handler(scene):
@@ -276,11 +248,11 @@ def div_handler(scene):
             bpy.data.objects[d1.data["name"]].select_set(True)
             bpy.data.objects[d2.data["name"]].select_set(False)
             bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
-            turn_on_physics_mother()
+            turn_on_physics()
             bpy.data.objects[d1.data["name"]].select_set(False)
             bpy.data.objects[d2.data["name"]].select_set(True)
             bpy.context.view_layer.objects.active = bpy.data.objects[d2.data["name"]]
-            turn_on_physics_daughter()
+            turn_on_physics()
             bpy.data.objects[d2.data["name"]].select_set(False)
 
 def make_cell(cell):
@@ -303,7 +275,7 @@ def make_cell(cell):
     bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
-    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 0.5
+    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.tension_damping = 5
     bpy.context.object.modifiers["Cloth"].settings.compression_damping = 5
     bpy.context.object.modifiers["Cloth"].settings.shear_damping = 5
@@ -311,7 +283,7 @@ def make_cell(cell):
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 2.8
     bpy.context.object.modifiers["Cloth"].settings.pressure_factor = 1
-    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 0
+    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
     bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
@@ -323,8 +295,8 @@ def make_cell(cell):
     #bpy.context.object.collision.cloth_friction = 5
     #bpy.ops.object.forcefield_toggle()
     #bpy.context.object.field.type = 'FORCE'
-    #bpy.context.object.field.strength = -800
-    #bpy.context.object.field.strength = -100
+    #bpy.context.object.field.strength = -600
+    #bpy.context.object.field.strength = 0
     #bpy.context.object.field.shape = 'POINT'
     #bpy.context.object.name = cell.name
     
