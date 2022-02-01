@@ -531,3 +531,19 @@ def setup_world():
     bpy.context.scene.unit_settings.temperature_unit = 'KELVIN'
 
     #bpy.context.space_data.shading.studio_light = 'snowy_field_4k.exr' #need to adjust for file upload here
+
+def render(file_path,scene,start,end):
+    scene.render.image_settings.file_format = 'PNG'
+    old_fp = scene.render.filepath
+    scene.render.filepath = file_path
+    scene = bpy.context.scene
+    scene.frame_start = start
+    scene.frame_end = end
+    for frame in range(scene.frame_start, scene.frame_end):
+        bpy.context.scene.frame_set(frame)
+        file_name = "frame" + str(scene.frame_current)
+        scene.render.filepath += file_name
+        bpy.ops.render.render(write_still=True) 
+        scene.render.filepath = scene.render.filepath.removesuffix(file_name)
+    scene.render.filepath = old_fp
+    return
