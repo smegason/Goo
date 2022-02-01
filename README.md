@@ -20,23 +20,23 @@ ___
 ### Installation
 ---
 1. Install the latest edition of [Blender](https://www.blender.org/download/)
-2. Clone Goo repository or download zip
+2. Clone the Goo repository or download and unzip
 3. In Blender, go to `Edit>Preferences`, then go to the 'Add-ons' tab and enable the checkbox next to `Add Mesh: Extra Objects`
 
 ![edit preferences](img/blender_edit_preferences.png)
 
 ![add mesh](img/blender_add_mesh.png)
 
-4. Then, in `Edit>Preferences`, go to the `File Paths` tab and add the `<location>/Goo/scripts/modules/` folder to `Scripts`
+4. Then, in `Edit>Preferences`, go to the `File Paths` tab and add the `<location>/Goo/scripts/` folder to `Scripts`
 
 
 ![add path](img/blender_add_path.png)
 
 ### Usage
 ---
-In a new 'General' Project, delete the default cube.
+In a new `General` Project, delete the default cube.
 
-In the Scripting tab use the cell functions
+In the Scripting tab, use the desired cell functions
 
 Example script (Create cell):
 ```
@@ -45,3 +45,6 @@ Goo.setup_world()
 cell = Goo.Cell(name_string = "Cell_", loc = (0, 0, 0))
 Goo.make_cell(cell)
 ```
+
+### Functions
+---
