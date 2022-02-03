@@ -9,9 +9,42 @@ Goo is open source and currently being developed by the <a href="http://www.digi
 
 Our grand Driving Biological Problem is to simulate the first <a href= "https://www.youtube.com/watch?v=RQ6vkDr_Dec">24 hours of zebrafish development</a>. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding morphogenesis, embryonic development, growth of organoids, tissue engineering, and artificial life.
 
-Contributors
+### Contributors
+___
 <li>Sean Megason, Harvard University
 <li>Daniel Oo, Amherst University
 <li>Kali Konstantinopoulos, Indiana University
 <li>Michael Mitsch, Indiana University
 <li>Drew Willis, Indiana University
+
+### Installation
+---
+1. Install the latest edition of [Blender](https://www.blender.org/download/)
+2. Clone the Goo repository or download and unzip
+3. In Blender, go to `Edit>Preferences`, then go to the 'Add-ons' tab and enable the checkbox next to `Add Mesh: Extra Objects`
+
+![edit preferences](img/blender_edit_preferences.png)
+
+![add mesh](img/blender_add_mesh.png)
+
+4. Then, in `Edit>Preferences`, go to the `File Paths` tab and add the `<location>/Goo/scripts/` folder to `Scripts`
+
+
+![add path](img/blender_add_path.png)
+
+### Usage
+---
+In a new `General` Project, delete the default cube.
+
+In the Scripting tab, use the desired cell functions
+
+Example script (Create cell):
+```
+from Goo import Goo
+Goo.setup_world()
+cell = Goo.Cell(name_string = "Cell_", loc = (0, 0, 0))
+Goo.make_cell(cell)
+```
+
+### Functions
+---
