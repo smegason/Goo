@@ -511,11 +511,17 @@ def render(file_path,scene,start,end):
     scene = bpy.context.scene
     scene.frame_start = start
     scene.frame_end = end
+    handlers = bpy.app.handlers.frame_change_post.copy()
+    bpy.app.handlers.frame_change_post.clear()
     for frame in range(scene.frame_start, scene.frame_end):
         bpy.context.scene.frame_set(frame)
+        for func in handlers:
+            func(scene)
         file_name = "frame" + str(scene.frame_current)
         scene.render.filepath += file_name
         bpy.ops.render.render(write_still=True) 
         scene.render.filepath = scene.render.filepath.removesuffix(file_name)
     scene.render.filepath = old_fp
+    for func in handlers:
+        bpy.app.handlers.frame_change_post.append(func)
     return
