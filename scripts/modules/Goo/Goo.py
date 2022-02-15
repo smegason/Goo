@@ -363,6 +363,39 @@ class Cell():
         obj = bpy.data.objects[self.data["name"]]
         return obj
 
+    def divide(self):
+        obj = self.get_blender_object()
+        obj.select_set(True)
+        m_name, d_name, COM, major_axis = sep(obj)
+        print(major_axis)
+        val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
+        if val == 0:
+            translate_cell(bpy.data.objects[m_name], major_axis)
+            bpy.data.objects[m_name].select_set(False)
+        else:
+            bpy.data.objects[d_name].select_set(True)
+            bpy.data.objects[m_name].select_set(False)
+            translate_cell(bpy.data.objects[d_name], major_axis)
+            bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+            bpy.data.objects[d_name].select_set(False)
+        bpy.data.objects[m_name].select_set(True)
+        bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
+        repair_hole(bpy.data.objects[m_name])
+        bpy.context.object.name = m_name + "0"
+        daughter1 = Cell(m_name + "0", loc = bpy.context.object.location)
+        daughter1.data['mother'] = m_name
+        daughter1.data['daughters'] = ['none', 'none']
+        bpy.data.objects[m_name + "0"].select_set(False)
+        bpy.data.objects[d_name].select_set(True)
+        bpy.context.view_layer.objects.active = bpy.data.objects[d_name]
+        repair_hole(bpy.data.objects[d_name])
+        bpy.context.object.name = m_name + "1"
+        bpy.data.objects[m_name + "1"].select_set(False)
+        daughter2 = Cell(bpy.context.object.name, loc = bpy.context.object.location)
+        daughter2.data['mother'] = m_name
+        daughter2.data['daughters'] = ['none', 'none']
+        return daughter1, daughter2
+
 def add_material(mat):
     bpy.data.materials.new(name = mat.name)
     bpy.data.materials[mat.name].node_tree.nodes["Mix Shader"].inputs[0].default_value = mat.BDSF_1_fac
