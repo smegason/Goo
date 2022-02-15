@@ -360,7 +360,7 @@ class Cell():
         self.theta = 0
         self.div_axis = (0, 0, 0) """
     def get_blender_object(self):
-        obj = bpy.data.objects[self.name]
+        obj = bpy.data.objects[self.data["name"]]
         return obj
 
 def add_material(mat):
