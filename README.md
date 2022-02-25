@@ -34,7 +34,7 @@ ___
 
 ### Usage
 ---
-In a new `General` Project, delete the default cube by right-clicking on the cube, type `X`, and then `return`
+In a new `General` Project within Blender, delete the default cube by left-clicking on the cube, type `X`, and then `return`
 
 In the Scripting tab, use the desired cell functions
 
@@ -46,6 +46,8 @@ cell = Goo.Cell(name_string = "Cell_", loc = (0, 0, 0))
 Goo.make_cell(cell)
 ```
 Click the play button and you should see a Goo cell appear
+  
+Note, Blender uses its own built in Python interpreter which may be different than another Python instance you've installed.
   
 ### Functions
 ---
