@@ -27,14 +27,14 @@ ___
 
 ![add mesh](img/blender_add_mesh.png)
 
-4. Then, in `Edit>Preferences`, go to the `File Paths` tab and add the `<location>/Goo/scripts/` folder to `Scripts`
+4. Then, in `Edit>Preferences`, go to the `File Paths` tab and add the `<location>/Goo/scripts/` folder to `Scripts`. `<location>` should be replaced with the root leading up to where you cloned the Goo repository. You may need to close and re-open Blender afther this change.
 
 
 ![add path](img/blender_add_path.png)
 
 ### Usage
 ---
-In a new `General` Project, delete the default cube.
+In a new `General` Project, delete the default cube by right-clicking on the cube, type `X`, and then `return`
 
 In the Scripting tab, use the desired cell functions
 
@@ -45,6 +45,7 @@ Goo.setup_world()
 cell = Goo.Cell(name_string = "Cell_", loc = (0, 0, 0))
 Goo.make_cell(cell)
 ```
-
+Click the play button and you should see a Goo cell appear
+  
 ### Functions
 ---
