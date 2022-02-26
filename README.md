@@ -47,6 +47,8 @@ Goo.make_cell(cell)
 ```
 Click the play button and you should see a Goo cell appear
   
+You may also open example simulations from the 'Simulations' folder
+  
 Note, Blender uses its own built in Python interpreter which may be different than another Python instance you've installed.
   
 ### Functions
