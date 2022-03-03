@@ -558,3 +558,71 @@ def render(file_path,scene,start,end):
     for func in handlers:
         bpy.app.handlers.frame_change_post.append(func)
     return
+
+class handler_class:
+    def __init__(self):
+        self.cell_types = ["Sphere","type1","type2"]
+        self.division_rates = {}
+        self.growth_rates = {}
+        self.adhesion_forces = {} # dictionary of dictionaries 
+                                  #ex: {"sphere": {"sphere": 100, "type1": 100, "type2": 100},"type1": {"sphere": 200, "type1": 200, "type2": 200},"type2": {"sphere": 300, "type1": 300, "type2": 300}}
+                                  # in the example above, spheres exert 100 force on other cells, type1 exerts 200, type2 exerts 300
+                                  # could change values to have different amounts of force on different cell types
+        for type in self.cell_types:
+            self.division_rates[type] = 0
+            self.growth_rates[type] = 0
+            self.adhesion_forces[type] = {}
+            for i in self.cell_types:
+                self.adhesion_forces[type][i] = 0
+        self.active_cell_types = [] # add active types to know what collections to divide
+        return
+    def set_division_rate(self,cell_type,rate):
+        # assume 60 frames per second 
+        # rate is in divisions per second
+        self.division_rates[cell_type] = 60/rate
+        return
+    def set_growth_rate(self,cell_type,rate):
+        self.growth_rates[cell_type] = rate
+        return
+    def set_adhesion(self,type1, force_type1_to_type2, type2, force_type2_to_type1):
+        self.adhesion_forces[type1][type2] = force_type1_to_type2
+        self.adhesion_forces[type2][type1] = force_type2_to_type1
+        return
+    def div_handler(self,scene,depsgraph):
+        for cell_type in self.active_cell_types:
+            num_cells = len(bpy.data.collections[cell_type].objects)
+            current_frame = bpy.data.scenes[0].frame_current
+            if current_frame % self.division_rates[cell_type] == 0:
+                print("DIVIDING CELLS")
+                for i in range(num_cells):
+                    cell_name = bpy.data.collections[cell_type].objects[i].name
+                    cell = bpy.data.objects[cell_name]
+                    bpy.data.objects[cell_name].select_set(True)
+                    bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
+                    print(cell_name)
+                    turn_off_physics()
+                    d1, d2 = divide(cell)
+                    bpy.data.objects[d1.data["name"]].select_set(True)
+                    bpy.data.objects[d2.data["name"]].select_set(False)
+                    bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
+                    turn_on_physics()
+                    bpy.data.objects[d1.data["name"]].select_set(False)
+                    bpy.data.objects[d2.data["name"]].select_set(True)
+                    bpy.context.view_layer.objects.active = bpy.data.objects[d2.data["name"]]
+                    turn_on_physics()
+                    bpy.data.objects[d2.data["name"]].select_set(False)
+    def growth_handler(self,scene, depsgraph): # WIP
+        print("Frame:",scene.frame_current)
+        cell_objs = [obj for obj in scene.objects if obj.name.startswith("Cell_")] # change between scene and depsgragh here
+        
+        num_cells = len(bpy.data.collections["Cells"].objects)
+        for cell_obj in cell_objs:
+            #cell_name = bpy.data.collections["Cells"].objects[i].name
+            cell_name = cell_obj.name
+            #cell_obj = bpy.data.objects[cell_name]
+            #bpy.data.objects[cell_name].select_set(True)
+            #bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
+            #bpy.ops.object.modifier_apply(modifier="CLOTH")
+            
+            print(cell_obj.name," Volume:",Goo.calculate_volume(cell_obj)," Shrinking Factor:",cell_obj.modifiers["Cloth"].settings.shrink_min)
+            cell_obj.modifiers["Cloth"].settings.shrink_min -= 0.01 # constantly changing shrink_min
