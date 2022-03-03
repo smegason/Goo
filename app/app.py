@@ -1,6 +1,9 @@
 from tkinter import *
 from tkinter import ttk
-from add_cell_controller import add_cell_controller
+
+from cv2 import add
+from sqlalchemy import ForeignKeyConstraint
+from add_cell_controller import add_cell_controller, cell
 
 root = Tk()
 #root.withdraw()
@@ -154,7 +157,7 @@ NumFrames.grid(row=1,column=4)
 #Create widgets for "Generate Script" Section
 Label(generate_script_section,text="Generation").grid(column=0,row=0,padx=(5,770),columnspan=4)
 gen_script_button = Button(generate_script_section,text="Generate Script")
-save_script_button = Button(generate_script_section,text="Save Script")
+save_script_button = Button(generate_script_section,text="Copy Script")
 run_script_button = Button(generate_script_section,text="Run Script")
 
 #Place widgets for "Generate Script" Section
@@ -187,7 +190,8 @@ class Script:
             self.script += "bpy.app.handlers.frame_change_post.append(Goo.div_handler)\n"
         if checkbox_var.get() == 1:
             self.script += "scene = bpy.context.scene\n"
-            self.script += "fp = '/Users/michaelmitschjr/Desktop/Python/data/'\n"
+            #self.script += "fp = '/Users/michaelmitschjr/Desktop/Python/data/'\n"
+            self.script += "fp = " + FilePathInput.get() + "\n"
             self.script += "scene.render.image_settings.file_format = 'PNG'\n"
             self.script += "Goo.render(fp,scene,1,60)\n"
         print(self.script)
@@ -274,32 +278,3 @@ gen_script_button.bind("<Button-1>",generateScript)
 save_script_button.bind("<Button-1>",saveScript)
 
 root.mainloop()
-
-'''
-from Goo import Goo
-import importlib
-importlib.reload(Goo)
-import bpy
-Goo.setup_world()
-collection = bpy.context.blend_data.collections.new(name='Cells')
-bpy.context.collection.children.link(collection)
-
-bpy.app.handlers.frame_change_post.clear()
-cell = Goo.Cell(name_string = "cell_(0,0,0)", loc = (0,0,0))
-Goo.make_cell(cell)
-obj = bpy.data.objects["cell_(0,0,0)"]
-bpy.ops.collection.objects_remove_all()
-bpy.data.collections['Cells'].objects.link(obj)
-
-cell = Goo.Cell(name_string = "cell_(0,0,1)", loc = (0,0,2))
-Goo.make_cell(cell)
-obj = bpy.data.objects["cell_(0,0,1)"]
-bpy.ops.collection.objects_remove_all()
-bpy.data.collections['Cells'].objects.link(obj)
-
-scene = bpy.context.scene
-old_fp = '/tmp/'
-fp = '/Users/michaelmitschjr/Desktop/Python/data/'
-scene.render.image_settings.file_format = 'PNG'
-Goo.render(fp,scene,1,60)
-'''
