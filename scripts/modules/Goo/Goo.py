@@ -187,7 +187,10 @@ def divide(obj):
     return daughter1, daughter2
     
 def make_mesh(cell):
-    bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.data['radius'], size= cell.data['size'], arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.data['location'])
+    try:
+        bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.data['radius'], size= cell.data['size'], arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.data['location'])
+    except:
+        print("To enable RoundCube creation for Cells you must go to Edit->Preferences->AddOns->Add Mesh:ExtraObjects and check the box to enable it")
     #bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
     bpy.context.object.name = cell.data['name']
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
@@ -256,6 +259,7 @@ def div_handler(scene):
             bpy.data.objects[d2.data["name"]].select_set(False)
 
 def make_cell(cell):
+    print ("make cell");
     #mesh = bpy.data.meshes.new()
     #cell = bmesh.ops.create_icosphere(mesh, 2, 2.0, insert_matrix_here, calc_uv = True)
     #bpy.ops.mesh.primitive_ico_sphere_add(radius = cell.radius, enter_editmode = cell.enter_editmode, align = cell.align, location = cell.location, scale = cell.scale)
@@ -299,9 +303,13 @@ def make_cell(cell):
     #bpy.context.object.field.strength = 0
     #bpy.context.object.field.shape = 'POINT'
     #bpy.context.object.name = cell.name
-    
+    if (bpy.data.materials.get(cell.data['material'])):
+        bpy.context.active_object.data.materials.append(bpy.data.materials.get(cell.data['material']))
+    else:
+        print ("No material ", cell.data['material'])
+        
 class Cell():
-    def __init__(self, name_string, loc):
+    def __init__(self, name_string, loc, material=""):
         self.data = {
             'ID': 0,
             'name': name_string,
@@ -309,6 +317,7 @@ class Cell():
             'enter_editmode': False,
             'align': 'WORLD',
             'location': loc,
+            'material': material,
             'size': (1, 1, 1),
             'scale': (1, 1, 1),
             'arcdiv': 8,
@@ -458,6 +467,171 @@ def add_material(mat):
     bpy.ops.node.select(wait_to_deselect_others=True, mouse_x=114, mouse_y=765, extend=False, deselect_all=True)
     bpy.ops.node.link(detach=False)
 
+def add_material2(mat_name):
+    mat = bpy.data.materials.get(mat_name)
+    if mat is None:
+        print ("Material not found. Make new")
+        mat = bpy.data.materials.new(name=mat_name)
+     
+    if mat.node_tree:
+        mat.node_tree.links.clear()
+        mat.node_tree.nodes.clear()
+            
+    bpy.data.materials[mat.name].use_nodes = True
+    
+    #soap bubble shader
+#    bpy.data.materials[mat.name].node_tree.nodes["Mix Shader"].inputs[0].default_value = mat.BDSF_1_fac
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[0].default_value = mat.BDSF_1_color
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[1].default_value = mat.BDSF_1_subsurface
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[2].default_value[0] = mat.BDSF_1_subsurf_radius[0]
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[2].default_value[1] = mat.BDSF_1_subsurf_radius[1]
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[2].default_value[2] = mat.BDSF_1_subsurf_radius[2]
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[3].default_value = mat.BDSF_1_subsurf_color
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[4].default_value = mat.BDSF_1_metallic
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[5].default_value = mat.BDSF_1_specular
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[6].default_value = mat.BDSF_1_specular_tint
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[7].default_value = mat.BDSF_1_roughness
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[8].default_value = mat.BDSF_1_anisotropic
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[9].default_value = mat.BDSF_1_anisotropic_rot
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[10].default_value = mat.BDSF_1_sheen
+#   bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[11].default_value = mat.BDSF_1_sheen_tint
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[12].default_value = mat.BDSF_1_clearcoat
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[13].default_value = mat.BDSF_1_clear_rough
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[14].default_value = mat.BDSF_1_IOR
+#   bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[15].default_value = mat.BDSF_1_transmission
+#   bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[16].default_value = mat.BDSF_1_transmission_rough
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[17].default_value = mat.BDSF_1_emission_color
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[18].default_value = mat.BDSF_1_emission_strength
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[19].default_value = mat.BDSF_1_alpha
+#   bpy.data.materials[mat.name].node_tree.nodes["Hue Saturation Value"].inputs[0].default_value = mat.BDSF_2_hue
+#    bpy.data.materials[mat.name].node_tree.nodes["Hue Saturation Value"].inputs[1].default_value = mat.BDSF_2_saturation
+#   bpy.data.materials[mat.name].node_tree.nodes["Hue Saturation Value"].inputs[2].default_value = mat.BDSF_2_value
+#    bpy.data.materials[mat.name].node_tree.nodes["Hue Saturation Value"].inputs[3].default_value = mat.BDSF_2_fac
+#    bpy.data.materials[mat.name].node_tree.nodes["Hue Saturation Value"].inputs[4].default_value = mat.BDSF_2_color
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[1].default_value = mat.BDSF_2_subsurface
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[2].default_value[0] = mat.BDSF_2_subsurf_radius[0]
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[2].default_value[1] = mat.BDSF_2_subsurf_radius[1]
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[2].default_value[2] = mat.BDSF_2_subsurf_radius[2]
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[3].default_value = mat.BDSF_2_subsurf_color
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[4].default_value = mat.BDSF_2_metallic
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[5].default_value = mat.BDSF_1_specular
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[6].default_value = mat.BDSF_2_specular_tint
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[7].default_value = mat.BDSF_2_roughness
+ #   bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[8].default_value = mat.BDSF_2_anisotropic
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[9].default_value = mat.BDSF_2_anisotropic_rot
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[10].default_value = mat.BDSF_2_sheen
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[11].default_value = mat.BDSF_2_sheen_tint
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[12].default_value = mat.BDSF_2_clearcoat
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[13].default_value = mat.BDSF_2_clear_rough
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[14].default_value = mat.BDSF_2_IOR
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[15].default_value = mat.BDSF_2_transmission
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[16].default_value = mat.BDSF_2_transmission_rough
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[17].default_value = mat.BDSF_2_emission_color
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[18].default_value = mat.BDSF_2_emission_strength
+#    bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF.001"].inputs[19].default_value = mat.BDSF_2_alpha
+#    bpy.context.object.active_material.blend_method = mat.blend_method
+#    bpy.context.object.active_material.shadow_method = mat.shadow_method
+#    bpy.context.object.active_material.refraction_depth = mat.refraction_depth
+##    bpy.context.object.active_material.pass_index = mat.pass_index
+#    bpy.context.object.active_material.diffuse_color = mat.diffuse_color
+#    bpy.context.object.active_material.metallic = mat.metallic
+#    bpy.context.object.active_material.roughness = mat.roughness
+#    bpy.ops.node.add_node(type="ShaderNodeTexNoise", use_transform=True)
+#    bpy.ops.node.select(wait_to_deselect_others=True, mouse_x=114, mouse_y=765, extend=False, deselect_all=True)
+#    bpy.ops.node.link(detach=False)
+
+def add_material_cell(mat_name, r, g, b):
+    #adds a soap bubble like material for use in rendering cells
+    print ("add cell material " + mat_name)
+    
+    # check whether the material already exists
+    if bpy.data.materials.get(mat_name):
+        mat = bpy.data.materials[mat_name]
+    else:
+        # create the material
+        mat = bpy.data.materials.new(mat_name)
+        
+    mat.diffuse_color = (1.0, 1.0, 1.0, 1.0) # viewport color
+    mat.use_nodes = True
+    mat.blend_method = 'BLEND'
+
+    # get the material nodes
+    nodes = mat.node_tree.nodes
+
+    # clear all nodes to start clean
+    for node in nodes:
+        nodes.remove(node)
+
+    # create principled node for main color
+    node_main = nodes.new(type='ShaderNodeBsdfPrincipled')
+    node_main.location = -200,100
+    node_main.inputs['Base Color'].default_value = (r,g,b,1)
+    node_main.inputs['Metallic'].default_value = 0.136
+    node_main.inputs['Specular'].default_value = 0.500
+    node_main.inputs['Specular Tint'].default_value = 0.555
+    node_main.inputs['Roughness'].default_value = 0.318
+    node_main.inputs['Anisotropic'].default_value = 0.041
+    node_main.inputs['Anisotropic Rotation'].default_value = 0.048
+    node_main.inputs['Sheen'].default_value = 0.052
+    node_main.inputs['Sheen Tint'].default_value = 0.030
+    node_main.inputs['Clearcoat'].default_value = 0.114
+    node_main.inputs['Clearcoat Roughness'].default_value = 0.123
+    node_main.inputs['IOR'].default_value = 1.450
+    node_main.inputs['Transmission'].default_value = 0.882
+    node_main.inputs['Transmission Roughness'].default_value = 0.0
+    node_main.inputs['Alpha'].default_value = 0.414
+    
+    # create noise texture source
+    node_noise = nodes.new(type="ShaderNodeTexNoise")
+    node_noise.inputs['Scale'].default_value = 0.600
+    node_noise.inputs['Detail'].default_value = 15.0
+    node_noise.inputs['Roughness'].default_value = 0.500
+    node_noise.inputs['Distortion'].default_value = 3.0
+    
+    # create HSV 
+    node_HSV = nodes.new(type="ShaderNodeHueSaturation")
+    node_HSV.inputs['Hue'].default_value = 0.800
+    node_HSV.inputs['Saturation'].default_value = 2.00
+    node_HSV.inputs['Value'].default_value = 2.00
+    node_HSV.inputs['Fac'].default_value = 1.00
+   
+    # create second principled node for random color variation
+    node_random = nodes.new(type='ShaderNodeBsdfPrincipled')
+    node_random.location = -200,-100
+    node_random.inputs['Base Color'].default_value = (r,g,b,1) #Hue Saturation Value
+    node_random.inputs['Metallic'].default_value = 0.0
+    node_random.inputs['Specular'].default_value = 0.500
+    node_random.inputs['Specular Tint'].default_value = 0.0
+    node_random.inputs['Roughness'].default_value = 0.482
+    node_random.inputs['Anisotropic'].default_value = 0.0
+    node_random.inputs['Anisotropic Rotation'].default_value = 0.0
+    node_random.inputs['Sheen'].default_value = 0.0
+    node_random.inputs['Sheen Tint'].default_value = 0.0
+    node_random.inputs['Clearcoat'].default_value = 0.0
+    node_random.inputs['Clearcoat Roughness'].default_value = 0.0
+    node_random.inputs['IOR'].default_value = 1.450
+    node_random.inputs['Transmission'].default_value = 1.0
+    node_random.inputs['Transmission Roughness'].default_value = 0.0
+    node_random.inputs['Alpha'].default_value = 0.555
+
+    # create mix shader node
+    node_mix = nodes.new(type='ShaderNodeMixShader')
+    node_mix.location = 0,0
+    node_mix.inputs['Fac'].default_value = 0.079
+
+    # create output node
+    node_output = nodes.new(type='ShaderNodeOutputMaterial')   
+    node_output.location = 200,0
+
+    # link nodes
+    links = mat.node_tree.links    
+    link_noise_HSV = links.new(node_noise.outputs[1], node_HSV.inputs[4])
+    link_HSV_random = links.new(node_HSV.outputs[0], node_random.inputs[0])
+    link_main_mix = links.new(node_main.outputs[0], node_mix.inputs[1])
+    link_random_mix = links.new(node_random.outputs[0], node_mix.inputs[2])
+    link_mix_out = links.new(node_mix.outputs[0], node_output.inputs[0])
+        
+
 class Material():
     def __init__(self):
         self.name = "Cell Material"
@@ -526,6 +700,7 @@ def initialize_cells(num_cells, loc_array, material):
         make_cell(cell)
 
 def setup_world():
+    print("setup worldDDDD")
     bpy.context.scene.use_gravity = False
     bpy.context.scene.unit_settings.system = 'METRIC'
     bpy.context.scene.unit_settings.scale_length = 1
@@ -535,8 +710,51 @@ def setup_world():
     bpy.context.scene.unit_settings.time_unit = 'SECONDS'
     bpy.context.scene.unit_settings.temperature_unit = 'KELVIN'
 
-    #bpy.context.space_data.shading.studio_light = 'snowy_field_4k.exr' #need to adjust for file upload here
+    #add materials
+    
+    add_world_HDRI()
+  
+def add_world_HDRI():
+    print("add world HDRI")
+    C = bpy.context
+    scn = C.scene
 
+    # Get the environment node tree of the current scene
+    node_tree = scn.world.node_tree
+    tree_nodes = node_tree.nodes
+
+    # Clear all nodes
+    tree_nodes.clear()
+
+    # Add Background node
+    node_background = tree_nodes.new(type='ShaderNodeBackground')
+
+    # Add Environment Texture node
+    node_environment = tree_nodes.new('ShaderNodeTexEnvironment')
+    # Load and assign the image to the node property
+    node_environment.image = bpy.data.images.load("//missile_launch_facility_01_4k.hdr") # Relative path- must be in same directory as blend file
+    node_environment.location = -300,0
+
+    # Add Output node
+    node_output = tree_nodes.new(type='ShaderNodeOutputWorld')   
+    node_output.location = 200,0
+
+    # Link all nodes
+    links = node_tree.links
+    link = links.new(node_environment.outputs["Color"], node_background.inputs["Color"])
+    link = links.new(node_background.outputs["Background"], node_output.inputs["Surface"])
+    
+    #set film to transparent to hide background
+    bpy.context.scene.render.film_transparent = True
+    
+    #change render preview mode
+    for area in bpy.context.screen.areas:   #only updates windows in current tab, e.g. Sxripting but not Layout
+        if area.type == 'VIEW_3D':
+            print ("update view 3d to rendered")
+            space = area.spaces.active
+            if space.type == 'VIEW_3D':
+                space.shading.type = 'RENDERED'
+        
 def render(file_path,scene,start,end):
     scene.render.image_settings.file_format = 'PNG'
     old_fp = scene.render.filepath
