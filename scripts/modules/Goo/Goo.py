@@ -3,22 +3,39 @@
 
 import bpy, bmesh, mathutils, numpy as np
 
+# This function calculates the volume of a cell 
 def calculate_volume(obj): # obj = bpy.context.object
+    # We need to get the cell as it is evaluated in the simulation.
+    # To do this, we fetch its dependency graph and obtain the
+    # evaluated cell (denoted as obj_eval here)
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
+    # We use this graph to obtain a new mesh from which
+    # we can calculate the volume using Blender's bmesh library
     mesh_from_eval = obj_eval.to_mesh()
     bm = bmesh.new()
     bm.from_mesh(mesh_from_eval)
     volume = bm.calc_volume(signed = True)
     return volume
 
+# In standard Goo simulations, cells divide along the major axis.
+# This function finds the major axis of a cell using Principle
+# Component Analysis. 
 def get_major_axis(obj): # obj = bpy.context.object
+    # We need to get the cell as it is evaluated in the simulation.
+    # To do this, we fetch its dependency graph and obtain the
+    # evaluated cell (denoted as obj_eval here)
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
+    # We obtain the (x,y,z) coordinates of the vertices in the
+    # evaluated cell
     vertices = obj_eval.data.vertices
     vert_coords = [(obj_eval.matrix_world @ v.co) for v in vertices]
     vert_coords = np.asarray(vert_coords)
 
+    # We separate the x, y, and z coordinates into their own arrays.
+    # We also subtract the mean of each dimension from the corresponding
+    # array values. This is part of the PCA algorithm.
     x = vert_coords[:, 0]
     x = x - np.mean(x)
     y = vert_coords[:, 1]
@@ -26,26 +43,47 @@ def get_major_axis(obj): # obj = bpy.context.object
     z = vert_coords[:, 2]
     z = z - np.mean(z)
 
+    # We stack the three arrays together to make the "new" coordinates
     new_coords = np.vstack([x, y, z])
+    # This is then used to find the covariance matrix of the coordinates
     cov_matrix = np.cov(new_coords)
+    # Per the PCA algorithm, we find the eigenalues and eigenvectors 
+    # of the covariance matrix
     eigenvals, eigenvecs = np.linalg.eig(cov_matrix)
 
+    # The eigenvalues are sorted, and the primary eigenvector
+    # is the major axis.
     sort_indices = np.argsort(eigenvals)
     major_x, major_y, major_z = eigenvecs[:, sort_indices[-1]]
     major_axis = (major_x, major_y, major_z)
     return major_axis
 
-#def get_division_angles(axis, prev_axis):
+# This function returns 2 angles associated with the
+# division axis of a cell: The angle angle between the the division axis
+# and the z-axis (phi, in spherical coordinates) and the angle
+# projected on the xy-plan (theta)
 def get_division_angles(axis):
+    # We define the unit vector of z-axis 
     z_axis = np.array((0, 0, 1))
+    # We find the unit vector of the division axis
     division_axis = axis/np.linalg.norm(axis)
+    # We calculate the dot product of the normalized
+    # z and division axes
     dot_product = np.dot(z_axis, division_axis)
+    # The inverse cosine of the dot product is phi
     phi = np.arccos(dot_product)
 
+    # The first step to find theta is to find the projection
+    # of the division axis on the z axis
     proj_axis_on_z = dot_product*z_axis
+    # This projection is subtracted from the division axis
+    # To find the projection on the xy-plane
     proj_xy_axis = division_axis - proj_axis_on_z
+    # We normalize this projection
     proj_xy_axis = proj_xy_axis/np.linalg.norm(proj_xy_axis)
+    # We take the dot product of the x-axis and the normalized projection
     dot_product = np.dot((1, 0, 0), proj_xy_axis)
+    # The inverse cosin of this dot product is theta.
     theta = np.arccos(dot_product)
 
     #prev_axis_norm = prev_axis/np.linalg.norm(prev_axis)
@@ -55,80 +93,132 @@ def get_division_angles(axis):
     print("GOT DIVISION ANGLES")
     return phi, theta
 
+# This function calculates the contact area of a cell
+# using the angles between adjacent faces
 def calculate_contact_area(obj): # obj = bpy.context.object
+    # We need to get the cell as it is evaluated in the simulation.
+    # To do this, we fetch its dependency graph and obtain the
+    # evaluated cell (denoted as obj_eval here)
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
+    # We use this graph to obtain a new mesh from which
+    # we can calculate the angles between adjacent faces of the cell
     mesh_from_eval = obj_eval.to_mesh()
     bm = bmesh.new()
     bm.from_mesh(mesh_from_eval)
 
+    # The contact area variable is initialized to zero.
     contact_area = 0
+    # All faces on the mesh are initially deselected
     for face in bm.faces:
         face.select = False
 
+    # We loop over all the edges in the mesh
     for edge in bm.edges:
+        # We find the angle between the two adjacent phases
+        # of the edge. If the angle is less than 0.01, the
+        # adjacent phases are either flat or concave, so this
+        # face is presumed to be in contact with another object 
+        # and is selected
         angle = edge.calc_face_angle_signed()
         if angle < 0.01:
             for face in edge.link_faces:
                 face.select = True
-                
+
+    # We loop through the selected faces and add the area of
+    # each face to the contact area variable            
     for face in bm.faces:
         if face.select == True:
             contact_area += face.calc_area()
 
     return contact_area
 
-# Repair hole: after cell division, add new face and re-triangulate mesh
-# may want to consider
+# The repair hole function adds a new face to the cell after
+# division of the mesh and regularizes the mesh so that the
+# mesh is evenly covered with faces
 def repair_hole(obj): 
     #bpy.context.view_layer.objects.active = obj
+    # Go into Blender Edit Mode
     bpy.ops.object.mode_set(mode = 'EDIT')
+    # Select all the edges in the mesh
     bpy.ops.mesh.select_mode(type="EDGE") 
     bpy.ops.mesh.select_all(action = 'SELECT')
+    # Add a new face (based on open eduges)
     bpy.ops.mesh.edge_face_add()
+    # Deselct the edges
     bpy.ops.mesh.select_all(action = 'DESELECT')
+    # Return to Blender Object Mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
+    # Remesh the cell with voxels of size 0.2
     bpy.ops.object.modifier_add(type='REMESH')
     bpy.context.object.modifiers["Remesh"].voxel_size = 0.2
     bpy.ops.object.modifier_apply(modifier="Remesh")
 
-#def divide(obj, tree): # obj = bpy.context.object
+# The sep function splits the cell mesh in two for division
 def sep(obj):
-    # Get Center of Mass
+    # We need to get the cell as it is evaluated in the simulation.
+    # To do this, we fetch its dependency graph and obtain the
+    # evaluated cell (denoted as obj_eval here)
     bpy.ops.object.mode_set(mode='OBJECT')
     dg = bpy.context.evaluated_depsgraph_get()
     obj = obj.evaluated_get(dg)
+    # The mother cell name is the name of the cell currently being divided
     mother_name = obj.name
+    # By Blender convention, duplicates of existing objects are given
+    # the same name as the original object, but with ".001" added to the end
+    # We use the naming convention to tentatively set the name of one 
+    # daughter cell
     daughter_name = mother_name + ".001"
+    # Get the cell's center of mass
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     COM = obj.location
+    # Go into edit mode
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
-    # Get Major Axis
+    # Get the cell's major axis
     major_axis = get_major_axis(obj)
+    # Get the division angles, if desired
     #phi, theta = get_division_angles(major_axis)
     #print(mother_name + " PHI: " + str(phi) + ", THETA: " + str(theta))
+    # Bisect the cell along the plane specified by the center of mass (point)
+    # and major axis (normal vectorr)
     bpy.ops.mesh.bisect(plane_co = COM, plane_no = major_axis, use_fill=False, flip=False)
+    # Go into object mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
-    # Separate the object
+    # Now we separate the split mesh into two separate objects.
+    # First, obtain the vertex coordinates of the bisected mother cell.
     obj = bpy.data.objects[mother_name]
     new_vertices = obj.data.vertices
     new_vert_coords = [(obj.matrix_world @ v.co) for v in new_vertices]
     new_vert_coords = np.asarray(new_vert_coords)
 
+    # We will choose half of the vertices to be separated into a new object.
+    # We create a list of the vertex indices we will use to create the
+    # daughter cell object
     separation_indices = []
+    # We loop through each vertex and calculate the signed distance between the vertex
+    # and the division plane (which is specified by the center of mass and major axis).
+    # If the distance is greater than -0.05 (the vertex is on a specific half of the cell),
+    # we add the vertex's index i to our list of separation indices
     for i in range(len(new_vert_coords)):
         distance = mathutils.geometry.distance_point_to_plane(new_vert_coords[i], COM, major_axis)
         if distance > -0.05:
             separation_indices.append(i)
+    # We go back into edit mode and deselect all vertices
     bpy.ops.object.mode_set(mode = 'EDIT') 
     bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action = 'DESELECT')
+    # We return to object mode and loop through all the vertices.
+    # If the vertex's index ix contained in the list of separation indices,
+    # we select it for separation
     bpy.ops.object.mode_set(mode = 'OBJECT')
     for index in separation_indices:
         obj.data.vertices[index].select = True
+    # We go back into edit mode and separate the selected vertices
+    # as a new daughter cell.
     bpy.ops.object.mode_set(mode = 'EDIT') 
     bpy.ops.mesh.separate(type='SELECTED')
+    # We return to object mode and select only the "original" mother cell
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.data.objects[mother_name].select_set(False)
     bpy.data.objects[daughter_name].select_set(False)
@@ -495,6 +585,22 @@ def add_material_cell(mat_name, r, g, b):
     link_main_mix = links.new(node_main.outputs[0], node_mix.inputs[1])
     link_random_mix = links.new(node_random.outputs[0], node_mix.inputs[2])
     link_mix_out = links.new(node_mix.outputs[0], node_output.inputs[0])
+
+class Force():
+    def __init__(self, force_name, cell_name, strength):
+        self.name = force_name
+        self.strength = strength
+        self.associated_cell = cell_name
+        self.falloff_power = 0
+    def get_blender_force(self):
+        obj = bpy.data.objects[self.name]
+        return obj
+
+def make_force(force):
+    bpy.ops.object.effector_add(type='FORCE', enter_editmode=False, align='WORLD', location=bpy.data.objects[force.associated_cell].location, scale=(1, 1, 1))
+    bpy.context.object.field.strength = force.strength
+    bpy.context.object.name = force.name
+    bpy.context.object.field.falloff_power = force.falloff_power
 
 def initialize_cells(num_cells, loc_array, material):
     if len(num_cells) != len(loc_array):
