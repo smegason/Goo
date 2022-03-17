@@ -357,9 +357,16 @@ def make_cell(cell):
     #bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
     bpy.context.object.name = cell.data['name']
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
+    
+    #smooth mesh
+    bpy.ops.object.select = True
+    bpy.ops.object.shade_smooth()
+    
+    #add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type = 'SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
-    #bpy.ops.object.modifier_add(type = 'SOFT_BODY')
+    
+    #add cloth settings for physics
     bpy.ops.object.modifier_add(type = 'CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
@@ -381,6 +388,8 @@ def make_cell(cell):
     bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
+    
+    #add Collision modifier for physics
     bpy.ops.object.modifier_add(type='COLLISION')
     bpy.context.object.collision.use_culling = False
     #bpy.context.object.collision.damping = 0.579821
@@ -393,6 +402,8 @@ def make_cell(cell):
     #bpy.context.object.field.strength = 0
     #bpy.context.object.field.shape = 'POINT'
     #bpy.context.object.name = cell.name
+    
+    #add material to cell based on name of material
     if (bpy.data.materials.get(cell.data['material'])):
         bpy.context.active_object.data.materials.append(bpy.data.materials.get(cell.data['material']))
     else:
