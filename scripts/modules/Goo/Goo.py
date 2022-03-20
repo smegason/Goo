@@ -623,6 +623,11 @@ def initialize_cells(num_cells, loc_array, material):
         make_cell(cell)
 
 def setup_world():
+    """
+    This function sets up the default values used for simulations in Goo including units and rendering background
+    
+    :return: None
+    """    
     print("setup world")
     bpy.context.scene.use_gravity = False
     bpy.context.scene.unit_settings.system = 'METRIC'
