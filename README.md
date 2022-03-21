@@ -17,39 +17,6 @@ ___
 <li>Michael Mitsch, Indiana University
 <li>Drew Willis, Indiana University
 
-### Installation
----
-1. Install the latest edition of [Blender](https://www.blender.org/download/)
-2. Clone the Goo repository or download and unzip
-3. In Blender, go to `Edit>Preferences`, then go to the 'Add-ons' tab and enable the checkbox next to `Add Mesh: Extra Objects`
-
-![edit preferences](img/blender_edit_preferences.png)
-
-![add mesh](img/blender_add_mesh.png)
-
-4. Then, in `Edit>Preferences`, go to the `File Paths` tab and add the `<location>/Goo/scripts/` folder to `Scripts`. `<location>` should be replaced with the root leading up to where you cloned the Goo repository. You may need to close and re-open Blender afther this change.
-
-
-![add path](img/blender_add_path.png)
-
-### Usage
----
-In a new `General` Project within Blender, delete the default cube by left-clicking on the cube, type `X`, and then `return`
-
-In the Scripting tab, use the desired cell functions
-
-Example script (Create cell):
-```
-from Goo import Goo
-Goo.setup_world()
-cell = Goo.Cell(name_string = "Cell_", loc = (0, 0, 0))
-Goo.make_cell(cell)
-```
-Click the play button and you should see a Goo cell appear
-  
-You may also open example simulations from the 'Simulations' folder
-  
-Note, Blender uses its own built in Python interpreter which may be different than another Python instance you've installed.
-  
-### Functions
----
+## Documentation
+  Full documentation for Goo is at Github Pages
+  https://smegason.github.io/Goo/
