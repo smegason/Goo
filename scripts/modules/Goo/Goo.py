@@ -524,13 +524,8 @@ def make_cell(cell):
         print ("No material ", cell.data['material'])
         
 class Cell():
-    """
-    A class for representing biological cells in Goo
  
-    :param name_string: String for the name of the cell
-    :param loc: Location of the cell center (x, y, z)  
-    """
-     def __init__(self, name_string, loc, material=""):
+    def __init__(self, name_string, loc, material=""):
         self.data = {
             'ID': 0,
             'name': name_string,
@@ -708,7 +703,7 @@ class Force():
     :param cell_name: Name of cell  
     :param strength: Strength of force
     """
-   def __init__(self, force_name, cell_name, strength):
+    def __init__(self, force_name, cell_name, strength):
         self.name = force_name
         self.strength = strength
         self.associated_cell = cell_name
