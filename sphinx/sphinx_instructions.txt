@@ -7,4 +7,5 @@ To make Sphinx documentation
 -this should remake the html files in sphinx/_build
 -uncomment out import bpy, bmesh, mathutils, numpy as np
 -save Goo.py
--use Git to commit the sphinx pages to Github to appear as Github Pages
+-copy all the files in /sphinx/_build/html/ to /docs/
+-use Git to commit the sphinx pages in docs/ to Github to appear as Github Pages
