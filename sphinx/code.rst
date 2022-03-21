@@ -1,6 +1,6 @@
 .. Goo Code documentation 
 
-Goo Code documentation
+Functions and Classes
 ======================
 
 .. automodule:: Goo
