@@ -3,8 +3,15 @@
 
 import bpy, bmesh, mathutils, numpy as np
 
-# This function calculates the volume of a cell 
-def calculate_volume(obj): # obj = bpy.context.object
+def calculate_volume(obj):
+    """
+    Calculates volume of a cell
+    
+    :param obj: the blender object (mesh)
+    
+    :return: volume
+    """
+ 
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
     # evaluated cell (denoted as obj_eval here)
@@ -18,10 +25,16 @@ def calculate_volume(obj): # obj = bpy.context.object
     volume = bm.calc_volume(signed = True)
     return volume
 
-# In standard Goo simulations, cells divide along the major axis.
-# This function finds the major axis of a cell using Principle
-# Component Analysis. 
-def get_major_axis(obj): # obj = bpy.context.object
+
+def get_major_axis(obj): 
+    """
+    Calculates the major (long) axis of a mesh by calculating the first eigenvector of the vertices in the mesh. This can be used to choose the axis of division
+    
+    :param obj: the blender object (mesh)
+    
+    :return: major axis as (x, y, z) which gives direction from origin (0, 0, 0)
+    """
+
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
     # evaluated cell (denoted as obj_eval here)
@@ -58,11 +71,16 @@ def get_major_axis(obj): # obj = bpy.context.object
     major_axis = (major_x, major_y, major_z)
     return major_axis
 
-# This function returns 2 angles associated with the
-# division axis of a cell: The angle angle between the the division axis
-# and the z-axis (phi, in spherical coordinates) and the angle
-# projected on the xy-plan (theta)
+
 def get_division_angles(axis):
+    """
+    This function returns 2 angles associated with the division axis of a cell: The angle between the the division axis and the z-axis (phi, in spherical coordinates) and the angle projected on the xy-plan (theta)   
+    
+    :param axis: the normal (e.g. long axis) to the division plane expressed as (x, y, z)
+    
+    :return: (phi, theta). phi is the angle between the division axis and the z-axis. theta is the angle projected on the xy plane
+    """
+  
     # We define the unit vector of z-axis 
     z_axis = np.array((0, 0, 1))
     # We find the unit vector of the division axis
@@ -93,9 +111,16 @@ def get_division_angles(axis):
     print("GOT DIVISION ANGLES")
     return phi, theta
 
-# This function calculates the contact area of a cell
-# using the angles between adjacent faces
 def calculate_contact_area(obj): # obj = bpy.context.object
+    """
+    Calculates the contact area of a cell using the angles between adjacent faces
+    
+    :param obj: the Blender mesh ??
+    
+    :return: contact_area
+    """
+    #TODO check docstring - I don't understand this function. Doesn't it need two cells to calculate the contact area??? Contact area with what?
+
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
     # evaluated cell (denoted as obj_eval here)
@@ -137,6 +162,15 @@ def calculate_contact_area(obj): # obj = bpy.context.object
 # division of the mesh and regularizes the mesh so that the
 # mesh is evenly covered with faces
 def repair_hole(obj): 
+    """
+    Adds a new face to the cell after division (splitting) of the mesh and regularizes the mesh so that the mesh is evenly covered with faces
+    
+    :param obj: the Blender mesh
+    
+    :return: None
+    """
+    #TODO check docstring
+
     #bpy.context.view_layer.objects.active = obj
     # Go into Blender Edit Mode
     bpy.ops.object.mode_set(mode = 'EDIT')
@@ -154,8 +188,16 @@ def repair_hole(obj):
     bpy.context.object.modifiers["Remesh"].voxel_size = 0.2
     bpy.ops.object.modifier_apply(modifier="Remesh")
 
-# The sep function splits the cell mesh in two for division
-def sep(obj):
+def seperate_cell(obj):
+    """
+    Splits one cell into two for cell division. Currently divides along the major axis but should allow a supplied axis
+    
+    :param obj: the Blender mesh to divide in two
+    
+    :return: mother_name, daughter_name, COM, major_axis
+    """
+    #TODO allow division along a supplied axis. If none supplied then divide along major axis
+
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
     # evaluated cell (denoted as obj_eval here)
@@ -225,28 +267,54 @@ def sep(obj):
     bpy.data.objects[mother_name].select_set(True)
     return mother_name, daughter_name, COM, major_axis
 
-def select_translate_cell(obj, COM, major_axis):
+def select_translate_cell(obj, COM, division_axis):
+    """
+    Determines what direction to move a cell after division so that new faces at cleavage plane are not overlapping 
+    
+    :param obj: the Blender mesh to divide in two
+    :param COM: center of mass
+    :param division_axis: division axis of cell (cleavage plane is perpendicular to division axis)
+    
+    :return: True if ??? and False otherwise
+    """
+    #TODO check docstring
+
     com = np.copy(COM)
     print("OLD COM: " + str(COM))
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     new_COM = obj.location
     print("NEW COM: " + str(new_COM))
     print(com)
-    distance = mathutils.geometry.distance_point_to_plane(new_COM, com, major_axis)
+    distance = mathutils.geometry.distance_point_to_plane(new_COM, com, division_axis)
     print(distance)
     if distance > 0:
         return 0
     else:
         return 1
 
-def translate_cell(obj, major_axis):
-    magnitude = ((major_axis[0])**2 + (major_axis[1])**2 + (major_axis[2])**2)**(0.5)
-    new_vec = (0.1*major_axis[0]/magnitude, 0.1*major_axis[1]/magnitude, 0.1*major_axis[2]/magnitude)
+def translate_cell(obj, axis):
+    """
+    Moves cell along the given axis. Used during cell division so daughters have some space
+    
+    :param obj: the Blender mesh to move
+    :param axis: the axis along which to move it
+    
+    :return: None
+    """
+    magnitude = ((axis[0])**2 + (axis[1])**2 + (axis[2])**2)**(0.5)
+    new_vec = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
     bpy.ops.transform.translate(value = new_vec)
 
 def divide(obj):
+    """
+    Divides a cell in two along its major axis by splitting the parent mesh in two, translating one mesh, filling the two holes, and retriangulating the meshes
+
+    :param obj: the Blender mesh to divide
+
+    :return: daughter1, daughter2
+    """
     obj.select_set(True)
-    m_name, d_name, COM, major_axis = sep(obj)
+    m_name, d_name, COM, major_axis = seperate_cell(obj)
     print(major_axis)
     val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
     if val == 0:
@@ -276,21 +344,21 @@ def divide(obj):
     daughter2.data['daughters'] = ['none', 'none']
     return daughter1, daughter2
     
-def make_mesh(cell):
-    try:
-        bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.data['radius'], size= cell.data['size'], arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.data['location'])
-    except:
-        print("To enable RoundCube creation for Cells you must go to Edit->Preferences->AddOns->Add Mesh:ExtraObjects and check the box to enable it")
-    #bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
-    bpy.context.object.name = cell.data['name']
-    bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
-    bpy.ops.object.modifier_add(type = 'SUBSURF')
-    bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
-    
 def turn_off_physics():
+    """
+    Turns physics off for the currently selected Blender object. Why is this useful?
+
+    :return: None
+    """
     bpy.ops.object.modifier_remove(modifier="Cloth")
     
 def turn_on_physics():
+    """
+    Turns physics on for the currently selected Blender object. Why is this useful?
+
+    :return: None
+    """
+    #TODO should these values be cell properties?
     bpy.ops.object.modifier_add(type = 'CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
@@ -316,6 +384,17 @@ def turn_on_physics():
 
 #def mitosis_handler(scene, tree):
 def mitosis_handler(scene):
+    """
+    Mitosis handler is a function triggered every frame to check if all cells need to divide. Currently just based on volume
+    
+    :param scene: ???
+    :param tree: ???
+    
+    :return: None
+    """
+    #TODO check docstring
+    #TODO should merge mitosis_handler and div_handler into one function. When to divide should be based on a cell property that allows for volume or time based trigger and allows for some noise in timing
+
     num_cells = len(bpy.data.collections["Cells"].objects)
     for i in range(num_cells):
         bpy.context.view_layer.objects.active = bpy.data.collections["Cells"].objects[i]
@@ -326,6 +405,14 @@ def mitosis_handler(scene):
     cell_tree.show()
 
 def div_handler(scene):
+    """
+    Cell division handler is a function triggered every frame to check if all cells need to divide. Currently just based on hard coded timing
+    
+    :param scene: ???
+    
+    :return: None
+    """
+
     num_cells = len(bpy.data.collections["Cells"].objects)
     current_frame = bpy.data.scenes[0].frame_current
     if current_frame % 30 == 0:
@@ -348,7 +435,34 @@ def div_handler(scene):
             turn_on_physics()
             bpy.data.objects[d2.data["name"]].select_set(False)
 
+def make_mesh(cell):
+    """
+    Makes a Blender mesh object for the given Goo cell
+
+    :param cell: the Goo cell to make a Blender mesh from
+
+    :return: None
+    """
+    try:
+        bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.data['radius'], size= cell.data['size'], arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.data['location'])
+    except:
+        print("To enable RoundCube creation for Cells you must go to Edit->Preferences->AddOns->Add Mesh:ExtraObjects and check the box to enable it")
+    #bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
+    bpy.context.object.name = cell.data['name']
+    bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
+    bpy.ops.object.modifier_add(type = 'SUBSURF')
+    bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
+    
 def make_cell(cell):
+    """
+    Makes a Blender mesh object for the given Goo cell
+
+    :param cell: the Goo cell to make a Blender mesh from
+
+    :return: None
+    """
+    #TODO make_mesh and make_cell are redundant. Need to merge.
+
     print ("make cell");
     #mesh = bpy.data.meshes.new()
     #cell = bmesh.ops.create_icosphere(mesh, 2, 2.0, insert_matrix_here, calc_uv = True)
@@ -410,7 +524,13 @@ def make_cell(cell):
         print ("No material ", cell.data['material'])
         
 class Cell():
-    def __init__(self, name_string, loc, material=""):
+    """
+    A class for representing biological cells in Goo
+ 
+    :param name_string: String for the name of the cell
+    :param loc: Location of the cell center (x, y, z)  
+    """
+     def __init__(self, name_string, loc, material=""):
         self.data = {
             'ID': 0,
             'name': name_string,
@@ -441,42 +561,16 @@ class Cell():
         }
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
         self.data['mass'] = self.data['density']*self.data['init_volume']
-        """ self.id = 0
-        self.name = name_string
-        self.radius = 1
-        self.enter_editmode = False
-        self.align = 'WORLD'
-        self.location = loc
-        self.size = (1, 1, 1)
-        #self.size = 2.0
-        self.scale = (1, 1, 1)
-        self.arcdiv = 8
-        self.subdiv = 2
-        self.vertex_mass = 0.3
-        self.density = 1.0
-        #self.init_volume = ((4/3)*np.pi*(self.radius)**3)*(10**-12) # fix to be in cm^3
-        self.init_volume = ((4/3)*np.pi*(self.radius)**3)
-        #self.mass = (self.density*self.init_volume)**1000
-        self.mass = self.density*self.init_volume
-        self.edges_pull = 0.0
-        self.edges_bend = 0.2
-        self.air_damping = 10
-        self.self_collision = True
-        self.self_collision_stiffness = 0.01
-        self.ball_size = 10
-        self.softbody_goal = False
-        self.sotbody_friction = 0.2
-        self.phi = 0
-        self.theta = 0
-        self.div_axis = (0, 0, 0) """
+ 
     def get_blender_object(self):
         obj = bpy.data.objects[self.data["name"]]
         return obj
 
     def divide(self):
+        #TODO this is redundant with the stand alone divide function 
         obj = self.get_blender_object()
         obj.select_set(True)
-        m_name, d_name, COM, major_axis = sep(obj)
+        m_name, d_name, COM, major_axis = seperate_cell(obj)
         print(major_axis)
         val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
         if val == 0:
@@ -507,7 +601,16 @@ class Cell():
         return daughter1, daughter2
 
 def add_material_cell(mat_name, r, g, b):
-    #adds a soap bubble like material for use in rendering cells
+    """
+    Creates a soap bubble like Blender material for use in rendering cells. The material has a name that allows it to be shared for multiple cells
+
+    :param mat_name: a text name for the material
+    :param r: red value [0 to 1]
+    :param g: green value [0 to 1]
+    :param b: blue value [0 to 1]
+
+    :return: None
+    """
     print ("add cell material " + mat_name)
     
     # check whether the material already exists
@@ -598,7 +701,14 @@ def add_material_cell(mat_name, r, g, b):
     link_mix_out = links.new(node_mix.outputs[0], node_output.inputs[0])
 
 class Force():
-    def __init__(self, force_name, cell_name, strength):
+    """
+    A class for representing forces between cells in Goo. Used for cell adhesion
+ 
+    :param force_name: Name of force
+    :param cell_name: Name of cell  
+    :param strength: Strength of force
+    """
+   def __init__(self, force_name, cell_name, strength):
         self.name = force_name
         self.strength = strength
         self.associated_cell = cell_name
@@ -608,12 +718,29 @@ class Force():
         return obj
 
 def make_force(force):
+    """
+    Makes a Blender force from the Goo force
+
+    :param force: a Goo force
+
+    :return: None
+    """
     bpy.ops.object.effector_add(type='FORCE', enter_editmode=False, align='WORLD', location=bpy.data.objects[force.associated_cell].location, scale=(1, 1, 1))
     bpy.context.object.field.strength = force.strength
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
 
 def initialize_cells(num_cells, loc_array, material):
+    """
+    Creates a collection of cells using an array
+    
+    :param num_cells: number of cells
+    :param loc_array: an array of locations (center) of cells
+    :param material: the material to use for the cells
+    
+    :return: None
+    """
+
     if len(num_cells) != len(loc_array):
         print("Number of cells must match number of cell locations")
         return
@@ -624,7 +751,7 @@ def initialize_cells(num_cells, loc_array, material):
 
 def setup_world():
     """
-    This function sets up the default values used for simulations in Goo including units and rendering background
+    Sets up the default values used for simulations in Goo including units and rendering background
     
     :return: None
     """    
@@ -641,6 +768,11 @@ def setup_world():
     add_world_HDRI()
   
 def add_world_HDRI():
+    """
+    Sets up Blender World properties for use in rendering most importantly adds an HDRI image for illumination
+
+    :return: None
+    """
     print("add world HDRI")
     C = bpy.context
     scn = C.scene
@@ -683,6 +815,16 @@ def add_world_HDRI():
                 space.shading.type = 'RENDERED'
         
 def render(file_path,scene,start,end):
+    """
+    Renders a simulation to create a set of still images that can be made into a movie
+
+    :param file_path: path for storing outputted images
+    :param scene: the Blender scene
+    :param start: the Blender start key frame
+    :param end: the Blender end key frame
+
+    :return: None
+    """
     scene.render.image_settings.file_format = 'PNG'
     old_fp = scene.render.filepath
     scene.render.filepath = file_path
@@ -705,6 +847,9 @@ def render(file_path,scene,start,end):
     return
 
 class handler_class:
+    """
+    A class for creating different types of handlers that trigger actions on Goo cells when certain criteria are met
+    """
     def __init__(self):
         self.cell_types = ["Sphere","type1","type2"]
         self.division_rates = {}
@@ -771,3 +916,4 @@ class handler_class:
             
             print(cell_obj.name," Volume:",Goo.calculate_volume(cell_obj)," Shrinking Factor:",cell_obj.modifiers["Cloth"].settings.shrink_min)
             cell_obj.modifiers["Cloth"].settings.shrink_min -= 0.01 # constantly changing shrink_min
+
