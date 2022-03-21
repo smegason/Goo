@@ -1,0 +1,10 @@
+To make Sphinx documentation
+-open Goo.py
+-comment out import bpy, bmesh, mathutils, numpy as np
+-save
+-from Terminal in Goo/Sphinx directory, type 'make html'
+-check for errors
+-this should remake the html files in sphinx/_build
+-uncomment out import bpy, bmesh, mathutils, numpy as np
+-save Goo.py
+-use Git to commit the sphinx pages to Github to appear as Github Pages
