@@ -1,9 +1,17 @@
 # Goo.py - This is the Goo library. It contains all helper functions for Goo
 # Goo is licensed under BSDv2
 
-import bpy, bmesh, mathutils, numpy as np
-
+#import bpy, bmesh, mathutils, numpy as np
 def calculate_volume(obj): # obj = bpy.context.object
+    """
+    Calculates volume of mesh
+    
+    :param obj: the blender object (mesh)
+    
+    :return: volume
+    """
+    #TODO check docstring
+
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
     mesh_from_eval = obj_eval.to_mesh()
@@ -13,6 +21,15 @@ def calculate_volume(obj): # obj = bpy.context.object
     return volume
 
 def get_major_axis(obj): # obj = bpy.context.object
+    """
+    Calculates the major (long) axis of a mesh by calculating the first eigenvector of the vertices in the mesh
+    
+    :param obj: the blender object (mesh)
+    
+    :return: major axis as (x, y, z) which gives direction from origin (0, 0, 0)
+    """
+    #TODO check docstring
+
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
     vertices = obj_eval.data.vertices
@@ -36,6 +53,15 @@ def get_major_axis(obj): # obj = bpy.context.object
     return major_axis
 
 def get_division_angles(axis):
+    """
+    Calculates division angle perpendicular to the given axis
+    
+    :param axis: the normal (e.g. long axis) to the division plane expressed as (x, y, z)
+    
+    :return: (phi, theta)
+    """
+    #TODO check docstring
+
     z_axis = np.array((0, 0, 1))
     division_axis = axis/np.linalg.norm(axis)
     dot_product = np.dot(z_axis, division_axis)
@@ -50,6 +76,15 @@ def get_division_angles(axis):
     return phi, theta
 
 def calculate_contact_area(obj): # obj = bpy.context.object
+    """
+    Calculates contact area between one mesh and another???
+    
+    :param obj: the Blender mesh ??
+    
+    :return: contact_area
+    """
+    #TODO check docstring
+
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
     mesh_from_eval = obj_eval.to_mesh()
@@ -75,6 +110,15 @@ def calculate_contact_area(obj): # obj = bpy.context.object
 # Repair hole: after cell division, add new face and re-triangulate mesh
 # may want to consider
 def repair_hole(obj): 
+    """
+    Repairs holes in a mesh after cell division with a new face and then re-triangulate mesh
+    
+    :param obj: the Blender mesh
+    
+    :return: None
+    """
+    #TODO check docstring
+
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_mode(type="EDGE") 
@@ -90,6 +134,15 @@ def repair_hole(obj):
     #bpy.ops.object.modifier_apply(modifier="Triangulate")
 
 def divide(obj): # obj = bpy.context.object
+    """
+    Divides one cell into two. Currently divides along the major axis but should allow a supplied axis
+    
+    :param obj: the Blender mesh to divide in two
+    
+    :return: None
+    """
+    #TODO check docstring
+
     # Get Center of Mass
     mother_name = obj.name
     daughter_name = mother_name + ".001"
@@ -136,6 +189,15 @@ def divide(obj): # obj = bpy.context.object
 
 
 def mitosis_handler(scene):
+    """
+    Mitosis handler is a function triggered every frame to check if all cells need to divide. Currently just based on volume
+    
+    :param scene: ???
+    
+    :return: None
+    """
+    #TODO check docstring
+
     num_cells = len(bpy.data.collections["Cells"].objects)
     for i in range(num_cells):
         bpy.context.view_layer.objects.active = bpy.data.collections["Cells"].objects[i]
@@ -145,6 +207,15 @@ def mitosis_handler(scene):
             divide(cell)
   
 def make_cell(cell):
+    """
+    Creates a Blender mesh object to represent a Goo Cell
+    
+    :param cell: A Cell object (Goo)
+    
+    :return: None
+    """
+    #TODO check docstring
+
     #mesh = bpy.data.meshes.new()
     #cell = bmesh.ops.create_icosphere(mesh, 2, 2.0, insert_matrix_here, calc_uv = True)
     #bpy.ops.mesh.primitive_ico_sphere_add(radius = cell.radius, enter_editmode = cell.enter_editmode, align = cell.align, location = cell.location, scale = cell.scale)
@@ -190,6 +261,13 @@ def make_cell(cell):
     #bpy.context.object.name = cell.name
     
 class Cell():
+    """
+    A class for representing biological cells in Goo
+ 
+    :param name_string: String for the name of the cell
+    :param loc: Location of the cell center (x, y, z)  
+    """
+ 
     def __init__(self, name_string, loc):
         self.name = name_string
         self.radius = 1
@@ -221,6 +299,13 @@ class Cell():
         return obj
 
 def add_material(mat):
+    """
+    Adds a material to the Blender scene. DEPRECATED- should switch to make_material
+    
+    :param mat: A Blender material
+    
+    :return: None
+    """
     bpy.data.materials.new(name = mat.name)
     bpy.data.materials[mat.name].node_tree.nodes["Mix Shader"].inputs[0].default_value = mat.BDSF_1_fac
     bpy.data.materials[mat.name].node_tree.nodes["Principled BSDF"].inputs[0].default_value = mat.BDSF_1_color
@@ -282,7 +367,7 @@ def add_material(mat):
     bpy.ops.node.select(wait_to_deselect_others=True, mouse_x=114, mouse_y=765, extend=False, deselect_all=True)
     bpy.ops.node.link(detach=False)
 
-class Material():
+class Material(): #DEPRECATED
     def __init__(self):
         self.name = "Cell Material"
         self.BDSF_1_fac = 0.079
@@ -341,6 +426,15 @@ class Material():
         self.roughness = 0.4
 
 def initialize_cells(num_cells, loc_array, material):
+    """
+    Creates a collection of cells using an array
+    
+    :param num_cells: number of cells
+    :param loc_array: an array of locations (center) of cells
+    :param material: the material to use for the cells
+    
+    :return: None
+    """
     if len(num_cells) != len(loc_array):
         print("Number of cells must match number of cell locations")
         return
@@ -350,6 +444,11 @@ def initialize_cells(num_cells, loc_array, material):
         make_cell(cell)
 
 def setup_world():
+    """
+    Sets up the Blender world's units and rendering properties
+       
+    :return: None
+    """
     bpy.context.scene.use_gravity = False
     bpy.context.scene.unit_settings.system = 'METRIC'
     bpy.context.scene.unit_settings.scale_length = 1

@@ -7,10 +7,10 @@ Welcome to Goo documentation's documentation!
 =============================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 2      
    :caption: Contents:
 
-
+   code
 
 Indices and tables
 ==================
