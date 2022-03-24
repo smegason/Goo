@@ -198,7 +198,7 @@ def seperate_cell(obj):
     
     :return: mother_name, daughter_name, COM, major_axis
     """
-    #TODO allow division along a supplied axis. If none supplied then divide along major axis
+    # TODO allow division along a supplied axis. If none supplied then divide along major axis
 
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
@@ -277,20 +277,34 @@ def select_translate_cell(obj, COM, division_axis):
     :param COM: center of mass
     :param division_axis: division axis of cell (cleavage plane is perpendicular to division axis)
     
-    :return: True if ??? and False otherwise
+    :return: 0 if the daughter cell is a positive distance away from the plane of division and 1 otherwise
     """
-    #TODO check docstring
+    #TODO check docstring # done
 
+    # This function is called after dividing the mother cell. We compare 
+    # the center of mass of the original mother cell to that of the corresponding daughter cell.
+    # We calculate the signed distance between the daughter cell's center of mass and the original plane of division. 
+    # If the distance is positive, the function returns 0 and this daughter cell will be translated later.
+    # If the distance is negative, the function returns 1 and the other daughter cell will be translated later
+
+    # Get the mother cell's center of mass
     com = np.copy(COM)
-    print("OLD COM: " + str(COM))
+    #print("OLD COM: " + str(COM))
+    # Set the daughter cell's location to its center of mass, and set this value as the new center of mass 
+    # (denoted new_COM)
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     new_COM = obj.location
-    print("NEW COM: " + str(new_COM))
-    print(com)
+    #print("NEW COM: " + str(new_COM))
+    #print(com)
+
+    # Calculate the signed distance between the new center of mass and the plane of division
     distance = mathutils.geometry.distance_point_to_plane(new_COM, com, division_axis)
+
+    # If the signed distance is greater than 0, return 0
     print(distance)
     if distance > 0:
         return 0
+    # Else, if the signed distance is less than 0, return 1
     else:
         return 1
 
@@ -303,10 +317,17 @@ def translate_cell(obj, axis):
     
     :return: None
     """
+
+    # Calculate the magnitude of the given axis
     magnitude = ((axis[0])**2 + (axis[1])**2 + (axis[2])**2)**(0.5)
+
+    # Normalize the axis by dividing eagh term by the magnitude. Multiply each term by 0.1
+    # so the cell is only translated a small distance
     new_vec = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
+    # translate the cell
     bpy.ops.transform.translate(value = new_vec)
 
+# This function needs to be removed
 def divide(obj):
     """
     Divides a cell in two along its major axis by splitting the parent mesh in two, translating one mesh, filling the two holes, and retriangulating the meshes
@@ -348,7 +369,9 @@ def divide(obj):
     
 def turn_off_physics():
     """
-    Turns physics off for the currently selected Blender object. Why is this useful?
+    Turns physics off for the currently selected Blender object. 
+    The cloth physics for cells are turned off before division to 
+    avoid irregular mesh behavior after
 
     :return: None
     """
@@ -356,11 +379,15 @@ def turn_off_physics():
     
 def turn_on_physics():
     """
-    Turns physics on for the currently selected Blender object. Why is this useful?
+    Turns physics on for the currently selected Blender object. 
+    Physics are turned back on after cell division occurs to avoid
+    irregular mesh behavior post-division.
 
     :return: None
     """
     #TODO should these values be cell properties?
+
+    # Set all parameter values
     bpy.ops.object.modifier_add(type = 'CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
@@ -389,7 +416,7 @@ def mitosis_handler(scene):
     """
     Mitosis handler is a function triggered every frame to check if all cells need to divide. Currently just based on volume
     
-    :param scene: ???
+    :param scene: Blender syntax
     :param tree: ???
     
     :return: None
@@ -397,11 +424,16 @@ def mitosis_handler(scene):
     #TODO check docstring
     #TODO should merge mitosis_handler and div_handler into one function. When to divide should be based on a cell property that allows for volume or time based trigger and allows for some noise in timing
 
+    # Find the number of cells by checking the length of the collection where they are kept in the Blender simulation
     num_cells = len(bpy.data.collections["Cells"].objects)
+    # Loop through each cell
     for i in range(num_cells):
+        # Make that cell the active object in the simulation
         bpy.context.view_layer.objects.active = bpy.data.collections["Cells"].objects[i]
         cell = bpy.context.view_layer.objects.active
+        # Calculate the cell volume
         volume = calculate_volume(cell)
+        # If the volume is above a certain threshold, divide
         if volume > .3:
             cell_tree = divide(cell, cell_tree)
     cell_tree.show()
@@ -410,33 +442,46 @@ def div_handler(scene):
     """
     Cell division handler is a function triggered every frame to check if all cells need to divide. Currently just based on hard coded timing
     
-    :param scene: ???
+    :param scene: Blender syntax
     
     :return: None
     """
 
+    # Find the number of cells by checking the length of the collection where they are kept in the Blender simulation
     num_cells = len(bpy.data.collections["Cells"].objects)
+    # Get the current frame number
     current_frame = bpy.data.scenes[0].frame_current
+    # Divide every 30 frames
     if current_frame % 30 == 0:
-        print("DIVIDING CELLS")
+        #print("DIVIDING CELLS")
+        # Loop thrrough the cells 
         for i in range(num_cells):
+            # Get the cell name
             cell_name = bpy.data.collections["Cells"].objects[i].name
+            # Set the cell as the active object
             cell = bpy.data.objects[cell_name]
             bpy.data.objects[cell_name].select_set(True)
             bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
-            print(cell_name)
+            #print(cell_name)
+            # Turn off the cloth physics for the cell. This minimizes unexpected mesh behavior post-division
             turn_off_physics()
+            # Divide the cell
             d1, d2 = divide(cell)
+            # Select the first daughter cell and make it the active object in the simulation
             bpy.data.objects[d1.data["name"]].select_set(True)
             bpy.data.objects[d2.data["name"]].select_set(False)
             bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
+            # Turn on the physics for this daughter cell
             turn_on_physics()
+            # Select the second daughter cell only and make it the active object in the simulation
             bpy.data.objects[d1.data["name"]].select_set(False)
             bpy.data.objects[d2.data["name"]].select_set(True)
             bpy.context.view_layer.objects.active = bpy.data.objects[d2.data["name"]]
+            # Turn on the physics for this daughter cell
             turn_on_physics()
             bpy.data.objects[d2.data["name"]].select_set(False)
 
+# Remove this function. Take try/except code to make_cell function
 def make_mesh(cell):
     """
     Makes a Blender mesh object for the given Goo cell
@@ -445,44 +490,50 @@ def make_mesh(cell):
 
     :return: None
     """
+
+    # Attempt to add a RoundCube mesh
     try:
         bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.data['radius'], size= cell.data['size'], arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.data['location'])
+    # If the user does not have this object enabled, print a statement explaining how to add it
     except:
         print("To enable RoundCube creation for Cells you must go to Edit->Preferences->AddOns->Add Mesh:ExtraObjects and check the box to enable it")
     #bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
+    # Get the cell name
     bpy.context.object.name = cell.data['name']
+    # Name the Blender mesh the cell's name
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
+    # Add a subdivision surface for a smoother shape
     bpy.ops.object.modifier_add(type = 'SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
     
 def make_cell(cell):
     """
-    Makes a Blender mesh object for the given Goo cell
+    Makes a Blender mesh object for the given Goo cell Python object
 
-    :param cell: the Goo cell to make a Blender mesh from
+    :param cell: the Goo cell Pythoon object to make a Blender mesh from
 
     :return: None
     """
     #TODO make_mesh and make_cell are redundant. Need to merge.
 
-    print ("make cell");
-    #mesh = bpy.data.meshes.new()
-    #cell = bmesh.ops.create_icosphere(mesh, 2, 2.0, insert_matrix_here, calc_uv = True)
-    #bpy.ops.mesh.primitive_ico_sphere_add(radius = cell.radius, enter_editmode = cell.enter_editmode, align = cell.align, location = cell.location, scale = cell.scale)
+    #print ("make cell")
+    
+    # Add a round_cube mesh 
     bpy.ops.mesh.primitive_round_cube_add(change = False, radius=cell.data['radius'], size= cell.data['size'], arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False, location = cell.data['location'])
-    #bpy.ops.mesh.primitive_cube_add(size= cell.size, location = cell.location, align = 'WORLD', scale = cell.scale)
+    
+    # Give the Blender object the cell's name
     bpy.context.object.name = cell.data['name']
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
     
-    #smooth mesh
+    # Smooth the mesh
     bpy.ops.object.select = True
     bpy.ops.object.shade_smooth()
     
-    #add subsurface modifier to make smoother
+    # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type = 'SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
     
-    #add cloth settings for physics
+    # Add cloth settings for physics
     bpy.ops.object.modifier_add(type = 'CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
@@ -524,10 +575,13 @@ def make_cell(cell):
         bpy.context.active_object.data.materials.append(bpy.data.materials.get(cell.data['material']))
     else:
         print ("No material ", cell.data['material'])
-        
+
+# Defines the Cell class      
 class Cell():
  
     def __init__(self, name_string, loc, material=""):
+        # The initialization function sets a cell data dictionary for geometric parameters, physics parameters,
+        # division information, and cell lineage
         self.data = {
             'ID': 0,
             'name': name_string,
@@ -556,13 +610,16 @@ class Cell():
             'mother': 'none',
             'daughters': ['none', 'none']
         }
+        # The volume and mass are calculated from values in the data dictionary
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
         self.data['mass'] = self.data['density']*self.data['init_volume']
  
+    # Member function for obtaining the Blender object corresponding to the cell
     def get_blender_object(self):
         obj = bpy.data.objects[self.data["name"]]
         return obj
 
+    # Member function to divide
     def divide(self):
         #TODO this is redundant with the stand alone divide function 
         obj = self.get_blender_object()
@@ -710,6 +767,7 @@ class Force():
         self.strength = strength
         self.associated_cell = cell_name
         self.falloff_power = 0
+    # Member function that gets the Blender object corresponding to a Goo Force object
     def get_blender_force(self):
         obj = bpy.data.objects[self.name]
         return obj
@@ -722,7 +780,9 @@ def make_force(force):
 
     :return: None
     """
+    # Add a force object
     bpy.ops.object.effector_add(type='FORCE', enter_editmode=False, align='WORLD', location=bpy.data.objects[force.associated_cell].location, scale=(1, 1, 1))
+    # Add force parameters
     bpy.context.object.field.strength = force.strength
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
@@ -738,14 +798,20 @@ def initialize_cells(num_cells, loc_array, material):
     :return: None
     """
 
+    # Print an error message if the length of locations provided doesn't match the number of cells provided
     if len(num_cells) != len(loc_array):
         print("Number of cells must match number of cell locations")
         return
-    add_material(material)
+    # Add a material to the cell
+    add_material(material) # Should this be add_material_cell? 
+    # Loop over all the cells
     for i in range(num_cells):
+        # Create a cell object corresponding to the cell number and location for that index
         cell = Cell("cell_" + str(i), loc = loc_array[i])
+        # Make the cell
         make_cell(cell)
 
+# Setup the simulation
 def setup_world():
     """
     Sets up the default values used for simulations in Goo including units and rendering background
@@ -753,7 +819,9 @@ def setup_world():
     :return: None
     """    
     print("setup world")
+    # Turn off gravity so cells don't fall in the simulation
     bpy.context.scene.use_gravity = False
+    # Set units to the metric system
     bpy.context.scene.unit_settings.system = 'METRIC'
     bpy.context.scene.unit_settings.scale_length = 1
     bpy.context.scene.unit_settings.system_rotation = 'DEGREES'
@@ -762,6 +830,7 @@ def setup_world():
     bpy.context.scene.unit_settings.time_unit = 'SECONDS'
     bpy.context.scene.unit_settings.temperature_unit = 'CELSIUS'
 
+    # Addn an HDRI image for illumination
     add_world_HDRI()
   
 def add_world_HDRI():
@@ -822,23 +891,32 @@ def render(file_path,scene,start,end):
 
     :return: None
     """
+    # Set the image file format as PNG
     scene.render.image_settings.file_format = 'PNG'
+    # Set the file path where the images will be saved
     old_fp = scene.render.filepath
     scene.render.filepath = file_path
+    # Set the starting and ending frames for the simulation
     scene = bpy.context.scene
     scene.frame_start = start
     scene.frame_end = end
+    # Set the handlers for the simulation
     handlers = bpy.app.handlers.frame_change_post.copy()
     bpy.app.handlers.frame_change_post.clear()
+    # Loop through each frame
     for frame in range(scene.frame_start, scene.frame_end):
+        # Set the frame
         bpy.context.scene.frame_set(frame)
+        # Run each handler
         for func in handlers:
             func(scene)
+        # Save the image
         file_name = "frame" + str(scene.frame_current)
         scene.render.filepath += file_name
         bpy.ops.render.render(write_still=True) 
         scene.render.filepath = scene.render.filepath.removesuffix(file_name)
     scene.render.filepath = old_fp
+    # Add each handler to the scene
     for func in handlers:
         bpy.app.handlers.frame_change_post.append(func)
     return
@@ -847,6 +925,8 @@ class handler_class:
     """
     A class for creating different types of handlers that trigger actions on Goo cells when certain criteria are met
     """
+    # The initialization function specifies available cell types and associated parameters
+    # like division rate, growth rate, and adhesion forces
     def __init__(self):
         self.cell_types = ["Sphere","type1","type2"]
         self.division_rates = {}
@@ -855,62 +935,88 @@ class handler_class:
                                   #ex: {"sphere": {"sphere": 100, "type1": 100, "type2": 100},"type1": {"sphere": 200, "type1": 200, "type2": 200},"type2": {"sphere": 300, "type1": 300, "type2": 300}}
                                   # in the example above, spheres exert 100 force on other cells, type1 exerts 200, type2 exerts 300
                                   # could change values to have different amounts of force on different cell types
+        # Set parameter values for each cell type
         for type in self.cell_types:
             self.division_rates[type] = 0
             self.growth_rates[type] = 0
             self.adhesion_forces[type] = {}
             for i in self.cell_types:
                 self.adhesion_forces[type][i] = 0
+        # Set active (dividing) cell types
         self.active_cell_types = [] # add active types to know what collections to divide
         return
+    # Member function to set division rate for a cell type
     def set_division_rate(self,cell_type,rate):
         # assume 60 frames per second 
         # rate is in divisions per second
         self.division_rates[cell_type] = 60/rate
         return
+    # Member function to set growth rate for a cell type
     def set_growth_rate(self,cell_type,rate):
         self.growth_rates[cell_type] = rate
         return
+    # Member function to set adhesion forces between cell types
     def set_adhesion(self,type1, force_type1_to_type2, type2, force_type2_to_type1):
         self.adhesion_forces[type1][type2] = force_type1_to_type2
         self.adhesion_forces[type2][type1] = force_type2_to_type1
         return
+    # Member function to set the division handler for cells
     def div_handler(self,scene,depsgraph):
+        # Loop through active cell types
         for cell_type in self.active_cell_types:
+            # Get the number of cells of that type
             num_cells = len(bpy.data.collections[cell_type].objects)
+            # Get the currrernt frame number
             current_frame = bpy.data.scenes[0].frame_current
+            # Divide based on the division rate
             if current_frame % self.division_rates[cell_type] == 0:
                 print("DIVIDING CELLS")
+                # Loop over all the cells of a type
                 for i in range(num_cells):
+                    # Get the cell name
                     cell_name = bpy.data.collections[cell_type].objects[i].name
+                    # Get the corresponding Blender object
                     cell = bpy.data.objects[cell_name]
+                    # Select the Blender object and make it the active object in the simulation
                     bpy.data.objects[cell_name].select_set(True)
                     bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
                     print(cell_name)
+                    # Turn off the cloth physics for this cell. This mitigates irregular mesh behavior after division
                     turn_off_physics()
+                    # Divide the cell
                     d1, d2 = divide(cell)
+                    # Select the first daughter cell only
                     bpy.data.objects[d1.data["name"]].select_set(True)
                     bpy.data.objects[d2.data["name"]].select_set(False)
                     bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
+                    # Turn on the physics for this daughter cell
                     turn_on_physics()
+                    # Select the second daughter cell only
                     bpy.data.objects[d1.data["name"]].select_set(False)
                     bpy.data.objects[d2.data["name"]].select_set(True)
                     bpy.context.view_layer.objects.active = bpy.data.objects[d2.data["name"]]
+                    # Turn on the physics for this daughter cell
                     turn_on_physics()
                     bpy.data.objects[d2.data["name"]].select_set(False)
+    # Member function to handle cell growth
     def growth_handler(self,scene, depsgraph): # WIP
         print("Frame:",scene.frame_current)
+        # Get the cell objects in Blender
         cell_objs = [obj for obj in scene.objects if obj.name.startswith("Cell_")] # change between scene and depsgragh here
-        
+        # Get the number of cells
         num_cells = len(bpy.data.collections["Cells"].objects)
+        # Loop through each cell
         for cell_obj in cell_objs:
             #cell_name = bpy.data.collections["Cells"].objects[i].name
+            # Get the cell name
             cell_name = cell_obj.name
             #cell_obj = bpy.data.objects[cell_name]
             #bpy.data.objects[cell_name].select_set(True)
             #bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
             #bpy.ops.object.modifier_apply(modifier="CLOTH")
             
+            # Print key information
             print(cell_obj.name," Volume:",Goo.calculate_volume(cell_obj)," Shrinking Factor:",cell_obj.modifiers["Cloth"].settings.shrink_min)
+            # Modify the cloth parameters
             cell_obj.modifiers["Cloth"].settings.shrink_min -= 0.01 # constantly changing shrink_min
 
