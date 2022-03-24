@@ -5,6 +5,9 @@
 
 Welcome to Goo
 =================
+.. image:: ../img/logo.jpeg
+  :width: 200
+    
 Goo is a Python library to make simulations of cells in Blender. Goo allows for the simulation of a collection of growing, self-replicating, autonomous and interacting agents in order to simulate biological tissues. Goo currently allows for physical interactions of cells using the physics engine built into Blender but we plan to add biochemical interactions in the future.
 
 Goo is hosted on Github at https://github.com/smegason/Goo 
