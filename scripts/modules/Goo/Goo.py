@@ -3,6 +3,8 @@
 
 import bpy, bmesh, mathutils, numpy as np
 
+global_test = "YO"
+
 def calculate_volume(obj):
     """
     Calculates volume of a cell
