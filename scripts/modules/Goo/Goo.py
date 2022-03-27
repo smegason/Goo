@@ -426,6 +426,7 @@ def mitosis_handler(scene):
 
     # Find the number of cells by checking the length of the collection where they are kept in the Blender simulation
     num_cells = len(bpy.data.collections["Cells"].objects)
+    cell_tree = None
     # Loop through each cell
     for i in range(num_cells):
         # Make that cell the active object in the simulation
@@ -435,11 +436,7 @@ def mitosis_handler(scene):
         volume = calculate_volume(cell)
         # If the volume is above a certain threshold, divide
         if volume > .3:
-            if (cell_tree):
-                cell_tree = divide(cell, cell_tree)
-            else:
-                print ("cell_tree undefined")
-                cell_tree = divide(cell, 0)
+           cell_tree = divide(cell, cell_tree)
     cell_tree.show()
 
 def div_handler(scene):
