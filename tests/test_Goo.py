@@ -1,11 +1,11 @@
 #test_Goo.py
 #this file is read by pytest to test all functions in Goo
 
-from Goo import Goo
+import Goo
 
 def test_sample_func():
 #    ret = Goo.sample_func()
-    ret = sample_func()
+    ret = Goo.sample_func()
     print (ret)
     assert True
 

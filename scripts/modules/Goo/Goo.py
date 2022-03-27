@@ -5,6 +5,16 @@ import bpy, bmesh, mathutils, numpy as np
 
 global_test = "YO"
 
+def sample_func(): # for pytest test
+    """
+    Test function to debug pytest CI
+    
+    :return: Howdy
+    """
+    print ("Sample func")
+
+    return "Howdy"
+
 def calculate_volume(obj):
     """
     Calculates volume of a cell
