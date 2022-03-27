@@ -4,7 +4,7 @@
 import Goo
 
 def test_sample_func():
-#    ret = Goo.sample_func() cccccc
+#    ret = Goo.sample_func()
     ret = Goo.sample_func()
     print (ret)
     assert True
