@@ -1,6 +1,10 @@
 #test_Goo.py
 #this file is read by pytest to test all functions in Goo
 
+import pprint
+import sys
+pprint.pprint(sys.path)
+
 from Goo import Goo
 #import '/scripts/modules/Goo/Goo.py'
 
