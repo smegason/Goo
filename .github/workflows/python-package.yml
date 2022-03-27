@@ -1,4 +1,4 @@
-jobs:xxx
+jobs:
   test:
     name: Test
     runs-on: ${{ matrix.platform }}
