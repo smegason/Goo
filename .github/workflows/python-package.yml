@@ -17,13 +17,8 @@ jobs:
       matrix:
         platform:
           - ubuntu-latest
-          - macos-latest
         blender-version:
-          - '2.90.1'
-          - '2.83.9'
-          - '2.82'
-          - '2.81'
-          - '2.80'
+          - '2.93.1'
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python v3.8
