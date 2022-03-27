@@ -1,12 +1,7 @@
 #test_Goo.py
 #this file is read by pytest to test all functions in Goo
 
-import pprint
-import sys
-pprint.pprint(sys.path)
-
-from Goo import Goo
-#import '/scripts/modules/Goo/Goo.py'
+#from Goo import Goo
 
 def test_calculate_volume():
     #obj = ???? need to get Blender object to test with somehow
