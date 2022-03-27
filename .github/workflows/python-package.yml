@@ -1,41 +1,50 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
-name: Python package
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  test:
+    name: Test
+    runs-on: ${{ matrix.platform }}
     strategy:
-      fail-fast: false
       matrix:
-        python-version: ["3.9"]
-
+        platform:
+          - ubuntu-latest
+          - macos-latest
+        blender-version:
+          - '2.90.1'
+          - '2.83.9'
+          - '2.82'
+          - '2.81'
+          - '2.80'
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install flake8 pytest blender pytest-blender
-        pytest-blender --blender-executable ~/blender-2.91.2-linux64/blender
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        pytest
+      - uses: actions/checkout@v2
+      - name: Set up Python v3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Upgrade PIP
+        run: python -m pip install --upgrade pip
+      - name: Cache Blender ${{ matrix.blender-version }}
+        uses: actions/cache@v2.1.5
+        id: cache-blender
+        with:
+          path: |
+            blender-*
+            _blender-executable-path.txt
+          key: ${{ runner.os }}-${{ matrix.blender-version }}
+      - name: Download Blender ${{ matrix.blender-version }}
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        id: download-blender
+        run: |
+          python -m pip install --upgrade blender-downloader
+          echo "$(blender-downloader \
+          ${{ matrix.blender-version }} --extract --remove-compressed \
+          --quiet --print-blender-executable)" > _blender-executable-path.txt
+      - name: Install dependencies
+        id: install-dependencies
+        run: |
+          python -m pip install .[test]
+          blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
+          python_blender_executable="$(pytest-blender --blender-executable $blender_executable)"
+          $python_blender_executable -m ensurepip
+          $python_blender_executable -m pip install pytest
+          echo "::set-output name=blender-executable::$blender_executable"
+      - name: Test with pytest
+        run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
