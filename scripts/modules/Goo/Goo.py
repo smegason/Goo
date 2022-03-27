@@ -435,7 +435,10 @@ def mitosis_handler(scene):
         volume = calculate_volume(cell)
         # If the volume is above a certain threshold, divide
         if volume > .3:
-            cell_tree = divide(cell, cell_tree)
+            if (cell_tree):
+                cell_tree = divide(cell, cell_tree)
+            else
+                cell_tree = divide(cell, 0)
     cell_tree.show()
 
 def div_handler(scene):
@@ -803,11 +806,11 @@ def initialize_cells(num_cells, loc_array, material):
         print("Number of cells must match number of cell locations")
         return
     # Add a material to the cell
-    add_material(material) # Should this be add_material_cell? 
+    #add_material(material) # Should this be add_material_cell? 
     # Loop over all the cells
     for i in range(num_cells):
         # Create a cell object corresponding to the cell number and location for that index
-        cell = Cell("cell_" + str(i), loc = loc_array[i])
+        cell = Cell("cell_" + str(i), loc = loc_array[i], material = material)
         # Make the cell
         make_cell(cell)
 
@@ -1016,7 +1019,7 @@ class handler_class:
             #bpy.ops.object.modifier_apply(modifier="CLOTH")
             
             # Print key information
-            print(cell_obj.name," Volume:",Goo.calculate_volume(cell_obj)," Shrinking Factor:",cell_obj.modifiers["Cloth"].settings.shrink_min)
+            print(cell_obj.name," Volume:",calculate_volume(cell_obj)," Shrinking Factor:",cell_obj.modifiers["Cloth"].settings.shrink_min)
             # Modify the cloth parameters
             cell_obj.modifiers["Cloth"].settings.shrink_min -= 0.01 # constantly changing shrink_min
 
