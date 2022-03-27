@@ -437,7 +437,7 @@ def mitosis_handler(scene):
         if volume > .3:
             if (cell_tree):
                 cell_tree = divide(cell, cell_tree)
-            else
+            else:
                 cell_tree = divide(cell, 0)
     cell_tree.show()
 
