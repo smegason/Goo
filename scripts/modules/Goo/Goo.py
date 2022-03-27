@@ -438,6 +438,7 @@ def mitosis_handler(scene):
             if (cell_tree):
                 cell_tree = divide(cell, cell_tree)
             else:
+                print ("cell_tree undefined")
                 cell_tree = divide(cell, 0)
     cell_tree.show()
 
