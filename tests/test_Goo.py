@@ -7,6 +7,7 @@ def test_sample_func():
 #    ret = goo.sample_func()
    # ret = goo.sample_func()
     #print (ret)
+    print("Test sample func")
     assert 1 == 1   
 
 def test_calculate_volume():
