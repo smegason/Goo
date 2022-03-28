@@ -6,24 +6,24 @@ import pytest
 
 
 try:
-    from pytest_blender.test import pytest_blender_active
+    from goo.test import goo_active
 except ImportError:
-    pytest_blender_active = True
+    goo_active = True
 
 
 @pytest.mark.skipif(
-    pytest_blender_active,
+    goo_active,
     reason="Requires testing without loading the pytest-blender plugin.",
 )
 @pytest.mark.skipif(
     not os.environ.get("BLENDER_EXECUTABLE"),
     reason="Environment variable 'BLENDER_EXECUTABLE' must be set.",
 )
-def test_pytest_blender_cli():
+def test_goo_cli():
     proc = subprocess.run(
         [
             sys.executable,
-            os.path.join("pytest_blender", "__main__.py"),
+            os.path.join("goo", "__main__.py"),
             "--blender-executable",
             os.environ["BLENDER_EXECUTABLE"],
         ],

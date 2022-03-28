@@ -4,13 +4,13 @@ import pytest
 
 
 try:
-    from pytest_blender.test import pytest_blender_unactive
+    from goo.test import goo_unactive
 except ImportError:
-    pytest_blender_unactive = False
+    goo_unactive = False
 
 
 @pytest.mark.skipif(
-    pytest_blender_unactive,
+    goo_unactive,
     reason="Requires testing loading the pytest-blender plugin.",
 )
 def test_basic_addon():
@@ -18,7 +18,7 @@ def test_basic_addon():
     import addon_utils
 
     installed_addons = [addon.__name__ for addon in addon_utils.modules()]
-    assert "pytest_blender_basic" in installed_addons
+    assert "goo_basic" in installed_addons
     assert "__init__" not in installed_addons
 
     operator_classes = [cls.__name__ for cls in _bpy.types.Operator.__subclasses__()]

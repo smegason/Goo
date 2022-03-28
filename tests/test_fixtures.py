@@ -9,13 +9,13 @@ import pytest
 
 
 try:
-    from pytest_blender.test import pytest_blender_unactive
+    from goo.test import goo_unactive
 except ImportError:
-    pytest_blender_unactive = False
+    goo_unactive = False
 
 
 @pytest.mark.skipif(
-    pytest_blender_unactive,
+    goo_unactive,
     reason="Requires testing loading the pytest-blender plugin.",
 )
 def test_blender_executable(blender_executable):
@@ -29,7 +29,7 @@ def test_blender_executable(blender_executable):
 
 
 @pytest.mark.skipif(
-    pytest_blender_unactive,
+    goo_unactive,
     reason="Requires testing loading the pytest-blender plugin.",
 )
 def test_blender_python_executable(blender_python_executable):
@@ -42,7 +42,7 @@ def test_blender_python_executable(blender_python_executable):
 
 
 @pytest.mark.skipif(
-    pytest_blender_unactive,
+    goo_unactive,
     reason="Requires testing loading the pytest-blender plugin.",
 )
 def test_blender_version(blender_executable, blender_version):
@@ -54,7 +54,7 @@ def test_blender_version(blender_executable, blender_version):
 
 
 @pytest.mark.skipif(
-    pytest_blender_unactive,
+    goo_unactive,
     reason="Requires testing loading the pytest-blender plugin.",
 )
 def test_blender_python_version(blender_python_version, blender_python_executable):

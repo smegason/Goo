@@ -2,13 +2,13 @@ import pytest
 
 
 try:
-    from pytest_blender.test import pytest_blender_unactive
+    from goo.test import goo_unactive
 except ImportError:
-    pytest_blender_unactive = False
+    goo_unactive = False
 
 
 @pytest.mark.skipif(
-    pytest_blender_unactive,
+    goo_unactive,
     reason="Requires testing loading the pytest-blender plugin.",
 )
 def test_bpy_import():
