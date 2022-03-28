@@ -13,10 +13,10 @@ A = classA()
 
 def test_sample_func():
     print ("A")
-    print(A)
-    
+    print(dir(classA))
+
     print ("Goo class:")
-    print (Goo)
+    print (dir(Goo))
     
     #Goo.ghdew()
 
