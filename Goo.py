@@ -5,6 +5,14 @@ import bpy, bmesh, mathutils, numpy as np
 
 global_test = "YO"
 
+def main():
+     """
+    Main
+    
+    :return: None
+    """
+    print("This is goo.main")
+
 def sample_func(): # for pytest test
     """
     Test function to debug pytest CI
@@ -22,7 +30,7 @@ def ghdew():
     :return: None
     """
     print ("ghdew")
-    
+
 def calculate_volume(obj):
     """
     Calculates volume of a cell
