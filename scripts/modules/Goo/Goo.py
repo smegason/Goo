@@ -11,7 +11,7 @@ def sample_func(): # for pytest test
     
     :return: Howdy
     """
-    print ("Sample func")
+    print ("Sample func XXXXXXXXXXXX")
 
     return "Howdy"
 
