@@ -1,13 +1,13 @@
-#test_Goo.py
+#test_goo.py
 #this file is read by pytest to test all functions in Goo cccccccc
 
 import Goo
 
 def test_sample_func():
-#    ret = Goo.sample_func()
-   # ret = Goo.sample_func()
+#    ret = goo.sample_func()
+   # ret = goo.sample_func()
     #print (ret)
-    assert True
+    assert 1 == 1   
 
 def test_calculate_volume():
     #obj = ???? need to get Blender object to test with somehow

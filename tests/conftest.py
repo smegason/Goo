@@ -14,7 +14,7 @@ goo_logger.setLevel(logging.DEBUG)
 goo_logger.addHandler(logging.StreamHandler())
 
 try:
-    from goo.test import goo_active
+    from Goo.test import goo_active
 except ImportError:
     # executing pytest from Python Blender executable, the plugin is active
     goo_active = True
