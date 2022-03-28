@@ -9,17 +9,17 @@ from contextlib import redirect_stdout
 import pytest
 
 
-pytest_blender_logger = logging.getLogger("pytest_blender")
-pytest_blender_logger.setLevel(logging.DEBUG)
-pytest_blender_logger.addHandler(logging.StreamHandler())
+goo_logger = logging.getLogger("goo")
+goo_logger.setLevel(logging.DEBUG)
+goo_logger.addHandler(logging.StreamHandler())
 
 try:
-    from pytest_blender.test import pytest_blender_active
+    from goo.test import goo_active
 except ImportError:
     # executing pytest from Python Blender executable, the plugin is active
-    pytest_blender_active = True
+    goo_active = True
 
-if pytest_blender_active:
+if goo_active:
 
     @pytest.fixture(scope="session", autouse=True)
     def _register_addons(request, install_addons_from_dir, disable_addons):
