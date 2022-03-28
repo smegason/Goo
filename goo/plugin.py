@@ -9,10 +9,10 @@ import sys
 
 import pytest
 
-from pytest_blender.utils import which_blender_by_os
+from goo.utils import which_blender_by_os
 
 
-logger = logging.getLogger("pytest_blender")
+logger = logging.getLogger("goo")
 
 
 def pytest_addoption(parser):
