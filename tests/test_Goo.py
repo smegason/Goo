@@ -3,8 +3,19 @@
 
 import Goo
 
+class classA():
+    def __init__(self):
+        self.var1 = 0
+        self.var2 = "Hello"
+
+A = classA()
+
+
 def test_sample_func():
-#    ret = goo.sample_func()
+    print ("A")
+    print(A)
+    
+    print ("Goo class:")
     print (Goo)
     
     #Goo.ghdew()
