@@ -5,9 +5,11 @@ import Goo
 
 def test_sample_func():
 #    ret = goo.sample_func()
-    Goo.ghdew()
+    print (Goo)
     
-    Goo.sample_func()
+    #Goo.ghdew()
+
+    #Goo.sample_func()
     #print (ret)
     print("Test sample func")
     assert 1 == 1   
