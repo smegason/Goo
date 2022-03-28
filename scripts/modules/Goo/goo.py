@@ -1,9 +1,29 @@
-# Goo.py - This is the Goo library. It contains all helper functions for Goo
-# Goo is licensed under BSDv2
+# goo.py - This is the Goo library. It contains all helper functions for goo
+# goo is licensed under BSDv2
 
 import bpy, bmesh, mathutils, numpy as np
 
 global_test = "YO"
+
+def main()
+    """
+    main for goo
+
+    :return: None
+    """
+
+    print ("This is goo main")
+
+
+def plugin()
+    """
+    plugin for goo
+
+    :return: None
+    """
+
+    print ("This is goo plugin")
+
 
 def sample_func(): # for pytest test
     """
