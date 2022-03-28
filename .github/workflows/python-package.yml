@@ -48,9 +48,9 @@ jobs:
         run: |
           python -m pip install .[test]
           blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
-          python_blender_executable="$(goo --blender-executable $blender_executable)"
-          $python_blender_executable -m ensurepip
-          $python_blender_executable -m pip install pytest
+          goo_executable="$(goo --blender-executable $blender_executable)"
+          $goo_executable -m ensurepip
+          $goo_executable -m pip install pytest
           echo "::set-output name=blender-executable::$blender_executable"
       - name: Test with pytest
         run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
