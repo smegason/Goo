@@ -5,8 +5,8 @@ import Goo
 
 def test_sample_func():
 #    ret = Goo.sample_func()
-    ret = Goo.sample_func()
-    print (ret)
+   # ret = Goo.sample_func()
+    #print (ret)
     assert True
 
 def test_calculate_volume():
