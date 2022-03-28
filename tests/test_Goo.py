@@ -5,6 +5,8 @@ import Goo
 
 def test_sample_func():
 #    ret = goo.sample_func()
+    Goo.ghdew()
+    
     Goo.sample_func()
     #print (ret)
     print("Test sample func")

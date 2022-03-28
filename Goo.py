@@ -15,6 +15,14 @@ def sample_func(): # for pytest test
 
     return "Howdy"
 
+def ghdew():
+    """
+    Test
+    
+    :return: None
+    """
+    print ("ghdew")
+    
 def calculate_volume(obj):
     """
     Calculates volume of a cell
