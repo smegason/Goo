@@ -1,9 +1,9 @@
 import argparse
 import sys
 
-from goo import __version__
-from goo.run_pytest import get_blender_binary_path_python
-from goo.utils import which_blender_by_os
+from Goo import __version__
+from Goo.run_pytest import get_blender_binary_path_python
+from Goo.utils import which_blender_by_os
 
 
 __description__ = "Show a Blender's builtin Python interpreter location."
