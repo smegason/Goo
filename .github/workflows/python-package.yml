@@ -54,7 +54,7 @@ jobs:
           #goo_executable="$(goo --goo-executable $goo_executable)"
           echo "353535353535"
           #goo_executable="$(< _goo-executable-path.txt tr -d '\n')"
-          echo "4444444444444"
+          echo "4444444444444XXX"
           #$goo_executable -m ensurepip
           $blender_executable -m ensurepip
           echo "55555555555"
