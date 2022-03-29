@@ -61,6 +61,6 @@ jobs:
           $goo_executable -m pip install pytest
           echo "6666666666666"
           echo "::set-output name=blender-executable::$blender_executable"
-          echo "77777777777"
+          echo "77777777777777"
       - name: Test with pytest
         run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
