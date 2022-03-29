@@ -55,4 +55,4 @@ jobs:
           $python_blender_executable -m pip install pytest
           echo "::set-output name=blender-executable::$blender_executable"
       - name: Test with pytest
-        run: pytest -svv --${{ blender-executable }} "${{ steps.install-dependencies.outputs.blender-executable }}" tests
+        run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
