@@ -1,7 +1,7 @@
 #test_goo.py
 #this file is read by pytest to test all functions in Goo 
 
-#import Goo
+import goo
 import bpy
 
 def test_sample_func():
@@ -13,7 +13,7 @@ def test_sample_func():
     
     #Goo.ghdew()
 
-    #Goo.sample_func()
+    goo.sample_func()
     #print (ret)
     print("Test sample func")
     version = bpy.app.version_string
