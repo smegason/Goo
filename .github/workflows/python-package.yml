@@ -47,6 +47,7 @@ jobs:
         id: install-dependencies
         run: |
           python -m pip install .[test]
+          echo "hellllllloooooo"
           blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
           goo_executable="$(goo --blender-executable $blender_executable)"
           $goo_executable -m ensurepip
