@@ -1,7 +1,7 @@
 #test_goo.py
 #this file is read by pytest to test all functions in Goo cccccccc
 
-import Goo
+#import Goo
 
 class classA():
     def __init__(self):
@@ -12,11 +12,12 @@ A = classA()
 
 
 def test_sample_func():
+    print("test samp[le function")
     print ("A")
     print(dir(classA))
 
-    print ("Goo class:")
-    print (dir(Goo))
+    #print ("Goo class:")
+    #print (dir(Goo))
     
     #Goo.ghdew()
 
@@ -29,6 +30,7 @@ def test_calculate_volume():
     #obj = ???? need to get Blender object to test with somehow
     #volume = calculate_volume(obj)
     #assert volume = ??
+    print ("test calculate volume")
 
     assert True
 
