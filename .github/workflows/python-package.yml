@@ -58,7 +58,7 @@ jobs:
           #$goo_executable -m ensurepip
           $blender_executable -m ensurepip
           echo "55555555555"
-          $goo_executable -m pip install pytest
+          #$goo_executable -m pip install pytest
           echo "6666666666666"
           echo "::set-output name=blender-executable::$blender_executable"
           echo "77777777777777"
