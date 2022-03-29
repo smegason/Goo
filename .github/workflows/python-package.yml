@@ -60,7 +60,7 @@ jobs:
           echo "55555555555"
 #          $goo_executable -m pip install pytest
           $blender_executable -m pip install pytest
-          echo "6666666666666"
+          echo "6666666666666666"
           echo "::set-output name=blender-executable::$blender_executable"
           echo "77777777777"
       - name: Test with pytest
