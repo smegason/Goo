@@ -52,6 +52,7 @@ jobs:
           blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
           echo "333333333333"
           #goo_executable="$(goo --goo-executable $goo_executable)"
+          echo "353535353535"
           goo_executable="$(< _goo-executable-path.txt tr -d '\n')"
           echo "4444444444444"
           $goo_executable -m ensurepip
