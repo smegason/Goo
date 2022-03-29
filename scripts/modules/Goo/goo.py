@@ -15,23 +15,13 @@ def main()
     print ("This is goo main")
 
 
-def plugin()
-    """
-    plugin for goo
-
-    :return: None
-    """
-
-    print ("This is goo plugin")
-
-
 def sample_func(): # for pytest test
     """
     Test function to debug pytest CI
     
     :return: Howdy
     """
-    print ("Sample func XXXXXXXXXXXX")
+    print ("Sample func in scripts/modules")
 
     return "Howdy"
 

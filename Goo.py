@@ -6,7 +6,7 @@ import bpy, bmesh, mathutils, numpy as np
 global_test = "YO"
 
 def main():
-     """
+    """
     Main
     
     :return: None
@@ -19,7 +19,7 @@ def sample_func(): # for pytest test
     
     :return: Howdy
     """
-    print ("Sample func YYYYYYY")
+    print ("Sample func in / root")
 
     return "Howdy"
 

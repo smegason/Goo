@@ -23,7 +23,7 @@ def sample_func(): # for pytest test
     
     :return: Howdy
     """
-    print ("Sample func YYYYYYY")
+    print ("Sample func in /test")
 
     return "Howdy"
 

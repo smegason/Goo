@@ -1,6 +1,13 @@
 #test_goo.py
 #this file is read by pytest to test all functions in Goo 
 
+# importing module
+import sys
+  
+# appending a path
+sys.path.append('../scripts/modules/goo')
+  
+# importing required module
 import goo
 import bpy
 
