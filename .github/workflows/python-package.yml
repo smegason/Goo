@@ -65,4 +65,4 @@ jobs:
           echo "::set-output name=blender-executable::$blender_executable"
           echo "77777777777777"
       - name: Test with pytest
-        run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
+        run: pytest -svv --$blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
