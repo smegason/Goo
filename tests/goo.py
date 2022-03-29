@@ -6,12 +6,16 @@ import bpy, bmesh, mathutils, numpy as np
 global_test = "YO"
 
 def main():
-     """
+    """
     Main
     
     :return: None
     """
-    print("This is goo.main")
+
+    print("This is goo.main in /test")
+
+    return None
+
 
 def sample_func(): # for pytest test
     """
