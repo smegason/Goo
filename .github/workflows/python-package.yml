@@ -55,8 +55,8 @@ jobs:
           echo "353535353535"
           #goo_executable="$(< _goo-executable-path.txt tr -d '\n')"
           echo "4444444444444"
-          $goo_executable -m ensurepip
-          $goo_executable -m ensurepip
+          #$goo_executable -m ensurepip
+          $blender_executable -m ensurepip
           echo "55555555555"
           $goo_executable -m pip install pytest
           echo "6666666666666"
