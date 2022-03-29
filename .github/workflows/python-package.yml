@@ -1,6 +1,9 @@
 # This workflow will install Python dependencies (and Blender), run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
+# this test is based on pytest-blender which allows pytest to be used from inside Blender's python while running Blender in headless mode 
+# https://github.com/mondeja/pytest-blender
+
 name: Python package
 
 on:
@@ -50,19 +53,9 @@ jobs:
           python -m pip install .[test]
           echo "22222222222222"
           blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
-          echo "333333333333"
-          echo $blender_executable
-          echo "333555333555"
-          #goo_executable="$(goo --goo-executable $goo_executable)"
-          echo "353535353535"
-          #goo_executable="$(< _goo-executable-path.txt tr -d '\n')"
-          echo "4444444444444XXX"
-          #$goo_executable -m ensurepip
-          echo $blender_executable -m ensurepip
-          echo "55555555555"
-          echo #$goo_executable -m pip install pytest
-          echo "6666666666666"
+          python_blender_executable="$(pytest-blender --blender-executable $blender_executable)"
+          $python_blender_executable -m ensurepip
+          $python_blender_executable -m pip install pytest
           echo "::set-output name=blender-executable::$blender_executable"
-          echo "77777777777777"
       - name: Test with pytest
         run: pytest -svv --${{ blender-executable }} "${{ steps.install-dependencies.outputs.blender-executable }}" tests
