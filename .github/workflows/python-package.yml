@@ -1,7 +1,4 @@
-# This workflow will install Python dependencies (and Blender), run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
-# this test is based on pytest-blender which allows pytest to be used from inside Blender's python while running Blender in headless mode 
+# This workflow is based on pytest-blender which allows pytest to be used from inside Blender's python while running Blender in headless mode 
 # https://github.com/mondeja/pytest-blender
 
 name: Python package
