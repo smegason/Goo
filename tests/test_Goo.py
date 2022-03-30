@@ -7,7 +7,7 @@
 
 import importlib.util
 
-spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo.py")
+spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo.py")
 
 foo = importlib.util.module_from_spec(spec)
 
