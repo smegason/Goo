@@ -14,7 +14,7 @@ os.chdir("scripts/modules/goo")
 print (os.listdir())   # For some weird reason goo.py is not in this directory but other .py files are e.g. goo2.py
 
 import importlib.util
-spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo2.py")
+spec = importlib.util.spec_from_file_location("goo", "goo2.py")
 foo = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(foo)
 print(foo.var)
@@ -28,8 +28,8 @@ def test_sample_func():
     print ("AAAAAA")
     #print (dir(goo))
     print ("BBBBBBB")
-   # ret = goo.sample_func()
-   # print (ret)
+    ret = goo.sample_func()
+    print (ret)
     print("Test sample func..........")
 
     assert True  
