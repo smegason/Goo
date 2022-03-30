@@ -14,13 +14,16 @@ import bpy
 def test_sample_func():
     print("test sample function------------")
 
+    version = bpy.app.version_string
+    print (version)
+ 
+    print ("AAAAAA")
     ret = goo.sample_func()
     print (ret)
     print("Test sample func..........")
 
-    version = bpy.app.version_string
-    print (version)
-    assert 1 == 1   
+    assert True  
+
 
 def test_calculate_volume():
     #obj = ???? need to get Blender object to test with somehow
