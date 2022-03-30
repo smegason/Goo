@@ -19,7 +19,7 @@ def test_sample_func():
  
     print ("AAAAAA")
     print (dir(goo))
-    
+    print ("BBBBBBB")
     ret = goo.sample_func()
     print (ret)
     print("Test sample func..........")
