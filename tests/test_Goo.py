@@ -2,13 +2,21 @@
 #this file is read by pytest to test all functions in Goo  xxx
 
 # importing module
-import sys
-  
-# appending a path
-sys.path.append('scripts/modules')
-  
+#import sys
+#sys.path.append('scripts/modules')
+
+import importlib.util
+
+spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo.py")
+
+foo = importlib.util.module_from_spec(spec)
+
+spec.loader.exec_module(foo)
+
+print(foo.var)
+
 # importing required module
-import goo
+#import goo
 import bpy
 
 def test_sample_func():
@@ -20,8 +28,8 @@ def test_sample_func():
     print ("AAAAAA")
     print (dir(goo))
     print ("BBBBBBB")
-    ret = goo.sample_func()
-    print (ret)
+   # ret = goo.sample_func()
+   # print (ret)
     print("Test sample func..........")
 
     assert True  
