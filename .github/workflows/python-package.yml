@@ -60,6 +60,7 @@ jobs:
           $python_blender_executable -m pip install pytest
           echo "66666"
           echo "::set-output name=blender-executable::$blender_executable"
+          python -m pip install flake8
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
