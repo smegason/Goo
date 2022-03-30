@@ -5,18 +5,19 @@
 #import sys
 #sys.path.append('scripts/modules')
 
-#import importlib.util
-#spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo2.py")
-#foo = importlib.util.module_from_spec(spec)
-#spec.loader.exec_module(foo)
-#print(foo.var)
-
 # importing required module
 #import goo
 import bpy
 
 import os
-cwd = os.getcwd()
+os.chdir("scripts/modules/goo")
+print (os.listdir())   # For some weird reason goo.py is not in this directory but other .py files are e.g. goo2.py
+
+import importlib.util
+spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo2.py")
+foo = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(foo)
+print(foo.var)
 
 def test_sample_func():
     print("test sample function------------")
@@ -31,18 +32,6 @@ def test_sample_func():
    # print (ret)
     print("Test sample func..........")
 
-    print ("Current wd=" + cwd)
-    print ("File path==" + os.path.dirname(os.path.realpath(__file__)))
-    print ("dir------")
-    print (os.listdir())
-    print("FFFFFF")
-    os.chdir("scripts")
-    print ("DIR--" + os.getcwd())
-    os.chdir("modules")
-    print ("DIR--zzz" + os.getcwd())
-    os.chdir("goo")
-    print ("DIR--yyy" + os.getcwd())
-    print (os.listdir())
     assert True  
 
 
