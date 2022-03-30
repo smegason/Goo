@@ -5,19 +5,18 @@
 #import sys
 #sys.path.append('scripts/modules')
 
-import importlib.util
-
-spec = importlib.util.spec_from_file_location("goo", "../scripts/modules/goo/goo.py")
-
-foo = importlib.util.module_from_spec(spec)
-
-spec.loader.exec_module(foo)
-
-print(foo.var)
+#import importlib.util
+#spec = importlib.util.spec_from_file_location("goo", "../scripts/modules/goo/goo.py")
+#foo = importlib.util.module_from_spec(spec)
+#spec.loader.exec_module(foo)
+#print(foo.var)
 
 # importing required module
 #import goo
 import bpy
+
+import os
+cwd = os.getcwd()
 
 def test_sample_func():
     print("test sample function------------")
@@ -32,6 +31,8 @@ def test_sample_func():
    # print (ret)
     print("Test sample func..........")
 
+    print (cwd)
+    print("FFFFFF")
     assert True  
 
 
