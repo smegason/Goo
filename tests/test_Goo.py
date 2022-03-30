@@ -25,7 +25,7 @@ def test_sample_func():
     print (version)
  
     print ("AAAAAA")
-    print (dir(goo))
+    #print (dir(goo))
     print ("BBBBBBB")
    # ret = goo.sample_func()
    # print (ret)
