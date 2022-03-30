@@ -33,7 +33,8 @@ def test_sample_func():
 
     print ("Current wd=" + cwd)
     print ("File path==" + os.path.dirname(os.path.realpath(__file__)))
-    print ("dir------"+ os.listdir())
+    print ("dir------")
+    print (os.listdir())
     print("FFFFFF")
     assert True  
 
