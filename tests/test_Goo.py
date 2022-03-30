@@ -6,7 +6,7 @@
 #sys.path.append('scripts/modules')
 
 #import importlib.util
-#spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo.py")
+#spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo2.py")
 #foo = importlib.util.module_from_spec(spec)
 #spec.loader.exec_module(foo)
 #print(foo.var)
