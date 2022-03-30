@@ -18,6 +18,8 @@ def test_sample_func():
     print (version)
  
     print ("AAAAAA")
+    print (dir(goo))
+    
     ret = goo.sample_func()
     print (ret)
     print("Test sample func..........")
