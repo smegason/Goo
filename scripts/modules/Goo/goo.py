@@ -5,7 +5,7 @@ import bpy, bmesh, mathutils, numpy as np
 
 global_test = "YO"
 
-def main()
+def main():
     """
     main for goo
 
