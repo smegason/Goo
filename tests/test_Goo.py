@@ -12,17 +12,12 @@ import goo
 import bpy
 
 def test_sample_func():
-    print("test samp[le function")
+    print("test sample function------------")
 
+    ret = goo.sample_func()
+    print (ret)
+    print("Test sample func..........")
 
-    #print ("Goo class:")
-    #print (dir(Goo))
-    
-    #Goo.ghdew()
-
-    goo.sample_func()
-    #print (ret)
-    print("Test sample func")
     version = bpy.app.version_string
     print (version)
     assert 1 == 1   
