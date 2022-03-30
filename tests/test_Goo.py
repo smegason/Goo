@@ -5,7 +5,7 @@
 import sys
   
 # appending a path
-sys.path.append('scripts/modules/goo')
+sys.path.append('scripts/modules')
   
 # importing required module
 import goo
