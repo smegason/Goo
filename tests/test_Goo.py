@@ -16,7 +16,7 @@ print (os.listdir())   # For some weird reason goo.py is not in this directory b
 import importlib.util
 spec = importlib.util.spec_from_file_location("goo", "goo2.py")
 goo = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(foo)
+spec.loader.exec_module(goo)
 #print(foo.var)
 
 def test_sample_func():
