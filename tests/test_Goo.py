@@ -5,11 +5,11 @@
 #import sys
 #sys.path.append('scripts/modules')
 
-import importlib.util
-spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo.py")
-foo = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(foo)
-print(foo.var)
+#import importlib.util
+#spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo.py")
+#foo = importlib.util.module_from_spec(spec)
+#spec.loader.exec_module(foo)
+#print(foo.var)
 
 # importing required module
 #import goo
@@ -36,6 +36,13 @@ def test_sample_func():
     print ("dir------")
     print (os.listdir())
     print("FFFFFF")
+    os.chdir("scripts")
+    print ("DIR--" + os.getcwd())
+    os.chdir("modules")
+    print ("DIR--zzz" + os.getcwd())
+    os.chdir("goo")
+    print ("DIR--yyy" + os.getcwd())
+    print (os.listdir())
     assert True  
 
 
