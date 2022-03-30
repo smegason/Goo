@@ -17,7 +17,7 @@ import importlib.util
 spec = importlib.util.spec_from_file_location("goo", "goo2.py")
 foo = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(foo)
-print(foo.var)
+#print(foo.var)
 
 def test_sample_func():
     print("test sample function------------")
