@@ -1,6 +1,6 @@
 # doublet.py - simulates 2 cells adhering to each other with different balances of cortical tension and cell adhesion
 
-import Goo from Goo
+from Goo import Goo
 
 Goo.setup_world()
 

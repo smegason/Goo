@@ -1,6 +1,6 @@
 # zebrafish_cleavage.py - simulates the first 12 cell cycles of zebrafish development
 
-import Goo from Goo
+from Goo import Goo
 
 Goo.setup_world()
 
