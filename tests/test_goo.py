@@ -16,7 +16,7 @@ def test_sample_func():
     version = bpy.app.version_string
     print("Blender version=" + version)
     ret = goo.sample_func()
-    print ("Goo ret=" + ret)
+    print("Goo ret=" + ret)
     assert True
 
 
@@ -25,6 +25,6 @@ def test_calculate_volume():
 
     # volume = goo.calculate_volume(obj)
     # assert volume = ??
-    print ("test calculate volume")
+    print("test calculate volume")
 
     assert True

@@ -28,7 +28,7 @@ obj = cell.get_blender_object()
 # obj.modifiers["Cloth"].settings.keyframe_insert(data_path="shrink_min", frame=40)
 
 
-def growth_handler(scene, depsgraph): #  WIP
+def growth_handler(scene, depsgraph):   # WIP
     print("Frame:", scene.frame_current)
     # change between scene and depsgragh here
     cell_objs = [obj for obj in scene.objects if obj.name.startswith("Cell_")]
@@ -43,7 +43,7 @@ def growth_handler(scene, depsgraph): #  WIP
         # bpy.ops.object.modifier_apply(modifier="CLOTH")
 
         print(cell_obj.name, " Volume:", Goo.calculate_volume(cell_obj),
-         " Shrinking Factor:", cell_obj.modifiers["Cloth"].settings.shrink_min)
+            " Shrinking Factor:", cell_obj.modifiers["Cloth"].settings.shrink_min)
 
         # constantly changing shrink_min
         cell_obj.modifiers["Cloth"].settings.shrink_min -= 0.01
