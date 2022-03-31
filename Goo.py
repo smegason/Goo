@@ -1,5 +1,5 @@
 # Goo.py - This is the Goo library. It contains all helper functions for Goo
-# Goo is licensed under BSDv2
+# Goo is licensed under BSDv2 bbbbbbb
 
 import bpy, bmesh, mathutils, numpy as np
 
