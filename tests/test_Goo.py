@@ -10,11 +10,14 @@
 import bpy
 
 import os
+print ("Root dir=")
+print (os.listdir())
 os.chdir("scripts/modules/goo")
+print ("modules dir=")
 print (os.listdir())   # For some weird reason goo.py is not in this directory but other .py files are e.g. goo2.py
 
 import importlib.util
-spec = importlib.util.spec_from_file_location("goo", "goo.py")
+spec = importlib.util.spec_from_file_location("goo", "goo2.py")
 goo = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(goo)
 #print(foo.var)
