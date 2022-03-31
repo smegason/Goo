@@ -17,7 +17,14 @@ os.chdir("..")
 print("One up dir=")
 print (os.listdir())
 print ("-----")
+
+os.chdir("..")
 print("Two up dir=")
+print (os.listdir())
+print ("-----")
+
+os.chdir("..")
+print("Three up dir=")
 print (os.listdir())
 print ("-----")
 
