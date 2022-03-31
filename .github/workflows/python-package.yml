@@ -61,8 +61,5 @@ jobs:
           echo "66666"
           echo "::set-output name=blender-executable::$blender_executable"
           pip install pylint
-      - name: Analysing the code with pylint...
-        run: |
-          pylint $(git ls-files 'goo.py')
       - name: Test with pytest
         run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
