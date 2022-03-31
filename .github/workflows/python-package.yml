@@ -58,7 +58,7 @@ jobs:
           $python_blender_executable -m ensurepip
           echo "555555"
           $python_blender_executable -m pip install pytest
-          echo "66666"
+          echo "666666"
           echo "::set-output name=blender-executable::$blender_executable"
           pip install pylint
       - name: Test with pytest
