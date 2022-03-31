@@ -23,7 +23,7 @@ def test_sample_func():
     print("test sample function------------")
 
     version = bpy.app.version_string
-    print (version)
+    print ("Blender version=" + version)
  
     print ("AAAAAA")
     #print (dir(goo))
