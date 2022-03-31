@@ -3,5 +3,5 @@ from Goo import Goo
 
 Goo.setup_world()
 
-cell = Goo.Cell(name_string = "Cell1_", loc = (0, 0, 0), material = "CellGreen")
+cell = Goo.Cell(name_string="Cell1_", loc=(0, 0, 0), material="CellGreen")
 Goo.make_cell(cell)

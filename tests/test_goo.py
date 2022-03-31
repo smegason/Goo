@@ -1,5 +1,5 @@
-#test_goo.py
-#this file is read by pytest to test all functions in goo
+# test_goo.py
+# this file is read by pytest to test all functions in goo
 
 import bpy
 
@@ -14,25 +14,17 @@ def test_sample_func():
 
     version = bpy.app.version_string
     print ("Blender version=" + version)
- 
-    print ("AAAAAA")
-    #print (dir(goo))
-    print ("BBBBBBB")
     ret = goo.sample_func()
-    print (ret)
-    print("Test sample func..........")
 
     assert True  
 
 
 def test_calculate_volume():
-    #make cell
+    # make cell
     
     
-    #volume = goo.calculate_volume(obj)
-    #assert volume = ??
+    # volume = goo.calculate_volume(obj)
+    # assert volume = ??
     print ("test calculate volume")
 
     assert True
-
-    

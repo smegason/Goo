@@ -59,6 +59,7 @@ f8 = Goo.Force("f8", "c4", -200)
 Goo.make_force(f8)
 forces.append(f8)
 
+
 def force_handler(scene):
     for i in range(len(forces)):
         assoc_cell = forces[i].associated_cell
@@ -74,6 +75,7 @@ def force_handler(scene):
         z = vert_coords[:, 2]
         COM = (np.mean(x), np.mean(y), np.mean(z))
         bpy.data.objects[forces[i].name].location = COM
-    
+
+
 bpy.app.handlers.frame_change_post.clear()
 bpy.app.handlers.frame_change_post.append(force_handler)
