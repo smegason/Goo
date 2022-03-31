@@ -1,4 +1,6 @@
-from cgitb import handler
+# makes a GUI for defining cells
+
+# from cgitb import handler
 from tkinter import *
 from tkinter import ttk
 
@@ -7,7 +9,7 @@ from sqlalchemy import ForeignKeyConstraint
 from add_cell_controller import add_cell_controller, cell
 
 root = Tk()
-#root.withdraw()
+# root.withdraw()
 
 # have all the cells call divide and check their size 
 
