@@ -1,5 +1,5 @@
 # This workflow is based on pytest-blender which allows pytest to be used from inside Blender's python while running Blender in headless mode 
-# https://github.com/mondeja/pytest-blender    XX
+# https://github.com/mondeja/pytest-blender   
 
 name: Python package
 
@@ -35,7 +35,7 @@ jobs:
             blender-*
             _blender-executable-path.txt
           key: ${{ runner.os }}-${{ matrix.blender-version }}
-      - name: Download Blender XXX ${{ matrix.blender-version }}
+      - name: Download Blender ${{ matrix.blender-version }}
         if: steps.cache-blender.outputs.cache-hit != 'true'
         id: download-blender
         run: |
@@ -43,7 +43,7 @@ jobs:
           echo "$(blender-downloader \
           ${{ matrix.blender-version }} --extract --remove-compressed \
           --quiet --print-blender-executable)" > _blender-executable-path.txt
-      - name: Install dependencies XXXX
+      - name: Install dependencies
         id: install-dependencies
         run: |
           echo "11111111111111"
@@ -61,5 +61,5 @@ jobs:
           echo "666666"
           echo "::set-output name=blender-executable::$blender_executable"
           pip install pylint
-      - name: Test with pytest XXXX
+      - name: Test with pytest
         run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
