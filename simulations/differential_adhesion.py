@@ -10,19 +10,19 @@ Goo.setup_world()
 cells = []
 forces = []
 
-c1 = Goo.Cell("c1", loc = (0, 0, 0))
+c1 = Goo.Cell("c1", loc=(0, 0, 0))
 Goo.make_cell(c1)
 cells.append(c1)
 
-c2 = Goo.Cell("c2", loc = (2, 2, 2))
+c2 = Goo.Cell("c2", loc=(2, 2, 2))
 Goo.make_cell(c2)
 cells.append(c2)
 
-c3 = Goo.Cell("c3", loc = (-2, -2, -2))
+c3 = Goo.Cell("c3", loc=(-2, -2, -2))
 Goo.make_cell(c3)
 cells.append(c3)
 
-c4 = Goo.Cell("c4", loc = (-4, -4, -4))
+c4 = Goo.Cell("c4", loc=(-4, -4, -4))
 Goo.make_cell(c4)
 cells.append(c4)
 
