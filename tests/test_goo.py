@@ -1,4 +1,4 @@
-#test_goo.py XXX
+#test_goo.py XXXxx
 #this file is read by pytest to test all functions in Goo  xxx
 
 # importing module
