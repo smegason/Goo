@@ -61,5 +61,7 @@ jobs:
           echo "66666"
           echo "::set-output name=blender-executable::$blender_executable"
           pip install pylint
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
       - name: Test with pytest
         run: pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests
