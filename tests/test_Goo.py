@@ -12,8 +12,11 @@ import bpy
 import os
 print ("Root dir=")
 print (os.listdir())
+
 os.chdir("..")
-print (os.listdir)
+print("One up dir=")
+print (os.listdir())
+print ("-----")
 
 #os.chdir("scripts/modules/goo")
 #print ("modules dir=")
