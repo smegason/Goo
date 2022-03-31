@@ -13,24 +13,24 @@ import os
 print ("Root dir=")
 print (os.listdir())
 
-os.chdir("..")
-print("One up dir=")
-print (os.listdir())
-print ("-----")
+#os.chdir("..")
+#print("One up dir=")
+#print (os.listdir())
+#print ("-----")
 
-os.chdir("..")
-print("Two up dir=")
-print (os.listdir())
-print ("-----")
+#os.chdir("..")
+#print("Two up dir=")
+#print (os.listdir())
+#print ("-----")
 
-os.chdir("..")
-print("Three up dir=")
-print (os.listdir())
-print ("-----")
+#os.chdir("..")
+#print("Three up dir=")
+#print (os.listdir())
+#print ("-----")
 
-#os.chdir("scripts/modules/goo")
-#print ("modules dir=")
-#print (os.listdir())   # For some weird reason goo.py is not in this directory but other .py files are e.g. goo2.py
+os.chdir("scripts/modules/goo")
+print ("modules dir=")
+print (os.listdir())   # For some weird reason goo.py is not in this directory but other .py files are e.g. goo2.py
 
 import importlib.util
 spec = importlib.util.spec_from_file_location("goo", "goo2.py")
