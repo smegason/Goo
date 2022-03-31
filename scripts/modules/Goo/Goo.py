@@ -831,7 +831,7 @@ def setup_world():
     bpy.context.scene.unit_settings.temperature_unit = 'CELSIUS'
 
     # Addn an HDRI image for illumination
-    add_world_HDRI()
+    #add_world_HDRI()
   
 def add_world_HDRI():
     """
@@ -920,15 +920,21 @@ def render(file_path,scene,start,end):
     for func in handlers:
         bpy.app.handlers.frame_change_post.append(func)
     return
+def make_force_collections(master_collection,cell_types):
+    bpy.context.view_layer.active_layer_collection = master_collection
+    for type in cell_types:
+        collection = bpy.context.blend_data.collections.new(name=type+"_forces")
+        bpy.context.collection.children.link(collection)
 
 class handler_class:
+    # TODO document this class
     """
     A class for creating different types of handlers that trigger actions on Goo cells when certain criteria are met
     """
     # The initialization function specifies available cell types and associated parameters
     # like division rate, growth rate, and adhesion forces
     def __init__(self):
-        self.cell_types = ["Sphere","type1","type2"]
+        self.cell_types = ['sphere','type1','type2']
         self.division_rates = {}
         self.growth_rates = {}
         self.adhesion_forces = {} # dictionary of dictionaries 
@@ -944,6 +950,7 @@ class handler_class:
                 self.adhesion_forces[type][i] = 0
         # Set active (dividing) cell types
         self.active_cell_types = [] # add active types to know what collections to divide
+        self.forces = []
         return
     # Member function to set division rate for a cell type
     def set_division_rate(self,cell_type,rate):
@@ -956,10 +963,26 @@ class handler_class:
         self.growth_rates[cell_type] = rate
         return
     # Member function to set adhesion forces between cell types
-    def set_adhesion(self,type1, force_type1_to_type2, type2, force_type2_to_type1):
-        self.adhesion_forces[type1][type2] = force_type1_to_type2
-        self.adhesion_forces[type2][type1] = force_type2_to_type1
+    def set_adhesion(self,type1, type2, force):
+        self.adhesion_forces[type1][type2] = force
         return
+
+    def apply_forces(self):
+        master_collection = bpy.context.view_layer.active_layer_collection
+        for cell_type in self.active_cell_types:
+            num_cells = len(bpy.data.collections[cell_type].objects)
+            for i in range(num_cells):
+                cell_name = bpy.data.collections[cell_type].objects[i].name
+                cell = bpy.data.objects[cell_name]
+                cell.modifiers["Cloth"].settings.effector_weights.collection = bpy.data.collections[cell_type+"_forces"]
+                for affected_type in self.cell_types:
+                    if self.adhesion_forces[cell_type][affected_type] != 0:
+                        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[affected_type+"_forces"]
+                        f = Force(cell_name+"_to_"+affected_type, cell_name,self.adhesion_forces[cell_type][affected_type])
+                        make_force(f)
+                        bpy.context.view_layer.active_layer_collection = master_collection
+                        self.forces.append(f)
+
     # Member function to set the division handler for cells
     def div_handler(self,scene,depsgraph):
         # Loop through active cell types
@@ -971,12 +994,15 @@ class handler_class:
             # Divide based on the division rate
             if current_frame % self.division_rates[cell_type] == 0:
                 print("DIVIDING CELLS")
+
                 # Loop over all the cells of a type
                 for i in range(num_cells):
                     # Get the cell name
                     cell_name = bpy.data.collections[cell_type].objects[i].name
                     # Get the corresponding Blender object
                     cell = bpy.data.objects[cell_name]
+                    #get scale before division
+                    scale = cell.modifiers["Cloth"].settings.shrink_min
                     # Select the Blender object and make it the active object in the simulation
                     bpy.data.objects[cell_name].select_set(True)
                     bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
@@ -998,25 +1024,33 @@ class handler_class:
                     # Turn on the physics for this daughter cell
                     turn_on_physics()
                     bpy.data.objects[d2.data["name"]].select_set(False)
+    
     # Member function to handle cell growth
-    def growth_handler(self,scene, depsgraph): # WIP
-        print("Frame:",scene.frame_current)
-        # Get the cell objects in Blender
-        cell_objs = [obj for obj in scene.objects if obj.name.startswith("Cell_")] # change between scene and depsgragh here
-        # Get the number of cells
-        num_cells = len(bpy.data.collections["Cells"].objects)
-        # Loop through each cell
-        for cell_obj in cell_objs:
-            #cell_name = bpy.data.collections["Cells"].objects[i].name
-            # Get the cell name
-            cell_name = cell_obj.name
-            #cell_obj = bpy.data.objects[cell_name]
-            #bpy.data.objects[cell_name].select_set(True)
-            #bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
-            #bpy.ops.object.modifier_apply(modifier="CLOTH")
-            
-            # Print key information
-            print(cell_obj.name," Volume:",Goo.calculate_volume(cell_obj)," Shrinking Factor:",cell_obj.modifiers["Cloth"].settings.shrink_min)
-            # Modify the cloth parameters
-            cell_obj.modifiers["Cloth"].settings.shrink_min -= 0.01 # constantly changing shrink_min
+    def growth_handler(self,scene, depsgraph):
+        for cell_type in self.active_cell_types:
+            num_cells = len(bpy.data.collections[cell_type].objects)
+            for i in range(num_cells):
+                cell_name = bpy.data.collections[cell_type].objects[i].name
+                cell = bpy.data.objects[cell_name]
+                cell.modifiers["Cloth"].settings.shrink_min -= 0.01 
+    def set_scale(self,scale,cell_type):
+        num_cells = len(bpy.data.collections[cell_type].objects)
+        for i in range(num_cells):
+            cell_name = bpy.data.collections[cell_type].objects[i].name
+            cell = bpy.data.objects[cell_name]
+            cell.modifiers["Cloth"].settings.shrink_min = scale
+    def adhesion_handler(self,scene,depsgraph):
+        for force in self.forces:
+            assoc_cell = force.associated_cell
+            bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
+            dg = bpy.context.evaluated_depsgraph_get()
+            cell_eval = bpy.data.objects[assoc_cell].evaluated_get(dg)
+            vertices = cell_eval.data.vertices
+            vert_coords = [(cell_eval.matrix_world @ v.co) for v in vertices]
+            vert_coords = np.asarray(vert_coords)
 
+            x = vert_coords[:, 0]
+            y = vert_coords[:, 1]
+            z = vert_coords[:, 2]
+            COM = (np.mean(x), np.mean(y), np.mean(z))
+            bpy.data.objects[force.name].location = COM

@@ -1,9 +1,8 @@
 from numpy import size
 
-
 class add_cell_controller:
     def __init__(self):
-        self.cell_types = ["sphere","fish","red blood cell"]
+        self.cell_types = ["sphere","type1","type2"]
         self.active_types = []
         self.active_cells = []
         return

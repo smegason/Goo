@@ -1,3 +1,4 @@
+from cgitb import handler
 from tkinter import *
 from tkinter import ttk
 
@@ -81,6 +82,7 @@ padx = 3
 
 Label(add_cell_section,text="Initial Cells").grid(column=0,row=0,padx=(5,632),columnspan=9)
 cell_type_dropdown = ttk.Combobox(add_cell_section,text="")
+
 x_lable = Label(add_cell_section,text="x:")
 y_lable = Label(add_cell_section,text="y:")
 z_lable = Label(add_cell_section,text="z:")
@@ -135,6 +137,8 @@ growth_sliders = []
 Label(cell_adhesion_section,text="Cell Adhesion").grid(column=0,row=0,padx=(5,754),columnspan=4)
 adhesion_labels = []
 adhesion_sliders = []
+adhesion_dropdowns = []
+adhesion_slider_values = []
 
 #Place widgets for "Cell Adhesion" Section
 
@@ -173,27 +177,63 @@ class Script:
         return
     def generateScript(self):
         self.script = ""
+        self.script += "# Import Libraries and setup world\n"
         for line in self.imports:
             self.script += line + "\n"
         self.script += "Goo.setup_world()\n" #setup
-        self.script += "collection = bpy.context.blend_data.collections.new(name='Cells')\n" #add collection to store cells
-        self.script += "bpy.context.collection.children.link(collection)\n"
-        self.script += "layer_collection = bpy.context.view_layer.layer_collection.children[collection.name]\n" 
-        self.script += "bpy.context.view_layer.active_layer_collection = layer_collection\n" # make the cells collection active
+
+        self.script += "\n# Add cells and cell collections"
+
         self.script += "bpy.app.handlers.frame_change_post.clear()\n" #clear handlers before adding new ones
-        for cell in self.cells:
+
+        self.script += "master_coll = bpy.context.view_layer.layer_collection\n"
+        for type in addCellController.active_types:
+            self.script += "collection = bpy.context.blend_data.collections.new(name='"+type+"')\n"
+            self.script += "bpy.context.collection.children.link(collection)\n"
+        for cell in addCellController.active_cells:
+            self.script += "bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children['"+cell.type+"']\n"
             location = "("+str(cell.location[0])+","+str(cell.location[1])+","+str(cell.location[2])+")"
-            self.script += 'cell = Goo.Cell(name_string = "cell_'+location+'", loc = '+location+')\n'
-            self.script += "Goo.make_cell(cell)\n"
-            #self.script += 'obj = bpy.data.objects["cell_"'+location+']]\n'
-        if division_sliders[0].get():
-            self.script += "bpy.app.handlers.frame_change_post.append(Goo.div_handler)\n"
+            self.script += 'Goo.make_cell(Goo.Cell(name_string = "'+cell.type+location+'", loc = '+location+'))\n'
+        
+        self.script += "\n# Add handlers for division, growth and adhesion"
+        self.script += "handlers = Goo.handler_class()\n"
+        divide = False
+        grow = False
+        adhesion = False
+        for t in addCellController.active_types:
+            self.script += "handlers.active_cell_types += ['"+t+"']\n"
+            div_rate = division_sliders[addCellController.active_types.index(t)].get()
+            if div_rate:
+                self.script += "handlers.set_division_rate('"+t+"',"+str(div_rate)+")\n"
+                divide = True
+            growth_rate = growth_sliders[addCellController.active_types.index(t)].get()
+            if growth_rate:
+                grow = True
+                self.script += "handlers.set_growth_rate('"+t+"',"+str(growth_rate)+")\n"
+            for type in addCellController.active_types:
+                row = addCellController.active_types.index(t)
+                force = int(adhesion_slider_values[row][type])
+                if force != 0:
+                    self.script += "handlers.set_adhesion('"+t+"','"+type+"',"+str(force)+")\n"
+                    adhesion = True
+        if divide:
+            self.script += "bpy.app.handlers.frame_change_post.append(handlers.div_handler)\n"
+        if grow:
+            self.script += "bpy.app.handlers.frame_change_post.append(handlers.growth_handler)\n"
+        if adhesion:
+            # make collections for forcefields
+            self.script += "Goo.make_force_collections(master_coll,handlers.active_cell_types)\n"
+            self.script += "handlers.apply_forces()\n"
+            self.script += "bpy.app.handlers.frame_change_post.append(handlers.adhesion_handler)\n"
+
         if checkbox_var.get() == 1:
+            self.script += "\n# Render animation"
             self.script += "scene = bpy.context.scene\n"
             #self.script += "fp = '/Users/michaelmitschjr/Desktop/Python/data/'\n"
             self.script += "fp = " + FilePathInput.get() + "\n"
             self.script += "scene.render.image_settings.file_format = 'PNG'\n"
             self.script += "Goo.render(fp,scene,1,60)\n"
+
         print(self.script)
         return
 
@@ -207,7 +247,19 @@ class Script:
         return
 
 script = Script()
-
+def adhesion_dropdown_changed(event):
+    dropdown = event.widget
+    row = dropdown.grid_info()['row']-1
+    key = dropdown.get()
+    adhesion_sliders[row].set(adhesion_slider_values[row][key])
+def adhesion_slider_changed(event):
+    slider = event.widget
+    row = slider.grid_info()['row']-1
+    value = slider.get()
+    key = adhesion_dropdowns[row].get()
+    adhesion_slider_values[row][key] = int(value)
+    print(value)
+    print(row)
 def addCell(event):
     location = (x_input.get(),y_input.get(),z_input.get())
     size = cell_size_slider.get()
@@ -230,9 +282,18 @@ def addCell(event):
     growth_sliders[-1].grid(row=num_cells,column=2,padx=10)
 
     adhesion_labels.append(Label(cell_adhesion_section,text=cell.type))
-    adhesion_sliders.append(Scale(cell_adhesion_section,orient=HORIZONTAL,length=500,from_=0,to=100))
+    adhesion_dropdowns.append(ttk.Combobox(cell_adhesion_section,text="",name=cell.type))
+    adhesion_sliders.append(Scale(cell_adhesion_section,orient=HORIZONTAL,length=300,from_=-800,to=800))
     adhesion_labels[-1].grid(column=1,row=num_cells,padx=20)
-    adhesion_sliders[-1].grid(row=num_cells,column=2,padx=10)
+    adhesion_dropdowns[-1].grid(column=2, row=num_cells,padx=20)
+    adhesion_sliders[-1].grid(row=num_cells,column=3,padx=10)
+    adhesion_dropdowns[-1].bind("<<ComboboxSelected>>", adhesion_dropdown_changed)
+    adhesion_sliders[-1].bind("<ButtonRelease>",adhesion_slider_changed)
+    forces = {}
+    for t in addCellController.active_types:
+        forces[t] = 0
+    adhesion_slider_values.append(forces)
+    update_adhesion_dropdown()
     return
 
 def removeCell(event):
@@ -256,8 +317,18 @@ def removeCell(event):
         adhesion_labels.remove(adhesion_labels[row])
         adhesion_sliders[row].destroy()
         adhesion_sliders.remove(adhesion_sliders[row])
+        adhesion_dropdowns[row].destroy()
+        adhesion_dropdowns.remove(adhesion_dropdowns[row])
+        #adhesion_slider_values.remove(adhesion_slider_values[row])
+        update_adhesion_dropdown()
     return
-
+def update_adhesion_dropdown():
+    for dropdown in adhesion_dropdowns:
+        dropdown['values'] = addCellController.active_types
+    for t in addCellController.active_types:
+        for dict in adhesion_slider_values:
+            if not (t in dict):
+                dict[t] = 0
 def generateScript(event):
     script.generateScript()
     return
@@ -278,3 +349,6 @@ gen_script_button.bind("<Button-1>",generateScript)
 save_script_button.bind("<Button-1>",saveScript)
 
 root.mainloop()
+
+
+# forces that affect one type of cell should all be in the same collection
