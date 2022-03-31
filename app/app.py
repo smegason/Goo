@@ -4,14 +4,14 @@
 from tkinter import *
 from tkinter import ttk
 
-from cv2 import add
-from sqlalchemy import ForeignKeyConstraint
-from add_cell_controller import add_cell_controller, cell
+# from cv2 import add
+# from sqlalchemy import ForeignKeyConstraint
+# from add_cell_controller import add_cell_controller, cell
 
 root = Tk()
 # root.withdraw()
 
-# have all the cells call divide and check their size 
+# have all the cells call divide and check their size
 
 addCellController = add_cell_controller()
 

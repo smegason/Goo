@@ -12,16 +12,16 @@ def main():
     :return: None
     """
 
-    print ("This is goo main")
+    print("This is goo main")
 
 
-def sample_func(): # for pytest test
+def sample_func(): #  for pytest test
     """
     Test function to debug pytest CI
     
     :return: Howdy
     """
-    print ("Sample func in scripts/modules")
+    print("Sample func in scripts/modules")
 
     return "Howdy"
 
