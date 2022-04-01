@@ -68,7 +68,7 @@ def get_major_axis(obj):
     # evaluated cell (denoted as obj_eval here)
     dg = bpy.context.evaluated_depsgraph_get()
     obj_eval = obj.evaluated_get(dg)
-    # We obtain the (x,y,z) coordinates of the vertices in the
+    # We obtain the (x, y, z) coordinates of the vertices in the
     # evaluated cell
     vertices = obj_eval.data.vertices
     vert_coords = [(obj_eval.matrix_world @ v.co) for v in vertices]
@@ -1044,7 +1044,7 @@ class handler_class:
                         self.forces.append(f)
 
     # Member function to set the division handler for cells
-    def div_handler(self,scene,depsgraph):
+    def div_handler(self, scene, depsgraph):
         # Loop through active cell types
         for cell_type in self.active_cell_types:
             # Get the number of cells of that type
@@ -1086,20 +1086,20 @@ class handler_class:
                     bpy.data.objects[d2.data["name"]].select_set(False)
     
     # Member function to handle cell growth
-    def growth_handler(self,scene, depsgraph):
+    def growth_handler(self, scene, depsgraph):
         for cell_type in self.active_cell_types:
             num_cells = len(bpy.data.collections[cell_type].objects)
             for i in range(num_cells):
                 cell_name = bpy.data.collections[cell_type].objects[i].name
                 cell = bpy.data.objects[cell_name]
                 cell.modifiers["Cloth"].settings.shrink_min -= 0.01 
-    def set_scale(self,scale,cell_type):
+    def set_scale(self, scale, cell_type):
         num_cells = len(bpy.data.collections[cell_type].objects)
         for i in range(num_cells):
             cell_name = bpy.data.collections[cell_type].objects[i].name
             cell = bpy.data.objects[cell_name]
             cell.modifiers["Cloth"].settings.shrink_min = scale
-    def adhesion_handler(self,scene,depsgraph):
+    def adhesion_handler(self, scene, depsgraph):
         for force in self.forces:
             assoc_cell = force.associated_cell
             bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
