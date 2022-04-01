@@ -5,6 +5,7 @@ import bpy
 import bmesh
 import mathutils
 import numpy as np
+import sys
 
 global_test = "YO"
 
@@ -802,7 +803,7 @@ def add_material_cell(mat_name, r, g, b):
     # create second principled node for random color variation
     node_random = nodes.new(type='ShaderNodeBsdfPrincipled')
     node_random.location = -200, -100
-    node_random.inputs['Base Color'].default_value = (r, g, b, 1)  # Hue Saturation Value
+    node_random.inputs['Base Color'].default_value = (r, g, b, 1)  # RGB or HSV?? todo
     node_random.inputs['Metallic'].default_value = 0.0
     node_random.inputs['Specular'].default_value = 0.500
     node_random.inputs['Specular Tint'].default_value = 0.0
@@ -828,8 +829,7 @@ def add_material_cell(mat_name, r, g, b):
     node_output.location = 200, 0
 
     # link nodes
-    links = mat.node_tree.links  
-    
+    links = mat.node_tree.links
     links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV
     links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random
     links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix
@@ -866,10 +866,11 @@ def make_force(force):
     :return: None
     """
     # Add a force object
+    cell = force.associated_cell
     bpy.ops.object.effector_add(type='FORCE',
                                 enter_editmode=False,
                                 align='WORLD',
-                                location=bpy.data.objects[force.associated_cell].location,
+                                location=bpy.data.objects[cell].location,
                                 scale=(1, 1, 1))
 
     # Add force parameters
@@ -881,11 +882,11 @@ def make_force(force):
 def initialize_cells(num_cells, loc_array, material):
     """
     Creates a collection of cells using an array
-    
+
     :param num_cells: number of cells
     :param loc_array: an array of locations (center) of cells
     :param material: the material to use for the cells
-    
+
     :return: None
     """
 
@@ -895,11 +896,11 @@ def initialize_cells(num_cells, loc_array, material):
         print("Number of cells must match number of cell locations")
         return
     # Add a material to the cell
-    # add_material(material) # Should this be add_material_cell? 
+    # add_material(material) # Should this be add_material_cell?
     # Loop over all the cells
     for i in range(num_cells):
         # Create a cell object for the cell number and location for that index
-        cell = Cell("cell_" + str(i), loc = loc_array[i], material = material)
+        cell = Cell("cell_" + str(i), loc=loc_array[i], material=material)
         # Make the cell
         make_cell(cell)
 
@@ -910,7 +911,7 @@ def setup_world():
     including units and rendering background
 
     :return: None
-    """    
+    """
     print("setup world")
     # Turn off gravity so cells don't fall in the simulation
     bpy.context.scene.use_gravity = False
@@ -925,7 +926,8 @@ def setup_world():
 
     # Addn an HDRI image for illumination
     # add_world_HDRI()
-  
+
+
 def add_world_HDRI():
     """
     Sets up Blender World properties for use in rendering most importantly
@@ -955,23 +957,23 @@ def add_world_HDRI():
     # Relative path- this file must be in same directory as blend file
     node_environment.image = bpy.data.images.load(
         scripts_paths[-1]+"/modules/Goo/missile_launch_facility_01_4k.hdr")
-    node_environment.location = -300,0
+    node_environment.location = -300, 0
 
     # Add Output node
     node_output = tree_nodes.new(type='ShaderNodeOutputWorld')   
-    node_output.location = 200,0
+    node_output.location = 200, 0
 
     # Link all nodes
     links = node_tree.links
-    link = links.new(node_environment.outputs["Color"], node_background.inputs["Color"])
-    link = links.new(node_background.outputs["Background"], node_output.inputs["Surface"])
+    links.new(node_environment.outputs["Color"], node_background.inputs["Color"])
+    links.new(node_background.outputs["Background"], node_output.inputs["Surface"])
 
     # set film to transparent to hide background
     bpy.context.scene.render.film_transparent = True
 
     # change render preview mode
     # only updates windows in current tab, e.g. Sxripting but not Layout
-    for area in bpy.context.screen.areas:   
+    for area in bpy.context.screen.areas:
         if area.type == 'VIEW_3D':
             print ("update view 3d to rendered")
             space = area.spaces.active
@@ -979,7 +981,7 @@ def add_world_HDRI():
                 space.shading.type = 'RENDERED'
 
 
-def render(file_path,scene,start,end):
+def render(file_path, scene, start, end):
     """
     Renders a simulation to create a set of still images that can be made into a movie
 
@@ -1012,7 +1014,7 @@ def render(file_path,scene,start,end):
         # Save the image
         file_name = "frame" + str(scene.frame_current)
         scene.render.filepath += file_name
-        bpy.ops.render.render(write_still=True) 
+        bpy.ops.render.render(write_still=True)
         scene.render.filepath = scene.render.filepath.removesuffix(file_name)
     scene.render.filepath = old_fp
     # Add each handler to the scene
@@ -1021,7 +1023,7 @@ def render(file_path,scene,start,end):
     return
 
 
-def make_force_collections(master_collection,cell_types):
+def make_force_collections(master_collection, cell_types):
     bpy.context.view_layer.active_layer_collection = master_collection
     for type in cell_types:
         collection = bpy.context.blend_data.collections.new(name=type+"_forces")
@@ -1035,13 +1037,13 @@ class handler_class:
     on Goo cells when certain criteria are met
     """
 
-    # The initialization function specifies available cell types and associated parameters
-    # like division rate, growth rate, and adhesion forces
+    # The initialization function specifies available cell types and associated
+    # parameters like division rate, growth rate, and adhesion forces
     def __init__(self):
-        self.cell_types = ['sphere','type1','type2']
+        self.cell_types = ['sphere', 'type1', 'type2']
         self.division_rates = {}
         self.growth_rates = {}
-        self.adhesion_forces = {} # dictionary of dictionaries
+        self.adhesion_forces = {}  # dictionary of dictionaries
         # ex: {"sphere": {"sphere": 100, "type1": 100, "type2": 100},
         # "type1": {"sphere": 200, "type1": 200, "type2": 200},
         # "type2": {"sphere": 300, "type1": 300, "type2": 300}}
@@ -1056,24 +1058,25 @@ class handler_class:
             for i in self.cell_types:
                 self.adhesion_forces[type][i] = 0
         # Set active (dividing) cell types
-        self.active_cell_types = [] # add active types to know what collections to divide
+        # add active types to know what collections to divide
+        self.active_cell_types = []
         self.forces = []
         return
 
     # Member function to set division rate for a cell type
-    def set_division_rate(self,cell_type,rate):
-        # assume 60 frames per second 
+    def set_division_rate(self, cell_type, rate):
+        # assume 60 frames per second
         # rate is in divisions per second
         self.division_rates[cell_type] = 60/rate
         return
 
     # Member function to set growth rate for a cell type
-    def set_growth_rate(self,cell_type,rate):
+    def set_growth_rate(self,cell_type, rate):
         self.growth_rates[cell_type] = rate
         return
 
     # Member function to set adhesion forces between cell types
-    def set_adhesion(self,type1, type2, force):
+    def set_adhesion(self, type1, type2, force):
         self.adhesion_forces[type1][type2] = force
         return
 
@@ -1084,7 +1087,8 @@ class handler_class:
             for i in range(num_cells):
                 cell_name = bpy.data.collections[cell_type].objects[i].name
                 cell = bpy.data.objects[cell_name]
-                cell.modifiers["Cloth"].settings.effector_weights.collection = bpy.data.collections[cell_type+"_forces"]
+                cell.modifiers["Cloth"].settings.effector_weights.collection = \
+                    bpy.data.collections[cell_type+"_forces"]
                 for affected_type in self.cell_types:
                     if self.adhesion_forces[cell_type][affected_type] != 0:
                         bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[affected_type+"_forces"]
@@ -1144,7 +1148,7 @@ class handler_class:
                     # Turn on the physics for this daughter cell
                     turn_on_physics()
                     bpy.data.objects[d2.data["name"]].select_set(False)
-    
+
     # Member function to handle cell growth
     def growth_handler(self, scene, depsgraph):
         for cell_type in self.active_cell_types:
@@ -1152,13 +1156,15 @@ class handler_class:
             for i in range(num_cells):
                 cell_name = bpy.data.collections[cell_type].objects[i].name
                 cell = bpy.data.objects[cell_name]
-                cell.modifiers["Cloth"].settings.shrink_min -= 0.01 
+                cell.modifiers["Cloth"].settings.shrink_min -= 0.01
+
     def set_scale(self, scale, cell_type):
         num_cells = len(bpy.data.collections[cell_type].objects)
         for i in range(num_cells):
             cell_name = bpy.data.collections[cell_type].objects[i].name
             cell = bpy.data.objects[cell_name]
             cell.modifiers["Cloth"].settings.shrink_min = scale
+
     def adhesion_handler(self, scene, depsgraph):
         for force in self.forces:
             assoc_cell = force.associated_cell
