@@ -38,7 +38,7 @@ def calculate_volume(obj):
 
     :return: volume
     """
- 
+
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
     # evaluated cell (denoted as obj_eval here)
@@ -49,13 +49,14 @@ def calculate_volume(obj):
     mesh_from_eval = obj_eval.to_mesh()
     bm = bmesh.new()
     bm.from_mesh(mesh_from_eval)
-    volume = bm.calc_volume(signed = True)
+    volume = bm.calc_volume(signed=True)
     return volume
 
 
-def get_major_axis(obj): 
+def get_major_axis(obj):
     """
-    Calculates the major (long) axis of a mesh by calculating the first eigenvector of the vertices in the mesh. This can be used to choose the axis of division
+    Calculates the major (long) axis of a mesh by calculating the first eigenvector
+    of the vertices in the mesh. This can be used to choose the axis of division
 
     :param obj: the blender object (mesh)
 
@@ -87,7 +88,7 @@ def get_major_axis(obj):
     new_coords = np.vstack([x, y, z])
     # This is then used to find the covariance matrix of the coordinates
     cov_matrix = np.cov(new_coords)
-    # Per the PCA algorithm, we find the eigenalues and eigenvectors 
+    # Per the PCA algorithm, we find the eigenalues and eigenvectors
     # of the covariance matrix
     eigenvals, eigenvecs = np.linalg.eig(cov_matrix)
 
@@ -101,11 +102,14 @@ def get_major_axis(obj):
 
 def get_division_angles(axis):
     """
-    This function returns 2 angles associated with the division axis of a cell: The angle between the the division axis and the z-axis (phi, in spherical coordinates) and the angle projected on the xy-plan (theta)   
+    This function returns 2 angles associated with the division axis of a cell:
+    The angle between the the division axis and the z-axis (phi, in spherical coordinates)
+    and the angle projected on the xy-plan (theta)   
 
     :param axis: the normal (e.g. long axis) to the division plane expressed as (x, y, z)
 
-    :return: (phi, theta). phi is the angle between the division axis and the z-axis. theta is the angle projected on the xy plane
+    :return: (phi, theta). phi is the angle between the division axis and the z-axis.
+    theta is the angle projected on the xy plane
     """
   
     # We define the unit vector of z-axis 
@@ -131,14 +135,15 @@ def get_division_angles(axis):
     # The inverse cosin of this dot product is theta.
     theta = np.arccos(dot_product)
 
-    #prev_axis_norm = prev_axis/np.linalg.norm(prev_axis)
-    #dot_product = np.dot(division_axis, prev_axis_norm)
-    #div_angle_change = np.arccos(dot_product)
-    #return phi, theta, div_angle_change
+    # prev_axis_norm = prev_axis/np.linalg.norm(prev_axis)
+    # dot_product = np.dot(division_axis, prev_axis_norm)
+    # div_angle_change = np.arccos(dot_product)
+    # return phi, theta, div_angle_change
     print("GOT DIVISION ANGLES")
     return phi, theta
 
-def calculate_contact_area(obj): # obj = bpy.context.object
+
+def calculate_contact_area(obj):  # obj = bpy.context.object
     """
     Calculates the contact area of a cell using the angles between adjacent faces
 
@@ -146,7 +151,7 @@ def calculate_contact_area(obj): # obj = bpy.context.object
 
     :return: contact_area
     """
-    #TODO check docstring - I don't understand this function. Doesn't it
+    # TODO check docstring - I don't understand this function. Doesn't it
     # need two cells to calculate the contact area??? Contact area with what?
 
     # We need to get the cell as it is evaluated in the simulation.
@@ -171,7 +176,7 @@ def calculate_contact_area(obj): # obj = bpy.context.object
         # We find the angle between the two adjacent phases
         # of the edge. If the angle is less than 0.01, the
         # adjacent phases are either flat or concave, so this
-        # face is presumed to be in contact with another object 
+        # face is presumed to be in contact with another object
         # and is selected
         angle = edge.calc_face_angle_signed()
         if angle < 0.01:
@@ -181,15 +186,16 @@ def calculate_contact_area(obj): # obj = bpy.context.object
     # We loop through the selected faces and add the area of
     # each face to the contact area variable            
     for face in bm.faces:
-        if face.select == True:
+        if face.select:
             contact_area += face.calc_area()
 
     return contact_area
 
 
-def repair_hole(obj): 
+def repair_hole(obj):
     """
-    Adds a new face to the cell after division (splitting) of the mesh and regularizes the mesh so that the mesh is evenly covered with faces
+    Adds a new face to the cell after division (splitting) of the mesh and
+    regularizes the mesh so that the mesh is evenly covered with faces
 
     :param obj: the Blender mesh
 
@@ -198,16 +204,16 @@ def repair_hole(obj):
 
     # bpy.context.view_layer.objects.active = obj
     # Go into Blender Edit Mode
-    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.object.mode_set(mode='EDIT')
     # Select all the edges in the mesh
     bpy.ops.mesh.select_mode(type="EDGE") 
-    bpy.ops.mesh.select_all(action = 'SELECT')
+    bpy.ops.mesh.select_all(action='SELECT')
     # Add a new face (based on open eduges)
     bpy.ops.mesh.edge_face_add()
     # Deselct the edges
-    bpy.ops.mesh.select_all(action = 'DESELECT')
+    bpy.ops.mesh.select_all(action='DESELECT')
     # Return to Blender Object Mode
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
     # Remesh the cell with voxels of size 0.2
     bpy.ops.object.modifier_add(type='REMESH')
     bpy.context.object.modifiers["Remesh"].voxel_size = 0.2
@@ -216,7 +222,8 @@ def repair_hole(obj):
 
 def seperate_cell(obj):
     """
-    Splits one cell into two for cell division. Currently divides along the major axis but should allow a supplied axis
+    Splits one cell into two for cell division. Currently divides
+    along the major axis but should allow a supplied axis
 
     :param obj: the Blender mesh to divide in two
 
@@ -273,21 +280,21 @@ def seperate_cell(obj):
         if distance > -0.05:
             separation_indices.append(i)
     # We go back into edit mode and deselect all vertices
-    bpy.ops.object.mode_set(mode = 'EDIT') 
+    bpy.ops.object.mode_set(mode='EDIT') 
     bpy.ops.mesh.select_mode(type="VERT")
-    bpy.ops.mesh.select_all(action = 'DESELECT')
+    bpy.ops.mesh.select_all(action='DESELECT')
     # We return to object mode and loop through all the vertices.
     # If the vertex's index ix contained in the list of separation indices,
     # we select it for separation
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
     for index in separation_indices:
         obj.data.vertices[index].select = True
     # We go back into edit mode and separate the selected vertices
     # as a new daughter cell.
-    bpy.ops.object.mode_set(mode = 'EDIT') 
+    bpy.ops.object.mode_set(mode='EDIT') 
     bpy.ops.mesh.separate(type='SELECTED')
     # We return to object mode and select only the "original" mother cell
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
     bpy.data.objects[mother_name].select_set(False)
     bpy.data.objects[daughter_name].select_set(False)
     bpy.data.objects[mother_name].select_set(True)
@@ -296,11 +303,15 @@ def seperate_cell(obj):
 
 def select_translate_cell(obj, COM, division_axis):
     """
-    This function is called after dividing the mother cell. We compare 
-    the center of mass of the original mother cell to that of the corresponding daughter cell.
-    We calculate the signed distance between the daughter cell's center of mass and the original plane of division. 
-    If the distance is positive, the function returns 0 and this daughter cell will be translated later.
-    If the distance is negative, the function returns 1 and the other daughter cell will be translated later 
+    This function is called after dividing the mother cell.
+    We compare the center of mass of the original mother cell to
+    that of the corresponding daughter cell.
+    We calculate the signed distance between the daughter cell's
+    center of mass and the original plane of division. 
+    If the distance is positive, the function returns 0
+    and this daughter cell will be translated later.
+    If the distance is negative, the function returns 1
+    and the other daughter cell will be translated later 
 
     :param obj: the Blender mesh to divide in two
     :param COM: center of mass
@@ -353,7 +364,8 @@ def translate_cell(obj, axis):
 
 def divide(obj):  # This function needs to be removed
     """
-    Divides a cell in two along its major axis by splitting the parent mesh in two, translating one mesh, filling the two holes, and retriangulating the meshes
+    Divides a cell in two along its major axis by splitting the parent mesh in two,
+    translating one mesh, filling the two holes, and retriangulating the meshes
 
     :param obj: the Blender mesh to divide
 
@@ -446,9 +458,12 @@ def mitosis_handler(scene):
     :return: None
     """
     # TODO check docstring
-    # TODO should merge mitosis_handler and div_handler into one function. When to divide should be based on a cell property that allows for volume or time based trigger and allows for some noise in timing
+    # TODO should merge mitosis_handler and div_handler into one function.
+    # When to divide should be based on a cell property that allows for volume
+    # or time based trigger and allows for some noise in timing
 
-    # Find the number of cells by checking the length of the collection where they are kept in the Blender simulation
+    # Find the number of cells by checking the length of the collection
+    # where they are kept in the Blender simulation
     num_cells = len(bpy.data.collections["Cells"].objects)
     cell_tree = None
     # Loop through each cell
@@ -465,14 +480,16 @@ def mitosis_handler(scene):
 
 def div_handler(scene):
     """
-    Cell division handler is a function triggered every frame to check if all cells need to divide. Currently just based on hard coded timing
+    Cell division handler is a function triggered every frame to check if
+    all cells need to divide. Currently just based on hard coded timing
 
     :param scene: Blender syntax
 
     :return: None
     """
 
-    # Find the number of cells by checking the length of the collection where they are kept in the Blender simulation
+    # Find the number of cells by checking the length of the collection where
+    # they are kept in the Blender simulation
     num_cells = len(bpy.data.collections["Cells"].objects)
     # Get the current frame number
     current_frame = bpy.data.scenes[0].frame_current
@@ -684,7 +701,8 @@ class Cell():
 
 def add_material_cell(mat_name, r, g, b):
     """
-    Creates a soap bubble like Blender material for use in rendering cells. The material has a name that allows it to be shared for multiple cells
+    Creates a soap bubble like Blender material for use in rendering cells.
+    The material has a name that allows it to be shared for multiple cells
 
     :param mat_name: a text name for the material
     :param r: red value [0 to 1]
