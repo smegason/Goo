@@ -280,7 +280,7 @@ def seperate_cell(obj):
     # we add the vertex's index i to our list of separation indices
     for i in range(len(new_vert_coords)):
         distance = mathutils.geometry.distance_point_to_plane(new_vert_coords[i],
-                                                             COM, major_axis)
+                                                              COM, major_axis)
         if distance > -0.05:
             separation_indices.append(i)
     # We go back into edit mode and deselect all vertices
@@ -381,7 +381,7 @@ def divide(obj):  # This function needs to be removed
     :return: daughter1, daughter2
     """
     obj.select_set(True)
-    m_name, d_name, COM, major_axis=seperate_cell(obj)
+    m_name, d_name, COM, major_axis = seperate_cell(obj)
     print(major_axis)
     val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
     if val == 0:
@@ -397,7 +397,7 @@ def divide(obj):  # This function needs to be removed
     bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
     repair_hole(bpy.data.objects[m_name])
     bpy.context.object.name = m_name + "0"
-    daughter1 = Cell(m_name + "0", loc = bpy.context.object.location)
+    daughter1 = Cell(m_name + "0", loc=bpy.context.object.location)
     daughter1.data['mother'] = m_name
     daughter1.data['daughters'] = ['none', 'none']
     bpy.data.objects[m_name + "0"].select_set(False)
@@ -517,7 +517,8 @@ def div_handler(scene):
             bpy.data.objects[cell_name].select_set(True)
             bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
             # print(cell_name)
-            # Turn off the cloth physics for the cell. This minimizes unexpected mesh behavior post-division
+            # Turn off the cloth physics for the cell. This minimizes
+            # unexpected mesh behavior post-division
             turn_off_physics()
             # Divide the cell
             d1, d2 = divide(cell)
@@ -548,10 +549,13 @@ def make_mesh(cell):
 
     # Attempt to add a RoundCube mesh
     try:
-        bpy.ops.mesh.primitive_round_cube_add(change = False,
-            radius=cell.data['radius'], size= cell.data['size'],
-            arc_div= cell.data['arcdiv'], lin_div=0, div_type='CORNERS',
-            odd_axis_align=False, no_limit=False, location=cell.data['location'])
+        bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                              radius=cell.data['radius'],
+                                              size= cell.data['size'],
+                                              arc_div=cell.data['arcdiv'],
+                                              lin_div=0, div_type='CORNERS',
+                                              odd_axis_align=False, no_limit=False,
+                                              location=cell.data['location'])
     # If the user does not have this object enabled, throw exception
     except Exception:
         print ("Exception="+sys.exc_info())
