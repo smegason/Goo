@@ -551,15 +551,17 @@ def make_mesh(cell):
     try:
         bpy.ops.mesh.primitive_round_cube_add(change=False,
                                               radius=cell.data['radius'],
-                                              size= cell.data['size'],
+                                              size=cell.data['size'],
                                               arc_div=cell.data['arcdiv'],
                                               lin_div=0, div_type='CORNERS',
                                               odd_axis_align=False, no_limit=False,
                                               location=cell.data['location'])
     # If the user does not have this object enabled, throw exception
     except Exception:
-        print ("Exception="+sys.exc_info())
-        print("To enable RoundCube creation for Cells you must go to Edit->Preferences->AddOns->Add Mesh:ExtraObjects and check the box to enable it")
+        print ("Exception=" + sys.exc_info())
+        print("To enable RoundCube creation for Cells you must go \
+               to Edit->Preferences->AddOns->Add Mesh:ExtraObjects\
+               and check the box to enable it")
 
     # Get the cell name
     bpy.context.object.name = cell.data['name']
@@ -568,7 +570,7 @@ def make_mesh(cell):
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
 
     # Add a subdivision surface for a smoother shape
-    bpy.ops.object.modifier_add(type = 'SUBSURF')
+    bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
 
 
@@ -582,15 +584,21 @@ def make_cell(cell):
     """
     # TODO make_mesh and make_cell are redundant. Need to merge.
 
-    #print ("make cell")
- 
-    # Add a round_cube mesh 
-    bpy.ops.mesh.primitive_round_cube_add(change=False, radius=cell.data['radius'],
-        size=cell.data['size'], arc_div= cell.data['arcdiv'],
-        lin_div=0, div_type='CORNERS', odd_axis_align=False,
-        no_limit=False, location = cell.data['location'])
+    # print ("make cell")
+
+    # Add a round_cube mesh
+    bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                          radius=cell.data['radius'],
+                                          size=cell.data['size'],
+                                          arc_div= cell.data['arcdiv'],
+                                          lin_div=0,
+                                          div_type='CORNERS',
+                                          odd_axis_align=False,
+                                          no_limit=False,
+                                          location=cell.data['location'])
 
     # Give the Blender object the cell's name
+    obj = bpy.context.object
     bpy.context.object.name = cell.data['name']
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
 
@@ -608,7 +616,7 @@ def make_cell(cell):
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
     bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
-    bpy.context.object.modifiers["Cloth"].settings.air_damping = cell.data['air_damping']
+    obj.modifiers["Cloth"].settings.air_damping = cell.data['air_damping']
     bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
@@ -623,7 +631,7 @@ def make_cell(cell):
     bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
     bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
-    bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0 
+    bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
 
     # add Collision modifier for physics
     bpy.ops.object.modifier_add(type='COLLISION')
