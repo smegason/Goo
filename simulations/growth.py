@@ -43,7 +43,7 @@ def growth_handler(scene, depsgraph):   # WIP
         # bpy.ops.object.modifier_apply(modifier="CLOTH")
 
         print(cell_obj.name, " Volume:", Goo.calculate_volume(cell_obj),
-            " Shrinking Factor:", cell_obj.modifiers["Cloth"].settings.shrink_min)
+              " Shrinking Factor:", cell_obj.modifiers["Cloth"].settings.shrink_min)
 
         # constantly changing shrink_min
         cell_obj.modifiers["Cloth"].settings.shrink_min -= 0.01

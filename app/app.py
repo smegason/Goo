@@ -1,12 +1,14 @@
 # makes a GUI for defining cells
 
+import sys
+
 # from cgitb import handler
-from tkinter import *
+from tkinter import tkinter
 from tkinter import ttk
 
 # from cv2 import add
 # from sqlalchemy import ForeignKeyConstraint
-# from add_cell_controller import add_cell_controller, cell
+from add_cell_controller import add_cell_controller, cell
 
 root = Tk()
 # root.withdraw()
@@ -14,6 +16,7 @@ root = Tk()
 # have all the cells call divide and check their size
 
 addCellController = add_cell_controller()
+
 
 class Lotfi(Entry):
     def __init__(self, master=None, **kwargs):
@@ -24,7 +27,7 @@ class Lotfi(Entry):
         self.get, self.set = self.var.get, self.var.set
 
     def check(self, *args):
-        #if self.get().isdecimal(): 
+        # if self.get().isdecimal(): 
         try:
             float(self.get())
             # the current value is only digits; allow this
@@ -40,20 +43,20 @@ class Intry(Entry):
         self.var.trace('w', self.check)
         self.get, self.set = self.var.get, self.var.set
 
-
     def check(self, *args):
-        #if self.get().isdecimal(): 
+        # if self.get().isdecimal(): 
         try:
             int(self.get())
             # the current value is only digits; allow this
             self.old_value = self.get()
-        except:
-            # there's non-digit characters in the input; reject this 
+        except Exception:
+            # there's non-digit characters in the input; reject this
+            print("Exception=", sys.exc_info())
             self.set(self.old_value)
 
 
 root.title("Goo")
-#root.geometry("500x600+10+20")
+# root.geometry("500x600+10+20")
 root.resizable(True,True)
 
 main_width = 700
@@ -70,7 +73,7 @@ cell_adhesion_section = Frame(root, width=main_width, height=section_height, bg=
 render_section = Frame(root, width=main_width, height=section_height, bg=sectionBackground,pady=3, highlightbackground=borderColor, highlightthickness=borderThickness)
 generate_script_section = Frame(root, width=main_width, height=section_height, bg=sectionBackground,pady=3, highlightbackground=borderColor, highlightthickness=borderThickness)
 
-#Place main sections of the app
+# Place main sections of the app
 root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
@@ -81,7 +84,7 @@ cell_adhesion_section.pack(side=TOP, pady=3)
 render_section.pack(side=TOP, pady=3)
 generate_script_section.pack(side=TOP, pady=3)
 
-#Create widgets for "Initial Cells" Section
+# Create widgets for "Initial Cells" Section
 padx = 3
 
 Label(add_cell_section,text="Initial Cells").grid(column=0, row=0, padx=(5, 632), columnspan=9)
@@ -106,7 +109,7 @@ scrollbar = ttk.Scrollbar(
 cells_list['yscrollcommand'] = scrollbar.set
 remove_cell_button = Button(add_cell_section, text="Remove Cell")
 
-#PLace widgets for "Initial Cells" Section
+# PLace widgets for "Initial Cells" Section
 cell_type_dropdown.grid(column=1, row=1, padx=padx)
 x_lable.grid(row=1, column=2, padx=(padx,0))
 x_input.grid(row=1, column=3, padx=(0,padx))
@@ -122,66 +125,62 @@ cells_list.grid(row=2, column=2, columnspan=6)
 scrollbar.grid(row=2, column=6)
 remove_cell_button.grid(row=2, column=8, columnspan=3)
 
-#Create widgets for "Cell Division" Section
+# Create widgets for "Cell Division" Section
 Label(cell_division_section,text="Cell Division").grid(column=0, row=0,padx=(5, 762), columnspan=4)
 division_labels = []
 division_sliders = []
 
-#Place widgets for "Cell Division" Section
+# Place widgets for "Cell Division" Section
 
-#Create widgets for "Cell Growth" Section
+# Create widgets for "Cell Growth" Section
 Label(growth_rate_section,text="Cell Growth").grid(column=0, row=0, padx=(5, 766), columnspan=4)
 growth_labels = []
 growth_sliders = []
 
-#PLace widgets for "Cell Growth" Section
+# PLace widgets for "Cell Growth" Section
 
-
-#Create widgets for "Cell Adhesion" Section
+# Create widgets for "Cell Adhesion" Section
 Label(cell_adhesion_section,text="Cell Adhesion").grid(column=0, row=0, padx=(5,754), columnspan=4)
 adhesion_labels = []
 adhesion_sliders = []
 adhesion_dropdowns = []
 adhesion_slider_values = []
 
-#Place widgets for "Cell Adhesion" Section
+# Place widgets for "Cell Adhesion" Section
 
-#Create widgets for "Render" Section
+# Create widgets for "Render" Section
 checkbox_var = IntVar()
 checkbox = Checkbutton(render_section,text="Rendering", variable=checkbox_var)
-#Label(render_section,text="Rendering").grid(column=1,row=0,padx=(5,776),columnspan=5)
+# Label(render_section,text="Rendering").grid(column=1,row=0,padx=(5,776),columnspan=5)
 FilePathLabel = Label(render_section, text="FilePath:")
 FilePathInput = Entry(render_section, width=30)
 NumFramesLabel = Label(render_section, text="Number of Frames:")
 NumFrames = Intry(render_section, width=5)
 
-#Place widgets for "Render" Section
+# Place widgets for "Render" Section
 checkbox.grid(column=0, row=0,padx=(5, 758), columnspan=5)
 FilePathLabel.grid(row=1, column=1)
 FilePathInput.grid(row=1, column=2)
 NumFramesLabel.grid(row=1, column=3)
 NumFrames.grid(row=1, column=4)
 
-#Create widgets for "Generate Script" Section
+# Create widgets for "Generate Script" Section
 Label(generate_script_section,text="Generation").grid(column=0,row=0,padx=(5, 770), columnspan=4)
 gen_script_button = Button(generate_script_section, text="Generate Script")
 save_script_button = Button(generate_script_section, text="Copy Script")
 run_script_button = Button(generate_script_section, text="Run Script")
 
-#Place widgets for "Generate Script" Section
+# Place widgets for "Generate Script" Section
 gen_script_button.grid(row=1, column=1, padx=65)
 save_script_button.grid(row=1, column=2, padx=65)
 run_script_button.grid(row=1, column=3, padx=65)
 
 class Script:
-
-
     def __init__(self):
         self.script = ""
         self.cells = []
         self.imports = ["from Goo import Goo","import importlib","importlib.reload(Goo)","import bpy"]
         return
-
 
     def generateScript(self):
         self.script = ""
@@ -237,7 +236,7 @@ class Script:
         if checkbox_var.get() == 1:
             self.script += "\n# Render animation"
             self.script += "scene = bpy.context.scene\n"
-            #self.script += "fp = '/Users/michaelmitschjr/Desktop/Python/data/'\n"
+            # self.script += "fp = '/Users/michaelmitschjr/Desktop/Python/data/'\n"
             self.script += "fp = " + FilePathInput.get() + "\n"
             self.script += "scene.render.image_settings.file_format = 'PNG'\n"
             self.script += "Goo.render(fp,scene,1,60)\n"
@@ -249,7 +248,7 @@ class Script:
     def saveScript(self):
         root.clipboard_clear()
         root.clipboard_append(self.script)
-        root.update() # now it stays on the clipboard after the window is closed
+        root.update()  # now it stays on the clipboard after the window is closed
         return
 
 
@@ -337,7 +336,7 @@ def removeCell(event):
         adhesion_sliders.remove(adhesion_sliders[row])
         adhesion_dropdowns[row].destroy()
         adhesion_dropdowns.remove(adhesion_dropdowns[row])
-        #adhesion_slider_values.remove(adhesion_slider_values[row])
+        # adhesion_slider_values.remove(adhesion_slider_values[row])
         update_adhesion_dropdown()
     return
 
