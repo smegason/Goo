@@ -558,14 +558,14 @@ def make_mesh(cell):
                                               location=cell.data['location'])
     # If the user does not have this object enabled, throw exception
     except Exception:
-        print ("Exception=" + sys.exc_info())
+        print("Exception=" + sys.exc_info())
         print("To enable RoundCube creation for Cells you must go \
                to Edit->Preferences->AddOns->Add Mesh:ExtraObjects\
                and check the box to enable it")
 
     # Get the cell name
     bpy.context.object.name = cell.data['name']
- 
+
     # Name the Blender mesh the cell's name
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
 
@@ -590,7 +590,7 @@ def make_cell(cell):
     bpy.ops.mesh.primitive_round_cube_add(change=False,
                                           radius=cell.data['radius'],
                                           size=cell.data['size'],
-                                          arc_div= cell.data['arcdiv'],
+                                          arc_div=cell.data['arcdiv'],
                                           lin_div=0,
                                           div_type='CORNERS',
                                           odd_axis_align=False,
@@ -607,11 +607,11 @@ def make_cell(cell):
     bpy.ops.object.shade_smooth()
 
     # Add subsurface modifier to make smoother
-    bpy.ops.object.modifier_add(type = 'SUBSURF')
+    bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
 
     # Add cloth settings for physics
-    bpy.ops.object.modifier_add(type = 'CLOTH')
+    bpy.ops.object.modifier_add(type='CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
@@ -648,14 +648,14 @@ def make_cell(cell):
     # bpy.context.object.name = cell.name
 
     # add material to cell based on name of material
-    if (bpy.data.materials.get(cell.data['material'])):
-        material = bpy.data.materials.get(cell.data['material'],
-        bpy.context.active_object.data.materials.append(material))
+    material = bpy.data.materials.get(cell.data['material'])
+    if (material):
+        bpy.context.active_object.data.materials.append(material)
     else:
-        print ("No material ", cell.data['material'])
+        print("No material ", cell.data['material'])
 
 
-# Defines the Cell class      
+# Defines the Cell class
 class Cell():
     def __init__(self, name_string, loc, material=""):
         # The initialization function sets a cell data dictionary
@@ -692,7 +692,7 @@ class Cell():
         # The volume and mass are calculated from values in the data dictionary
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
         self.data['mass'] = self.data['density']*self.data['init_volume']
- 
+
     # Member function for obtaining the Blender object corresponding to the cell
     def get_blender_object(self):
         obj = bpy.data.objects[self.data["name"]]
@@ -700,7 +700,7 @@ class Cell():
 
     # Member function to divide
     def divide(self):
-        # TODO this is redundant with the stand alone divide function 
+        # TODO this is redundant with the stand alone divide function
         obj = self.get_blender_object()
         obj.select_set(True)
         m_name, d_name, COM, major_axis = seperate_cell(obj)
@@ -719,7 +719,7 @@ class Cell():
         bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
         repair_hole(bpy.data.objects[m_name])
         bpy.context.object.name = m_name + "0"
-        daughter1 = Cell(m_name + "0", loc = bpy.context.object.location)
+        daughter1 = Cell(m_name + "0", loc=bpy.context.object.location)
         daughter1.data['mother'] = m_name
         daughter1.data['daughters'] = ['none', 'none']
         bpy.data.objects[m_name + "0"].select_set(False)
@@ -728,7 +728,7 @@ class Cell():
         repair_hole(bpy.data.objects[d_name])
         bpy.context.object.name = m_name + "1"
         bpy.data.objects[m_name + "1"].select_set(False)
-        daughter2 = Cell(bpy.context.object.name, loc = bpy.context.object.location)
+        daughter2 = Cell(bpy.context.object.name, loc=bpy.context.object.location)
         daughter2.data['mother'] = m_name
         daughter2.data['daughters'] = ['none', 'none']
         return daughter1, daughter2
@@ -746,7 +746,7 @@ def add_material_cell(mat_name, r, g, b):
 
     :return: None
     """
-    print ("add cell material " + mat_name)
+    print("add cell material " + mat_name)
 
     # check whether the material already exists
     if bpy.data.materials.get(mat_name):
@@ -754,8 +754,8 @@ def add_material_cell(mat_name, r, g, b):
     else:
         # create the material
         mat = bpy.data.materials.new(mat_name)
-        
-    mat.diffuse_color = (1.0, 1.0, 1.0, 1.0) # viewport color
+
+    mat.diffuse_color = (1.0, 1.0, 1.0, 1.0)  # viewport color
     mat.use_nodes = True
     mat.blend_method = 'BLEND'
 
@@ -768,8 +768,8 @@ def add_material_cell(mat_name, r, g, b):
 
     # create principled node for main color
     node_main = nodes.new(type='ShaderNodeBsdfPrincipled')
-    node_main.location = -200,100
-    node_main.inputs['Base Color'].default_value = (r,g,b,1)
+    node_main.location = -200, 100
+    node_main.inputs['Base Color'].default_value = (r, g, b, 1)
     node_main.inputs['Metallic'].default_value = 0.136
     node_main.inputs['Specular'].default_value = 0.500
     node_main.inputs['Specular Tint'].default_value = 0.555
@@ -792,7 +792,7 @@ def add_material_cell(mat_name, r, g, b):
     node_noise.inputs['Roughness'].default_value = 0.500
     node_noise.inputs['Distortion'].default_value = 3.0
 
-    # create HSV 
+    # create HSV
     node_HSV = nodes.new(type="ShaderNodeHueSaturation")
     node_HSV.inputs['Hue'].default_value = 0.800
     node_HSV.inputs['Saturation'].default_value = 2.00
@@ -801,8 +801,8 @@ def add_material_cell(mat_name, r, g, b):
 
     # create second principled node for random color variation
     node_random = nodes.new(type='ShaderNodeBsdfPrincipled')
-    node_random.location = -200,-100
-    node_random.inputs['Base Color'].default_value = (r,g,b,1) #Hue Saturation Value
+    node_random.location = -200, -100
+    node_random.inputs['Base Color'].default_value = (r, g, b, 1)  # Hue Saturation Value
     node_random.inputs['Metallic'].default_value = 0.0
     node_random.inputs['Specular'].default_value = 0.500
     node_random.inputs['Specular Tint'].default_value = 0.0
@@ -820,28 +820,29 @@ def add_material_cell(mat_name, r, g, b):
 
     # create mix shader node
     node_mix = nodes.new(type='ShaderNodeMixShader')
-    node_mix.location = 0,0
+    node_mix.location = 0, 0
     node_mix.inputs['Fac'].default_value = 0.079
 
     # create output node
-    node_output = nodes.new(type='ShaderNodeOutputMaterial')   
-    node_output.location = 200,0
+    node_output = nodes.new(type='ShaderNodeOutputMaterial')
+    node_output.location = 200, 0
 
     # link nodes
-    links = mat.node_tree.links    
-    link_noise_HSV = links.new(node_noise.outputs[1], node_HSV.inputs[4])
-    link_HSV_random = links.new(node_HSV.outputs[0], node_random.inputs[0])
-    link_main_mix = links.new(node_main.outputs[0], node_mix.inputs[1])
-    link_random_mix = links.new(node_random.outputs[0], node_mix.inputs[2])
-    link_mix_out = links.new(node_mix.outputs[0], node_output.inputs[0])
+    links = mat.node_tree.links  
+    
+    links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV
+    links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random
+    links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix
+    links.new(node_random.outputs[0], node_mix.inputs[2])  # link_random_mix
+    links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out
 
 
 class Force():
     """
     A class for representing forces between cells in Goo. Used for cell adhesion
- 
+
     :param force_name: Name of force
-    :param cell_name: Name of cell  
+    :param cell_name: Name of cell
     :param strength: Strength of force
     """
     def __init__(self, force_name, cell_name, strength):
@@ -849,6 +850,7 @@ class Force():
         self.strength = strength
         self.associated_cell = cell_name
         self.falloff_power = 0
+
     # Member function that gets the Blender object corresponding to a Goo Force object
     def get_blender_force(self):
         obj = bpy.data.objects[self.name]
@@ -864,9 +866,11 @@ def make_force(force):
     :return: None
     """
     # Add a force object
-    bpy.ops.object.effector_add(type='FORCE', enter_editmode=False,
-        align='WORLD', location=bpy.data.objects[force.associated_cell].location,
-        scale=(1, 1, 1))
+    bpy.ops.object.effector_add(type='FORCE',
+                                enter_editmode=False,
+                                align='WORLD',
+                                location=bpy.data.objects[force.associated_cell].location,
+                                scale=(1, 1, 1))
 
     # Add force parameters
     bpy.context.object.field.strength = force.strength
