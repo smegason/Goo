@@ -637,7 +637,7 @@ def make_cell(cell):
 
     # add material to cell based on name of material
     if (bpy.data.materials.get(cell.data['material'])):
-        material = bpy.data.materials.get(cell.data['material']
+        material = bpy.data.materials.get(cell.data['material'],
         bpy.context.active_object.data.materials.append(material))
     else:
         print ("No material ", cell.data['material'])
