@@ -103,15 +103,16 @@ def get_major_axis(obj):
 def get_division_angles(axis):
     """
     This function returns 2 angles associated with the division axis of a cell:
-    The angle between the the division axis and the z-axis (phi, in spherical coordinates)
-    and the angle projected on the xy-plan (theta)   
+    The angle between the the division axis and the z-axis
+    (phi, in spherical coordinates) and the angle projected on the xy-plan (theta)
 
-    :param axis: the normal (e.g. long axis) to the division plane expressed as (x, y, z)
+    :param axis: the normal (e.g. long axis) to the division plane
+    expressed as (x, y, z)
 
     :return: (phi, theta). phi is the angle between the division axis and the z-axis.
     theta is the angle projected on the xy plane
     """
-  
+
     # We define the unit vector of z-axis 
     z_axis = np.array((0, 0, 1))
     # We find the unit vector of the division axis
@@ -184,7 +185,7 @@ def calculate_contact_area(obj):  # obj = bpy.context.object
                 face.select = True
 
     # We loop through the selected faces and add the area of
-    # each face to the contact area variable            
+    # each face to the contact area variable
     for face in bm.faces:
         if face.select:
             contact_area += face.calc_area()
@@ -206,7 +207,7 @@ def repair_hole(obj):
     # Go into Blender Edit Mode
     bpy.ops.object.mode_set(mode='EDIT')
     # Select all the edges in the mesh
-    bpy.ops.mesh.select_mode(type="EDGE") 
+    bpy.ops.mesh.select_mode(type="EDGE")
     bpy.ops.mesh.select_all(action='SELECT')
     # Add a new face (based on open eduges)
     bpy.ops.mesh.edge_face_add()
@@ -229,7 +230,8 @@ def seperate_cell(obj):
 
     :return: mother_name, daughter_name, COM, major_axis
     """
-    # TODO allow division along a supplied axis. If none supplied then divide along major axis
+    # TODO allow division along a supplied axis. 
+    # If none supplied then divide along major axis
 
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
@@ -241,7 +243,7 @@ def seperate_cell(obj):
     mother_name = obj.name
     # By Blender convention, duplicates of existing objects are given
     # the same name as the original object, but with ".001" added to the end
-    # We use the naming convention to tentatively set the name of one 
+    # We use the naming convention to tentatively set the name of one
     # daughter cell
     daughter_name = mother_name + ".001"
     # Get the cell's center of mass
@@ -257,9 +259,9 @@ def seperate_cell(obj):
     # print(mother_name + " PHI: " + str(phi) + ", THETA: " + str(theta))
     # Bisect the cell along the plane specified by the center of mass (point)
     # and major axis (normal vectorr)
-    bpy.ops.mesh.bisect(plane_co = COM, plane_no = major_axis, use_fill=False, flip=False)
+    bpy.ops.mesh.bisect(plane_co=COM, plane_no=major_axis, use_fill=False, flip=False)
     # Go into object mode
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
     # Now we separate the split mesh into two separate objects.
     # First, obtain the vertex coordinates of the bisected mother cell.
     obj = bpy.data.objects[mother_name]
@@ -273,14 +275,15 @@ def seperate_cell(obj):
     separation_indices = []
     # We loop through each vertex and calculate the signed distance between the vertex
     # and the division plane (which is specified by the center of mass and major axis).
-    # If the distance is greater than -0.05 (the vertex is on a specific half of the cell),
+    # If the distance is greater than -0.05 (the vertex is on a specific
+    # half of the cell),
     # we add the vertex's index i to our list of separation indices
     for i in range(len(new_vert_coords)):
         distance = mathutils.geometry.distance_point_to_plane(new_vert_coords[i], COM, major_axis)
         if distance > -0.05:
             separation_indices.append(i)
     # We go back into edit mode and deselect all vertices
-    bpy.ops.object.mode_set(mode='EDIT') 
+    bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action='DESELECT')
     # We return to object mode and loop through all the vertices.
@@ -291,7 +294,7 @@ def seperate_cell(obj):
         obj.data.vertices[index].select = True
     # We go back into edit mode and separate the selected vertices
     # as a new daughter cell.
-    bpy.ops.object.mode_set(mode='EDIT') 
+    bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.separate(type='SELECTED')
     # We return to object mode and select only the "original" mother cell
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -307,30 +310,34 @@ def select_translate_cell(obj, COM, division_axis):
     We compare the center of mass of the original mother cell to
     that of the corresponding daughter cell.
     We calculate the signed distance between the daughter cell's
-    center of mass and the original plane of division. 
+    center of mass and the original plane of division.
     If the distance is positive, the function returns 0
     and this daughter cell will be translated later.
     If the distance is negative, the function returns 1
-    and the other daughter cell will be translated later 
+    and the other daughter cell will be translated later
 
     :param obj: the Blender mesh to divide in two
     :param COM: center of mass
-    :param division_axis: division axis of cell (cleavage plane is perpendicular to division axis)
+    :param division_axis: division axis of cell (cleavage plane is
+    perpendicular to division axis)
 
-    :return: 0 if the daughter cell is a positive distance away from the plane of division and 1 otherwise
+    :return: 0 if the daughter cell is a positive distance away from
+    the plane of division and 1 otherwise
     """
 
     # Get the mother cell's center of mass
     com = np.copy(COM)
     # print("OLD COM: " + str(COM))
-    # Set the daughter cell's location to its center of mass, and set this value as the new center of mass 
+    # Set the daughter cell's location to its center of mass,
+    # and set this value as the new center of mass
     # (denoted new_COM)
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     new_COM = obj.location
     # print("NEW COM: " + str(new_COM))
     # print(com)
 
-    # Calculate the signed distance between the new center of mass and the plane of division
+    # Calculate the signed distance between the new center of mass
+    # and the plane of division
     distance = mathutils.geometry.distance_point_to_plane(new_COM, com, division_axis)
 
     # If the signed distance is greater than 0, return 0
