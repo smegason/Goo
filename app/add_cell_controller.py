@@ -8,7 +8,8 @@ class add_cell_controller:
         self.active_types = []
         self.active_cells = []
         return
-    def remove_cell(self,index):
+
+    def remove_cell(self, index):
         t = self.active_cells[index].type
         self.active_cells.remove(self.active_cells[index])
         found = False
@@ -40,4 +41,3 @@ class cell:
         self.type = type
         self.name = type + " " + str(location)
         return
-    
