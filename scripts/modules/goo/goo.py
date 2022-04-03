@@ -975,7 +975,7 @@ def add_world_HDRI():
     # only updates windows in current tab, e.g. Sxripting but not Layout
     for area in bpy.context.screen.areas:
         if area.type == 'VIEW_3D':
-            print ("update view 3d to rendered")
+            print("update view 3d to rendered")
             space = area.spaces.active
             if space.type == 'VIEW_3D':
                 space.shading.type = 'RENDERED'
@@ -1071,7 +1071,7 @@ class handler_class:
         return
 
     # Member function to set growth rate for a cell type
-    def set_growth_rate(self,cell_type, rate):
+    def set_growth_rate(self, cell_type, rate):
         self.growth_rates[cell_type] = rate
         return
 
@@ -1091,8 +1091,11 @@ class handler_class:
                     bpy.data.collections[cell_type+"_forces"]
                 for affected_type in self.cell_types:
                     if self.adhesion_forces[cell_type][affected_type] != 0:
-                        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[affected_type+"_forces"]
-                        f = Force(cell_name+"_to_"+affected_type, cell_name,self.adhesion_forces[cell_type][affected_type])
+                        affected = bpy.context.view_layer.layer_collection.children[affected_type+"_forces"]
+                        bpy.context.view_layer.active_layer_collection = affected
+                        f = Force(cell_name+"_to_"+affected_type,
+                                  cell_name,
+                                  self.adhesion_forces[cell_type][affected_type])
                         make_force(f)
                         bpy.context.view_layer.active_layer_collection = master_collection
                         self.forces.append(f)
