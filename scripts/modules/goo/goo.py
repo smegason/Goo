@@ -10,16 +10,6 @@ import sys
 global_test = "YO"
 
 
-def main():
-    """
-    main for goo
-
-    :return: None
-    """
-
-    print("This is goo main")
-
-
 def sample_func():  # for pytest test
     """
     Test function to debug pytest CI
