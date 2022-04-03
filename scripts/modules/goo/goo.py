@@ -960,7 +960,7 @@ def add_world_HDRI():
     node_environment.location = -300, 0
 
     # Add Output node
-    node_output = tree_nodes.new(type='ShaderNodeOutputWorld')   
+    node_output = tree_nodes.new(type='ShaderNodeOutputWorld')
     node_output.location = 200, 0
 
     # Link all nodes
@@ -1091,13 +1091,14 @@ class handler_class:
                     bpy.data.collections[cell_type+"_forces"]
                 for affected_type in self.cell_types:
                     if self.adhesion_forces[cell_type][affected_type] != 0:
-                        affected = bpy.context.view_layer.layer_collection.children[affected_type+"_forces"]
+                        vl = bpy.context.view_layer
+                        affected = vl.layer_collection.children[affected_type+"_forces"]
                         bpy.context.view_layer.active_layer_collection = affected
                         f = Force(cell_name+"_to_"+affected_type,
                                   cell_name,
                                   self.adhesion_forces[cell_type][affected_type])
                         make_force(f)
-                        bpy.context.view_layer.active_layer_collection = master_collection
+                        vl.active_layer_collection = master_collection
                         self.forces.append(f)
 
     # Member function to set the division handler for cells
@@ -1120,8 +1121,8 @@ class handler_class:
                     # Get the corresponding Blender object
                     cell = bpy.data.objects[cell_name]
 
-                    #get scale before division
-                    scale = cell.modifiers["Cloth"].settings.shrink_min
+                    # get scale before division
+                    # scale = cell.modifiers["Cloth"].settings.shrink_min
 
                     # Select the Blender object and make it the active object
                     bpy.data.objects[cell_name].select_set(True)
@@ -1136,9 +1137,10 @@ class handler_class:
                     d1, d2 = divide(cell)
 
                     # Select the first daughter cell only
+                    vl = bpy.context.view_layer
                     bpy.data.objects[d1.data["name"]].select_set(True)
                     bpy.data.objects[d2.data["name"]].select_set(False)
-                    bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
+                    vl.objects.active = bpy.data.objects[d1.data["name"]]
 
                     # Turn on the physics for this daughter cell
                     turn_on_physics()
@@ -1146,7 +1148,7 @@ class handler_class:
                     # Select the second daughter cell only
                     bpy.data.objects[d1.data["name"]].select_set(False)
                     bpy.data.objects[d2.data["name"]].select_set(True)
-                    bpy.context.view_layer.objects.active = bpy.data.objects[d2.data["name"]]
+                    vl.objects.active = bpy.data.objects[d2.data["name"]]
 
                     # Turn on the physics for this daughter cell
                     turn_on_physics()
