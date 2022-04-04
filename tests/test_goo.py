@@ -30,7 +30,7 @@ def test_calculate_volume():
     volume = goo.calculate_volume(cell.get_blender_object())
     print("Volume of cell=")
     print(volume)
-    delta = math.abs(4/3 * math.pi * 1**3 - volume)
+    delta = abs(4/3 * math.pi * 1**3 - volume)
     print("Delta=")
     print(delta)
 
@@ -54,7 +54,7 @@ def test_get_major_axis():
     print(axis[2])
 
     # calculate difference
-    delta = math.abs(-1 - axis[0])
+    delta = abs(-1 - axis[0])
     print("Delta=")
     print(delta)
 
