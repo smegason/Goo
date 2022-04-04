@@ -9,12 +9,15 @@ spec = importlib.util.spec_from_file_location("goo", "scripts/modules/goo/goo.py
 goo = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(goo)
 
+# show Blender version
+print("*** Testing Goo ***")
+version = bpy.app.version_string
+print("Blender version=" + version)
+
 
 def test_sample_func():
     print("test sample function------------")
 
-    version = bpy.app.version_string
-    print("Blender version=" + version)
     ret = goo.sample_func()
     print("Goo ret=" + ret)
     assert True
@@ -27,4 +30,11 @@ def test_calculate_volume():
     # assert volume = ??
     print("test calculate volume")
 
+    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
+    goo.make_cell(cell)
+
+    volume = goo.calculate_volume(cell.get_blender_object())
+
+    print("Volume of cell=" + volume)
+    
     assert True

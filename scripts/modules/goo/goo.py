@@ -7,7 +7,8 @@ import mathutils
 import numpy as np
 import sys
 
-global_test = "YO"
+# global variables
+cell_collection = {}
 
 
 def sample_func():  # for pytest test
@@ -18,7 +19,7 @@ def sample_func():  # for pytest test
     """
     print("Sample func in scripts/modules")
 
-    return "Howdy"
+    return "sample_func working"
 
 
 def calculate_volume(obj):
@@ -493,6 +494,8 @@ def div_handler(scene):
 
     # Find the number of cells by checking the length of the collection where
     # they are kept in the Blender simulation
+    # TODO is this the right way to iterate over cells?
+    # Uses cell_type instead of "Cells" elsewhere
     num_cells = len(bpy.data.collections["Cells"].objects)
     # Get the current frame number
     current_frame = bpy.data.scenes[0].frame_current
