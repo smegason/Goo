@@ -8,18 +8,7 @@ import numpy as np
 import sys
 
 # global variables
-cell_collection = {}
-
-
-def sample_func():  # for pytest test
-    """
-    Test function to debug pytest CI
-
-    :return: Howdy
-    """
-    print("Sample func in scripts/modules")
-
-    return "sample_func working"
+cell_collection = {}  # is this needed or just use Blender collections?
 
 
 def calculate_volume(obj):
@@ -138,7 +127,8 @@ def get_division_angles(axis):
 
 def calculate_contact_area(obj):  # obj = bpy.context.object
     """
-    Calculates the contact area of a cell using the angles between adjacent faces
+    Calculates the contact area of a cell with all surrounding objects
+    by looking for flat areas of the mesh. Not always a good assumption
 
     :param obj: the Blender mesh ??
 
@@ -166,9 +156,9 @@ def calculate_contact_area(obj):  # obj = bpy.context.object
 
     # We loop over all the edges in the mesh
     for edge in bm.edges:
-        # We find the angle between the two adjacent phases
+        # We find the angle between the two adjacent faces
         # of the edge. If the angle is less than 0.01, the
-        # adjacent phases are either flat or concave, so this
+        # adjacent faces are either flat or concave, so this
         # face is presumed to be in contact with another object
         # and is selected
         angle = edge.calc_face_angle_signed()
@@ -649,6 +639,18 @@ def make_cell(cell):
         print("No material ", cell.data['material'])
 
 
+def delete_cell(cell):
+    """
+    Deletes a Goo cell's Blender object
+
+    :param cell: the Goo cell to delete
+
+    :return: None
+    """
+    obj = cell.get_blender_object()
+    bpy.data.objects.remove(obj, do_unlink=True)
+
+
 # Defines the Cell class
 class Cell():
     def __init__(self, name_string, loc, material=""):
@@ -1026,8 +1028,8 @@ def make_force_collections(master_collection, cell_types):
 class handler_class:
     # TODO document this class
     """
-    A class for creating different types of handlers that trigger actions
-    on Goo cells when certain criteria are met
+    A class for creating different types of handlers that trigger
+    actions on Goo cells when certain criteria are met
     """
 
     # The initialization function specifies available cell types and associated

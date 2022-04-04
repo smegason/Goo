@@ -34,6 +34,9 @@ def test_calculate_volume():
     print("Delta=")
     print(delta)
 
+    # clean up
+    goo.delete_cell(cell)
+
     # volume should be 4/3 pi 1^3 = 4.19 but runs low (?)
     assert(delta < 0.2)
 
@@ -57,6 +60,9 @@ def test_get_major_axis():
     delta = abs(-1 - axis[0])
     print("Delta=")
     print(delta)
+
+    # clean up
+    goo.delete_cell(cell)
 
     # axis should align with x-axis
     assert(delta < 0.1)
@@ -87,5 +93,22 @@ def test_get_division_angles():
     print("Delta2=")
     print(delta2)
 
+    # clean up
+    goo.delete_cell(cell)
+
     # axis should align with x-axis
     assert(delta1 < 0.1 and delta2 < 0.1)
+
+
+def test_make_cell():
+    print("\n")
+
+    # make cell
+    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
+    cell.data['size'] = (2, 1, 1)
+    goo.make_cell(cell)
+
+    # clean up
+    goo.delete_cell(cell)
+
+    assert(True)
