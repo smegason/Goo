@@ -38,6 +38,7 @@ def test_calculate_volume():
 
     volume = goo.calculate_volume(cell.get_blender_object())
 
-    print("Volume of cell=" + volume)
+    print("Volume of cell=")
+    print(volume)
 
     assert True
