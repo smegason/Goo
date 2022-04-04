@@ -41,4 +41,4 @@ def test_calculate_volume():
     print("Volume of cell=")
     print(volume)
 
-    assert True
+    assert(volume > 4 and volume < 4.1)
