@@ -20,8 +20,6 @@ bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
 
 
 def test_calculate_volume():
-    print("Test calculate_volume")
-
     # make cell
     cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
     goo.make_cell(cell)
@@ -39,8 +37,6 @@ def test_calculate_volume():
 
 
 def test_get_major_axis():
-    print("Test get_major_axis")
-
     # make cell
     cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
     cell.data['size'] = (2, 1, 1)
@@ -60,3 +56,28 @@ def test_get_major_axis():
 
     # axis should align with x-axis
     assert(delta < 0.1)
+
+
+def test_get_division_angles():
+    # make cell
+    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
+    cell.data['size'] = (2, 1, 1)
+    goo.make_cell(cell)
+
+    # get major axis
+    axis = goo.get_major_axis(cell.get_blender_object())
+
+    # get division angle
+    angles = goo.get_division_angles(axis)
+    print("angles=")
+    print(angles[0])
+    print(angles[1])
+
+    # calculate difference
+    delta = 0
+    # print("Delta=")
+    # print(delta)
+
+    # axis should align with x-axis
+    assert(delta < 0.1)
+
