@@ -25,7 +25,7 @@ def test_calculate_volume():
     cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
     goo.make_cell(cell)
 
-    #get volume
+    # get volume
     volume = goo.calculate_volume(cell.get_blender_object())
     print("Volume of cell=")
     print(volume)
@@ -38,10 +38,10 @@ def test_get_major_axis():
     print("Test get_major_axis")
 
     # make cell
-    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0), size=(2,1,1))
+    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0), size=(2, 1, 1))
     goo.make_cell(cell)
 
-    #get major axis
+    # get major axis
     axis = goo.get_major_axis(cell.get_blender_object())
     print("Axis of cell=")
     print(axis.major_x)
