@@ -45,9 +45,10 @@ def test_get_major_axis():
     # get major axis
     axis = goo.get_major_axis(cell.get_blender_object())
     print("Axis of cell=")
-    print(axis.major_x)
-    print(axis.major_y)
-    print(axis.major_z)
+    print(axis)
+    print(axis[1])
+    print(axis[2])
+    print(axis[1])
 
     # axis
     assert(True)
