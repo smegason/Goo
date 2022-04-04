@@ -15,7 +15,7 @@ version = bpy.app.version_string
 print("Blender version=" + version)
 
 print("Enable Extra objects Add-on")
-bpy.ops.preferences.addon_enable(module='Add Mesh Extra Objects')
+bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
 
 
 def test_sample_func():
