@@ -20,7 +20,7 @@ bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
 
 
 def test_calculate_volume():
-    print ("\n")
+    print("\n")
 
     # make cell
     cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
@@ -39,7 +39,7 @@ def test_calculate_volume():
 
 
 def test_get_major_axis():
-    print ("\n")
+    print("\n")
 
     # make cell
     cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
@@ -63,7 +63,7 @@ def test_get_major_axis():
 
 
 def test_get_division_angles():
-    print ("\n")
+    print("\n")
 
     # make cell
     cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
