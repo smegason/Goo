@@ -18,27 +18,35 @@ print("Enable Extra objects Add-on")
 bpy.ops.preferences.addon_enable(module='add_mesh_extra_objects')
 
 
-def test_sample_func():
-    print("test sample function------------")
-
-    ret = goo.sample_func()
-    print("Goo ret=" + ret)
-    assert True
-
-
 def test_calculate_volume():
+    print("Test calculate_volume")
+
     # make cell
-
-    # volume = goo.calculate_volume(obj)
-    # assert volume = ??
-    print("test calculate volume")
-
     cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
     goo.make_cell(cell)
 
+    #get volume
     volume = goo.calculate_volume(cell.get_blender_object())
-
     print("Volume of cell=")
     print(volume)
 
+    # volume should be 4/3 pi 1^3 = 4.19 but runs low (?)
     assert(volume > 4 and volume < 4.1)
+
+
+def test_get_major_axis():
+    print("Test get_major_axis")
+
+    # make cell
+    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0), size=(2,1,1))
+    goo.make_cell(cell)
+
+    #get major axis
+    axis = goo.get_major_axis(cell.get_blender_object())
+    print("Axis of cell=")
+    print(axis.major_x)
+    print(axis.major_y)
+    print(axis.major_z)
+
+    # axis
+    assert(True)
