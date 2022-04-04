@@ -38,7 +38,8 @@ def test_get_major_axis():
     print("Test get_major_axis")
 
     # make cell
-    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0), size=(2, 1, 1))
+    cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0))
+    cell.data['size'] = (2, 1, 1)
     goo.make_cell(cell)
 
     # get major axis
