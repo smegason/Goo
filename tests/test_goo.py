@@ -80,4 +80,3 @@ def test_get_division_angles():
 
     # axis should align with x-axis
     assert(delta < 0.1)
-
