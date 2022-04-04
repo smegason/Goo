@@ -2,6 +2,7 @@
 # this file is read by pytest to test all functions in goo
 
 import bpy
+import math
 
 # importing goo
 import importlib.util
@@ -29,9 +30,12 @@ def test_calculate_volume():
     volume = goo.calculate_volume(cell.get_blender_object())
     print("Volume of cell=")
     print(volume)
+    delta = math.abs(4/3 * math.pi * 1**3 - volume)
+    print("Delta=")
+    print(delta)
 
     # volume should be 4/3 pi 1^3 = 4.19 but runs low (?)
-    assert(volume > 4 and volume < 4.1)
+    assert(delta < 0.2)
 
 
 def test_get_major_axis():
@@ -45,10 +49,14 @@ def test_get_major_axis():
     # get major axis
     axis = goo.get_major_axis(cell.get_blender_object())
     print("Axis of cell=")
-    print(axis)
+    print(axis[0])
     print(axis[1])
     print(axis[2])
-    print(axis[1])
 
-    # axis
-    assert(True)
+    # calculate difference
+    delta = math.abs(-1 - axis[0])
+    print("Delta=")
+    print(delta)
+
+    # axis should align with x-axis
+    assert(delta < 0.1)
