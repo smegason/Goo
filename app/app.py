@@ -4,6 +4,8 @@ import sys
 
 # from cgitb import handler
 import tkinter as tk
+from tkinter import ttk
+
 
 # from cv2 import add
 # from sqlalchemy import ForeignKeyConstraint
@@ -127,7 +129,7 @@ padx = 3
 
 tk.Label(add_cell_section,
          text="Initial Cells").grid(column=0, row=0, padx=(5, 632), columnspan=9)
-cell_type_dropdown = tk.ttk.Combobox(add_cell_section, text="")
+cell_type_dropdown = ttk.Combobox(add_cell_section, text="")
 
 x_lable = tk.Label(add_cell_section, text="x:")
 y_lable = tk.Label(add_cell_section, text="y:")
@@ -318,7 +320,6 @@ class Script:
         return
 
     def runScript(self):
-
         return
 
 
