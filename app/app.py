@@ -59,7 +59,7 @@ class Intry(tk.Entry):
             self.set(self.old_value)
 
 
-root.title("Goo")
+root.title("goo")
 # root.geometry("500x600+10+20")
 root.resizable(True, True)
 
@@ -225,9 +225,9 @@ class Script:
     def __init__(self):
         self.script = ""
         self.cells = []
-        self.imports = ["from Goo import Goo",
+        self.imports = ["from goo import goo",
                         "import importlib",
-                        "importlib.reload(Goo)",
+                        "importlib.reload(goo)",
                         "import bpy"]
         return
 
@@ -236,7 +236,7 @@ class Script:
         self.script += "# Import Libraries and setup world\n"
         for line in self.imports:
             self.script += line + "\n"
-        self.script += "Goo.setup_world()\n"  # setup
+        self.script += "goo.setup_world()\n"  # setup
 
         self.script += "\n# Add cells and cell collections"
 
@@ -260,12 +260,12 @@ class Script:
                         "," +
                         str(cell.location[2]) +
                         ")")
-            self.script += 'Goo.make_cell(Goo.Cell(name_string = "'
+            self.script += 'goo.make_cell(goo.Cell(name_string = "'
             self.script += cell.type + location
             self.script += '", loc = ' + location + '))\n'
 
         self.script += "\n# Add handlers for division, growth and adhesion"
-        self.script += "handlers = Goo.handler_class()\n"
+        self.script += "handlers = goo.handler_class()\n"
         divide = False
         grow = False
         adhesion = False
@@ -296,7 +296,7 @@ class Script:
             self.script += "append(handlers.growth_handler)\n"
         if adhesion:
             # make collections for forcefields
-            self.script += "Goo.make_force_collections"
+            self.script += "goo.make_force_collections"
             self.script += "(master_coll,handlers.active_cell_types)\n"
             self.script += "handlers.apply_forces()\n"
             self.script += "bpy.app.handlers.frame_change_post."
@@ -308,7 +308,7 @@ class Script:
             # self.script += "fp = '/Users/michaelmitschjr/Desktop/Python/data/'\n"
             self.script += "fp = " + FilePathInput.get() + "\n"
             self.script += "scene.render.image_settings.file_format = 'PNG'\n"
-            self.script += "Goo.render(fp,scene,1,60)\n"
+            self.script += "goo.render(fp,scene,1,60)\n"
 
         print(self.script)
         return
