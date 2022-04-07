@@ -1022,7 +1022,8 @@ def make_force_collections(master_collection, cell_types):
     """
     Make collections for forces to be stored in.
 
-    :param master_collection: The collection that the force collections will be contained
+    :param master_collection: The collection that the force
+    collections will be contained
     :param cell_types: list of active cell types
 
     :return: None
@@ -1051,7 +1052,8 @@ class handler_class:
         # ex: {"sphere": {"sphere": 100, "type1": 100, "type2": 100},
         #      "type1": {"sphere": 200, "type1": 200, "type2": 200},
         #      "type2": {"sphere": 300, "type1": 300, "type2": 300}}
-        # in the example above, spheres exert 100 force on other spheres, 100 force on type 1, and 100 on type 2
+        # in the example above, spheres exert 100 force on other
+        # spheres, 100 force on type 1, and 100 on type  2
         # could change values to have different amounts of force on different cell types
         # Set parameter values for each cell type
         for type in self.cell_types:
@@ -1073,7 +1075,8 @@ class handler_class:
         """
         Sets division rate in the handler class that div_handler() can reference later
 
-        :param cell_type: Name of cell type to apply this division rate to. Must be one of the active cell types. (String)
+        :param cell_type: Name of cell type to apply this division rate to.
+        Must be one of the active cell types. (String)
         :param rate: number of frames between each division (int)
 
         :return: None
@@ -1088,7 +1091,8 @@ class handler_class:
 
         :param cell_type: Name of cell type to apply this division rate to. 
         Must be one of the active cell types. (String)
-        :param rate: amount to change cell.modifiers["Cloth"].settings.shrink_min each frame. 
+        :param rate: amount to change cell.modifiers["Cloth"].
+        settings.shrink_min each frame. 
         Should be between 0 and 1. (float)
 
         :return: None
@@ -1100,7 +1104,8 @@ class handler_class:
     # Member function to set adhesion forces between cell types
     def set_adhesion(self, type1, type2, force):
         """
-        Sets a value adhesion_forces in the handler class that apply_forces() can reference later
+        Sets a value adhesion_forces in the handler class that
+        apply_forces() can reference later
 
         :param type1: Name of cell type that the force is attatched to.
         Must be one of the active cell types. (String)
@@ -1115,7 +1120,8 @@ class handler_class:
 
     def apply_forces(self):
         """
-        Add force fields to force collections and make them affect corresponding cell types
+        Add force fields to force collections and make them affect corresponding cell
+        types
 
         :return: None
         """
