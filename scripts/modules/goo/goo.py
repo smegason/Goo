@@ -1086,10 +1086,10 @@ class handler_class:
         """
         Sets rate rate in the handler class that growth_handler() can reference later
 
-        :param cell_type: Name of cell type to apply this division rate to. 
+        :param cell_type: Name of cell type to apply this division rate to.
         Must be one of the active cell types. (String)
         :param rate: amount to change cell.modifiers["Cloth"].
-        settings.shrink_min each frame. 
+        settings.shrink_min each frame.
         Should be between 0 and 1. (float)
 
         :return: None
@@ -1106,9 +1106,9 @@ class handler_class:
 
         :param type1: Name of cell type that the force is attatched to.
         Must be one of the active cell types. (String)
-        :param type1: Name of cell type that the force affects. 
+        :param type1: Name of cell type that the force affects.
         Must be one of the active cell types. (String)
-        :param force: the strength of the force (int) 
+        :param force: the strength of the force (int)
 
         :return: None
         """
