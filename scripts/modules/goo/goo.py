@@ -947,8 +947,16 @@ def add_world_HDRI():
     scripts_paths = bpy.utils.script_paths()
 
     # Relative path- this file must be in same directory as blend file
-    node_environment.image = bpy.data.images.load(
-        scripts_paths[-1]+"/modules/Goo/missile_launch_facility_01_4k.hdr")
+    try:
+        node_environment.image = bpy.data.images.load(
+            scripts_paths[-1]+"/modules/goo/missile_launch_facility_01_4k.hdr")
+    # If the user does not have this file in the right place, throw exception
+    except Exception:
+        print(sys.exc_info())
+        print("WARNING FROM GOO: To enable proper rendering you must have")
+        print("/modules/goo/missile_launch_facility_01_4k.hdr")
+        print("in the right location")
+
     node_environment.location = -300, 0
 
     # Add Output node
