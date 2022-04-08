@@ -917,7 +917,7 @@ def setup_world():
     bpy.context.scene.unit_settings.temperature_unit = 'CELSIUS'
 
     # Addn an HDRI image for illumination
-    # add_world_HDRI()
+    add_world_HDRI()
 
 
 def add_world_HDRI():
@@ -1108,7 +1108,7 @@ class handler_class:
         Must be one of the active cell types. (String)
         :param type1: Name of cell type that the force affects.
         Must be one of the active cell types. (String)
-        :param force: the strength of the force (int)
+        :param force: the strenfgth of the force (int)
 
         :return: None
         """

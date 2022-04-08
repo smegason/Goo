@@ -89,10 +89,10 @@
 <p>In a new <cite>General</cite> Project within Blender, delete the default cube by left-clicking on the cube, type <cite>X</cite>, and then <cite>return</cite></p>
 <p>In the Scripting tab of Blender, use the desired cell functions</p>
 <p>Example script (Create cell):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Goo</span> <span class="kn">import</span> <span class="n">Goo</span>
-<span class="n">Goo</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
-<span class="n">cell</span> <span class="o">=</span> <span class="n">Goo</span><span class="o">.</span><span class="n">Cell</span><span class="p">(</span><span class="n">name_string</span> <span class="o">=</span> <span class="s2">&quot;Cell_&quot;</span><span class="p">,</span> <span class="n">loc</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-<span class="n">Goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">goo</span> <span class="kn">import</span> <span class="n">goo</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Cell</span><span class="p">(</span><span class="n">name_string</span> <span class="o">=</span> <span class="s2">&quot;Cell_&quot;</span><span class="p">,</span> <span class="n">loc</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Click the play button in the scripting tab of Blender and you should see a Goo cell appear</p>

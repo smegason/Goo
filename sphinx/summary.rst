@@ -45,10 +45,10 @@ In the Scripting tab of Blender, use the desired cell functions
 
 Example script (Create cell)::
 
-   from Goo import Goo
-   Goo.setup_world()
-   cell = Goo.Cell(name_string = "Cell_", loc = (0, 0, 0))
-   Goo.make_cell(cell)
+   from goo import goo
+   goo.setup_world()
+   cell = goo.Cell(name_string = "Cell_", loc = (0, 0, 0))
+   goo.make_cell(cell)
 
 Click the play button in the scripting tab of Blender and you should see a Goo cell appear
   
