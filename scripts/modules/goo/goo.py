@@ -7,9 +7,6 @@ import mathutils
 import numpy as np
 import sys
 
-# global variables
-cell_collection = {}  # is this needed or just use Blender collections?
-
 
 def calculate_volume(obj):
     """
