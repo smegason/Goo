@@ -468,56 +468,6 @@ def mitosis_handler(scene):
             cell_tree = divide(cell, cell_tree)
     cell_tree.show()
 
-
-def div_handler(scene):
-    """
-    Cell division handler is a function triggered every frame to check if
-    all cells need to divide. Currently just based on hard coded timing
-
-    :param scene: Blender syntax
-
-    :return: None
-    """
-
-    # Find the number of cells by checking the length of the collection where
-    # they are kept in the Blender simulation
-    # TODO is this the right way to iterate over cells?
-    # Uses cell_type instead of "Cells" elsewhere
-    num_cells = len(bpy.data.collections["Cells"].objects)
-    # Get the current frame number
-    current_frame = bpy.data.scenes[0].frame_current
-    # Divide every 30 frames
-    if current_frame % 30 == 0:
-        # print("DIVIDING CELLS")
-        # Loop thrrough the cells
-        for i in range(num_cells):
-            # Get the cell name
-            cell_name = bpy.data.collections["Cells"].objects[i].name
-            # Set the cell as the active object
-            cell = bpy.data.objects[cell_name]
-            bpy.data.objects[cell_name].select_set(True)
-            bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
-            # print(cell_name)
-            # Turn off the cloth physics for the cell. This minimizes
-            # unexpected mesh behavior post-division
-            turn_off_physics()
-            # Divide the cell
-            d1, d2 = divide(cell)
-            # Select the first daughter cell and make it the active object
-            bpy.data.objects[d1.data["name"]].select_set(True)
-            bpy.data.objects[d2.data["name"]].select_set(False)
-            bpy.context.view_layer.objects.active = bpy.data.objects[d1.data["name"]]
-            # Turn on the physics for this daughter cell
-            turn_on_physics()
-            # Select the second daughter cell only and make it the active object
-            bpy.data.objects[d1.data["name"]].select_set(False)
-            bpy.data.objects[d2.data["name"]].select_set(True)
-            bpy.context.view_layer.objects.active = bpy.data.objects[d2.data["name"]]
-            # Turn on the physics for this daughter cell
-            turn_on_physics()
-            bpy.data.objects[d2.data["name"]].select_set(False)
-
-
 # Remove this function. Take try/except code to make_cell function
 def make_mesh(cell):
     """
@@ -568,15 +518,21 @@ def make_cell(cell):
     # print ("make cell")
 
     # Add a round_cube mesh
-    bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                          radius=cell.data['radius'],
-                                          size=cell.data['size'],
-                                          arc_div=cell.data['arcdiv'],
-                                          lin_div=0,
-                                          div_type='CORNERS',
-                                          odd_axis_align=False,
-                                          no_limit=False,
-                                          location=cell.data['location'])
+    try:
+        bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                            radius=cell.data['radius'],
+                                            size=cell.data['size'],
+                                            arc_div=cell.data['arcdiv'],
+                                            lin_div=0,
+                                            div_type='CORNERS',
+                                            odd_axis_align=False,
+                                            no_limit=False,
+                                            location=cell.data['location'])
+    except:
+        print("To enable RoundCube creation for Cells you must go to ")
+        print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
+        print("check the box to enable it")
+        return
 
     # Give the Blender object the cell's name
     obj = bpy.context.object
@@ -870,31 +826,95 @@ def make_force(force):
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
 
+def initialize_cell_sheet():
+    bpy.ops.mesh.primitive_grid_add(size=2, 
+                                    enter_editmode=False, 
+                                    align='WORLD', 
+                                    location=(0, 0, 0), 
+                                    scale=(8.28558, 8.28558, 8.28558))
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.transform.shear(value=-0.5, 
+                            orient_axis='Z', 
+                            orient_axis_ortho='Y', 
+                            orient_type='GLOBAL', 
+                            orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
+                            orient_matrix_type='GLOBAL', 
+                            mirror=True, 
+                            use_proportional_edit=False, 
+                            proportional_edit_falloff='SMOOTH', 
+                            proportional_size=1, 
+                            use_proportional_connected=False, 
+                            use_proportional_projected=False, 
+                            release_confirm=True)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    '''
+    bpy.ops.transform.resize(value=(8.28558, 8.28558, 8.28558), 
+                             orient_type='GLOBAL', 
+                             orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
+                             orient_matrix_type='GLOBAL', 
+                             mirror=False, 
+                             use_proportional_edit=False, 
+                             proportional_edit_falloff='SMOOTH', 
+                             proportional_size=1, 
+                             use_proportional_connected=False, 
+                             use_proportional_projected=False)
+    '''
+    c = Cell("cell", loc = (0,0,0))
+    make_cell(c)
+    bpy.data.objects["Grid"].select_set(False)
+    bpy.data.objects["cell"].select_set(False)
+    bpy.data.objects["cell"].select_set(True)
+    bpy.data.objects["Grid"].select_set(True)
+    bpy.ops.object.parent_set(type='OBJECT')
+    bpy.context.object.instance_type = 'VERTS'
+    bpy.ops.object.duplicates_make_real()
+    bpy.ops.outliner.item_activate(deselect_all=True)
+    bpy.data.objects["Grid"].select_set(True)
+    bpy.ops.object.delete(use_global=False)
 
-def initialize_cells(num_cells, loc_array, material):
-    """
-    Creates a collection of cells using an array
+def initialize_cell_shell():
+    bpy.ops.mesh.primitive_ico_sphere_add(radius=1, 
+                                          enter_editmode=False, 
+                                          align='WORLD', 
+                                          location=(0, 0, 0), 
+                                          scale=(4.16825, 4.16825, 4.16825))
+    c = Cell("cell", loc = (0,0,0))
+    make_cell(c)
+    bpy.data.objects["Icosphere"].select_set(False)
+    bpy.data.objects["cell"].select_set(False)
+    bpy.data.objects["cell"].select_set(True)
+    bpy.data.objects["Icosphere"].select_set(True)
+    bpy.ops.object.parent_set(type='OBJECT')
+    bpy.context.object.instance_type = 'VERTS'
+    bpy.ops.object.duplicates_make_real()
+    bpy.ops.outliner.item_activate(deselect_all=True)
+    bpy.data.objects["Icosphere"].select_set(True)
+    bpy.ops.object.delete(use_global=False)
+    bpy.data.objects["cell"].select_set(True)
+    bpy.ops.object.delete(use_global=False)
 
-    :param num_cells: number of cells
-    :param loc_array: an array of locations (center) of cells
-    :param material: the material to use for the cells
+def initialize_solid_tissue(): # Work in Progress
+    c1 = Cell("cell1", loc = (0,0,0))
+    make_cell(c1)
+    c2 = Cell("cell2", loc = (1,1,-1))
+    make_cell(c2)
+    c3 = Cell("cell3", loc = (-1,1,1))
+    make_cell(c3)
+    c4 = Cell("cell4", loc = (-1,-1,-1))
+    make_cell(c4)
+    c5 = Cell("cell5", loc = (1,-1,1))
+    make_cell(c5)
+    bpy.data.objects["cell1"].select_set(True)
+    bpy.data.objects["cell2"].select_set(True)
+    bpy.data.objects["cell3"].select_set(True)
+    bpy.data.objects["cell4"].select_set(True)
+    bpy.data.objects["cell5"].select_set(True)
+    bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(-0, -2.33693, -0), "orient_axis_ortho":'X', "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, True, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
 
-    :return: None
-    """
 
-    # Print an error message if the length of locations provided
-    # doesn't match the number of cells provided
-    if len(num_cells) != len(loc_array):
-        print("Number of cells must match number of cell locations")
-        return
-    # Add a material to the cell
-    # add_material(material) # Should this be add_material_cell?
-    # Loop over all the cells
-    for i in range(num_cells):
-        # Create a cell object for the cell number and location for that index
-        cell = Cell("cell_" + str(i), loc=loc_array[i], material=material)
-        # Make the cell
-        make_cell(cell)
+
+
+
 
 
 def setup_world():
@@ -1038,7 +1058,7 @@ def make_force_collections(master_collection, cell_types):
         collection = bpy.context.blend_data.collections.new(name=type+"_forces")
         bpy.context.collection.children.link(collection)
 
-
+ 
 class handler_class:
     # TODO document this class
     """
