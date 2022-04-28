@@ -225,7 +225,7 @@ class Script:
     def __init__(self):
         self.script = ""
         self.cells = []
-        self.imports = ["from goo import goo",
+        self.imports = ["from Goo import goo",
                         "import importlib",
                         "importlib.reload(goo)",
                         "import bpy"]
@@ -238,7 +238,7 @@ class Script:
             self.script += line + "\n"
         self.script += "goo.setup_world()\n"  # setup
 
-        self.script += "\n# Add cells and cell collections"
+        self.script += "\n# Add cells and cell collections\n"
 
         # clear handlers before adding new ones
         self.script += "bpy.app.handlers.frame_change_post.clear()\n"
@@ -264,7 +264,7 @@ class Script:
             self.script += cell.type + location
             self.script += '", loc = ' + location + '))\n'
 
-        self.script += "\n# Add handlers for division, growth and adhesion"
+        self.script += "\n# Add handlers for division, growth and adhesion\n"
         self.script += "handlers = goo.handler_class()\n"
         divide = False
         grow = False
@@ -303,7 +303,7 @@ class Script:
             self.script += "append(handlers.adhesion_handler)\n"
 
         if checkbox_var.get() == 1:
-            self.script += "\n# Render animation"
+            self.script += "\n# Render animation\n"
             self.script += "scene = bpy.context.scene\n"
             # self.script += "fp = '/Users/michaelmitschjr/Desktop/Python/data/'\n"
             self.script += "fp = " + FilePathInput.get() + "\n"
