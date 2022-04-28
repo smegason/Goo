@@ -40,12 +40,13 @@ def get_major_axis(obj):
 
     :return: major axis as (x, y, z) which gives direction from origin (0, 0, 0)
     """
-
+    obj = bpy.data.objects[obj.name]
     # We need to get the cell as it is evaluated in the simulation.
     # To do this, we fetch its dependency graph and obtain the
     # evaluated cell (denoted as obj_eval here)
     dg = bpy.context.evaluated_depsgraph_get()
-    obj_eval = obj.evaluated_get(dg)
+    #obj_eval = obj.evaluated_get(dg)
+    obj_eval = obj
     # We obtain the (x, y, z) coordinates of the vertices in the
     # evaluated cell
     vertices = obj_eval.data.vertices
@@ -196,7 +197,7 @@ def repair_hole(obj):
     bpy.ops.object.mode_set(mode='OBJECT')
     # Remesh the cell with voxels of size 0.2
     bpy.ops.object.modifier_add(type='REMESH')
-    bpy.context.object.modifiers["Remesh"].voxel_size = 0.2
+    bpy.context.object.modifiers["Remesh"].voxel_size = 0.1
     bpy.ops.object.modifier_apply(modifier="Remesh")
 
 
@@ -399,6 +400,7 @@ def turn_off_physics():
 
     :return: None
     """
+
     bpy.ops.object.modifier_remove(modifier="Cloth")
 
 
@@ -414,6 +416,7 @@ def turn_on_physics():
 
     # Set all parameter values
     bpy.ops.object.modifier_add(type='CLOTH')
+    bpy.ops.object.modifier_add(type='COLLISION')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
@@ -430,7 +433,7 @@ def turn_on_physics():
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 2.8
     bpy.context.object.modifiers["Cloth"].settings.pressure_factor = 1
-    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
+    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 0.1
     bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
@@ -939,6 +942,22 @@ def setup_world():
     # Addn an HDRI image for illumination
     add_world_HDRI()
 
+def mesh_eval_to_mesh(context, obj):
+    deg = context.evaluated_depsgraph_get()
+    eval_mesh = obj.evaluated_get(deg).data.copy()
+    name = obj.name
+    obj.name = "temp"
+    new_obj = bpy.data.objects.new(name, eval_mesh)
+
+    context.collection.objects.link(new_obj)
+
+    new_obj.matrix_world = obj.matrix_world
+    bpy.data.objects.remove(obj, do_unlink=True)
+    #new_obj.select_set(True)
+    
+    #context.view_layer.objects.active = new_obj
+    
+    return new_obj
 
 def add_world_HDRI():
     """
@@ -1185,25 +1204,38 @@ class handler_class:
                 print("DIVIDING CELLS")
 
                 # Loop over all the cells of a type
-                for i in range(num_cells):
+                objnames = []
+                for obj in bpy.data.collections[cell_type].objects:
+                    objnames.append(obj.name)
+                for objname in objnames:
+                    
                     # Get the cell name
-                    cell_name = bpy.data.collections[cell_type].objects[i].name
-
+                    cell_name = objname
                     # Get the corresponding Blender object
                     cell = bpy.data.objects[cell_name]
+
+
 
                     # get scale before division
                     # scale = cell.modifiers["Cloth"].settings.shrink_min
 
                     # Select the Blender object and make it the active object
+
+                    #bpy.ops.object.convert(target='MESH', keep_original=False)
+
+                    
+                    cell = mesh_eval_to_mesh(bpy.context, cell)
+                    cell_name = cell.name   
+                    
                     bpy.data.objects[cell_name].select_set(True)
                     bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
+                    turn_on_physics()
+
                     print(cell_name)
 
                     # Turn off the cloth physics for this cell. This mitigates
                     # irregular mesh behavior after division
                     turn_off_physics()
-
                     # Divide the cell
                     d1, d2 = divide(cell)
 
