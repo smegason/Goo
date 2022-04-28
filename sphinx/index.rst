@@ -12,6 +12,8 @@ Goo is a Python library to make simulations of cells in Blender. Goo allows for 
 
 Goo is hosted on Github at https://github.com/smegason/Goo 
 
+The Goo YouTube channel is at https://www.youtube.com/channel/UCVA10yBC_TMD5O1iq5Hrsrg
+
 .. toctree::
    :maxdepth: 2      
    :caption: Contents:

@@ -46,11 +46,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="module-Goo">
-<span id="functions-and-classes"></span><h1>Functions and Classes<a class="headerlink" href="#module-Goo" title="Permalink to this headline">¶</a></h1>
+  <section id="module-goo">
+<span id="functions-and-classes"></span><h1>Functions and Classes<a class="headerlink" href="#module-goo" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="Goo.Force">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">Force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strength</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.Force" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.Force">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">Force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strength</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.Force" title="Permalink to this definition">¶</a></dt>
 <dd><p>A class for representing forces between cells in Goo. Used for cell adhesion</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -64,9 +64,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.add_material_cell">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">add_material_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mat_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.add_material_cell" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a soap bubble like Blender material for use in rendering cells. The material has a name that allows it to be shared for multiple cells</p>
+<dt class="sig sig-object py" id="goo.add_material_cell">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">add_material_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mat_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.add_material_cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a soap bubble like Blender material for use in rendering cells.
+The material has a name that allows it to be shared for multiple cells</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -83,9 +84,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.add_world_HDRI">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">add_world_HDRI</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Goo.add_world_HDRI" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets up Blender World properties for use in rendering most importantly adds an HDRI image for illumination</p>
+<dt class="sig sig-object py" id="goo.add_world_HDRI">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">add_world_HDRI</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#goo.add_world_HDRI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up Blender World properties for use in rendering most importantly
+adds an HDRI image for illumination</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>None</p>
@@ -94,9 +96,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.calculate_contact_area">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">calculate_contact_area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.calculate_contact_area" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the contact area of a cell using the angles between adjacent faces</p>
+<dt class="sig sig-object py" id="goo.calculate_contact_area">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">calculate_contact_area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.calculate_contact_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the contact area of a cell with all surrounding objects
+by looking for flat areas of the mesh. Not always a good assumption</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh ??</p>
@@ -108,8 +111,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.calculate_volume">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">calculate_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.calculate_volume" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.calculate_volume">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">calculate_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.calculate_volume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates volume of a cell</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -122,12 +125,12 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.div_handler">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">div_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.div_handler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cell division handler is a function triggered every frame to check if all cells need to divide. Currently just based on hard coded timing</p>
+<dt class="sig sig-object py" id="goo.delete_cell">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">delete_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.delete_cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes a Goo cell’s Blender object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>scene</strong> – Blender syntax</p>
+<dd class="field-odd"><p><strong>cell</strong> – the Goo cell to delete</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>None</p>
@@ -136,9 +139,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.divide">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">divide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.divide" title="Permalink to this definition">¶</a></dt>
-<dd><p>Divides a cell in two along its major axis by splitting the parent mesh in two, translating one mesh, filling the two holes, and retriangulating the meshes</p>
+<dt class="sig sig-object py" id="goo.divide">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">divide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.divide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Divides a cell in two along its major axis by splitting the parent mesh in two,
+translating one mesh, filling the two holes, and retriangulating the meshes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh to divide</p>
@@ -150,23 +154,30 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.get_division_angles">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">get_division_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.get_division_angles" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function returns 2 angles associated with the division axis of a cell: The angle between the the division axis and the z-axis (phi, in spherical coordinates) and the angle projected on the xy-plan (theta)</p>
+<dt class="sig sig-object py" id="goo.get_division_angles">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">get_division_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.get_division_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function returns 2 angles associated with the division axis of a cell:
+The angle between the the division axis and the z-axis
+(phi, in spherical coordinates) and the angle projected on the xy-plan (theta)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>axis</strong> – the normal (e.g. long axis) to the division plane expressed as (x, y, z)</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>(phi, theta). phi is the angle between the division axis and the z-axis. theta is the angle projected on the xy plane</p>
+<dd class="field-odd"><p><strong>axis</strong> – the normal (e.g. long axis) to the division plane</p>
 </dd>
 </dl>
+<p>expressed as (x, y, z)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>(phi, theta). phi is the angle between the division axis and the z-axis.</p>
+</dd>
+</dl>
+<p>theta is the angle projected on the xy plane</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.get_major_axis">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">get_major_axis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.get_major_axis" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the major (long) axis of a mesh by calculating the first eigenvector of the vertices in the mesh. This can be used to choose the axis of division</p>
+<dt class="sig sig-object py" id="goo.get_major_axis">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">get_major_axis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.get_major_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the major (long) axis of a mesh by calculating the first eigenvector
+of the vertices in the mesh. This can be used to choose the axis of division</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>obj</strong> – the blender object (mesh)</p>
@@ -178,21 +189,90 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="Goo.handler_class">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">handler_class</span></span><a class="headerlink" href="#Goo.handler_class" title="Permalink to this definition">¶</a></dt>
-<dd><p>A class for creating different types of handlers that trigger actions on Goo cells when certain criteria are met</p>
+<dt class="sig sig-object py" id="goo.handler_class">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">handler_class</span></span><a class="headerlink" href="#goo.handler_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for creating different types of handlers that trigger
+actions on Goo cells when certain criteria are met</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler_class.apply_forces">
+<span class="sig-name descname"><span class="pre">apply_forces</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.apply_forces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add force fields to force collections and make them affect corresponding cell
+types</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="Goo.initialize_cells">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">initialize_cells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_cells</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.initialize_cells" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a collection of cells using an array</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler_class.set_adhesion">
+<span class="sig-name descname"><span class="pre">set_adhesion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.set_adhesion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a value adhesion_forces in the handler class that
+apply_forces() can reference later</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>type1</strong> – Name of cell type that the force is attatched to.</p>
+</dd>
+</dl>
+<p>Must be one of the active cell types. (String)
+:param type1: Name of cell type that the force affects.
+Must be one of the active cell types. (String)
+:param force: the strenfgth of the force (int)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler_class.set_division_rate">
+<span class="sig-name descname"><span class="pre">set_division_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.set_division_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets division rate in the handler class that div_handler() can reference later</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cell_type</strong> – Name of cell type to apply this division rate to.</p>
+</dd>
+</dl>
+<p>Must be one of the active cell types. (String)
+:param rate: number of frames between each division (int)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler_class.set_growth_rate">
+<span class="sig-name descname"><span class="pre">set_growth_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.set_growth_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets rate rate in the handler class that growth_handler() can reference later</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cell_type</strong> – Name of cell type to apply this division rate to.</p>
+</dd>
+</dl>
+<p>Must be one of the active cell types. (String)
+:param rate: amount to change cell.modifiers[“Cloth”].
+settings.shrink_min each frame.
+Should be between 0 and 1. (float)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler_class.set_scale">
+<span class="sig-name descname"><span class="pre">set_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.set_scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the size of all cells of a certain type</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_cells</strong> – number of cells</p></li>
-<li><p><strong>loc_array</strong> – an array of locations (center) of cells</p></li>
-<li><p><strong>material</strong> – the material to use for the cells</p></li>
+<li><p><strong>scale</strong> – value to set cell.modifiers[“Cloth”].settings.shrink_min to.</p></li>
+<li><p><strong>cell_type</strong> – Name of cell type to scale. (String)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -201,9 +281,11 @@
 </dl>
 </dd></dl>
 
+</dd></dl>
+
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.make_cell">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">make_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.make_cell" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.make_cell">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_cell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a Blender mesh object for the given Goo cell Python object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -216,8 +298,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.make_force">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">make_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.make_force" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.make_force">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_force" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a Blender force from the Goo force</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -230,8 +312,26 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.make_mesh">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">make_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.make_mesh" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.make_force_collections">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_force_collections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">master_collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_types</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_force_collections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make collections for forces to be stored in.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>master_collection</strong> – The collection that the force</p>
+</dd>
+</dl>
+<p>collections will be contained
+:param cell_types: list of active cell types</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="goo.make_mesh">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_mesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a Blender mesh object for the given Goo cell</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -244,9 +344,11 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.mitosis_handler">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">mitosis_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.mitosis_handler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mitosis handler is a function triggered every frame to check if all cells need to divide. Currently just based on volume</p>
+<dt class="sig sig-object py" id="goo.mitosis_handler">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">mitosis_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.mitosis_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mitosis handler is a function triggered every frame to check if all cells
+need to divide
+Currently just based on volume</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -262,8 +364,8 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.render">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.render" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.render">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.render" title="Permalink to this definition">¶</a></dt>
 <dd><p>Renders a simulation to create a set of still images that can be made into a movie</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -281,9 +383,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.repair_hole">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">repair_hole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.repair_hole" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds a new face to the cell after division (splitting) of the mesh and regularizes the mesh so that the mesh is evenly covered with faces</p>
+<dt class="sig sig-object py" id="goo.repair_hole">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">repair_hole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.repair_hole" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new face to the cell after division (splitting) of the mesh and
+regularizes the mesh so that the mesh is evenly covered with faces</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh</p>
@@ -295,27 +398,40 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.select_translate_cell">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">select_translate_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">COM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">division_axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.select_translate_cell" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determines what direction to move a cell after division so that new faces at cleavage plane are not overlapping</p>
+<dt class="sig sig-object py" id="goo.select_translate_cell">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">select_translate_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">COM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">division_axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.select_translate_cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is called after dividing the mother cell.
+We compare the center of mass of the original mother cell to
+that of the corresponding daughter cell.
+We calculate the signed distance between the daughter cell’s
+center of mass and the original plane of division.
+If the distance is positive, the function returns 0
+and this daughter cell will be translated later.
+If the distance is negative, the function returns 1
+and the other daughter cell will be translated later</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>obj</strong> – the Blender mesh to divide in two</p></li>
 <li><p><strong>COM</strong> – center of mass</p></li>
-<li><p><strong>division_axis</strong> – division axis of cell (cleavage plane is perpendicular to division axis)</p></li>
+<li><p><strong>division_axis</strong> – division axis of cell (cleavage plane is</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>0 if the daughter cell is a positive distance away from the plane of division and 1 otherwise</p>
+</dl>
+<p>perpendicular to division axis)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>0 if the daughter cell is a positive distance away from</p>
 </dd>
 </dl>
+<p>the plane of division and 1 otherwise</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.seperate_cell">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">seperate_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.seperate_cell" title="Permalink to this definition">¶</a></dt>
-<dd><p>Splits one cell into two for cell division. Currently divides along the major axis but should allow a supplied axis</p>
+<dt class="sig sig-object py" id="goo.seperate_cell">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">seperate_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.seperate_cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits one cell into two for cell division. Currently divides
+along the major axis but should allow a supplied axis</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh to divide in two</p>
@@ -327,9 +443,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.setup_world">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">setup_world</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Goo.setup_world" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets up the default values used for simulations in Goo including units and rendering background</p>
+<dt class="sig sig-object py" id="goo.setup_world">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">setup_world</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#goo.setup_world" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up the default values used for simulations in Goo
+including units and rendering background</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>None</p>
@@ -338,9 +455,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.translate_cell">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">translate_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Goo.translate_cell" title="Permalink to this definition">¶</a></dt>
-<dd><p>Moves cell along the given axis. Used during cell division so daughters have some space</p>
+<dt class="sig sig-object py" id="goo.translate_cell">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">translate_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.translate_cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Moves cell along the given axis.
+Used during cell division so daughters have some space</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -355,10 +473,10 @@
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.turn_off_physics">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">turn_off_physics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Goo.turn_off_physics" title="Permalink to this definition">¶</a></dt>
-<dd><p>Turns physics off for the currently selected Blender object. 
-The cloth physics for cells are turned off before division to 
+<dt class="sig sig-object py" id="goo.turn_off_physics">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">turn_off_physics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#goo.turn_off_physics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns physics off for the currently selected Blender object.
+The cloth physics for cells are turned off before division to
 avoid irregular mesh behavior after</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -368,9 +486,9 @@ avoid irregular mesh behavior after</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Goo.turn_on_physics">
-<span class="sig-prename descclassname"><span class="pre">Goo.</span></span><span class="sig-name descname"><span class="pre">turn_on_physics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Goo.turn_on_physics" title="Permalink to this definition">¶</a></dt>
-<dd><p>Turns physics on for the currently selected Blender object. 
+<dt class="sig sig-object py" id="goo.turn_on_physics">
+<span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">turn_on_physics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#goo.turn_on_physics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns physics on for the currently selected Blender object.
 Physics are turned back on after cell division occurs to avoid
 irregular mesh behavior post-division.</p>
 <dl class="field-list simple">

@@ -3,5 +3,5 @@
 Functions and Classes
 ======================
 
-.. automodule:: Goo
+.. automodule:: goo
    :members:
