@@ -4,7 +4,7 @@ To make Sphinx documentation
 -comment out import bpy, bmesh, mathutils, numpy as np
 -save
 -from Terminal in Goo/Sphinx directory, type 'make html'
--check for errors
+-check for errors. Sometimes re-running will fix errors
 -this should remake the html files in sphinx/_build
 -uncomment out import bpy, bmesh, mathutils, numpy as np
 -save Goo.py
