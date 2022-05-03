@@ -468,6 +468,7 @@ def mitosis_handler(scene):
             cell_tree = divide(cell, cell_tree)
     cell_tree.show()
 
+
 # Remove this function. Take try/except code to make_cell function
 def make_mesh(cell):
     """
@@ -520,15 +521,16 @@ def make_cell(cell):
     # Add a round_cube mesh
     try:
         bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                            radius=cell.data['radius'],
-                                            size=cell.data['size'],
-                                            arc_div=cell.data['arcdiv'],
-                                            lin_div=0,
-                                            div_type='CORNERS',
-                                            odd_axis_align=False,
-                                            no_limit=False,
-                                            location=cell.data['location'])
-    except:
+                                              radius=cell.data['radius'],
+                                              size=cell.data['size'],
+                                              arc_div=cell.data['arcdiv'],
+                                              lin_div=0,
+                                              div_type='CORNERS',
+                                              odd_axis_align=False,
+                                              no_limit=False,
+                                              location=cell.data['location'])
+    except Exception:
+        print(sys.exc_info())
         print("To enable RoundCube creation for Cells you must go to ")
         print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
         print("check the box to enable it")
@@ -826,40 +828,41 @@ def make_force(force):
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
 
+
 def initialize_cell_sheet():
-    bpy.ops.mesh.primitive_grid_add(size=2, 
-                                    enter_editmode=False, 
-                                    align='WORLD', 
-                                    location=(0, 0, 0), 
+    bpy.ops.mesh.primitive_grid_add(size=2,
+                                    enter_editmode=False,
+                                    align='WORLD',
+                                    location=(0, 0, 0),
                                     scale=(8.28558, 8.28558, 8.28558))
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.transform.shear(value=-0.5, 
-                            orient_axis='Z', 
-                            orient_axis_ortho='Y', 
-                            orient_type='GLOBAL', 
-                            orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
-                            orient_matrix_type='GLOBAL', 
-                            mirror=True, 
-                            use_proportional_edit=False, 
-                            proportional_edit_falloff='SMOOTH', 
-                            proportional_size=1, 
-                            use_proportional_connected=False, 
-                            use_proportional_projected=False, 
+    bpy.ops.transform.shear(value=-0.5,
+                            orient_axis='Z',
+                            orient_axis_ortho='Y',
+                            orient_type='GLOBAL',
+                            orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+                            orient_matrix_type='GLOBAL',
+                            mirror=True,
+                            use_proportional_edit=False,
+                            proportional_edit_falloff='SMOOTH',
+                            proportional_size=1,
+                            use_proportional_connected=False,
+                            use_proportional_projected=False,
                             release_confirm=True)
     bpy.ops.object.mode_set(mode='OBJECT')
     '''
-    bpy.ops.transform.resize(value=(8.28558, 8.28558, 8.28558), 
-                             orient_type='GLOBAL', 
-                             orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
-                             orient_matrix_type='GLOBAL', 
-                             mirror=False, 
-                             use_proportional_edit=False, 
-                             proportional_edit_falloff='SMOOTH', 
-                             proportional_size=1, 
-                             use_proportional_connected=False, 
+    bpy.ops.transform.resize(value=(8.28558, 8.28558, 8.28558),
+                             orient_type='GLOBAL',
+                             orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+                             orient_matrix_type='GLOBAL',
+                             mirror=False,
+                             use_proportional_edit=False,
+                             proportional_edit_falloff='SMOOTH',
+                             proportional_size=1,
+                             use_proportional_connected=False,
                              use_proportional_projected=False)
     '''
-    c = Cell("cell", loc = (0,0,0))
+    c = Cell("cell", loc=(0, 0, 0))
     make_cell(c)
     bpy.data.objects["Grid"].select_set(False)
     bpy.data.objects["cell"].select_set(False)
@@ -872,13 +875,14 @@ def initialize_cell_sheet():
     bpy.data.objects["Grid"].select_set(True)
     bpy.ops.object.delete(use_global=False)
 
+
 def initialize_cell_shell():
-    bpy.ops.mesh.primitive_ico_sphere_add(radius=1, 
-                                          enter_editmode=False, 
-                                          align='WORLD', 
-                                          location=(0, 0, 0), 
+    bpy.ops.mesh.primitive_ico_sphere_add(radius=1,
+                                          enter_editmode=False,
+                                          align='WORLD',
+                                          location=(0, 0, 0),
                                           scale=(4.16825, 4.16825, 4.16825))
-    c = Cell("cell", loc = (0,0,0))
+    c = Cell("cell", loc=(0, 0, 0))
     make_cell(c)
     bpy.data.objects["Icosphere"].select_set(False)
     bpy.data.objects["cell"].select_set(False)
@@ -893,28 +897,51 @@ def initialize_cell_shell():
     bpy.data.objects["cell"].select_set(True)
     bpy.ops.object.delete(use_global=False)
 
-def initialize_solid_tissue(): # Work in Progress
-    c1 = Cell("cell1", loc = (0,0,0))
+
+def initialize_solid_tissue():  # Work in Progress
+    c1 = Cell("cell1", loc=(0, 0, 0))
     make_cell(c1)
-    c2 = Cell("cell2", loc = (1,1,-1))
+    c2 = Cell("cell2", loc=(1, 1, -1))
     make_cell(c2)
-    c3 = Cell("cell3", loc = (-1,1,1))
+    c3 = Cell("cell3", loc=(-1, 1, 1))
     make_cell(c3)
-    c4 = Cell("cell4", loc = (-1,-1,-1))
+    c4 = Cell("cell4", loc=(-1, -1, -1))
     make_cell(c4)
-    c5 = Cell("cell5", loc = (1,-1,1))
+    c5 = Cell("cell5", loc=(1, -1, 1))
     make_cell(c5)
     bpy.data.objects["cell1"].select_set(True)
     bpy.data.objects["cell2"].select_set(True)
     bpy.data.objects["cell3"].select_set(True)
     bpy.data.objects["cell4"].select_set(True)
     bpy.data.objects["cell5"].select_set(True)
-    bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(-0, -2.33693, -0), "orient_axis_ortho":'X', "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, True, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
-
-
-
-
-
+    bpy.ops.object.duplicate_move(
+       OBJECT_OT_duplicate={"linked": False,
+                            "mode": 'TRANSLATION'},
+       TRANSFORM_OT_translate={"value": (-0, -2.33693, -0),
+                               "orient_axis_ortho": 'X',
+                               "orient_type": 'GLOBAL',
+                               "orient_matrix": ((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+                               "orient_matrix_type": 'GLOBAL',
+                               "constraint_axis": (False, True, False),
+                               "mirror": False,
+                               "use_proportional_edit": False,
+                               "proportional_edit_falloff": 'SMOOTH',
+                               "proportional_size": 1,
+                               "use_proportional_connected": False,
+                               "use_proportional_projected": False,
+                               "snap": False,
+                               "snap_target": 'CLOSEST',
+                               "snap_point": (0, 0, 0),
+                               "snap_align": False,
+                               "snap_normal": (0, 0, 0),
+                               "gpencil_strokes": False,
+                               "cursor_transform": False,
+                               "texture_space": False,
+                               "remove_on_cancel": False,
+                               "view2d_edge_pan": False,
+                               "release_confirm": False,
+                               "use_accurate": False,
+                               "use_automerge_and_split": False})
 
 
 def setup_world():
@@ -1058,7 +1085,7 @@ def make_force_collections(master_collection, cell_types):
         collection = bpy.context.blend_data.collections.new(name=type+"_forces")
         bpy.context.collection.children.link(collection)
 
- 
+
 class handler_class:
     # TODO document this class
     """
