@@ -227,8 +227,9 @@ class Script:
         self.cells = []
         self.imports = ["from goo import goo",
                         "import importlib",
-                        "importlib.reload(goo)",
-                        "import bpy"]
+                        "import bpy",
+                        "",
+                        "importlib.reload(goo)"]
         return
 
     def generateScript(self):
@@ -260,9 +261,10 @@ class Script:
                         "," +
                         str(cell.location[2]) +
                         ")")
-            self.script += 'goo.make_cell(goo.Cell(name_string = "'
+            self.script += 'goo.make_cell(goo.Cell(name_string="'
             self.script += cell.type + location
-            self.script += '", loc = ' + location + '))\n'
+            self.script += '",'
+            self.script += '                       loc=' + location + '))\n'
 
         self.script += "\n# Add handlers for division, growth and adhesion\n"
         self.script += "handlers = goo.handler_class()\n"
@@ -280,13 +282,13 @@ class Script:
                 grow = True
                 self.script += "handlers.set_growth_rate('"
                 self.script += t
-                self.script += "'," + str(growth_rate) + ")\n"
+                self.script += "', " + str(growth_rate) + ")\n"
             for type in addCellController.active_types:
                 row = addCellController.active_types.index(t)
                 force = int(adhesion_slider_values[row][type])
                 if force != 0:
                     self.script += "handlers.set_adhesion('"
-                    self.script += t+"','" + type + "'," + str(force)+")\n"
+                    self.script += t+"', '" + type + "', " + str(force)+")\n"
                     adhesion = True
         if divide:
             self.script += "bpy.app.handlers.frame_change_post."
