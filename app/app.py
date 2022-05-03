@@ -225,7 +225,7 @@ class Script:
     def __init__(self):
         self.script = ""
         self.cells = []
-        self.imports = ["from Goo import goo",
+        self.imports = ["from goo import goo",
                         "import importlib",
                         "importlib.reload(goo)",
                         "import bpy"]
