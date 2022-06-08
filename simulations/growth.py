@@ -1,9 +1,9 @@
 # under development
 
 import bpy
-from Goo import Goo
+from goo import goo
 from importlib import reload
-reload(Goo)
+reload(goo)
 
 # clear stuff from before
 bpy.app.handlers.frame_change_pre.clear()
@@ -15,11 +15,11 @@ for cell_obj in cell_objs:
 # keep frame handler from crashing interface
 bpy.types.RenderSettings.use_lock_interface = True
 
-Goo.setup_world()
+goo.setup_world()
 
 # create first cell
-cell = Goo.Cell(name_string="Cell_", loc=(0, 0, 0))
-Goo.make_cell(cell)
+cell = goo.Cell(name_string="Cell_", loc=(0, 0, 0))
+goo.make_cell(cell)
 obj = cell.get_blender_object()
 
 # obj.modifiers["Cloth"].settings.shrink_min = 0
@@ -42,7 +42,7 @@ def growth_handler(scene, depsgraph):   # WIP
         # bpy.context.view_layer.objects.active = bpy.data.objects[cell_name]
         # bpy.ops.object.modifier_apply(modifier="CLOTH")
 
-        print(cell_obj.name, " Volume:", Goo.calculate_volume(cell_obj),
+        print(cell_obj.name, " Volume:", goo.calculate_volume(cell_obj),
               " Shrinking Factor:", cell_obj.modifiers["Cloth"].settings.shrink_min)
 
         # constantly changing shrink_min
@@ -50,4 +50,4 @@ def growth_handler(scene, depsgraph):   # WIP
 
 
 bpy.app.handlers.frame_change_post.append(growth_handler)
-bpy.app.handlers.frame_change_post.append(Goo.div_handler)
+bpy.app.handlers.frame_change_post.append(goo.div_handler)

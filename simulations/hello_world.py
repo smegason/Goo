@@ -1,7 +1,7 @@
 # hello_world.py - creates one cell
-from Goo import Goo
+from goo import goo
 
-Goo.setup_world()
+goo.setup_world()
 
-cell = Goo.Cell(name_string="Cell1_", loc=(0, 0, 0), material="CellGreen")
-Goo.make_cell(cell)
+cell = goo.Cell(name_string="Cell1_", loc=(0, 0, 0), material="CellGreen")
+goo.make_cell(cell)
