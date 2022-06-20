@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Functions and Classes &#8212; Goo 0.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -12,9 +12,11 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Welcome to Developer’s Guide" href="devguide.html" />
     <link rel="prev" title="Goo Overview" href="summary.html" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
@@ -34,6 +36,9 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
+          <a href="devguide.html" title="Welcome to Developer’s Guide"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
           <a href="summary.html" title="Goo Overview"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Goo 0.0.1 documentation</a> &#187;</li>
@@ -47,13 +52,13 @@
           <div class="body" role="main">
             
   <section id="module-goo">
-<span id="functions-and-classes"></span><h1>Functions and Classes<a class="headerlink" href="#module-goo" title="Permalink to this headline">¶</a></h1>
+<span id="functions-and-classes"></span><h1>Functions and Classes<a class="headerlink" href="#module-goo" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="goo.Force">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">Force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strength</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.Force" title="Permalink to this definition">¶</a></dt>
 <dd><p>A class for representing forces between cells in Goo. Used for cell adhesion</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>force_name</strong> – Name of force</p></li>
 <li><p><strong>cell_name</strong> – Name of cell</p></li>
@@ -69,7 +74,7 @@
 <dd><p>Creates a soap bubble like Blender material for use in rendering cells.
 The material has a name that allows it to be shared for multiple cells</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mat_name</strong> – a text name for the material</p></li>
 <li><p><strong>r</strong> – red value [0 to 1]</p></li>
@@ -77,7 +82,7 @@ The material has a name that allows it to be shared for multiple cells</p>
 <li><p><strong>b</strong> – blue value [0 to 1]</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -89,7 +94,7 @@ The material has a name that allows it to be shared for multiple cells</p>
 <dd><p>Sets up Blender World properties for use in rendering most importantly
 adds an HDRI image for illumination</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -101,10 +106,10 @@ adds an HDRI image for illumination</p>
 <dd><p>Calculates the contact area of a cell with all surrounding objects
 by looking for flat areas of the mesh. Not always a good assumption</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh ??</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>contact_area</p>
 </dd>
 </dl>
@@ -115,10 +120,10 @@ by looking for flat areas of the mesh. Not always a good assumption</p>
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">calculate_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.calculate_volume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates volume of a cell</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>obj</strong> – the blender object (mesh)</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>volume</p>
 </dd>
 </dl>
@@ -129,10 +134,10 @@ by looking for flat areas of the mesh. Not always a good assumption</p>
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">delete_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.delete_cell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deletes a Goo cell’s Blender object</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>cell</strong> – the Goo cell to delete</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -144,10 +149,10 @@ by looking for flat areas of the mesh. Not always a good assumption</p>
 <dd><p>Divides a cell in two along its major axis by splitting the parent mesh in two,
 translating one mesh, filling the two holes, and retriangulating the meshes</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh to divide</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>daughter1, daughter2</p>
 </dd>
 </dl>
@@ -160,13 +165,13 @@ translating one mesh, filling the two holes, and retriangulating the meshes</p>
 The angle between the the division axis and the z-axis
 (phi, in spherical coordinates) and the angle projected on the xy-plan (theta)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>axis</strong> – the normal (e.g. long axis) to the division plane</p>
 </dd>
 </dl>
 <p>expressed as (x, y, z)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>(phi, theta). phi is the angle between the division axis and the z-axis.</p>
 </dd>
 </dl>
@@ -179,10 +184,10 @@ The angle between the the division axis and the z-axis
 <dd><p>Calculates the major (long) axis of a mesh by calculating the first eigenvector
 of the vertices in the mesh. This can be used to choose the axis of division</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>obj</strong> – the blender object (mesh)</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>major axis as (x, y, z) which gives direction from origin (0, 0, 0)</p>
 </dd>
 </dl>
@@ -199,7 +204,7 @@ actions on Goo cells when certain criteria are met</p>
 <dd><p>Add force fields to force collections and make them affect corresponding cell
 types</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -211,7 +216,7 @@ types</p>
 <dd><p>Sets a value adhesion_forces in the handler class that
 apply_forces() can reference later</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>type1</strong> – Name of cell type that the force is attatched to.</p>
 </dd>
 </dl>
@@ -220,7 +225,7 @@ apply_forces() can reference later</p>
 Must be one of the active cell types. (String)
 :param force: the strenfgth of the force (int)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -231,14 +236,14 @@ Must be one of the active cell types. (String)
 <span class="sig-name descname"><span class="pre">set_division_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.set_division_rate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets division rate in the handler class that div_handler() can reference later</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>cell_type</strong> – Name of cell type to apply this division rate to.</p>
 </dd>
 </dl>
 <p>Must be one of the active cell types. (String)
 :param rate: number of frames between each division (int)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -249,7 +254,7 @@ Must be one of the active cell types. (String)
 <span class="sig-name descname"><span class="pre">set_growth_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.set_growth_rate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets rate rate in the handler class that growth_handler() can reference later</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>cell_type</strong> – Name of cell type to apply this division rate to.</p>
 </dd>
 </dl>
@@ -258,7 +263,7 @@ Must be one of the active cell types. (String)
 settings.shrink_min each frame.
 Should be between 0 and 1. (float)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -269,13 +274,13 @@ Should be between 0 and 1. (float)</p>
 <span class="sig-name descname"><span class="pre">set_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.handler_class.set_scale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Change the size of all cells of a certain type</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>scale</strong> – value to set cell.modifiers[“Cloth”].settings.shrink_min to.</p></li>
 <li><p><strong>cell_type</strong> – Name of cell type to scale. (String)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -288,10 +293,10 @@ Should be between 0 and 1. (float)</p>
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_cell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a Blender mesh object for the given Goo cell Python object</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>cell</strong> – the Goo cell Pythoon object to make a Blender mesh from</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -302,10 +307,10 @@ Should be between 0 and 1. (float)</p>
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_force" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a Blender force from the Goo force</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>force</strong> – a Goo force</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -316,14 +321,14 @@ Should be between 0 and 1. (float)</p>
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_force_collections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">master_collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_types</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_force_collections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make collections for forces to be stored in.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>master_collection</strong> – The collection that the force</p>
 </dd>
 </dl>
 <p>collections will be contained
 :param cell_types: list of active cell types</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -334,10 +339,10 @@ Should be between 0 and 1. (float)</p>
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_mesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes a Blender mesh object for the given Goo cell</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>cell</strong> – the Goo cell to make a Blender mesh from</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -350,14 +355,14 @@ Should be between 0 and 1. (float)</p>
 need to divide
 Currently just based on volume</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>scene</strong> – Blender syntax</p></li>
 <li><p><strong>tree</strong> – <p>???</p>
 </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -368,7 +373,7 @@ Currently just based on volume</p>
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.render" title="Permalink to this definition">¶</a></dt>
 <dd><p>Renders a simulation to create a set of still images that can be made into a movie</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_path</strong> – path for storing outputted images</p></li>
 <li><p><strong>scene</strong> – the Blender scene</p></li>
@@ -376,7 +381,7 @@ Currently just based on volume</p>
 <li><p><strong>end</strong> – the Blender end key frame</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -388,10 +393,10 @@ Currently just based on volume</p>
 <dd><p>Adds a new face to the cell after division (splitting) of the mesh and
 regularizes the mesh so that the mesh is evenly covered with faces</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -410,7 +415,7 @@ and this daughter cell will be translated later.
 If the distance is negative, the function returns 1
 and the other daughter cell will be translated later</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>obj</strong> – the Blender mesh to divide in two</p></li>
 <li><p><strong>COM</strong> – center of mass</p></li>
@@ -420,7 +425,7 @@ and the other daughter cell will be translated later</p>
 </dl>
 <p>perpendicular to division axis)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>0 if the daughter cell is a positive distance away from</p>
 </dd>
 </dl>
@@ -433,10 +438,10 @@ and the other daughter cell will be translated later</p>
 <dd><p>Splits one cell into two for cell division. Currently divides
 along the major axis but should allow a supplied axis</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>obj</strong> – the Blender mesh to divide in two</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>mother_name, daughter_name, COM, major_axis</p>
 </dd>
 </dl>
@@ -448,7 +453,7 @@ along the major axis but should allow a supplied axis</p>
 <dd><p>Sets up the default values used for simulations in Goo
 including units and rendering background</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -460,13 +465,13 @@ including units and rendering background</p>
 <dd><p>Moves cell along the given axis.
 Used during cell division so daughters have some space</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>obj</strong> – the Blender mesh to move</p></li>
 <li><p><strong>axis</strong> – the axis along which to move it</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -479,7 +484,7 @@ Used during cell division so daughters have some space</p>
 The cloth physics for cells are turned off before division to
 avoid irregular mesh behavior after</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -492,7 +497,7 @@ avoid irregular mesh behavior after</p>
 Physics are turned back on after cell division occurs to avoid
 irregular mesh behavior post-division.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
@@ -512,6 +517,11 @@ irregular mesh behavior post-division.</p>
     <p class="topless"><a href="summary.html"
                           title="previous chapter">Goo Overview</a></p>
   </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="devguide.html"
+                          title="next chapter">Welcome to Developer’s Guide</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -528,7 +538,7 @@ irregular mesh behavior post-division.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -543,6 +553,9 @@ irregular mesh behavior post-division.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
+          <a href="devguide.html" title="Welcome to Developer’s Guide"
+             >next</a> |</li>
+        <li class="right" >
           <a href="summary.html" title="Goo Overview"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Goo 0.0.1 documentation</a> &#187;</li>
@@ -551,7 +564,7 @@ irregular mesh behavior post-division.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022. President and Fellows of Harvard College.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

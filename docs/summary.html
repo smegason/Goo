@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Goo Overview &#8212; Goo 0.0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -12,6 +12,7 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,9 +33,6 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="code.html" title="Functions and Classes"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -51,16 +49,16 @@
           <div class="body" role="main">
             
   <section id="goo-overview">
-<h1>Goo Overview<a class="headerlink" href="#goo-overview" title="Permalink to this headline">¶</a></h1>
+<h1>Goo Overview<a class="headerlink" href="#goo-overview" title="Permalink to this heading">¶</a></h1>
 <section id="what-is-goo">
-<h2>What is Goo<a class="headerlink" href="#what-is-goo" title="Permalink to this headline">¶</a></h2>
+<h2>What is Goo<a class="headerlink" href="#what-is-goo" title="Permalink to this heading">¶</a></h2>
 <p>Goo is a Python package for extending Blender for modeling biological cells, tissues, and embryos.</p>
 <p>Goo is a modeling environment for creating physics based simulations of biological cells, tissues, and whole embryos. Goo contains built-in models for basic cell properties such as growth, division, and adhesion. Goo creates realistic models of cells in 3D based on surface meshes enclosing compresible fluid. Goo is meant to fill a void in currently available models such as vertex and particle based models which are too simplified to capture essential featuers of cells, are often 2D, and can be difficult for new users to use.</p>
 <p>Goo is built on top of Blender. Blender is a truly amazing open source computer graphics project for generating animations. Goo provides a library of helper functions in Python for creating cells with user defined properties that are used inside the scripting environment and GUI of Blender. Physics and rendering are handled by Blender. In combination Goo and Blender allow cell-based simulations to be interacted with via Python scripts and through a GUI.</p>
 <p>Goo is open source and currently being developed by the Megason lab at Harvard University. We would love for you to contribute! Please contact me if you are interested. megason AT hms.harvard.edu .</p>
 <p>Our grand Driving Biological Problem is to simulate the first 24 hours of zebrafish development. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding morphogenesis, embryonic development, growth of organoids, tissue engineering, and artificial life.</p>
 <section id="contributors">
-<h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h3>
+<h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Sean Megason, Harvard University</p></li>
 <li><p>Daniel Oo, Amherst University</p></li>
@@ -71,7 +69,7 @@
 </section>
 </section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">¶</a></h2>
 <ol class="arabic">
 <li><p>Install the latest edition of Blender from <a class="reference external" href="https://www.blender.org/download/">https://www.blender.org/download/</a></p></li>
 <li><p>Clone the Goo repository or download and unzip</p></li>
@@ -85,7 +83,7 @@
 </ol>
 </section>
 <section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
 <p>In a new <cite>General</cite> Project within Blender, delete the default cube by left-clicking on the cube, type <cite>X</cite>, and then <cite>return</cite></p>
 <p>In the Scripting tab of Blender, use the desired cell functions</p>
 <p>Example script (Create cell):</p>
@@ -99,7 +97,7 @@
 <p>Note, Blender uses its own built in Python interpreter which may be different than another Python instance you’ve installed.</p>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
 <p>Look in the Simulations folder in the Github repository for Goo to find example scripts for running simulations. These can be loaded from Blender in the scripts tab and then run to create the simulation.</p>
 </section>
 </section>
@@ -153,7 +151,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -164,9 +162,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
         <li class="right" >
           <a href="code.html" title="Functions and Classes"
              >next</a> |</li>
@@ -179,7 +174,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022. President and Fellows of Harvard College.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>
