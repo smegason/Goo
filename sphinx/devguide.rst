@@ -43,6 +43,35 @@ Once you have downloaded and installed Blender, launch Blender and select *Gener
 
 .. image:: ../img/basic_blender.png
   :width: 800
-    
 
-    
+Creating Python File
+~~~~~~~~~~~~~~~~~~~~
+
+You can create a Python file and run it on Blender. Once you are in **Scripting** tab, click on the *+ New* icon. 
+
+.. image:: ../img/python_file.png
+  :width: 800
+
+*bpy* is a Blender API that allow to interact with Blender through Python language. To import Blender API, you write the following::
+    import bpy
+
+The Blender API can used with no installation nor importing into the Python Interactive Console. The Python file can be run on Blender by clicking on *play* icon. 
+
+.. image:: ../img/play_button.png
+  :width: 800
+
+
+Viewing Python Errors on Blender
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+Useful Blender Tips
+~~~~~~~~~~~~~~~~~~~
+
+- To Display *Line Numbers* on a Python file, click *View* and mark the checkbox of *Line Numbers*. *View* tab will appear once you create a Python file.
+- To turn on *Highlight Line* at the line currently at, click *View* and mark the checkbox of *Highlight Line*. *View* tab will appear once you create a Python file.
+- *Developer Extras* allows users to examine Python codes on any features or buttons on Blender by right-clicking for example on a Render button and then select *Edit Source*.  To enable this *Developer Extras*, go to *Edit* -> *Preferences* -> *Interface* -> check *Developer Extras*
+- *Python Tooltips* also allows users to examine the Python codes behind any bulit-in Blender features by just hovering the mouse on top and a pops-up window will appear.  To enable *Python Tooltips*, *Edit* -> *Preferences* -> *Interface* -> Check *Python Tooltips*
+
