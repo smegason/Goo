@@ -38,7 +38,7 @@ Blender is an open source 3D computer software. It is free to download_. Blender
 Once you have downloaded and installed Blender, launch Blender and select *General* for the new file. **Scripting** tab allows you to interact with Blender using Python language. By clicking **scripting**, a list of windows will open:
 
 - *3D Viewport* allows you to interact with 3D objects.
-- *Python Interactive Console* allows you to interact with Blender using Python language. You can think of it as a command window/terminal of Blender. 
+- *Python Interactive Console* allows you to interact with Blender using Python language. 
 - *Info Console Menu* or *Report console* creates a log in Python of the executed actions on Blender. In another words, it translates the clicks you made in Blender into code. This is very useful especially when you try to automate procedures of actions on *scripting*.    
 
 .. image:: ../img/basic_blender.png
@@ -61,8 +61,12 @@ The Blender API can used with no installation nor importing into the Python Inte
   :width: 800
 
 
-Viewing Python Errors on Blender
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Viewing Python Error Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**PC**: *Window -> Toggle System Console*
+
+**Mac**: *Finder -> Applications -> right-click on Blender -> Show Package Content -> Contents -> MacOS -> right-click on Blender -> Make Alias*. Blender will be launched by double-clicking the Blender alias and any error messages will display on the alias window. You can store the alia any folder. 
 
 
 
