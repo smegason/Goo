@@ -21,6 +21,7 @@ Kaltura hosted video presentation of all Goo features (as of May 2022) is at  ht
 
    summary
    code
+   userguide
    devguide
 
 Indices and tables
