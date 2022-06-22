@@ -69,7 +69,12 @@ Viewing Python Error Messages
 **Mac**: *Finder -> Applications -> right-click on Blender -> Show Package Content -> Contents -> MacOS -> right-click on Blender -> Make Alias*. Blender will be launched by double-clicking the Blender alias and any error messages will display on the alias window. You can store the alia any folder. 
 
 
+Blender Python Tutorials
+~~~~~~~~~~~~~~~~~~~~~~~~
 
+You can  find many free tutorials on YouTube and the Internet. here is a great tutorial, made by Darkfall_, on YouTube on how to write a Python script in Blender. 
+
+.. _Darkfall: https://www.youtube.com/watch?v=cyt0O7saU4Q&list=PLFtLHTf5bnym_wk4DcYIMq1DkjqB7kDb-&ab_channel=Darkfall
 
 Useful Blender Tips
 ~~~~~~~~~~~~~~~~~~~
