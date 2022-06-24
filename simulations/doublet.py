@@ -139,11 +139,7 @@ for collection in bpy.data.collections:
         for obj in collection.objects:
             obj.modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections[force_name]
         
-# Set up the effector collection 
-#bpy.data.objects[1].modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections["A_Forces"]
-#bpy.data.collections[0].objects[0]
-
-#handlers = goo.handler_class()
-#handlers.forces = [fA1, fA2, fB1, fB2]
-#bpy.app.handlers.frame_change_post.clear()
-#bpy.app.handlers.frame_chnage_post.append(handlers.adhesion_handler)
+handlers = goo.handler_class()
+handlers.forces = [fA1, fA2, fB1, fB2]
+bpy.app.handlers.frame_change_post.clear()
+bpy.app.handlers.frame_change_post.append(handlers.adhesion_handler)
