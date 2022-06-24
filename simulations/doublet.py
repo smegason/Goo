@@ -5,10 +5,6 @@ from goo import goo
 import bpy
 
 goo.setup_world()
-
-# Delete all existing collections 
-#for collection in bpy.data.collections:  # loop through the existing collection
-#    bpy.data.collections.remove(collection)
     
 # Delete all existing collections 
 for collection in bpy.data.collections:  # loop through the existing collection
@@ -129,33 +125,25 @@ bpy.ops.collection.objects_remove_all()
 # Add the active force to our specific collection 
 bpy.data.collections['B_Forces'].objects.link(obj)
 
+# Set the Effector Collection (Select a cell then go to
+# Physics Properties > Cloth > Field Weights > Effector Collection > selct the force collection)
+for collection in bpy.data.collections:
+    
+    # Exclude the objects in the force collections
+    if 'Cells' in collection.name_full:
+        # Collection name
+        coll_name = collection.name_full
+        # Save the word before the underscore
+        force_name = coll_name[0:coll_name.find('_')] + '_Forces'
+        # Loop through the objects existed in the collection 
+        for obj in collection.objects:
+            obj.modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections[force_name]
+        
+# Set up the effector collection 
+#bpy.data.objects[1].modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections["A_Forces"]
+#bpy.data.collections[0].objects[0]
 
-
-
-## Cell A force
-#fA_collection = bpy.data.collections.new("A_Forces")       # create a new collection
-#bpy.context.scene.collection.children.link(fA_collection) # make collection visible on the outliner
-
-#fA1 = goo.Force("force_A1", "cell_A1", -800)
-#goo.make_force(fA1)
-
-## Cell B force
-#fB_collection = bpy.data.collections.new("B_Forces")
-#bpy.context.scene.collection.children.link(fB_collection)
-
-
-
-#cA_collection = bpy.data.collections.new
-
-#bpy.context.scene.collection.children.link(bpy.data.collections.new("A_Cell"))
-
-#cB_collection = 
-#fA_collection = 
-
-## Rename existing collection
-#coll1 = bpy.data.collections[0]
-#coll1.name
-
-## make cells
-#cell1 = Goo.Cell("cell_", loc=(1, 0, 0))
-#cell2 = Goo.Cell("cell_", loc=(-1, 0, 0))
+#handlers = goo.handler_class()
+#handlers.forces = [fA1, fA2, fB1, fB2]
+#bpy.app.handlers.frame_change_post.clear()
+#bpy.app.handlers.frame_chnage_post.append(handlers.adhesion_handler)
