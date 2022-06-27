@@ -14,14 +14,14 @@ for collection in bpy.data.collections:  # loop through the existing collection
         bpy.data.objects.remove(objs)
     # Delete collection
     bpy.data.collections.remove(collection)
-
+    
 # Change the Viewport Shading to Rendered
 for area in bpy.context.screen.areas: 
     if area.type == 'VIEW_3D':
         for space in area.spaces: 
             if space.type == 'VIEW_3D':
                 space.shading.type = 'MATERIAL'
-
+                
 #====================== Colors =========================
 # Green
 matg = bpy.data.materials.new("Green")
@@ -29,6 +29,9 @@ matg.diffuse_color = (0,0.1,0,0.8)
 # Red
 matr = bpy.data.materials.new("red")
 matr.diffuse_color = (0.1,0,0,0.8)
+# Blue
+matb = bpy.data.materials.new("blue")
+matb.diffuse_color = (0.0,0,1,0.8)
 
 #================== Cell A Collection ==================
 # Create a collection for cell A
@@ -49,18 +52,6 @@ bpy.ops.collection.objects_remove_all()
 # Add the active cell to our specific collection 
 bpy.data.collections['A_Cells'].objects.link(obj)
 
-# Define cell A2
-cA2 = goo.Cell("cell_A2", loc = (2,-2,0))
-# Make a Blender mesh object for cell
-goo.make_cell(cA2)
-# The created cell is the active object
-obj = bpy.context.active_object
-# Set the object color
-obj.active_material = matg
-# Remove object from all collections not used in a scene
-bpy.ops.collection.objects_remove_all()
-# Add the active cell to our specific collection 
-bpy.data.collections['A_Cells'].objects.link(obj)
 
 #================== Cell B Collection ==================
 # Create a collection for cell B
@@ -81,18 +72,24 @@ bpy.ops.collection.objects_remove_all()
 # Add the active cell to our specific collection 
 bpy.data.collections['B_Cells'].objects.link(obj)
 
-# Define cell B2
-cB2 = goo.Cell("cell_B2", loc = (-2,-2,0))
+#================== Cell C Collection ==================
+# Create a collection for cell B
+cC_collection = bpy.data.collections.new("C_Cells")
+# link the collection to the scene
+bpy.context.scene.collection.children.link(cC_collection)
+# Define cell A1
+cC1 = goo.Cell("cell_C1", loc = (0,2,2))
 # Make a Blender mesh object for cell
-goo.make_cell(cB2)
+goo.make_cell(cC1)
 # The created cell is the active object
 obj = bpy.context.active_object
 # Set the object color
-obj.active_material = matr
-# Remove object from all collections not used in a scene
+obj.active_material = matb
+# Remove object from all collections not used in a scene 
+# if you do not delete them the object outside colleciton will link to object inside the collection
 bpy.ops.collection.objects_remove_all()
 # Add the active cell to our specific collection 
-bpy.data.collections['B_Cells'].objects.link(obj)
+bpy.data.collections['C_Cells'].objects.link(obj)
 
 #================== Force A Collection ==================
 # Create a collection for force A
@@ -103,17 +100,6 @@ bpy.context.scene.collection.children.link(fA_collection)
 fA1 = goo.Force("force_A1", "cell_A1", -800)
 # Make force
 goo.make_force(fA1)
-# The created force is the active object
-obj = bpy.context.active_object
-# Remove object from all collections not used in a scene
-bpy.ops.collection.objects_remove_all()
-# Add the active force to our specific collection 
-bpy.data.collections['A_Forces'].objects.link(obj)
-
-# Define and link force A2
-fA2 = goo.Force("force_A2", "cell_A2", -800)
-# Make force
-goo.make_force(fA2)
 # The created force is the active object
 obj = bpy.context.active_object
 # Remove object from all collections not used in a scene
@@ -137,16 +123,22 @@ bpy.ops.collection.objects_remove_all()
 # Add the active force to our specific collection 
 bpy.data.collections['B_Forces'].objects.link(obj)
 
-# Define and link force B2
-fB2 = goo.Force("force_B2", "cell_B2", -800)
+#================== Force C Collection ==================
+# Create a collection for force B
+fC_collection = bpy.data.collections.new("C_Forces")
+# link the collection to the scene 
+bpy.context.scene.collection.children.link(fC_collection)
+# Define and link force B1
+fC1 = goo.Force("force_C1", "cell_C1", -800)
 # Make force
-goo.make_force(fB2)
+goo.make_force(fC1)
 # The created force is the active object
 obj = bpy.context.active_object
 # Remove object from all collections not used in a scene
 bpy.ops.collection.objects_remove_all()
 # Add the active force to our specific collection 
-bpy.data.collections['B_Forces'].objects.link(obj)
+bpy.data.collections['C_Forces'].objects.link(obj)
+
 
 # Set the Effector Collection (Select a cell then go to
 # Physics Properties > Cloth > Field Weights > Effector Collection > selct the force collection)
@@ -156,56 +148,37 @@ for collection in bpy.data.collections:
     if 'Cells' in collection.name_full:
         # Collection name
         coll_name = collection.name_full
-        # Save the word before the underscore
-        force_name = coll_name[0:coll_name.find('_')] + '_Forces'
-        # Loop through the objects existed in the collection 
-        for obj in collection.objects:
-            # Cloth > Effector collection
-            obj.modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections[force_name]
-            # Cloth
-            obj.modifiers['Cloth'].settings.quality = 6
-            obj.modifiers['Cloth'].settings.air_damping = 5
-            obj.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
-            # Cloth > Stiffness 
-            obj.modifiers['Cloth'].settings.tension_stiffness = 1
-            obj.modifiers['Cloth'].settings.compression_stiffness = 1
-            obj.modifiers['Cloth'].settings.shear_stiffness = 1
-            obj.modifiers['Cloth'].settings.bending_stiffness = 1
-            # Cloth > Damping
-            obj.modifiers['Cloth'].settings.tension_damping = 25
-            obj.modifiers['Cloth'].settings.compression_damping = 25
-            obj.modifiers['Cloth'].settings.shear_damping = 25
-            obj.modifiers['Cloth'].settings.bending_damping = 0.5
-            # Cloth > Internal Springs
-            obj.modifiers['Cloth'].settings.use_internal_springs = True
-            obj.modifiers['Cloth'].settings.internal_spring_max_length = 0
-            obj.modifiers['Cloth'].settings.internal_spring_max_diversion = 0.785398
-            obj.modifiers['Cloth'].settings.internal_spring_normal_check = True
-            obj.modifiers['Cloth'].settings.internal_tension_stiffness = 1
-            obj.modifiers['Cloth'].settings.internal_compression_stiffness = 1
-            obj.modifiers['Cloth'].settings.internal_tension_stiffness_max = 5
-            obj.modifiers['Cloth'].settings.internal_compression_stiffness_max = 5
-            # Cloth > Pressure
-            obj.modifiers['Cloth'].settings.uniform_pressure_force = 5
-            obj.modifiers['Cloth'].settings.use_pressure_volume = True
-            obj.modifiers['Cloth'].settings.target_volume = 1
-            obj.modifiers['Cloth'].settings.pressure_factor = 1
-            obj.modifiers['Cloth'].settings.fluid_density = 0
-            # Cloth > Collisions
-            obj.modifiers['Cloth'].collision_settings.collision_quality = 6
-            obj.modifiers['Cloth'].collision_settings.use_collision = True
-            obj.modifiers['Cloth'].collision_settings.use_self_collision = True
-            obj.modifiers['Cloth'].collision_settings.self_friction = 5
-            obj.modifiers['Cloth'].collision_settings.self_distance_min = 0.015
-            obj.modifiers['Cloth'].collision_settings.self_impulse_clamp = 0
-            # Collision
-            obj.modifiers['Collision'].settings.damping = 0.579821
-            obj.modifiers['Collision'].settings.thickness_outer = 0.02
-            obj.modifiers['Collision'].settings.thickness_inner = 0.2
-            obj.modifiers['Collision'].settings.cloth_friction = 5
-            obj.modifiers['Collision'].settings.use_culling = True
+        
+        # Cell A attracts to Cell B
+        if coll_name == 'A_Cells':
+                      
+            # Force B
+            force_name = 'B_Forces'
+            # Loop through the objects existed in the collection 
+            for obj in collection.objects:
+                obj.modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections[force_name]
             
+        # Cell B attracts to Cell C
+        elif coll_name == 'B_Cells':
+            
+            # Force C
+            force_name = 'C_Forces'
+            # Loop through the objects existed in the collection 
+            for obj in collection.objects:
+                obj.modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections[force_name]
+        
+        # Cell C attracts to Cell A    
+        else:
+            
+            # Foce A
+            force_name = 'A_Forces'
+            # Loop through the objects existed in the collection 
+            for obj in collection.objects:
+                obj.modifiers['Cloth'].settings.effector_weights.collection = bpy.data.collections[force_name]
+                
+
+        
 handlers = goo.handler_class()
-handlers.forces = [fA1, fA2, fB1, fB2]
+handlers.forces = [fA1, fB1, fC1]
 bpy.app.handlers.frame_change_post.clear()
 bpy.app.handlers.frame_change_post.append(handlers.adhesion_handler)
