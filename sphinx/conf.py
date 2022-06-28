@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../scripts/modules/Goo/'))
+sys.path.insert(0, os.path.abspath('../scripts/modules/goo/'))
 
 
 # -- Project information -----------------------------------------------------

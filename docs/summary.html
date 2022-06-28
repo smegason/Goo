@@ -4,12 +4,11 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Goo Overview &#8212; Goo 0.0.1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/pyramid.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -32,9 +31,6 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="code.html" title="Functions and Classes"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -50,59 +46,28 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="goo-overview">
+  <div class="section" id="goo-overview">
 <h1>Goo Overview<a class="headerlink" href="#goo-overview" title="Permalink to this headline">¶</a></h1>
-<section id="what-is-goo">
+<div class="section" id="what-is-goo">
 <h2>What is Goo<a class="headerlink" href="#what-is-goo" title="Permalink to this headline">¶</a></h2>
 <p>Goo is a Python package for extending Blender for modeling biological cells, tissues, and embryos.</p>
 <p>Goo is a modeling environment for creating physics based simulations of biological cells, tissues, and whole embryos. Goo contains built-in models for basic cell properties such as growth, division, and adhesion. Goo creates realistic models of cells in 3D based on surface meshes enclosing compresible fluid. Goo is meant to fill a void in currently available models such as vertex and particle based models which are too simplified to capture essential featuers of cells, are often 2D, and can be difficult for new users to use.</p>
 <p>Goo is built on top of Blender. Blender is a truly amazing open source computer graphics project for generating animations. Goo provides a library of helper functions in Python for creating cells with user defined properties that are used inside the scripting environment and GUI of Blender. Physics and rendering are handled by Blender. In combination Goo and Blender allow cell-based simulations to be interacted with via Python scripts and through a GUI.</p>
 <p>Goo is open source and currently being developed by the Megason lab at Harvard University. We would love for you to contribute! Please contact me if you are interested. megason AT hms.harvard.edu .</p>
 <p>Our grand Driving Biological Problem is to simulate the first 24 hours of zebrafish development. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding morphogenesis, embryonic development, growth of organoids, tissue engineering, and artificial life.</p>
-<section id="contributors">
+<div class="section" id="contributors">
 <h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Sean Megason, Harvard University</p></li>
+<li><p>Ahmed Almaghasilah, University of Maine</p></li>
 <li><p>Daniel Oo, Amherst University</p></li>
 <li><p>Kali Konstantinopoulos, Indiana University</p></li>
 <li><p>Michael Mitsch, Indiana University</p></li>
 <li><p>Drew Willis, Indiana University</p></li>
 </ul>
-</section>
-</section>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<ol class="arabic">
-<li><p>Install the latest edition of Blender from <a class="reference external" href="https://www.blender.org/download/">https://www.blender.org/download/</a></p></li>
-<li><p>Clone the Goo repository or download and unzip</p></li>
-<li><p>In Blender, go to <cite>Edit&gt;Preferences</cite>, then go to the ‘Add-ons’ tab and enable the checkbox next to <cite>Add Mesh: Extra Objects</cite></p>
-<img alt="_images/blender_edit_preferences.png" src="_images/blender_edit_preferences.png" />
-<img alt="_images/blender_add_mesh.png" src="_images/blender_add_mesh.png" />
-</li>
-<li><p>Then, in <cite>Edit&gt;Preferences</cite>, go to the <cite>File Paths</cite> tab and add the <cite>&lt;location&gt;/Goo/scripts/</cite> folder to <cite>Scripts</cite>. <cite>&lt;location&gt;</cite> should be replaced with the root leading up to where you cloned the Goo repository. You may need to close and re-open Blender afther this change.</p>
-<img alt="_images/blender_add_path.png" src="_images/blender_add_path.png" />
-</li>
-</ol>
-</section>
-<section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<p>In a new <cite>General</cite> Project within Blender, delete the default cube by left-clicking on the cube, type <cite>X</cite>, and then <cite>return</cite></p>
-<p>In the Scripting tab of Blender, use the desired cell functions</p>
-<p>Example script (Create cell):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">goo</span> <span class="kn">import</span> <span class="n">goo</span>
-<span class="n">goo</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
-<span class="n">cell</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Cell</span><span class="p">(</span><span class="n">name_string</span> <span class="o">=</span> <span class="s2">&quot;Cell_&quot;</span><span class="p">,</span> <span class="n">loc</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
-</pre></div>
 </div>
-<p>Click the play button in the scripting tab of Blender and you should see a Goo cell appear</p>
-<p>Note, Blender uses its own built in Python interpreter which may be different than another Python instance you’ve installed.</p>
-</section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p>Look in the Simulations folder in the Github repository for Goo to find example scripts for running simulations. These can be loaded from Blender in the scripts tab and then run to create the simulation.</p>
-</section>
-</section>
+</div>
+</div>
 
 
             <div class="clearer"></div>
@@ -111,32 +76,23 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <div>
-    <h3><a href="index.html">Table of Contents</a></h3>
-    <ul>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
 <li><a class="reference internal" href="#">Goo Overview</a><ul>
 <li><a class="reference internal" href="#what-is-goo">What is Goo</a><ul>
 <li><a class="reference internal" href="#contributors">Contributors</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#installation">Installation</a></li>
-<li><a class="reference internal" href="#usage">Usage</a></li>
-<li><a class="reference internal" href="#examples">Examples</a></li>
 </ul>
 </li>
 </ul>
 
-  </div>
-  <div>
-    <h4>Previous topic</h4>
-    <p class="topless"><a href="index.html"
-                          title="previous chapter">Welcome to Goo</a></p>
-  </div>
-  <div>
-    <h4>Next topic</h4>
-    <p class="topless"><a href="code.html"
-                          title="next chapter">Functions and Classes</a></p>
-  </div>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Goo</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="code.html"
+                        title="next chapter">Functions and Classes</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -148,7 +104,7 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -165,9 +121,6 @@
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="code.html" title="Functions and Classes"
              >next</a> |</li>
         <li class="right" >
@@ -179,7 +132,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022. President and Fellows of Harvard College.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
     </div>
   </body>
 </html>
