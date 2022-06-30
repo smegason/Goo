@@ -19,7 +19,7 @@ Usage
 -----
 In a new `General` Project within Blender, delete the default cube by left-clicking on the cube, type `X`, and then `return`
 
-In the Scripting tab of Blender, use the desired cell functions
+In the **Scripting** tab of Blender, use the desired cell functions
 
 Example script (Create cell)::
 
@@ -32,6 +32,11 @@ Click the play button in the scripting tab of Blender and you should see a Goo c
   
 Note, Blender uses its own built in Python interpreter which may be different than another Python instance you've installed.
 
-Examples
+Python Simulation Scripts
+-------------------------
+Look in the Simulations folder in the Github repository for Goo to find example python scripts for running simulations. These can be loaded from Blender in the scripts tab and then run to create the simulation.
+
+Concepts
 --------
-Look in the Simulations folder in the Github repository for Goo to find example scripts for running simulations. These can be loaded from Blender in the scripts tab and then run to create the simulation.
+
+- `Cell Adhesion`: is where cells interact and attach to each other. The cell adhesion is essential part of forming an organism. In Blender, cell adhesion is represented as force field. 

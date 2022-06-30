@@ -5,6 +5,7 @@ from goo import goo
 import bpy
 
 goo.setup_world()
+  
     
 # Delete all existing collections 
 for collection in bpy.data.collections:  # loop through the existing collection
@@ -16,11 +17,11 @@ for collection in bpy.data.collections:  # loop through the existing collection
     bpy.data.collections.remove(collection)
 
 # Change the Viewport Shading to Rendered
-for area in bpy.context.screen.areas: 
+for area in bpy.data.screens[3].areas: 
     if area.type == 'VIEW_3D':
         for space in area.spaces: 
             if space.type == 'VIEW_3D':
-                space.shading.type = 'MATERIAL'
+                space.shading.type = 'RENDERED'
 
 #====================== Colors =========================
 # Green

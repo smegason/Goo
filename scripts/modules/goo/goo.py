@@ -510,14 +510,16 @@ def make_cell(cell):
     """
     Makes a Blender mesh object for the given Goo cell Python object
 
-    :param cell: the Goo cell Pythoon object to make a Blender mesh from
+    :param cell: the Goo cell Python object to make a Blender mesh from
 
     :return: None
     """
     # TODO make_mesh and make_cell are redundant. Need to merge.
 
     # print ("make cell")
+    print(cell.data['name'])
 
+    # if cell.data['flavor'] == "round_cube" or None:
     # Add a round_cube mesh
     try:
         bpy.ops.mesh.primitive_round_cube_add(change=False,
@@ -1291,3 +1293,11 @@ class handler_class:
             z = vert_coords[:, 2]
             COM = (np.mean(x), np.mean(y), np.mean(z))
             bpy.data.objects[force.name].location = COM
+
+
+# make_cell(Cell(name_string="cell1", loc=(1, 1, 0)))
+
+# if __name__ == '__main__':
+#     make_cell(Cell("cell1", loc=(1, 1, 0)))
+
+
