@@ -1,8 +1,7 @@
 import bpy
 from goo import goo 
-# from importlib import reload
-# reload(goo)
-# exec(open("goo.py").read())
+from importlib import reload
+reload(goo)
 
 # Delete all existing collections 
 for collection in bpy.data.collections:  # loop through the existing collection
@@ -20,19 +19,20 @@ for collection in bpy.data.collections:  # loop through the existing collection
 #             if space.type == 'VIEW_3D':
 #                 space.shading.type = 'RENDERED'
 
-# ===================================================
+
+# ========================== Testing ==========================
 cA_collection = bpy.data.collections.new("A_Cells")
 # link the collection to the scene for visualization 
 bpy.context.scene.collection.children.link(cA_collection)
 # Define cell A1
-cA1 = goo.Cell("cell_A1", loc=(2, 2, 0))
+cA1 = goo.Cell("cell_A1", loc=(2, 2, 0), flavor="ico_sphere")
 # Make a Blender mesh object for cell
 goo.make_cell(cA1)
-# # The created cell is the active object
-# obj = bpy.context.active_object
-# # Remove object from all collections not used in a scene 
-# # if you do not delete them the object outside colleciton will link to object  
-# # inside the collection
-# bpy.ops.collection.objects_remove_all()
-# # Add the active cell to our specific collection
-# bpy.data.collections['A_Cells'].objects.link(obj)
+# The created cell is the active object
+obj = bpy.context.active_object
+# Remove object from all collections not used in a scene 
+# if you do not delete them the object outside colleciton will link to object  
+# inside the collection
+bpy.ops.collection.objects_remove_all()
+# Add the active cell to our specific collection
+bpy.data.collections['A_Cells'].objects.link(obj)

@@ -516,27 +516,52 @@ def make_cell(cell):
     """
     # TODO make_mesh and make_cell are redundant. Need to merge.
 
-    # print ("make cell")
-    print(cell.data['name'])
+    # Making cell
+    print('Making cell')
 
     # if cell.data['flavor'] == "round_cube" or None:
     # Add a round_cube mesh
-    try:
-        bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                              radius=cell.data['radius'],
-                                              size=cell.data['size'],
-                                              arc_div=cell.data['arcdiv'],
-                                              lin_div=0,
-                                              div_type='CORNERS',
-                                              odd_axis_align=False,
-                                              no_limit=False,
-                                              location=cell.data['location'])
-    except Exception:
-        print(sys.exc_info())
-        print("To enable RoundCube creation for Cells you must go to ")
-        print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
-        print("check the box to enable it")
-        return
+    if cell.data['flavor'] == "round_cube" or "":
+        print("Making Round Cube")
+        try:
+            bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                                  radius=cell.data['radius'],
+                                                  size=cell.data['size'],
+                                                  arc_div=cell.data['arcdiv'],
+                                                  lin_div=0,
+                                                  div_type='CORNERS',
+                                                  odd_axis_align=False,
+                                                  no_limit=False,
+                                                  location=cell.data['location'])
+        except Exception:
+            print(sys.exc_info())
+            print("To enable RoundCube creation for Cells you must go to ")
+            print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
+            print("check the box to enable it")
+            return
+    # Ico sphere
+    elif cell.data['flavor'] == "ico_sphere":
+        print("Making Ico Sphere")
+        try:
+            bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False, 
+                                                  align='WORLD', 
+                                                  location=(0, 0, 0), 
+                                                  scale=(1, 1, 1))
+
+
+            # bpy.ops.mesh.primitive_ico_sphere_add(change=False,
+            #                                       radius=cell.data['radius'],
+            #                                       size=cell.data['size'],
+            #                                       arc_div=cell.data['arcdiv'],
+            #                                       lin_div=0,
+            #                                       div_type='CORNERS',
+            #                                       odd_axis_align=False,
+            #                                       no_limit=False,
+            #                                       location=cell.data['location'])
+        except Exception:
+            print(sys.exc_info())
+            print("Make sure you spell the correct name")
+            return
 
     # Give the Blender object the cell's name
     obj = bpy.context.object
@@ -610,7 +635,7 @@ def delete_cell(cell):
 
 # Defines the Cell class
 class Cell():
-    def __init__(self, name_string, loc, material=""):
+    def __init__(self, name_string, loc, material="", flavor=""):
         # The initialization function sets a cell data dictionary
         # for geometric parameters, physics parameters,
         # division information, and cell lineage
@@ -640,7 +665,8 @@ class Cell():
             'theta': 0,
             'div_axis': (0, 0, 0),
             'mother': 'none',
-            'daughters': ['none', 'none']
+            'daughters': ['none', 'none'],
+            'flavor': flavor
         }
         # The volume and mass are calculated from values in the data dictionary
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
@@ -1293,11 +1319,3 @@ class handler_class:
             z = vert_coords[:, 2]
             COM = (np.mean(x), np.mean(y), np.mean(z))
             bpy.data.objects[force.name].location = COM
-
-
-# make_cell(Cell(name_string="cell1", loc=(1, 1, 0)))
-
-# if __name__ == '__main__':
-#     make_cell(Cell("cell1", loc=(1, 1, 0)))
-
-
