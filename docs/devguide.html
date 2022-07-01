@@ -113,19 +113,35 @@ Will give you the freedom to test and make changes to the project without affect
 <li><strong>Install Blender API</strong> - Open Terminal/Command Window and type “<em>pip install fake-bpy-module-latest</em>”.  This command line will install the latest Blender’s version available using Pip package manager. For more info on visit <a class="reference external" href="https://github.com/nutti/fake-bpy-module">Fake Blender Github</a>.</li>
 <li><strong>Download and install VSCode software</strong> - <a class="reference external" href="https://code.visualstudio.com/download">Visual Studio Code</a>.</li>
 <li><strong>Install Python extension</strong> - open VSCode and go to the extension tab and search for “Python” by Microsoft. The VSCode extensions enhance developer’s experience.</li>
-<li><strong>Install Blender extenion</strong> - same as before open up VSCode and got to extension and search for “Blender Development” by Jacques Lucke</li>
 <li><strong>Open Goo folder in VSCode</strong> - <em>File &gt; Open Folder</em> (See <strong>Git/GitHub</strong> section on how to clone Goo on your local machine if you have not done it yet).</li>
-<li><strong>Enable and Select Linter</strong> - Before you start working on Goo, you need to enable Linter which advise you about the code quality.  We are following fake8 style. To enable linter in VSCode, hit <em>ctl + shift + P</em> and type “Python: Enable/Disable Linting”.  Click on it and enable it. Now you need to select the code style.  Again click ctl + shift + P and type “Python: Select Linter” and then select <em>fake8</em></li>
+<li><strong>Enable and Select Linter</strong> - Before you start working on Goo, you need to enable Linter which advise you about the code quality.  We are following fake8 style. To enable linter in VSCode, hit <em>ctl + shift + P</em> and type “Python: Enable/Disable Linting”.  Click on it and enable it. Now you need to select the code style.  Again click <em>ctl + shift + P</em> and type “Python: Select Linter” and then select <em>fake8</em></li>
 <li><strong>Open Terminal</strong> - if needed, you can open Terminal in VSCode. Go to Terminal tab and then select New Terminal.</li>
 </ol>
-</div>
-<div class="section" id="developing-python-codes-for-blender-in-vscode">
-<h3>Developing Python codes for Blender in VSCode<a class="headerlink" href="#developing-python-codes-for-blender-in-vscode" title="Permalink to this headline">¶</a></h3>
 <p>We have already shown how to run Python codes in Blender (see <em>Creating Python file</em> above). In this section, we will show you how to run Python scripts on VSCode written exclusively for Blender.</p>
+<p>There are two ways you can develop/execute your Python codes in VSCode.</p>
+</div>
+<div class="section" id="a-developing-executing-python-codes-in-vscode">
+<h3>A) Developing/Executing Python codes in VSCode<a class="headerlink" href="#a-developing-executing-python-codes-in-vscode" title="Permalink to this headline">¶</a></h3>
 <ol class="arabic simple">
+<li><strong>Install Blender extenion</strong>: same as before open up VSCode and got to extension and search for “Blender Development” by Jacques Lucke</li>
 <li><strong>Python file</strong>: Create a Python file in VSCode.</li>
 <li><strong>Link Blender executable file</strong>: Click <em>ctl + shift + p</em> , select <em>Blender: Start</em>, and then select the executable Blender (you can find it in Blender folder). In <em>Mac</em>:  Finder &gt; Application &gt; right-click on Blender and choose “Show Package Content” &gt; Contents &gt; MacOS. In <em>PC</em>: find the path where blender.exe exists in Blender folder. Once you link the executable, Blender will launch.  Select <em>General</em> to start from scratch.</li>
 <li><strong>Run Python script</strong>: if you want to run your script, hit <em>ctl + shift + p</em> and select <em>Blender: Run Script</em>. Now, you can see the results in Blender.</li>
+</ol>
+</div>
+<div class="section" id="b-developing-a-python-script-in-vscode-and-executing-in-blender">
+<h3>B) Developing a Python script in VSCode and executing in Blender<a class="headerlink" href="#b-developing-a-python-script-in-vscode-and-executing-in-blender" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p class="first"><strong>Save changes in VSCode</strong>: Save the changes you made in goo.py or any other scripts in VSCode</p>
+</li>
+<li><p class="first"><strong>Create a new script</strong>: In Blender, create a new Python script</p>
+</li>
+<li><p class="first"><strong>Reload</strong>: To use the attributs/methods of the scripts you created or modified in Blender, you will need to add the following at the top of the script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
+<span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
 </ol>
 </div>
 </div>
@@ -154,7 +170,8 @@ Will give you the freedom to test and make changes to the project without affect
 </li>
 <li><a class="reference internal" href="#visual-studio-code-vscode">Visual Studio Code (VSCode)</a><ul>
 <li><a class="reference internal" href="#getting-started-with-vscode">Getting started with VSCode:</a></li>
-<li><a class="reference internal" href="#developing-python-codes-for-blender-in-vscode">Developing Python codes for Blender in VSCode</a></li>
+<li><a class="reference internal" href="#a-developing-executing-python-codes-in-vscode">A) Developing/Executing Python codes in VSCode</a></li>
+<li><a class="reference internal" href="#b-developing-a-python-script-in-vscode-and-executing-in-blender">B) Developing a Python script in VSCode and executing in Blender</a></li>
 </ul>
 </li>
 </ul>
