@@ -12,7 +12,7 @@ def calculate_volume(obj):
     """
     Calculates volume of a cell
 
-    :param obj: the blender object (mesh)
+    :param obj: the blender object (mesh) -> obj = bpy.data.objects['object name']
 
     :return: volume
     """
@@ -36,7 +36,7 @@ def get_major_axis(obj):
     Calculates the major (long) axis of a mesh by calculating the first eigenvector
     of the vertices in the mesh. This can be used to choose the axis of division
 
-    :param obj: the blender object (mesh)
+    :param obj: the blender object (mesh) -> obj = bpy.data.objects['object name']
 
     :return: major axis as (x, y, z) which gives direction from origin (0, 0, 0)
     """
@@ -334,7 +334,7 @@ def translate_cell(obj, axis):
     Moves cell along the given axis.
     Used during cell division so daughters have some space
 
-    :param obj: the Blender mesh to move
+    :param obj: the Blender mesh to move -> obj = bpy.data.objects['object name']
     :param axis: the axis along which to move it
 
     :return: None
@@ -346,6 +346,7 @@ def translate_cell(obj, axis):
     # Normalize the axis by dividing eagh term by the magnitude.
     # Multiply each term by 0.1 so the cell is only translated a small distance
     new_vec = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
+    print(new_vec)
     # translate the cell
     bpy.ops.transform.translate(value=new_vec)
 
@@ -543,21 +544,12 @@ def make_cell(cell):
     elif cell.data['flavor'] == "ico_sphere":
         print("Making Ico Sphere")
         try:
-            bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False, 
-                                                  align='WORLD', 
-                                                  location=(0, 0, 0), 
-                                                  scale=(1, 1, 1))
+            bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False,
+                                                  align='WORLD',
+                                                  location=cell.data['location'],
+                                                  scale=cell.data['scale'],
+                                                  radius=cell.data['radius'])
 
-
-            # bpy.ops.mesh.primitive_ico_sphere_add(change=False,
-            #                                       radius=cell.data['radius'],
-            #                                       size=cell.data['size'],
-            #                                       arc_div=cell.data['arcdiv'],
-            #                                       lin_div=0,
-            #                                       div_type='CORNERS',
-            #                                       odd_axis_align=False,
-            #                                       no_limit=False,
-            #                                       location=cell.data['location'])
         except Exception:
             print(sys.exc_info())
             print("Make sure you spell the correct name")
