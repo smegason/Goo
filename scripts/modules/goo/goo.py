@@ -519,7 +519,7 @@ def make_cell(cell):
 
     # Making cell
     print('Making cell')
-
+    print(cell.data['flavor'] == "")
     # if cell.data['flavor'] == "round_cube" or None:
     # Add a round_cube mesh
     if cell.data['flavor'] == "round_cube" or "":
@@ -540,8 +540,10 @@ def make_cell(cell):
             print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
             print("check the box to enable it")
             return
+    
     # Ico sphere
-    elif cell.data['flavor'] == "ico_sphere":
+    # elif cell.data['flavor'] == "ico_sphere":
+    else:
         print("Making Ico Sphere")
         try:
             bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False,

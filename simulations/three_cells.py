@@ -3,6 +3,8 @@
 
 from goo import goo
 import bpy
+from importlib import reload
+reload(goo)
 
 goo.setup_world()
     
@@ -97,7 +99,7 @@ fA_collection = bpy.data.collections.new("A_Forces")
 # link the collection to the scene 
 bpy.context.scene.collection.children.link(fA_collection)
 # Define and link force A1
-fA1 = goo.Force("force_A1", "cell_A1", -800)
+fA1 = goo.Force("force_A1", "cell_A1", -10)
 # Make force
 goo.make_force(fA1)
 # The created force is the active object
@@ -113,7 +115,7 @@ fB_collection = bpy.data.collections.new("B_Forces")
 # link the collection to the scene 
 bpy.context.scene.collection.children.link(fB_collection)
 # Define and link force B1
-fB1 = goo.Force("force_B1", "cell_B1", -800)
+fB1 = goo.Force("force_B1", "cell_B1", -10)
 # Make force
 goo.make_force(fB1)
 # The created force is the active object
@@ -129,7 +131,7 @@ fC_collection = bpy.data.collections.new("C_Forces")
 # link the collection to the scene 
 bpy.context.scene.collection.children.link(fC_collection)
 # Define and link force B1
-fC1 = goo.Force("force_C1", "cell_C1", -800)
+fC1 = goo.Force("force_C1", "cell_C1", -10)
 # Make force
 goo.make_force(fC1)
 # The created force is the active object
