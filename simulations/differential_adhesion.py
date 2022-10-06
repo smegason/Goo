@@ -1,62 +1,62 @@
-from Goo import Goo
+from goo import goo
 import bpy
 import numpy as np
 import importlib
 
-importlib.reload(Goo)
+importlib.reload(goo)
 
-Goo.setup_world()
+goo.setup_world()
 
 cells = []
 forces = []
 
-c1 = Goo.Cell("c1", loc=(0, 0, 0))
-Goo.make_cell(c1)
+c1 = goo.Cell("c1", loc=(0, 0, 0))
+goo.make_cell(c1)
 cells.append(c1)
 
-c2 = Goo.Cell("c2", loc=(2, 2, 2))
-Goo.make_cell(c2)
+c2 = goo.Cell("c2", loc=(2, 2, 2))
+goo.make_cell(c2)
 cells.append(c2)
 
-c3 = Goo.Cell("c3", loc=(-2, -2, -2))
-Goo.make_cell(c3)
+c3 = goo.Cell("c3", loc=(-2, -2, -2))
+goo.make_cell(c3)
 cells.append(c3)
 
-c4 = Goo.Cell("c4", loc=(-4, -4, -4))
-Goo.make_cell(c4)
+c4 = goo.Cell("c4", loc=(-4, -4, -4))
+goo.make_cell(c4)
 cells.append(c4)
 
 
-f1 = Goo.Force("f1", "c1", -800)
-Goo.make_force(f1)
+f1 = goo.Force("f1", "c1", -800)
+goo.make_force(f1)
 forces.append(f1)
 
-f2 = Goo.Force("f2", "c2", -800)
-Goo.make_force(f2)
+f2 = goo.Force("f2", "c2", -800)
+goo.make_force(f2)
 forces.append(f2)
 
-f3 = Goo.Force("f3", "c1", -200)
-Goo.make_force(f3)
+f3 = goo.Force("f3", "c1", -200)
+goo.make_force(f3)
 forces.append(f3)
 
-f4 = Goo.Force("f4", "c2", -200)
-Goo.make_force(f4)
+f4 = goo.Force("f4", "c2", -200)
+goo.make_force(f4)
 forces.append(f4)
 
-f5 = Goo.Force("f5", "c3", -800)
-Goo.make_force(f5)
+f5 = goo.Force("f5", "c3", -800)
+goo.make_force(f5)
 forces.append(f5)
 
-f6 = Goo.Force("f6", "c4", -800)
-Goo.make_force(f6)
+f6 = goo.Force("f6", "c4", -800)
+goo.make_force(f6)
 forces.append(f6)
 
-f7 = Goo.Force("f7", "c3", -200)
-Goo.make_force(f7)
+f7 = goo.Force("f7", "c3", -200)
+goo.make_force(f7)
 forces.append(f7)
 
-f8 = Goo.Force("f8", "c4", -200)
-Goo.make_force(f8)
+f8 = goo.Force("f8", "c4", -200)
+goo.make_force(f8)
 forces.append(f8)
 
 

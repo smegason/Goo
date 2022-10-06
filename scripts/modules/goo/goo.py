@@ -12,7 +12,7 @@ def calculate_volume(obj):
     """
     Calculates volume of a cell
 
-    :param obj: the blender object (mesh)
+    :param obj: the blender object (mesh) -> obj = bpy.data.objects['object name']
 
     :return: volume
     """
@@ -36,7 +36,7 @@ def get_major_axis(obj):
     Calculates the major (long) axis of a mesh by calculating the first eigenvector
     of the vertices in the mesh. This can be used to choose the axis of division
 
-    :param obj: the blender object (mesh)
+    :param obj: the blender object (mesh) -> obj = bpy.data.objects['object name']
 
     :return: major axis as (x, y, z) which gives direction from origin (0, 0, 0)
     """
@@ -334,7 +334,7 @@ def translate_cell(obj, axis):
     Moves cell along the given axis.
     Used during cell division so daughters have some space
 
-    :param obj: the Blender mesh to move
+    :param obj: the Blender mesh to move -> obj = bpy.data.objects['object name']
     :param axis: the axis along which to move it
 
     :return: None
@@ -346,6 +346,7 @@ def translate_cell(obj, axis):
     # Normalize the axis by dividing eagh term by the magnitude.
     # Multiply each term by 0.1 so the cell is only translated a small distance
     new_vec = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
+    print(new_vec)
     # translate the cell
     bpy.ops.transform.translate(value=new_vec)
 
@@ -510,31 +511,51 @@ def make_cell(cell):
     """
     Makes a Blender mesh object for the given Goo cell Python object
 
-    :param cell: the Goo cell Pythoon object to make a Blender mesh from
+    :param cell: the Goo cell Python object to make a Blender mesh from
 
     :return: None
     """
     # TODO make_mesh and make_cell are redundant. Need to merge.
 
-    # print ("make cell")
-
+    # Making cell
+    print('Making cell')
+    print(cell.data['flavor'] == "")
+    # if cell.data['flavor'] == "round_cube" or None:
     # Add a round_cube mesh
-    try:
-        bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                              radius=cell.data['radius'],
-                                              size=cell.data['size'],
-                                              arc_div=cell.data['arcdiv'],
-                                              lin_div=0,
-                                              div_type='CORNERS',
-                                              odd_axis_align=False,
-                                              no_limit=False,
-                                              location=cell.data['location'])
-    except Exception:
-        print(sys.exc_info())
-        print("To enable RoundCube creation for Cells you must go to ")
-        print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
-        print("check the box to enable it")
-        return
+    if cell.data['flavor'] == "round_cube" or "":
+        print("Making Round Cube")
+        try:
+            bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                                  radius=cell.data['radius'],
+                                                  size=cell.data['size'],
+                                                  arc_div=cell.data['arcdiv'],
+                                                  lin_div=0,
+                                                  div_type='CORNERS',
+                                                  odd_axis_align=False,
+                                                  no_limit=False,
+                                                  location=cell.data['location'])
+        except Exception:
+            print(sys.exc_info())
+            print("To enable RoundCube creation for Cells you must go to ")
+            print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
+            print("check the box to enable it")
+            return
+    
+    # Ico sphere
+    # elif cell.data['flavor'] == "ico_sphere":
+    else:
+        print("Making Ico Sphere")
+        try:
+            bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False,
+                                                  align='WORLD',
+                                                  location=cell.data['location'],
+                                                  scale=cell.data['scale'],
+                                                  radius=cell.data['radius'])
+
+        except Exception:
+            print(sys.exc_info())
+            print("Make sure you spell the correct name")
+            return
 
     # Give the Blender object the cell's name
     obj = bpy.context.object
@@ -608,7 +629,7 @@ def delete_cell(cell):
 
 # Defines the Cell class
 class Cell():
-    def __init__(self, name_string, loc, material=""):
+    def __init__(self, name_string, loc, material="", flavor=""):
         # The initialization function sets a cell data dictionary
         # for geometric parameters, physics parameters,
         # division information, and cell lineage
@@ -638,7 +659,8 @@ class Cell():
             'theta': 0,
             'div_axis': (0, 0, 0),
             'mother': 'none',
-            'daughters': ['none', 'none']
+            'daughters': ['none', 'none'],
+            'flavor': flavor
         }
         # The volume and mass are calculated from values in the data dictionary
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
