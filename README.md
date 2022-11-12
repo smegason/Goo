@@ -9,13 +9,18 @@ Goo was started by the <a href="http://www.digitalfish.org">Megason lab at Harva
 
 Our grand Driving Biological Problem is to simulate the first <a href= "https://www.youtube.com/watch?v=RQ6vkDr_Dec">24 hours of zebrafish development</a>. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding morphogenesis, embryonic development, growth of organoids, tissue engineering, and artificial life.
 
-### Contributors
+### Contributors (in order of appearance)
 ___
 <li>Sean Megason, Harvard University
 <li>Daniel Oo, Amherst University
 <li>Kali Konstantinopoulos, Indiana University
 <li>Michael Mitsch, Indiana University
 <li>Drew Willis, Indiana University
+<li>Antoine Ruzette, KU Leuven and Harvard University
+<li>Vanshika Bidhan, KU Leuven
+<li>Julie De Man, KU Leuven
+<li>Nenghan Lin, KU Leuven
+<li>Jiangli Gui, KU Leuven
 
 ## Documentation
   Full documentation for Goo is at Github Pages
