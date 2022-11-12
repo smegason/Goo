@@ -1,5 +1,8 @@
 {
     "esbonio.sphinx.confDir": "",
     "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true
+    "python.linting.flake8Enabled": true,
+    "python.analysis.extraPaths": [
+        "./scripts/modules/goo"
+    ]
 }
