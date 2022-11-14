@@ -14,7 +14,7 @@ bpy.context.collection.children.link(collection)
 layer_collection = bpy.context.view_layer.layer_collection.children[collection.name]
 bpy.context.view_layer.active_layer_collection = layer_collection
 bpy.app.handlers.frame_change_post.clear()
-cell = goo.Cell(name_string="cell1", loc=(0, 0, 0))
+cell = goo.Cell(name="cell1", loc=(0, 0, 0))
 goo.make_cell(cell)
 
 bpy.context.view_layer.active_layer_collection = master_coll
