@@ -831,17 +831,18 @@ def add_material_cell(mat_name, r, g, b):
 class Force():
     """Core class: creates Goo force objects. 
 
-    The class instantiates :class:`Force` object that represent 
+    The class instantiates :class:`Force` objects that represent 
     adhesion forces between cells in Blender. 
     
-    :param force_name: The name of the force.
-    :type force_name: str
-    :param cell_name: The name of the cell. 
-    :type cell_name: str
-    :param strength: The strength of the force.
-    :type strength: float
-    :param falloff_power: The power of the falloff of the force. 
-    :type falloff_power: positive float
+    :param str force_name: The name of the force.
+    :param str cell_name: The name of the cell. 
+    :param float strength: The strength of the force.
+    :param float falloff_power: The power of the falloff of the force. 
+    :returns: None
+
+    .. note:: ``falloff_power`` is a positive (:py:class:`float`). 
+        By default, the type of the falloff is set to `SPHERE` 
+        and its shape is set to `SURFACE`. 
     """
     def __init__(self, force_name, cell_name, strength, falloff_power):
         self.name = force_name
@@ -849,14 +850,14 @@ class Force():
         self.associated_cell = cell_name
         self.falloff_power = falloff_power
         self.falloff_type = 'SPHERE'
-        self.shape = 'POINTS'
+        self.shape = 'SURFACE'
 
 
 def make_force(force):
-    """Core function: creates a Blender force given a ``Goo`` Force object. 
+    """Core function: creates a Blender force from a Goo :class:`Force` object. 
 
-    :param force: a Goo force
-    :return: None
+    :param :class:`Force` force: The Goo force object. 
+    :returns: None
     """
     # Add a force object
     cell = force.associated_cell
@@ -988,12 +989,11 @@ def initialize_solid_tissue():  # Work in Progress
                                "use_automerge_and_split": False})
 '''
 def setup_world():
+    """Auxilliary function: sets up the default values used for simulations in Goo 
+    including units and rendering background. 
+
+    :returns: None
     """
-    Sets up the default values used for simulations in ``Goo``
-    including units and rendering background
-    :return: None
-    """
-    print("setup world")
     # Turn off gravity so cells don't fall in the simulation
     bpy.context.scene.use_gravity = False
     # Set units to the metric system
@@ -1010,25 +1010,22 @@ def setup_world():
 
 
 def add_world_HDRI():
+    """Auxilliary function: sets up Blender World properties for use in rendering.
+
+    It adds an HDRI image for illumination. 
+
+    :returns: None
     """
-    Sets up Blender World properties for use in rendering most importantly
-    adds an HDRI image for illumination
-    :return: None
-    """
-    print("add world HDRI")
     C = bpy.context
     scn = C.scene
 
     # Get the environment node tree of the current scene
     node_tree = scn.world.node_tree
     tree_nodes = node_tree.nodes
-
     # Clear all nodes
     tree_nodes.clear()
-
     # Add Background node
     node_background = tree_nodes.new(type='ShaderNodeBackground')
-
     # Add Environment Texture node
     node_environment = tree_nodes.new('ShaderNodeTexEnvironment')
     # Load and assign the image to the node property
@@ -1050,15 +1047,12 @@ def add_world_HDRI():
     # Add Output node
     node_output = tree_nodes.new(type='ShaderNodeOutputWorld')
     node_output.location = 200, 0
-
     # Link all nodes
     links = node_tree.links
     links.new(node_environment.outputs["Color"], node_background.inputs["Color"])
     links.new(node_background.outputs["Background"], node_output.inputs["Surface"])
-
     # set film to transparent to hide background
     bpy.context.scene.render.film_transparent = True
-
     # change render preview mode
     # only updates windows in current tab, e.g. Sxripting but not Layout
     for area in bpy.context.screen.areas:
@@ -1070,13 +1064,13 @@ def add_world_HDRI():
 
 
 def render(file_path, scene, start, end):
-    """
-    Renders a simulation to create a set of still images that can be made into a movie
-    :param file_path: path for storing outputted images
-    :param scene: the Blender scene
-    :param start: the Blender start key frame
-    :param end: the Blender end key frame
-    :return: None
+    """Auxilliary function: renders a simulation to create a set of still images that can be made into a movie
+
+    :param str file_path: The path of the folder used to store output images. 
+    :param bpy.context.scene scene: The Blender current scene. 
+    :param int start: The Blender starting frame. 
+    :param int end: The Blender ending frame. 
+    :returns: None
     """
     # Set the image file format as PNG
     scene.render.image_settings.file_format = 'PNG'
@@ -1108,14 +1102,14 @@ def render(file_path, scene, start, end):
         bpy.app.handlers.frame_change_post.append(func)
     return
 
-
+# collections are currently manually created in Blender - this function is not being used
 def make_force_collections(master_collection, cell_types):
-    """
-    Make collections for forces to be stored in.
-    :param master_collection: The collection that the force
-    collections will be contained
+    """Auxilliary function: makes collections for forces to be stored in.
+
+    :param bpy.context.view_layer.active_layer_collection master_collection: The collection in which the force
+    collections will be contained. 
     :param cell_types: list of active cell types
-    :return: None
+    :returns: None
     """
     bpy.context.view_layer.active_layer_collection = master_collection
     for type in cell_types:
