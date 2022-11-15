@@ -614,7 +614,17 @@ def make_cell(cell, force = None):
         bpy.context.object.field.strength = -20
         bpy.context.object.field.shape = 'POINT'
     elif type(force) == Force(): 
-        # link force to cell 
+        cell = force.associated_cell # Link forces to cells in Python/Goo
+        bpy.ops.object.forcefield_toggle()
+        bpy.context.object.field.type = force.type
+        bpy.context.object.field.name = force.name
+        bpy.context.object.field.falloff_power = force.falloff_power
+        bpy.context.object.field.strength = force.strength
+        bpy.context.object.field.falloff_type = 'SPHERE'
+        bpy.context.object.field.shape = 'SURFACE'
+
+        # add scale (1,1,1)
+
     '''
 
     # add material to cell based on name of material
@@ -871,6 +881,7 @@ def make_force(force):
     bpy.context.object.field.strength = force.strength
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
+    # add links for falloff_type and shape
 
 # not used - under development
 '''
