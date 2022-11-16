@@ -881,6 +881,9 @@ def make_force(force):
     bpy.context.object.field.strength = force.strength
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
+    bpy.context.object.field.falloff_type = 'SPHERE'
+    bpy.context.object.field.shape = 'SURFACE'
+    
     # add links for falloff_type and shape
 
 # not used - under development
