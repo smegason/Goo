@@ -16,6 +16,7 @@ ___
 <li>Kali Konstantinopoulos, Indiana University
 <li>Michael Mitsch, Indiana University
 <li>Drew Willis, Indiana University
+<li>Ahmed Almaghasilah, University of Maine and Harvard University
 <li>Antoine Ruzette, KU Leuven and Harvard University
 <li>Vanshika Bidhan, KU Leuven
 <li>Julie De Man, KU Leuven
