@@ -1,40 +1,36 @@
 # goo.py - This is the Goo library. It contains all helper functions for goo
 # goo is licensed under BSDv2
 
-
 import bpy
 import bmesh
 import mathutils
 import numpy as np
 import sys
 
-
 """
 Refactored by Antoine Ruzette, November 2022.
 
 Note on comments: 
-Core functions are required for Goo to correctly run. 
+Core functions are required for Goo to run. 
 Auxilliary function are not required for Goo to run but 
 are used for supporting tasks such as retrieving metrics 
 - typically they can be removed. 
 
-Sphynx docstring was enhanced by adding types, and written in a more sphynx-ic way. 
+Sphynx docstring was enhanced and written in a more sphynx-ic way. 
 """
 
 
 def calculate_volume(obj):
     """Auxilliary function: calculates the volume of the Blender mesh. 
-
-    In order to retrieve the mesh as it is currrently evaluated - including 
-    the effect of all modifiers - in the simulation, its corresponding evaluated 
-    ID is obtained from the dependency graph for the current context. 
-    .. seealso:: [Blender API Documentation > ``evaluated_get(depsgraph)``]
-    (https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get)
-
+    
     :param bpy.data.objects['name'] obj: The Blender mesh.
     :returns: The volume of the mesh. 
     :rtype: float
 
+    .. seealso:: In order to retrieve the mesh as it is currrently evaluated - including 
+        the effect of all modifiers - in the simulation, its corresponding evaluated 
+        ID is obtained from the dependency graph for the current context. 
+        `Blender API Documentation > evaluated_get(depsgraph) <https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get>`__
     .. note:: The function may return a negative volume - see ``calc_volume(signed=True)``. 
 
     """
@@ -391,7 +387,7 @@ def seperate_cell(obj):
 
 
 
-def divide(obj):  # This function needs to be removed
+def divide(obj): 
     """Core function: divides a mother Blender mesh into two daughter Blender meshes. 
     
     The division plane is orthogonal to the major axis of the parent mesh. 
@@ -400,8 +396,8 @@ def divide(obj):  # This function needs to be removed
 
     :param bpy.data.objects['mother_name'] obj: The soon-to-be mother Blender mesh. 
     :returns:
-        - daughter1 (bpy.data.objects['daughter1_name']) - The Blender mesh of one of the daughter cells. 
-        - daughter2 (bpy.data.objects['daughter2_name']) - The Blender mesh of the other daughter cell. 
+        - daughter1 (`bpy.data.objects['daughter1_name']`) - The Blender mesh of one of the daughter cells. 
+        - daughter2 (`bpy.data.objects['daughter2_name']`) - The Blender mesh of the other daughter cell. 
     """
     obj.select_set(True)
     m_name, d_name, COM, major_axis = seperate_cell(obj)
@@ -556,10 +552,10 @@ def make_mesh(cell):
 def make_cell(cell):
     """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell` object. 
 
-    :param :class:`Cell` cell: The Goo :class:`Cell` object. 
+    :param `Cell` cell: The Goo :class:`Cell` object. 
     :returns: None
     """
-    # TODO make_mesh and make_cell are redundant. Need to merge.
+    # TODO make_mesh and make_cell are redundant. Keep make_cell. 
 
     # Making cell
     print('Making cell')
@@ -662,7 +658,7 @@ def make_cell(cell):
 def delete_cell(cell):
     """Auxilliary function: deletes a Blender mesh. 
 
-    :param :class:`Cell` cell: The Goo :class:`Cell` object. 
+    :param `Cell` cell: The Goo :class:`Cell` object. 
     :returns: None
     """
     obj = cell.get_blender_object()
@@ -673,9 +669,11 @@ def delete_cell(cell):
 class Cell():
     """Core class: creates Goo cell object. 
 
+    The class instantiates :class:`Cell` objects. 
+
     :param str name: The name of the cell.
     :param tuple loc: The coordinates of the cell.   
-    :returns None:
+    :returns: None
     """
     def __init__(self, name_string, loc, material="", flavor=""):
         """
@@ -895,7 +893,7 @@ class Force():
 def make_force(force):
     """Core function: creates a Blender force from a Goo :class:`Force` object. 
 
-    :param :class:`Force` force: The Goo force object. 
+    :param `Force` force: The Goo :class:`Force` object. 
     :returns: None
     """
     # Add a force object
@@ -1055,7 +1053,7 @@ def setup_world():
 def add_world_HDRI():
     """Auxilliary function: sets up Blender World properties for use in rendering.
 
-    It adds an HDRI image for illumination. 
+    It adds an HDRI (High Dynamic Range Image) for illumination.
 
     :returns: None
     """
@@ -1157,7 +1155,7 @@ def make_force_collections(master_collection, cell_types):
     """Auxilliary function: makes collections for forces to be stored in.
 
     :param bpy.context.view_layer.active_layer_collection master_collection: The collection in which the force
-    collections will be contained. 
+        collections will be contained. 
     :param list cell_types: The list of active cell types. 
     :returns: None
     """
@@ -1213,8 +1211,10 @@ class handler_class:
         """Sets division rate in the handler class that div_handler() can reference later. 
 
         :param str cell_type: The name of cell type to apply this division rate to. 
-        Must be one of the active cell types.
         :param int rate: The number of frames between each division. 
+     
+        .. note:: The cell type must be one of the active cell types.
+        .. note:: The rate is in divisions per second ans assumes 60 frames per second. 
 
         :returns: None
         """
@@ -1228,7 +1228,6 @@ class handler_class:
         The growth rate should be between 0 and 1.
 
         :param str cell_type: The name of cell type to apply this division rate to.
-        Must be one of the active cell types.
         :param float rate: The amount to change ``cell.modifiers["Cloth"].settings.shrink_min`` each frame.
 
         :returns: None
@@ -1347,7 +1346,7 @@ class handler_class:
         """Changes the size of all cells of a certain type. 
 
         :param float scale: value to set ``cell.modifiers["Cloth"].settings.shrink_min`` to.
-        :param str cell_type: Name of cell type to scale. (String)
+        :param str cell_type: Name of cell type to scale.
 
         :returns: None
         """

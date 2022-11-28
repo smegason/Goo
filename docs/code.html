@@ -63,6 +63,7 @@ import sys</p>
 <dt class="sig sig-object py" id="goo.Cell">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">Cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_string</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flavor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.Cell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Core class: creates Goo cell object.</p>
+<p>The class instantiates <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> objects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -70,8 +71,9 @@ import sys</p>
 <li><p><strong>loc</strong> (<em>tuple</em>) – The coordinates of the cell.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns None<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -126,7 +128,7 @@ and its shape is set to <cite>SURFACE</cite>.</p>
 <dt class="sig sig-object py" id="goo.add_world_HDRI">
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">add_world_HDRI</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#goo.add_world_HDRI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Auxilliary function: sets up Blender World properties for use in rendering.</p>
-<p>It adds an HDRI image for illumination.</p>
+<p>It adds an HDRI (High Dynamic Range Image) for illumination.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -156,11 +158,6 @@ and its shape is set to <cite>SURFACE</cite>.</p>
 <dt class="sig sig-object py" id="goo.calculate_volume">
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">calculate_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.calculate_volume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Auxilliary function: calculates the volume of the Blender mesh.</p>
-<p>In order to retrieve the mesh as it is currrently evaluated - including 
-the effect of all modifiers - in the simulation, its corresponding evaluated 
-ID is obtained from the dependency graph for the current context. 
-.. seealso:: [Blender API Documentation &gt; <code class="docutils literal notranslate"><span class="pre">evaluated_get(depsgraph)</span></code>]
-(<a class="reference external" href="https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get">https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get</a>)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>obj</strong> (<em>bpy.data.objects</em><em>[</em><em>'name'</em><em>]</em>) – The Blender mesh.</p>
@@ -172,6 +169,13 @@ ID is obtained from the dependency graph for the current context.
 <dd class="field-odd"><p>float</p>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>In order to retrieve the mesh as it is currrently evaluated - including 
+the effect of all modifiers - in the simulation, its corresponding evaluated 
+ID is obtained from the dependency graph for the current context. 
+<a class="reference external" href="https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get">Blender API Documentation &gt; evaluated_get(depsgraph)</a></p>
+</div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The function may return a negative volume - see <code class="docutils literal notranslate"><span class="pre">calc_volume(signed=True)</span></code>.</p>
@@ -182,8 +186,14 @@ ID is obtained from the dependency graph for the current context.
 <dt class="sig sig-object py" id="goo.delete_cell">
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">delete_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.delete_cell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Auxilliary function: deletes a Blender mesh.</p>
-<p>:param <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> cell: The Goo <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> object. 
-:returns: None</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cell</strong> (<a class="reference internal" href="#goo.Cell" title="goo.Cell"><em>Cell</em></a>) – The Goo <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -199,8 +209,8 @@ translating one mesh, filling the two holes, and retriangulating the meshes</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p>daughter1 (bpy.data.objects[‘daughter1_name’]) - The Blender mesh of one of the daughter cells.</p></li>
-<li><p>daughter2 (bpy.data.objects[‘daughter2_name’]) - The Blender mesh of the other daughter cell.</p></li>
+<li><p>daughter1 (<cite>bpy.data.objects[‘daughter1_name’]</cite>) - The Blender mesh of one of the daughter cells.</p></li>
+<li><p>daughter2 (<cite>bpy.data.objects[‘daughter2_name’]</cite>) - The Blender mesh of the other daughter cell.</p></li>
 </ul>
 </p>
 </dd>
@@ -292,11 +302,20 @@ apply_forces() can reference later</p>
 <dd><p>Sets division rate in the handler class that div_handler() can reference later.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cell_type</strong> (<em>str</em>) – The name of cell type to apply this division rate to.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_type</strong> (<em>str</em>) – The name of cell type to apply this division rate to.</p></li>
+<li><p><strong>rate</strong> (<em>int</em>) – The number of frames between each division.</p></li>
+</ul>
 </dd>
 </dl>
-<p>Must be one of the active cell types.
-:param int rate: The number of frames between each division.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The cell type must be one of the active cell types.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The rate is in divisions per second ans assumes 60 frames per second.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -311,14 +330,13 @@ apply_forces() can reference later</p>
 <p>The growth rate should be between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cell_type</strong> (<em>str</em>) – The name of cell type to apply this division rate to.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_type</strong> (<em>str</em>) – The name of cell type to apply this division rate to.</p></li>
+<li><p><strong>rate</strong> (<em>float</em>) – The amount to change <code class="docutils literal notranslate"><span class="pre">cell.modifiers[&quot;Cloth&quot;].settings.shrink_min</span></code> each frame.</p></li>
+</ul>
 </dd>
-</dl>
-<p>Must be one of the active cell types.
-:param float rate: The amount to change <code class="docutils literal notranslate"><span class="pre">cell.modifiers[&quot;Cloth&quot;].settings.shrink_min</span></code> each frame.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -331,7 +349,7 @@ apply_forces() can reference later</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>scale</strong> (<em>float</em>) – value to set <code class="docutils literal notranslate"><span class="pre">cell.modifiers[&quot;Cloth&quot;].settings.shrink_min</span></code> to.</p></li>
-<li><p><strong>cell_type</strong> (<em>str</em>) – Name of cell type to scale. (String)</p></li>
+<li><p><strong>cell_type</strong> (<em>str</em>) – Name of cell type to scale.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -346,16 +364,28 @@ apply_forces() can reference later</p>
 <dt class="sig sig-object py" id="goo.make_cell">
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_cell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Core function: creates a Blender mesh corresponding to a Goo <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> object.</p>
-<p>:param <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> cell: The Goo <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> object. 
-:returns: None</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cell</strong> (<a class="reference internal" href="#goo.Cell" title="goo.Cell"><em>Cell</em></a>) – The Goo <a class="reference internal" href="#goo.Cell" title="goo.Cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cell</span></code></a> object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="goo.make_force">
 <span class="sig-prename descclassname"><span class="pre">goo.</span></span><span class="sig-name descname"><span class="pre">make_force</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.make_force" title="Permalink to this definition">¶</a></dt>
 <dd><p>Core function: creates a Blender force from a Goo <a class="reference internal" href="#goo.Force" title="goo.Force"><code class="xref py py-class docutils literal notranslate"><span class="pre">Force</span></code></a> object.</p>
-<p>:param <a class="reference internal" href="#goo.Force" title="goo.Force"><code class="xref py py-class docutils literal notranslate"><span class="pre">Force</span></code></a> force: The Goo force object. 
-:returns: None</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>force</strong> (<a class="reference internal" href="#goo.Force" title="goo.Force"><em>Force</em></a>) – The Goo <a class="reference internal" href="#goo.Force" title="goo.Force"><code class="xref py py-class docutils literal notranslate"><span class="pre">Force</span></code></a> object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -364,12 +394,16 @@ apply_forces() can reference later</p>
 <dd><p>Auxilliary function: makes collections for forces to be stored in.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>master_collection</strong> (<em>bpy.context.view_layer.active_layer_collection</em>) – The collection in which the force</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>master_collection</strong> (<em>bpy.context.view_layer.active_layer_collection</em>) – The collection in which the force
+collections will be contained.</p></li>
+<li><p><strong>cell_types</strong> (<em>list</em>) – The list of active cell types.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
-<p>collections will be contained. 
-:param list cell_types: The list of active cell types. 
-:returns: None</p>
 </dd></dl>
 
 <dl class="py function">
