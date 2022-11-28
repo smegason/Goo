@@ -52,7 +52,8 @@ You can create a Python file and run it on Blender. Once you are in **Scripting*
 .. image:: ../img/python_file.png
   :width: 800
 
-*bpy* is a Blender API that allow to interact with Blender through Python language. To import Blender API, you write the following::
+Blender Python's API, named *bpy*, allows Python and Blender to fit together. To use it, the following package should be imported:
+    
     import bpy
 
 The Blender API can used with no installation nor importing into the Python Interactive Console. The Python file can be run on Blender by clicking on *play* icon. 
