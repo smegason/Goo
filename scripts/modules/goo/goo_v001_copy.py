@@ -1,7 +1,6 @@
 # goo.py - This is the Goo library. It contains all helper functions for goo
 # goo is licensed under BSDv2
 
-
 import bpy
 import bmesh
 import mathutils
@@ -9,34 +8,11 @@ import numpy as np
 import sys
 
 
-"""
-Refactored by Antoine Ruzette, November 2022.
-
-Note on comments: 
-Core functions are required for Goo to correctly run. 
-Auxilliary function are not required for Goo to run but 
-are used for supporting tasks such as retrieving metrics 
-- typically they can be removed. 
-
-Sphynx docstring was enhanced by adding types, and written in a more sphynx-ic way. 
-"""
-
-
 def calculate_volume(obj):
-    """Auxilliary function: calculates the volume of the Blender mesh. 
-
-    In order to retrieve the mesh as it is currrently evaluated - including 
-    the effect of all modifiers - in the simulation, its corresponding evaluated 
-    ID is obtained from the dependency graph for the current context. 
-    .. seealso:: [Blender API Documentation > ``evaluated_get(depsgraph)``]
-    (https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get)
-
-    :param bpy.data.objects['name'] obj: The Blender mesh.
-    :returns: The volume of the mesh. 
-    :rtype: float
-
-    .. note:: The function may return a negative volume - see ``calc_volume(signed=True)``. 
-
+    """
+    Calculates volume of a cell
+    :param obj: the blender object (mesh) -> obj = bpy.data.objects['object name']
+    :return: volume
     """
 
     # We need to get the cell as it is evaluated in the simulation.
@@ -54,14 +30,11 @@ def calculate_volume(obj):
 
 
 def get_major_axis(obj):
-    """Core function: calculates the long axis of a mesh. 
-
-    This function calculates the first eigenvector of the vertices in the mesh, 
-    which corresponds to the long axis.
-
-    :param bpy.data.objects['name'] obj: The Blender mesh.
-    :returns: The coordinates of the long axis of the mesh as a tuple(x, y, z) which gives direction from the origin (0, 0, 0). 
-    :rtype: tuple
+    """
+    Calculates the major (long) axis of a mesh by calculating the first eigenvector
+    of the vertices in the mesh. This can be used to choose the axis of division
+    :param obj: the blender object (mesh) -> obj = bpy.data.objects['object name']
+    :return: major axis as (x, y, z) which gives direction from origin (0, 0, 0)
     """
 
     # We need to get the cell as it is evaluated in the simulation.
@@ -102,12 +75,14 @@ def get_major_axis(obj):
 
 
 def get_division_angles(axis):
-    """Auxilliary function: retrieves the 2 angles associated with the long axis of a cell. 
-
-    :param tuple axis: Coordinates of the long axis to the division plane - as retrived by ``get_major_axis(obj)``.
-    :returns: 
-        - phi (:py:class:`tuple`) - Phi is the angle between the division axis and the z-axis in spherical coordinates. 
-        - theta (:py:class:`tuple`) - Theta is the angle projected on the xy plane in cartesian 3D coordinates. 
+    """
+    This function returns 2 angles associated with the division axis of a cell:
+    The angle between the the division axis and the z-axis
+    (phi, in spherical coordinates) and the angle projected on the xy-plan (theta)
+    :param axis: the normal (e.g. long axis) to the division plane
+    expressed as (x, y, z)
+    :return: (phi, theta). phi is the angle between the division axis and the z-axis.
+    theta is the angle projected on the xy plane
     """
 
     # We define the unit vector of z-axis
@@ -142,13 +117,11 @@ def get_division_angles(axis):
 
 
 def calculate_contact_area(obj):  # obj = bpy.context.object
-    """Auxilliary function: calculates the contact area of a Blender cell with all surrounding objects.
-
-    The function looks for flat areas of the mesh. Not always a good assumption
-
-    :param bpy.data.objects['name'] obj: The Blender mesh. 
-    :returns: The contact area. 
-    :rtype: float 
+    """
+    Calculates the contact area of a cell with all surrounding objects
+    by looking for flat areas of the mesh. Not always a good assumption
+    :param obj: the Blender mesh ??
+    :return: contact_area
     """
     # TODO check docstring - I don't understand this function. Doesn't it
     # need two cells to calculate the contact area??? Contact area with what?
@@ -192,13 +165,11 @@ def calculate_contact_area(obj):  # obj = bpy.context.object
 
 
 def repair_hole(obj):
-    """Core function: repair the holes created by the bissection of the Blender mesh. 
-    
-    This function adds a new face to the cell after division (bissection - in two equal parts) 
-    of the mesh and regularizes the mesh so that the mesh is evenly covered with faces. 
-
-    :param bpy.data.objects['name'] obj: The Blender mesh. 
-    :returns: None
+    """
+    Adds a new face to the cell after division (splitting) of the mesh and
+    regularizes the mesh so that the mesh is evenly covered with faces
+    :param obj: the Blender mesh
+    :return: None
     """
 
     # bpy.context.view_layer.objects.active = obj
@@ -219,101 +190,12 @@ def repair_hole(obj):
     bpy.ops.object.modifier_apply(modifier="Remesh")
 
 
-def print_info(obj):
-    """Auxilliary function: Retrieves the number of vertices, edges and faces of a Blender object
-
-    :param bpy.data.objects['name'] obj: The Blender mesh. 
-    :returns: The number of vertices, faces and edges of ``obj``. 
-    :rtype: list of float
-    """
-    vertices = obj.data.vertices
-    edges = obj.data.edges
-    faces = obj.data.polygons
-
-    print(f'Vertices: {len(vertices)}; Edges: {len(edges)}; Faces: {len(faces)}')
-    
-    return [vertices, edges, faces]
-
-
-def select_translate_cell(obj, COM, division_axis):
-    """Core function: selects one of the daughter cells to translate. 
-    
-    After dividing the mother cell, this function compares the 
-    center of mass of the original mother cell to that of the 
-    corresponding daughter cells. To do so, the signed distance 
-    between the daughter cell's center of mass and the original 
-    plane of division is calculated.
-    If this distance is positive, the function returns True
-    and this selected daughter cell will be translated later.
-    If this distance is negative, the function returns False
-    and the other daughter cell will be translated later
-
-    :param bpy.data.objects['name'] obj: The Blender mesh of the mother cell. 
-    :param tuple COM: The XYZ coordinates of the center of mass of the mother cell. 
-    :param tuple major_axis: The major axis of the mother mesh specified by XYZ coordinates from the origin. 
-    :returns: A boolean flag indicating which cell has to be translated in ``translate_cell(obj, axis)``. 
-    :rtype: Boolean
-    """
-
-    # Get the mother cell's center of mass
-    com = np.copy(COM)
-    # print("OLD COM: " + str(COM))
-    # Set the daughter cell's location to its center of mass,
-    # and set this value as the new center of mass
-    # (denoted new_COM)
-    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
-    new_COM = obj.location
-    # print("NEW COM: " + str(new_COM))
-    # print(com)
-
-    # Calculate the signed distance between the new center of mass
-    # and the plane of division
-    distance = mathutils.geometry.distance_point_to_plane(new_COM, com, division_axis)
-
-    # If the signed distance is greater than 0, return 0
-    print(distance)
-    if distance > 0:
-        return 0
-    # Else, if the signed distance is less than 0, return 1
-    else:
-        return 1
-
-
-def translate_cell(obj, axis):
-    """Core function: translates cells along the given axis. 
-
-    This function is used during cell division so daughters have some space. 
-
-    :param bpy.data.objects['name'] obj: The Blender mesh to translate. 
-    :param tuple axis: The XYZ coordinates of the major axis of the Blender mesh to translate.
-    :returns: None
-    """
-
-    # Calculate the magnitude of the given axis
-    magnitude = ((axis[0])**2 + (axis[1])**2 + (axis[2])**2)**(0.5)
-
-    # Normalize the axis by dividing eagh term by the magnitude.
-    # Multiply each term by 0.1 so the cell is only translated a small distance
-    new_vec = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
-    print(new_vec)
-    # translate the cell
-    bpy.ops.transform.translate(value=new_vec)
-
-
 def seperate_cell(obj):
-    """Core function: splits one cell into two for cell division. 
-    
-    The mother Blender mesh is split in two given a division plane. 
-    The division plane is specified by a point on this plane, that is the center of mass of the mother,
-    and the direction of this point, given by the long axis of the mother mesh.
-    By naming convention, the daughter cells inherit their mother name added with .001. 
-
-    :param bpy.data.objects['name'] obj: the Blender mesh to divide in two. 
-    :returns:
-        - mother_name (:py:class:`str`) - The name of the mother cell. 
-        - daughter_name (:py:class:`str`) - The name of the daughter cell. 
-        - COM (:py:class:`tuple`) - The XYZ coordinates of the center of mass of the mother cell. 
-        - major_axis (:py:class:`tuple`) - The XYZ coordinates of the long axis of the mother cell. 
+    """
+    Splits one cell into two for cell division. Currently divides
+    along the major axis but should allow a supplied axis
+    :param obj: the Blender mesh to divide in two
+    :return: mother_name, daughter_name, COM, major_axis
     """
     # TODO allow division along a supplied axis.
     # If none supplied then divide along major axis
@@ -390,18 +272,75 @@ def seperate_cell(obj):
     return mother_name, daughter_name, COM, major_axis
 
 
+def select_translate_cell(obj, COM, division_axis):
+    """
+    This function is called after dividing the mother cell.
+    We compare the center of mass of the original mother cell to
+    that of the corresponding daughter cell.
+    We calculate the signed distance between the daughter cell's
+    center of mass and the original plane of division.
+    If the distance is positive, the function returns 0
+    and this daughter cell will be translated later.
+    If the distance is negative, the function returns 1
+    and the other daughter cell will be translated later
+    :param obj: the Blender mesh to divide in two
+    :param COM: center of mass
+    :param division_axis: division axis of cell (cleavage plane is
+    perpendicular to division axis)
+    :return: 0 if the daughter cell is a positive distance away from
+    the plane of division and 1 otherwise
+    """
+
+    # Get the mother cell's center of mass
+    com = np.copy(COM)
+    # print("OLD COM: " + str(COM))
+    # Set the daughter cell's location to its center of mass,
+    # and set this value as the new center of mass
+    # (denoted new_COM)
+    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+    new_COM = obj.location
+    # print("NEW COM: " + str(new_COM))
+    # print(com)
+
+    # Calculate the signed distance between the new center of mass
+    # and the plane of division
+    distance = mathutils.geometry.distance_point_to_plane(new_COM, com, division_axis)
+
+    # If the signed distance is greater than 0, return 0
+    print(distance)
+    if distance > 0:
+        return 0
+    # Else, if the signed distance is less than 0, return 1
+    else:
+        return 1
+
+
+def translate_cell(obj, axis):
+    """
+    Moves cell along the given axis.
+    Used during cell division so daughters have some space
+    :param obj: the Blender mesh to move -> obj = bpy.data.objects['object name']
+    :param axis: the axis along which to move it
+    :return: None
+    """
+
+    # Calculate the magnitude of the given axis
+    magnitude = ((axis[0])**2 + (axis[1])**2 + (axis[2])**2)**(0.5)
+
+    # Normalize the axis by dividing eagh term by the magnitude.
+    # Multiply each term by 0.1 so the cell is only translated a small distance
+    new_vec = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
+    print(new_vec)
+    # translate the cell
+    bpy.ops.transform.translate(value=new_vec)
+
 
 def divide(obj):  # This function needs to be removed
-    """Core function: divides a mother Blender mesh into two daughter Blender meshes. 
-    
-    The division plane is orthogonal to the major axis of the parent mesh. 
-    Additionally, this function may translate daughter cells, 
+    """
+    Divides a cell in two along its major axis by splitting the parent mesh in two,
     translating one mesh, filling the two holes, and retriangulating the meshes
-
-    :param bpy.data.objects['mother_name'] obj: The soon-to-be mother Blender mesh. 
-    :returns:
-        - daughter1 (bpy.data.objects['daughter1_name']) - The Blender mesh of one of the daughter cells. 
-        - daughter2 (bpy.data.objects['daughter2_name']) - The Blender mesh of the other daughter cell. 
+    :param obj: the Blender mesh to divide
+    :return: daughter1, daughter2
     """
     obj.select_set(True)
     m_name, d_name, COM, major_axis = seperate_cell(obj)
@@ -436,23 +375,21 @@ def divide(obj):  # This function needs to be removed
 
 
 def turn_off_physics():
-    """Core function: turns physics off for the currently selected Blender object.
-
-    The cloth physics for cells are turned off before division to avoid irregular mesh behavior after. 
-
-    :param: None
-    :returns: None
+    """
+    Turns physics off for the currently selected Blender object.
+    The cloth physics for cells are turned off before division to
+    avoid irregular mesh behavior after
+    :return: None
     """
     bpy.ops.object.modifier_remove(modifier="Cloth")
 
 
 def turn_on_physics():
-    """Core function: turns physics on for the currently selected Blender object.
-    
-    Physics are turned back on after cell division occurs to avoid irregular mesh behavior post-division.
-
-    :param: None
-    :returns: None
+    """
+    Turns physics on for the currently selected Blender object.
+    Physics are turned back on after cell division occurs to avoid
+    irregular mesh behavior post-division.
+    :return: None
     """
     # TODO should these values be cell properties?
 
@@ -479,17 +416,14 @@ def turn_on_physics():
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
 
-# TODO: depreciated, to be removed
-'''
+
 def mitosis_handler(scene):
     """
     Mitosis handler is a function triggered every frame to check if all cells
     need to divide
     Currently just based on volume
-
     :param scene: Blender syntax
     :param tree: ???
-
     :return: None
     """
     # TODO check docstring
@@ -512,17 +446,13 @@ def mitosis_handler(scene):
         if volume > .3:
             cell_tree = divide(cell, cell_tree)
     cell_tree.show()
-'''
 
 
-# TODO: depreciated, to be removed (redudant with make_cell)
-'''
+# Remove this function. Take try/except code to make_cell function
 def make_mesh(cell):
     """
     Makes a Blender mesh object for the given Goo cell
-
     :param cell: the Goo cell to make a Blender mesh from
-
     :return: None
     """
 
@@ -551,13 +481,13 @@ def make_mesh(cell):
     # Add a subdivision surface for a smoother shape
     bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
-'''
+
 
 def make_cell(cell):
-    """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell` object. 
-
-    :param :class:`Cell` cell: The Goo :class:`Cell` object. 
-    :returns: None
+    """
+    Makes a Blender mesh object for the given Goo cell Python object
+    :param cell: the Goo cell Python object to make a Blender mesh from
+    :return: None
     """
     # TODO make_mesh and make_cell are redundant. Need to merge.
 
@@ -660,10 +590,10 @@ def make_cell(cell):
 
 
 def delete_cell(cell):
-    """Auxilliary function: deletes a Blender mesh. 
-
-    :param :class:`Cell` cell: The Goo :class:`Cell` object. 
-    :returns: None
+    """
+    Deletes a Goo cell's Blender object
+    :param cell: the Goo cell to delete
+    :return: None
     """
     obj = cell.get_blender_object()
     bpy.data.objects.remove(obj, do_unlink=True)
@@ -671,16 +601,7 @@ def delete_cell(cell):
 
 # Defines the Cell class
 class Cell():
-    """Core class: creates Goo cell object. 
-
-    :param str name: The name of the cell.
-    :param tuple loc: The coordinates of the cell.   
-    :returns None:
-    """
     def __init__(self, name_string, loc, material="", flavor=""):
-        """
-        Constructor method
-        """
         # The initialization function sets a cell data dictionary
         # for geometric parameters, physics parameters,
         # division information, and cell lineage
@@ -722,8 +643,6 @@ class Cell():
         obj = bpy.data.objects[self.data["name"]]
         return obj
 
-    # TO DO: redudant with the standalone function, to be removed.     
-    """
     # Member function to divide
     def divide(self):
         # TODO this is redundant with the stand alone divide function
@@ -758,19 +677,18 @@ class Cell():
         daughter2.data['mother'] = m_name
         daughter2.data['daughters'] = ['none', 'none']
         return daughter1, daughter2
-    """
+
+
 def add_material_cell(mat_name, r, g, b):
-    """Core function: creates a soap bubble-like Blender material for use in rendering cells.
-
-    The material has a name that allows it to be shared across multiple cells. 
-
-    :param str mat_name: The name of the material. 
-    :param float r: The value of the red in RGB [0 to 1]. 
-    :param float g: The value of the green value in RGB [0 to 1]. 
-    :param float b: The value of the blue value in RGB [0 to 1]. 
-    :returns: None
     """
-
+    Creates a soap bubble like Blender material for use in rendering cells.
+    The material has a name that allows it to be shared for multiple cells
+    :param mat_name: a text name for the material
+    :param r: red value [0 to 1]
+    :param g: green value [0 to 1]
+    :param b: blue value [0 to 1]
+    :return: None
+    """
     print("add cell material " + mat_name)
 
     # check whether the material already exists
@@ -862,25 +780,13 @@ def add_material_cell(mat_name, r, g, b):
 
 
 class Force():
-    """Core class: creates Goo force objects. 
-
-    The class instantiates :class:`Force` objects that represent 
-    adhesion forces between cells in Blender. 
-    
-    :param str force_name: The name of the force.
-    :param str cell_name: The name of the cell. 
-    :param float strength: The strength of the force.
-    :param float falloff_power: The power of the falloff of the force. 
-    :returns: None
-
-    .. note:: ``falloff_power`` is a positive (:py:class:`float`). 
-        By default, the type of the falloff is set to `SPHERE` 
-        and its shape is set to `SURFACE`. 
+    """
+    A class for representing forces between cells in Goo. Used for cell adhesion
+    :param force_name: Name of force
+    :param cell_name: Name of cell
+    :param strength: Strength of force
     """
     def __init__(self, force_name, cell_name, strength):
-        """
-        Constructor method
-        """
         self.name = force_name
         self.strength = strength
         self.associated_cell = cell_name
@@ -893,10 +799,10 @@ class Force():
 
 
 def make_force(force):
-    """Core function: creates a Blender force from a Goo :class:`Force` object. 
-
-    :param :class:`Force` force: The Goo force object. 
-    :returns: None
+    """
+    Makes a Blender force from the Goo force
+    :param force: a Goo force
+    :return: None
     """
     # Add a force object
     cell = force.associated_cell
@@ -911,9 +817,6 @@ def make_force(force):
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
 
-
-# functions to simulate cell sheet-like biological tissue e.g. epithelial layer
-# TODO: under development
 
 def initialize_cell_sheet():
     bpy.ops.mesh.primitive_grid_add(size=2,
@@ -1031,10 +934,10 @@ def initialize_solid_tissue():  # Work in Progress
 
 
 def setup_world():
-    """Auxilliary function: sets up the default values used for simulations in Goo 
-    including units and rendering background. 
-
-    :returns: None
+    """
+    Sets up the default values used for simulations in Goo
+    including units and rendering background
+    :return: None
     """
     print("setup world")
     # Turn off gravity so cells don't fall in the simulation
@@ -1053,11 +956,10 @@ def setup_world():
 
 
 def add_world_HDRI():
-    """Auxilliary function: sets up Blender World properties for use in rendering.
-
-    It adds an HDRI image for illumination. 
-
-    :returns: None
+    """
+    Sets up Blender World properties for use in rendering most importantly
+    adds an HDRI image for illumination
+    :return: None
     """
     print("add world HDRI")
     C = bpy.context
@@ -1114,13 +1016,13 @@ def add_world_HDRI():
 
 
 def render(file_path, scene, start, end):
-    """Auxilliary function: renders a simulation to create a set of still images that can be made into a movie
-
-    :param str file_path: The path of the folder used to store output images. 
-    :param bpy.context.scene scene: The Blender current scene. 
-    :param int start: The Blender starting frame. 
-    :param int end: The Blender ending frame. 
-    :returns: None
+    """
+    Renders a simulation to create a set of still images that can be made into a movie
+    :param file_path: path for storing outputted images
+    :param scene: the Blender scene
+    :param start: the Blender start key frame
+    :param end: the Blender end key frame
+    :return: None
     """
     # Set the image file format as PNG
     scene.render.image_settings.file_format = 'PNG'
@@ -1154,12 +1056,12 @@ def render(file_path, scene, start, end):
 
 
 def make_force_collections(master_collection, cell_types):
-    """Auxilliary function: makes collections for forces to be stored in.
-
-    :param bpy.context.view_layer.active_layer_collection master_collection: The collection in which the force
-    collections will be contained. 
-    :param list cell_types: The list of active cell types. 
-    :returns: None
+    """
+    Make collections for forces to be stored in.
+    :param master_collection: The collection that the force
+    collections will be contained
+    :param cell_types: list of active cell types
+    :return: None
     """
     bpy.context.view_layer.active_layer_collection = master_collection
     for type in cell_types:
@@ -1169,19 +1071,14 @@ def make_force_collections(master_collection, cell_types):
 
 class handler_class:
     # TODO document this class
-    """Core class: creates handler objects.  
-    
-    Handlers trigger actions on Goo cells when certain criteria are met. 
-    
-    :returns: None
+    """
+    A class for creating different types of handlers that trigger
+    actions on Goo cells when certain criteria are met
     """
 
     # The initialization function specifies available cell types and associated
     # parameters like division rate, growth rate, and adhesion forces
     def __init__(self):
-        """
-        Constructor method
-        """
 
         self.cell_types = ['sphere', 'type1', 'type2']
         self.division_rates = {}
@@ -1210,28 +1107,26 @@ class handler_class:
     def set_division_rate(self, cell_type, rate):
         # assume 60 frames per second
         # rate is in divisions per second
-        """Sets division rate in the handler class that div_handler() can reference later. 
-
-        :param str cell_type: The name of cell type to apply this division rate to. 
-        Must be one of the active cell types.
-        :param int rate: The number of frames between each division. 
-
-        :returns: None
+        """
+        Sets division rate in the handler class that div_handler() can reference later
+        :param cell_type: Name of cell type to apply this division rate to.
+        Must be one of the active cell types. (String)
+        :param rate: number of frames between each division (int)
+        :return: None
         """
         self.division_rates[cell_type] = rate
         return
 
     # Member function to set growth rate for a cell type
     def set_growth_rate(self, cell_type, rate):
-        """Sets growth rate in the handler class that growth_handler() can reference later.
-
-        The growth rate should be between 0 and 1.
-
-        :param str cell_type: The name of cell type to apply this division rate to.
-        Must be one of the active cell types.
-        :param float rate: The amount to change ``cell.modifiers["Cloth"].settings.shrink_min`` each frame.
-
-        :returns: None
+        """
+        Sets rate rate in the handler class that growth_handler() can reference later
+        :param cell_type: Name of cell type to apply this division rate to.
+        Must be one of the active cell types. (String)
+        :param rate: amount to change cell.modifiers["Cloth"].
+        settings.shrink_min each frame.
+        Should be between 0 and 1. (float)
+        :return: None
         """
         if(rate > 0 and rate < 1):
             self.growth_rates[cell_type] = rate
@@ -1239,24 +1134,23 @@ class handler_class:
 
     # Member function to set adhesion forces between cell types
     def set_adhesion(self, type1, type2, force):
-        """Sets a value adhesion_forces in the handler class that 
+        """
+        Sets a value adhesion_forces in the handler class that
         apply_forces() can reference later
-
-        The cell type must be one of the actives.
-
-        :param str type1: The name of cell type that the force is attatched to.
-        :param str type2: The name of cell type that the force affects.
-        :param int force: The strength of the force between type1 and type2 cells. 
-
-        :returns: None
+        :param type1: Name of cell type that the force is attatched to.
+        Must be one of the active cell types. (String)
+        :param type1: Name of cell type that the force affects.
+        Must be one of the active cell types. (String)
+        :param force: the strenfgth of the force (int)
+        :return: None
         """
         self.adhesion_forces[type1][type2] = force
         return
 
     def apply_forces(self):
-        """Adds force fields to force collections and make them affect the
-        corresponding cell types. 
-
+        """
+        Add force fields to force collections and make them affect corresponding cell
+        types
         :return: None
         """
         master_collection = bpy.context.view_layer.active_layer_collection
@@ -1344,12 +1238,11 @@ class handler_class:
                 cell.modifiers["Cloth"].settings.shrink_min -= 0.01
 
     def set_scale(self, scale, cell_type):
-        """Changes the size of all cells of a certain type. 
-
-        :param float scale: value to set ``cell.modifiers["Cloth"].settings.shrink_min`` to.
-        :param str cell_type: Name of cell type to scale. (String)
-
-        :returns: None
+        """
+        Change the size of all cells of a certain type
+        :param scale: value to set cell.modifiers["Cloth"].settings.shrink_min to.
+        :param cell_type: Name of cell type to scale. (String)
+        :return: None
         """
         num_cells = len(bpy.data.collections[cell_type].objects)
         for i in range(num_cells):

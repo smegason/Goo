@@ -53,7 +53,8 @@ You can create a Python file and run it on Blender. Once you are in **Scripting*
   :width: 800
 
 Blender Python's API, named *bpy*, allows Python and Blender to fit together. To use it, the following package should be imported:
-    `import bpy`
+    
+    import bpy
 
 The Blender API can used with no installation nor importing into the Python Interactive Console. The Python file can be run on Blender by clicking on *play* icon. 
 
