@@ -549,6 +549,94 @@ def make_mesh(cell):
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
 '''
 
+# Defines the Cell class
+class Cell():
+    """Core class: creates Goo cell object. 
+
+    The class instantiates :class:`Cell` objects. 
+
+    :param str name: The name of the cell.
+    :param tuple loc: The coordinates of the cell.   
+    :returns: None
+    """
+    def __init__(self, name_string, loc, material="", flavor=""):
+        """
+        Constructor method
+        """
+        # The initialization function sets a cell data dictionary
+        # for geometric parameters, physics parameters,
+        # division information, and cell lineage
+        self.data = {
+            'ID': 0,
+            'name': name_string,
+            'radius': 1,
+            'enter_editmode': False,
+            'align': 'WORLD',
+            'location': loc,
+            'material': material,
+            'size': (1, 1, 1),
+            'scale': (1, 1, 1),
+            'arcdiv': 8,
+            'subdiv': 2,
+            'vertex_mass': 0.3,
+            'density': 1.0,
+            'edges_pull': 0.0,
+            'edges_bend': 0.2,
+            'air_damping': 10,
+            'self_collision': True,
+            'self_collision_stiffness': 0.01,
+            'ball_size': 10,
+            'softbody_goal': False,
+            'sotbody_friction': 0.2,
+            'phi': 0,
+            'theta': 0,
+            'div_axis': (0, 0, 0),
+            'mother': 'none',
+            'daughters': ['none', 'none'],
+            'flavor': flavor
+        }
+        # The volume and mass are calculated from values in the data dictionary
+        self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
+        self.data['mass'] = self.data['density']*self.data['init_volume']
+
+    # TO DO: redudant with the standalone function, to be removed.     
+    """
+    # Member function to divide
+    def divide(self):
+        # TODO this is redundant with the stand alone divide function
+        obj = self.get_blender_object()
+        obj.select_set(True)
+        m_name, d_name, COM, major_axis = seperate_cell(obj)
+        print(major_axis)
+        val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
+        if val == 0:
+            translate_cell(bpy.data.objects[m_name], major_axis)
+            bpy.data.objects[m_name].select_set(False)
+        else:
+            bpy.data.objects[d_name].select_set(True)
+            bpy.data.objects[m_name].select_set(False)
+            translate_cell(bpy.data.objects[d_name], major_axis)
+            bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+            bpy.data.objects[d_name].select_set(False)
+        bpy.data.objects[m_name].select_set(True)
+        bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
+        repair_hole(bpy.data.objects[m_name])
+        bpy.context.object.name = m_name + "0"
+        daughter1 = Cell(m_name + "0", loc=bpy.context.object.location)
+        daughter1.data['mother'] = m_name
+        daughter1.data['daughters'] = ['none', 'none']
+        bpy.data.objects[m_name + "0"].select_set(False)
+        bpy.data.objects[d_name].select_set(True)
+        bpy.context.view_layer.objects.active = bpy.data.objects[d_name]
+        repair_hole(bpy.data.objects[d_name])
+        bpy.context.object.name = m_name + "1"
+        bpy.data.objects[m_name + "1"].select_set(False)
+        daughter2 = Cell(bpy.context.object.name, loc=bpy.context.object.location)
+        daughter2.data['mother'] = m_name
+        daughter2.data['daughters'] = ['none', 'none']
+        return daughter1, daughter2
+    """
+
 def make_cell(cell):
     """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell` object. 
 
@@ -598,8 +686,8 @@ def make_cell(cell):
             return
 
     # Give the Blender object the cell's name
-    obj = bpy.context.object
-    bpy.context.object.name = cell.data['name']
+    obj = bpy.ops.object.select = True
+    bpy.context.object.name = cell.data.get('name')
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
 
     # Smooth the mesh
@@ -655,6 +743,7 @@ def make_cell(cell):
         print("No material ", cell.data['material'])
 
 
+'''
 def delete_cell(cell):
     """Auxilliary function: deletes a Blender mesh. 
 
@@ -663,100 +752,8 @@ def delete_cell(cell):
     """
     obj = cell.get_blender_object()
     bpy.data.objects.remove(obj, do_unlink=True)
+'''
 
-
-# Defines the Cell class
-class Cell():
-    """Core class: creates Goo cell object. 
-
-    The class instantiates :class:`Cell` objects. 
-
-    :param str name: The name of the cell.
-    :param tuple loc: The coordinates of the cell.   
-    :returns: None
-    """
-    def __init__(self, name_string, loc, material="", flavor=""):
-        """
-        Constructor method
-        """
-        # The initialization function sets a cell data dictionary
-        # for geometric parameters, physics parameters,
-        # division information, and cell lineage
-        self.data = {
-            'ID': 0,
-            'name': name_string,
-            'radius': 1,
-            'enter_editmode': False,
-            'align': 'WORLD',
-            'location': loc,
-            'material': material,
-            'size': (1, 1, 1),
-            'scale': (1, 1, 1),
-            'arcdiv': 8,
-            'subdiv': 2,
-            'vertex_mass': 0.3,
-            'density': 1.0,
-            'edges_pull': 0.0,
-            'edges_bend': 0.2,
-            'air_damping': 10,
-            'self_collision': True,
-            'self_collision_stiffness': 0.01,
-            'ball_size': 10,
-            'softbody_goal': False,
-            'sotbody_friction': 0.2,
-            'phi': 0,
-            'theta': 0,
-            'div_axis': (0, 0, 0),
-            'mother': 'none',
-            'daughters': ['none', 'none'],
-            'flavor': flavor
-        }
-        # The volume and mass are calculated from values in the data dictionary
-        self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
-        self.data['mass'] = self.data['density']*self.data['init_volume']
-
-    # Member function for obtaining the Blender object corresponding to the cell
-    def get_blender_object(self):
-        obj = bpy.data.objects[self.data["name"]]
-        return obj
-
-    # TO DO: redudant with the standalone function, to be removed.     
-    """
-    # Member function to divide
-    def divide(self):
-        # TODO this is redundant with the stand alone divide function
-        obj = self.get_blender_object()
-        obj.select_set(True)
-        m_name, d_name, COM, major_axis = seperate_cell(obj)
-        print(major_axis)
-        val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
-        if val == 0:
-            translate_cell(bpy.data.objects[m_name], major_axis)
-            bpy.data.objects[m_name].select_set(False)
-        else:
-            bpy.data.objects[d_name].select_set(True)
-            bpy.data.objects[m_name].select_set(False)
-            translate_cell(bpy.data.objects[d_name], major_axis)
-            bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
-            bpy.data.objects[d_name].select_set(False)
-        bpy.data.objects[m_name].select_set(True)
-        bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
-        repair_hole(bpy.data.objects[m_name])
-        bpy.context.object.name = m_name + "0"
-        daughter1 = Cell(m_name + "0", loc=bpy.context.object.location)
-        daughter1.data['mother'] = m_name
-        daughter1.data['daughters'] = ['none', 'none']
-        bpy.data.objects[m_name + "0"].select_set(False)
-        bpy.data.objects[d_name].select_set(True)
-        bpy.context.view_layer.objects.active = bpy.data.objects[d_name]
-        repair_hole(bpy.data.objects[d_name])
-        bpy.context.object.name = m_name + "1"
-        bpy.data.objects[m_name + "1"].select_set(False)
-        daughter2 = Cell(bpy.context.object.name, loc=bpy.context.object.location)
-        daughter2.data['mother'] = m_name
-        daughter2.data['daughters'] = ['none', 'none']
-        return daughter1, daughter2
-    """
 def add_material_cell(mat_name, r, g, b):
     """Core function: creates a soap bubble-like Blender material for use in rendering cells.
 
@@ -883,11 +880,6 @@ class Force():
         self.strength = strength
         self.associated_cell = cell_name
         self.falloff_power = 0
-
-    # Member function that gets the Blender object corresponding to a Goo Force object
-    def get_blender_force(self):
-        obj = bpy.data.objects[self.name]
-        return obj
 
 
 def make_force(force):
