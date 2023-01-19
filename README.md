@@ -2,6 +2,7 @@
 
 Goo is a Python package for extending Blender for modeling biological cells, tissues, and embryos. 
 
+                           | 
 :-------------------------:|:-------------------------:
 <img src="https://github.com/smegason/Goo/blob/main/img/cell_tube_32_fontal.gif" width="256"/>  |  <img src="https://github.com/smegason/Goo/blob/main/img/layer-like structure.gif" width="256"/>    
 <img src="https://github.com/smegason/Goo/blob/main/img/cell_tube_32_lateral.gif" width="256"/> | <img src="https://github.com/smegason/Goo/blob/main/img/adhesion-based sorting.gif" width="256"/>
