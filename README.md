@@ -10,7 +10,7 @@ B &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &
 
 <img src="https://github.com/smegason/Goo/blob/main/img/cell_tube_32_lateral.gif" width="350"/> <img src="https://github.com/smegason/Goo/blob/main/img/adhesion-based sorting.gif" width="350"/>
 
-_A,C. Tube-like tissue B. layer-like tissue D. Adhesion-based sorting_
+_A,B. Tube-like tissue C. layer-like tissue D. Adhesion-based sorting_
 
 <br>
 
