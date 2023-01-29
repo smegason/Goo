@@ -8,6 +8,7 @@ Goo is a Python package for extending Blender for modeling biological cells, tis
 
 _Examples: A,B. Tube-like tissue C. layer-like tissue D. Adhesion-based sorting_
 
+<img src="https://github.com/smegason/Goo/blob/main/img/16cells_packing_highquali.mp4" width="350"/> D
 <br>
 
 
