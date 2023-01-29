@@ -2,35 +2,42 @@
 # goo is licensed under BSDv2
 
 import bpy
-import bmesh
 import mathutils
 import numpy as np
 import sys
+import random
+import os 
+import math
+from datetime import datetime
+import json
+import subprocess
+import bmesh
 
 """
-Refactored by Antoine Ruzette, November 2022.
+Refactored by Antoine Ruzette, Jan. 2022.
 
 Note on comments: 
-Core functions are required for Goo to run. 
-Auxilliary function are not required for Goo to run but 
-are used for supporting tasks such as retrieving metrics 
-- typically they can be removed. 
+Core functions are required for ``Goo`` to correctly run. 
+Auxilliary function are not required for ``Goo`` to run but are used for supporting tasks such as retrieving metrics - typically they can be removed. 
 
-Sphynx docstring was enhanced and written in a more sphynx-ic way. 
+Sphynx docstring was enhanced by adding types, and written in a more sphynx-ic way. 
 """
 
+# TODO: explain differences between edit and object mode
+# TODO: explain Blender's modifiers as a data type
 
 def calculate_volume(obj):
     """Auxilliary function: calculates the volume of the Blender mesh. 
-    
+
+    In order to retrieve the mesh as it is currrently evaluated - including 
+    the effect of all modifiers - in the simulation, its corresponding evaluated 
+    ID is obtained from the dependency graph for the current context. 
+    .. seealso:: [Blender API Documentation > ``evaluated_get(depsgraph)``](https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get)
+
     :param bpy.data.objects['name'] obj: The Blender mesh.
     :returns: The volume of the mesh. 
     :rtype: float
 
-    .. seealso:: In order to retrieve the mesh as it is currrently evaluated - including 
-        the effect of all modifiers - in the simulation, its corresponding evaluated 
-        ID is obtained from the dependency graph for the current context. 
-        `Blender API Documentation > evaluated_get(depsgraph) <https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get>`__
     .. note:: The function may return a negative volume - see ``calc_volume(signed=True)``. 
 
     """
@@ -46,10 +53,11 @@ def calculate_volume(obj):
     bm = bmesh.new()
     bm.from_mesh(mesh_from_eval)
     volume = bm.calc_volume(signed=True)
+    print(type(volume))
     return volume
 
 
-def get_major_axis(obj):
+def get_long_axis(obj):
     """Core function: calculates the long axis of a mesh. 
 
     This function calculates the first eigenvector of the vertices in the mesh, 
@@ -73,7 +81,7 @@ def get_major_axis(obj):
 
     # We separate the x, y, and z coordinates into their own arrays.
     # We also subtract the mean of each dimension from the corresponding
-    # array values. This is part of the PCA algorithm.
+    # array values (normalization). This is part of the PCA algorithm.
     x = vert_coords[:, 0]
     x = x - np.mean(x)
     y = vert_coords[:, 1]
@@ -94,6 +102,7 @@ def get_major_axis(obj):
     sort_indices = np.argsort(eigenvals)
     major_x, major_y, major_z = eigenvecs[:, sort_indices[-1]]
     major_axis = (major_x, major_y, major_z)
+
     return major_axis
 
 
@@ -129,65 +138,12 @@ def get_division_angles(axis):
     # The inverse cosin of this dot product is theta.
     theta = np.arccos(dot_product)
 
-    # prev_axis_norm = prev_axis/np.linalg.norm(prev_axis)
-    # dot_product = np.dot(division_axis, prev_axis_norm)
-    # div_angle_change = np.arccos(dot_product)
-    # return phi, theta, div_angle_change
-    print("GOT DIVISION ANGLES")
+    print(f'Division angles:(phi={phi}; theta={theta})')
     return phi, theta
 
 
-def calculate_contact_area(obj):  # obj = bpy.context.object
-    """Auxilliary function: calculates the contact area of a Blender cell with all surrounding objects.
-
-    The function looks for flat areas of the mesh. Not always a good assumption
-
-    :param bpy.data.objects['name'] obj: The Blender mesh. 
-    :returns: The contact area. 
-    :rtype: float 
-    """
-    # TODO check docstring - I don't understand this function. Doesn't it
-    # need two cells to calculate the contact area??? Contact area with what?
-
-    # We need to get the cell as it is evaluated in the simulation.
-    # To do this, we fetch its dependency graph and obtain the
-    # evaluated cell (denoted as obj_eval here)
-    dg = bpy.context.evaluated_depsgraph_get()
-    obj_eval = obj.evaluated_get(dg)
-    # We use this graph to obtain a new mesh from which
-    # we can calculate the angles between adjacent faces of the cell
-    mesh_from_eval = obj_eval.to_mesh()
-    bm = bmesh.new()
-    bm.from_mesh(mesh_from_eval)
-
-    # The contact area variable is initialized to zero.
-    contact_area = 0
-    # All faces on the mesh are initially deselected
-    for face in bm.faces:
-        face.select = False
-
-    # We loop over all the edges in the mesh
-    for edge in bm.edges:
-        # We find the angle between the two adjacent faces
-        # of the edge. If the angle is less than 0.01, the
-        # adjacent faces are either flat or concave, so this
-        # face is presumed to be in contact with another object
-        # and is selected
-        angle = edge.calc_face_angle_signed()
-        if angle < 0.01:
-            for face in edge.link_faces:
-                face.select = True
-
-    # We loop through the selected faces and add the area of
-    # each face to the contact area variable
-    for face in bm.faces:
-        if face.select:
-            contact_area += face.calc_area()
-
-    return contact_area
-
-
 def repair_hole(obj):
+
     """Core function: repair the holes created by the bissection of the Blender mesh. 
     
     This function adds a new face to the cell after division (bissection - in two equal parts) 
@@ -197,7 +153,6 @@ def repair_hole(obj):
     :returns: None
     """
 
-    # bpy.context.view_layer.objects.active = obj
     # Go into Blender Edit Mode
     bpy.ops.object.mode_set(mode='EDIT')
     # Select all the edges in the mesh
@@ -231,7 +186,7 @@ def print_info(obj):
     return [vertices, edges, faces]
 
 
-def select_translate_cell(obj, COM, division_axis):
+def select_translate_cell(obj, COM, major_axis):
     """Core function: selects one of the daughter cells to translate. 
     
     After dividing the mother cell, this function compares the 
@@ -253,26 +208,16 @@ def select_translate_cell(obj, COM, division_axis):
 
     # Get the mother cell's center of mass
     com = np.copy(COM)
-    # print("OLD COM: " + str(COM))
     # Set the daughter cell's location to its center of mass,
-    # and set this value as the new center of mass
-    # (denoted new_COM)
+    # and set this value as the new center of mass (denoted new_COM)
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     new_COM = obj.location
-    # print("NEW COM: " + str(new_COM))
-    # print(com)
-
     # Calculate the signed distance between the new center of mass
     # and the plane of division
-    distance = mathutils.geometry.distance_point_to_plane(new_COM, com, division_axis)
-
-    # If the signed distance is greater than 0, return 0
-    print(distance)
-    if distance > 0:
-        return 0
-    # Else, if the signed distance is less than 0, return 1
-    else:
-        return 1
+    distance = mathutils.geometry.distance_point_to_plane(new_COM, com, major_axis)
+    # If the signed distance is greater than 0, return True. Else, return False. 
+    translated = True if distance > 0 else False
+    return translated
 
 
 def translate_cell(obj, axis):
@@ -285,27 +230,28 @@ def translate_cell(obj, axis):
     :returns: None
     """
 
+    # TODO: reasons to translate of such a distance??
+
     # Calculate the magnitude of the given axis
-    magnitude = ((axis[0])**2 + (axis[1])**2 + (axis[2])**2)**(0.5)
+    magnitude = ((axis[0])**2 + (axis[1])**2 + (axis[2])**2)
 
-    # Normalize the axis by dividing eagh term by the magnitude.
+    # Normalize the axis by dividing eagh term by the magnitude
     # Multiply each term by 0.1 so the cell is only translated a small distance
-    new_vec = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
-    print(new_vec)
+    # if this is not done, daughter cells are far away from each other
+    new_coord = (0.1*axis[0]/magnitude, 0.1*axis[1]/magnitude, 0.1*axis[2]/magnitude)
     # translate the cell
-    bpy.ops.transform.translate(value=new_vec)
-
+    bpy.ops.transform.translate(value=new_coord)    
 
 def seperate_cell(obj):
     """Core function: splits one cell into two for cell division. 
     
     The mother Blender mesh is split in two given a division plane. 
     The division plane is specified by a point on this plane, that is the center of mass of the mother,
-    and the direction of this point, given by the long axis of the mother mesh.
+    and the direction of this point, given by the long axis of the mother mesh. 
     By naming convention, the daughter cells inherit their mother name added with .001. 
 
     :param bpy.data.objects['name'] obj: the Blender mesh to divide in two. 
-    :returns:
+    :returns: 
         - mother_name (:py:class:`str`) - The name of the mother cell. 
         - daughter_name (:py:class:`str`) - The name of the daughter cell. 
         - COM (:py:class:`tuple`) - The XYZ coordinates of the center of mass of the mother cell. 
@@ -314,9 +260,7 @@ def seperate_cell(obj):
     # TODO allow division along a supplied axis.
     # If none supplied then divide along major axis
 
-    # We need to get the cell as it is evaluated in the simulation.
-    # To do this, we fetch its dependency graph and obtain the
-    # evaluated cell (denoted as obj_eval here)
+    # Get the cell as it is evaluated in Blender
     bpy.ops.object.mode_set(mode='OBJECT')
     dg = bpy.context.evaluated_depsgraph_get()
     obj = obj.evaluated_get(dg)
@@ -324,24 +268,20 @@ def seperate_cell(obj):
     mother_name = obj.name
     # By Blender convention, duplicates of existing objects are given
     # the same name as the original object, but with ".001" added to the end
-    # We use the naming convention to tentatively set the name of one
-    # daughter cell
-    daughter_name = mother_name + ".001"
+    # We use the naming convention to tentatively set the name of one daughter cell
+    daughter_name = f"{mother_name}.001"
     # Get the cell's center of mass
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     COM = obj.location
-    # Go into edit mode
+    # Enter edit mode
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     # Get the cell's major axis
-    major_axis = get_major_axis(obj)
-    # Get the division angles, if desired
-    # phi, theta = get_division_angles(major_axis)
-    # print(mother_name + " PHI: " + str(phi) + ", THETA: " + str(theta))
-    # Bisect the cell along the plane specified by the center of mass (point)
-    # and major axis (normal vectorr)
+    major_axis = get_long_axis(obj)
+    # The division plane is specified by a point on this plane (COM) 
+    # and by the direction of the points on plane (major axis i.e. normal axis).  
     bpy.ops.mesh.bisect(plane_co=COM, plane_no=major_axis, use_fill=False, flip=False)
-    # Go into object mode
+    # Enter object mode
     bpy.ops.object.mode_set(mode='OBJECT')
     # Now we separate the split mesh into two separate objects.
     # First, obtain the vertex coordinates of the bisected mother cell.
@@ -351,8 +291,7 @@ def seperate_cell(obj):
     new_vert_coords = np.asarray(new_vert_coords)
 
     # We will choose half of the vertices to be separated into a new object.
-    # We create a list of the vertex indices we will use to create the
-    # daughter cell object
+    # We create a list of the vertex indices we will use to create the daughter cell object
     separation_indices = []
     # We loop through each vertex and calculate the signed distance between the vertex
     # and the division plane (which is specified by the center of mass and major axis).
@@ -364,28 +303,25 @@ def seperate_cell(obj):
                                                               COM, major_axis)
         if distance > -0.05:
             separation_indices.append(i)
-    # We go back into edit mode and deselect all vertices
+    # Enter edit mode and deselect all vertices
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action='DESELECT')
-    # We return to object mode and loop through all the vertices.
+    # Enter object mode and loop through all the vertices.
     # If the vertex's index ix contained in the list of separation indices,
     # we select it for separation
     bpy.ops.object.mode_set(mode='OBJECT')
     for index in separation_indices:
         obj.data.vertices[index].select = True
-    # We go back into edit mode and separate the selected vertices
-    # as a new daughter cell.
+    # Enter edit mode and separate the selected vertices as a new daughter cell.
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.separate(type='SELECTED')
-    # We return to object mode and select only the "original" mother cell
+    # Enter object mode and select only the "original" mother cell
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.data.objects[mother_name].select_set(False)
     bpy.data.objects[daughter_name].select_set(False)
     bpy.data.objects[mother_name].select_set(True)
     return mother_name, daughter_name, COM, major_axis
-
-
 
 def divide(obj): 
     """Core function: divides a mother Blender mesh into two daughter Blender meshes. 
@@ -395,15 +331,18 @@ def divide(obj):
     translating one mesh, filling the two holes, and retriangulating the meshes
 
     :param bpy.data.objects['mother_name'] obj: The soon-to-be mother Blender mesh. 
-    :returns:
-        - daughter1 (`bpy.data.objects['daughter1_name']`) - The Blender mesh of one of the daughter cells. 
-        - daughter2 (`bpy.data.objects['daughter2_name']`) - The Blender mesh of the other daughter cell. 
+    :returns: 
+        - daughter1 (bpy.data.objects['daughter1_name']) - The Blender mesh of one of the daughter cells. 
+        - daughter2 (bpy.data.objects['daughter2_name']) - The Blender mesh of the other daughter cell. 
     """
+    # Select mother cell
     obj.select_set(True)
+    # Split mother's Blender mesh in two
     m_name, d_name, COM, major_axis = seperate_cell(obj)
-    print(major_axis)
-    val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
-    if val == 0:
+    # Decides which ce
+    translated = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
+
+    if translated == True:
         translate_cell(bpy.data.objects[m_name], major_axis)
         bpy.data.objects[m_name].select_set(False)
     else:
@@ -412,6 +351,7 @@ def divide(obj):
         translate_cell(bpy.data.objects[d_name], major_axis)
         bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
         bpy.data.objects[d_name].select_set(False)
+
     bpy.data.objects[m_name].select_set(True)
     bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
     repair_hole(bpy.data.objects[m_name])
@@ -429,7 +369,6 @@ def divide(obj):
     daughter2.data['mother'] = m_name
     daughter2.data['daughters'] = ['none', 'none']
     return daughter1, daughter2
-
 
 def turn_off_physics():
     """Core function: turns physics off for the currently selected Blender object.
@@ -450,8 +389,6 @@ def turn_on_physics():
     :param: None
     :returns: None
     """
-    # TODO should these values be cell properties?
-
     # Set all parameter values
     bpy.ops.object.modifier_add(type='CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
@@ -475,204 +412,36 @@ def turn_on_physics():
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
 
-# TODO: depreciated, to be removed
-'''
-def mitosis_handler(scene):
-    """
-    Mitosis handler is a function triggered every frame to check if all cells
-    need to divide
-    Currently just based on volume
-
-    :param scene: Blender syntax
-    :param tree: ???
-
-    :return: None
-    """
-    # TODO check docstring
-    # TODO should merge mitosis_handler and div_handler into one function.
-    # When to divide should be based on a cell property that allows for volume
-    # or time based trigger and allows for some noise in timing
-
-    # Find the number of cells by checking the length of the collection
-    # where they are kept in the Blender simulation
-    num_cells = len(bpy.data.collections["Cells"].objects)
-    cell_tree = None
-    # Loop through each cell
-    for i in range(num_cells):
-        # Make that cell the active object in the simulation
-        bpy.context.view_layer.objects.active = bpy.data.collections["Cells"].objects[i]
-        cell = bpy.context.view_layer.objects.active
-        # Calculate the cell volume
-        volume = calculate_volume(cell)
-        # If the volume is above a certain threshold, divide
-        if volume > .3:
-            cell_tree = divide(cell, cell_tree)
-    cell_tree.show()
-'''
-
-
-# TODO: depreciated, to be removed (redudant with make_cell)
-'''
-def make_mesh(cell):
-    """
-    Makes a Blender mesh object for the given Goo cell
-
-    :param cell: the Goo cell to make a Blender mesh from
-
-    :return: None
-    """
-
-    # Attempt to add a RoundCube mesh
-    try:
-        bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                              radius=cell.data['radius'],
-                                              size=cell.data['size'],
-                                              arc_div=cell.data['arcdiv'],
-                                              lin_div=0, div_type='CORNERS',
-                                              odd_axis_align=False, no_limit=False,
-                                              location=cell.data['location'])
-    # If the user does not have this object enabled, throw exception
-    except Exception:
-        print("Exception=" + sys.exc_info())
-        print("To enable RoundCube creation for Cells you must go \
-               to Edit->Preferences->AddOns->Add Mesh:ExtraObjects\
-               and check the box to enable it")
-
-    # Get the cell name
-    bpy.context.object.name = cell.data['name']
-
-    # Name the Blender mesh the cell's name
-    bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
-
-    # Add a subdivision surface for a smoother shape
-    bpy.ops.object.modifier_add(type='SUBSURF')
-    bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
-'''
-
-# Defines the Cell class
-class Cell():
-    """Core class: creates Goo cell object. 
-
-    The class instantiates :class:`Cell` objects. 
-
-    :param str name: The name of the cell.
-    :param tuple loc: The coordinates of the cell.   
-    :returns: None
-    """
-    def __init__(self, name_string, loc, material="", flavor=""):
-        """
-        Constructor method
-        """
-        # The initialization function sets a cell data dictionary
-        # for geometric parameters, physics parameters,
-        # division information, and cell lineage
-        self.data = {
-            'ID': 0,
-            'name': name_string,
-            'radius': 1,
-            'enter_editmode': False,
-            'align': 'WORLD',
-            'location': loc,
-            'material': material,
-            'size': (1, 1, 1),
-            'scale': (1, 1, 1),
-            'arcdiv': 8,
-            'subdiv': 2,
-            'vertex_mass': 0.3,
-            'density': 1.0,
-            'edges_pull': 0.0,
-            'edges_bend': 0.2,
-            'air_damping': 10,
-            'self_collision': True,
-            'self_collision_stiffness': 0.01,
-            'ball_size': 10,
-            'softbody_goal': False,
-            'sotbody_friction': 0.2,
-            'phi': 0,
-            'theta': 0,
-            'div_axis': (0, 0, 0),
-            'mother': 'none',
-            'daughters': ['none', 'none'],
-            'flavor': flavor
-        }
-        # The volume and mass are calculated from values in the data dictionary
-        self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
-        self.data['mass'] = self.data['density']*self.data['init_volume']
-
-    # TO DO: redudant with the standalone function, to be removed.     
-    """
-    # Member function to divide
-    def divide(self):
-        # TODO this is redundant with the stand alone divide function
-        obj = self.get_blender_object()
-        obj.select_set(True)
-        m_name, d_name, COM, major_axis = seperate_cell(obj)
-        print(major_axis)
-        val = select_translate_cell(bpy.data.objects[m_name], COM, major_axis)
-        if val == 0:
-            translate_cell(bpy.data.objects[m_name], major_axis)
-            bpy.data.objects[m_name].select_set(False)
-        else:
-            bpy.data.objects[d_name].select_set(True)
-            bpy.data.objects[m_name].select_set(False)
-            translate_cell(bpy.data.objects[d_name], major_axis)
-            bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
-            bpy.data.objects[d_name].select_set(False)
-        bpy.data.objects[m_name].select_set(True)
-        bpy.context.view_layer.objects.active = bpy.data.objects[m_name]
-        repair_hole(bpy.data.objects[m_name])
-        bpy.context.object.name = m_name + "0"
-        daughter1 = Cell(m_name + "0", loc=bpy.context.object.location)
-        daughter1.data['mother'] = m_name
-        daughter1.data['daughters'] = ['none', 'none']
-        bpy.data.objects[m_name + "0"].select_set(False)
-        bpy.data.objects[d_name].select_set(True)
-        bpy.context.view_layer.objects.active = bpy.data.objects[d_name]
-        repair_hole(bpy.data.objects[d_name])
-        bpy.context.object.name = m_name + "1"
-        bpy.data.objects[m_name + "1"].select_set(False)
-        daughter2 = Cell(bpy.context.object.name, loc=bpy.context.object.location)
-        daughter2.data['mother'] = m_name
-        daughter2.data['daughters'] = ['none', 'none']
-        return daughter1, daughter2
-    """
-
-def make_cell(cell):
+def make_cell(cell, force = None):
+    # add mesh type as an cell argument? 
     """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell` object. 
 
-    :param `Cell` cell: The Goo :class:`Cell` object. 
+    :param :class:`Cell` cell: The Goo :class:`Cell` object. 
     :returns: None
     """
-    # TODO make_mesh and make_cell are redundant. Keep make_cell. 
-
-    # Making cell
-    print('Making cell')
-    print(cell.data['flavor'] == "")
-    # if cell.data['flavor'] == "round_cube" or None:
+    '''
     # Add a round_cube mesh
-    if cell.data['flavor'] == "round_cube" or "":
-        print("Making Round Cube")
+    if cell.data['mesh_type'] == "round_cube" or "":
+        print("Making mesh as a Round Cube")
         try:
-            bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                                  radius=cell.data['radius'],
-                                                  size=cell.data['size'],
-                                                  arc_div=cell.data['arcdiv'],
-                                                  lin_div=0,
-                                                  div_type='CORNERS',
-                                                  odd_axis_align=False,
-                                                  no_limit=False,
-                                                  location=cell.data['location'])
+    '''        
+    bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                            radius=cell.data['radius'],
+                                            size=cell.data['size'],
+                                            arc_div=cell.data['arcdiv'],
+                                            lin_div=0,
+                                            div_type='CORNERS',
+                                            odd_axis_align=False,
+                                            no_limit=False,
+                                            location=cell.data['location'])
+    ''' 
         except Exception:
             print(sys.exc_info())
-            print("To enable RoundCube creation for Cells you must go to ")
-            print("Edit->Preferences->AddOns->Add Mesh:ExtraObjects and ")
-            print("check the box to enable it")
-            return
-    
-    # Ico sphere
-    # elif cell.data['flavor'] == "ico_sphere":
-    else:
-        print("Making Ico Sphere")
+            print(f"To enable RoundCube creation for Cells you must go to \n \
+                    Edit->Preferences->AddOns->Add Mesh:ExtraObjects and check the box to enable it")
+   
+    else: 
+        print("Making mesh as Ico Sphere")
         try:
             bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False,
                                                   align='WORLD',
@@ -682,12 +451,11 @@ def make_cell(cell):
 
         except Exception:
             print(sys.exc_info())
-            print("Make sure you spell the correct name")
-            return
-
+            print(f"{cell.data['mesh_type']} is not recognised as a valid mesh type.")        
+        '''
     # Give the Blender object the cell's name
-    obj = bpy.ops.object.select = True
-    bpy.context.object.name = cell.data.get('name')
+    obj = bpy.context.object
+    bpy.context.object.name = cell.data['name']
     bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
 
     # Smooth the mesh
@@ -705,54 +473,91 @@ def make_cell(cell):
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
     bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
     obj.modifiers["Cloth"].settings.air_damping = cell.data['air_damping']
-    bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
-    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.tension_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.compression_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.shear_damping = 5
+    bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 1
+    bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 1
+    bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 1
+    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 1
+    bpy.context.object.modifiers["Cloth"].settings.tension_damping = 25
+    bpy.context.object.modifiers["Cloth"].settings.compression_damping = 25
+    bpy.context.object.modifiers["Cloth"].settings.shear_damping = 25
     bpy.context.object.modifiers["Cloth"].settings.bending_damping = 0.5
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 2.8
+    bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 5
     bpy.context.object.modifiers["Cloth"].settings.pressure_factor = 1
-    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
+    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 0
     bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
 
     # add Collision modifier for physics
     bpy.ops.object.modifier_add(type='COLLISION')
-    bpy.context.object.collision.use_culling = False
-    # bpy.context.object.collision.damping = 0.579821
-    # bpy.context.object.collision.thickness_outer = 0.02
-    # bpy.context.object.collision.thickness_inner = 0.2
-    # bpy.context.object.collision.cloth_friction = 5
-    # bpy.ops.object.forcefield_toggle()
-    # bpy.context.object.field.type = 'FORCE'
-    # bpy.context.object.field.strength = -600
-    # bpy.context.object.field.strength = 0
-    # bpy.context.object.field.shape = 'POINT'
-    # bpy.context.object.name = cell.name
+    bpy.context.object.collision.use_culling = True
+    bpy.context.object.collision.damping = 0.579821
+    bpy.context.object.collision.thickness_outer = 0.02
+    bpy.context.object.collision.thickness_inner = 0.2
+    bpy.context.object.collision.cloth_friction = 5
 
     # add material to cell based on name of material
     material = bpy.data.materials.get(cell.data['material'])
     if (material):
         bpy.context.active_object.data.materials.append(material)
     else:
-        print("No material ", cell.data['material'])
+        print(f"No material: {cell.data['material']}")
 
 
-'''
-def delete_cell(cell):
-    """Auxilliary function: deletes a Blender mesh. 
+# Defines the Cell class
+class Cell():
+    '''Core class: creates Goo cell object. 
 
-    :param `Cell` cell: The Goo :class:`Cell` object. 
-    :returns: None
-    """
-    obj = cell.get_blender_object()
-    bpy.data.objects.remove(obj, do_unlink=True)
-'''
+    :param str name: The name of the cell.
+    :param tuple loc: The coordinates of the cell.   
+    :returns None:
+    '''
+    def __init__(self, name, loc, mesh_type="", material=''):
+        '''
+        Constructor method
+        '''
+        # The initialization function sets a cell data dictionary
+        # for geometric parameters, physics parameters,
+        # division information, and cell lineage
+        self.data = {
+            'ID': 0,
+            'name': name,
+            'radius': 1,
+            'enter_editmode': False,
+            'align': 'WORLD',
+            'location': loc,
+            'material': material,
+            'size': (1, 1, 1),
+            'scale': (1, 1, 1),
+            'arcdiv': 4,
+            'subdiv': 2,
+            'vertex_mass': 3,
+            'density': 1.0,
+            'edges_pull': 0.0,
+            'edges_bend': 0.2,
+            'air_damping': 10,
+            'self_collision': True,
+            'self_collision_stiffness': 0.01,
+            'ball_size': 10,
+            'softbody_goal': False,
+            'sotbody_friction': 0.2,
+            'phi': 0,
+            'theta': 0,
+            'div_axis': (0, 0, 0),
+            'mother': 'none',
+            'daughters': ['none', 'none'],
+            'mesh_type': mesh_type
+        }
+        # The volume and mass are calculated from values in the data dictionary
+        self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
+        self.data['mass'] = self.data['density']*self.data['init_volume']
+        print(self.data['mass'])
+
+    # Member function for obtaining the Blender object corresponding to the cell
+    def get_blender_object(self):
+        obj = bpy.data.objects[self.data["name"]]
+        return obj
 
 def add_material_cell(mat_name, r, g, b):
     """Core function: creates a soap bubble-like Blender material for use in rendering cells.
@@ -765,8 +570,6 @@ def add_material_cell(mat_name, r, g, b):
     :param float b: The value of the blue value in RGB [0 to 1]. 
     :returns: None
     """
-
-    print("add cell material " + mat_name)
 
     # check whether the material already exists
     if bpy.data.materials.get(mat_name):
@@ -872,20 +675,26 @@ class Force():
         By default, the type of the falloff is set to `SPHERE` 
         and its shape is set to `SURFACE`. 
     """
-    def __init__(self, force_name, cell_name, strength):
-        """
-        Constructor method
-        """
+    def __init__(self, force_name, cell_name, strength, falloff_power):
         self.name = force_name
         self.strength = strength
         self.associated_cell = cell_name
-        self.falloff_power = 0
+        self.falloff_power = falloff_power
+        self.falloff_type = 'SPHERE'
+        self.shape = 'SURFACE'
 
+    def get_force(self): 
+        return self.strength
 
+    def get_blender_force(self):
+        obj = bpy.data.objects[self.name]
+        return obj
+
+    
 def make_force(force):
     """Core function: creates a Blender force from a Goo :class:`Force` object. 
 
-    :param `Force` force: The Goo :class:`Force` object. 
+    :param :class:`Force` force: The Goo force object. 
     :returns: None
     """
     # Add a force object
@@ -898,13 +707,14 @@ def make_force(force):
 
     # Add force parameters
     bpy.context.object.field.strength = force.strength
+    bpy.context.object.field.distance_max = 0.5
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
 
+    # add links for falloff_type and shape
 
-# functions to simulate cell sheet-like biological tissue e.g. epithelial layer
-# TODO: under development
-
+# not used - under development
+'''
 def initialize_cell_sheet():
     bpy.ops.mesh.primitive_grid_add(size=2,
                                     enter_editmode=False,
@@ -926,7 +736,7 @@ def initialize_cell_sheet():
                             use_proportional_projected=False,
                             release_confirm=True)
     bpy.ops.object.mode_set(mode='OBJECT')
-    '''
+
     bpy.ops.transform.resize(value=(8.28558, 8.28558, 8.28558),
                              orient_type='GLOBAL',
                              orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
@@ -937,7 +747,7 @@ def initialize_cell_sheet():
                              proportional_size=1,
                              use_proportional_connected=False,
                              use_proportional_projected=False)
-    '''
+
     c = Cell("cell", loc=(0, 0, 0))
     make_cell(c)
     bpy.data.objects["Grid"].select_set(False)
@@ -1018,15 +828,13 @@ def initialize_solid_tissue():  # Work in Progress
                                "release_confirm": False,
                                "use_accurate": False,
                                "use_automerge_and_split": False})
-
-
+'''
 def setup_world():
     """Auxilliary function: sets up the default values used for simulations in Goo 
     including units and rendering background. 
 
     :returns: None
     """
-    print("setup world")
     # Turn off gravity so cells don't fall in the simulation
     bpy.context.scene.use_gravity = False
     # Set units to the metric system
@@ -1045,24 +853,20 @@ def setup_world():
 def add_world_HDRI():
     """Auxilliary function: sets up Blender World properties for use in rendering.
 
-    It adds an HDRI (High Dynamic Range Image) for illumination.
+    It adds an HDRI image for illumination. 
 
     :returns: None
     """
-    print("add world HDRI")
     C = bpy.context
     scn = C.scene
 
     # Get the environment node tree of the current scene
     node_tree = scn.world.node_tree
     tree_nodes = node_tree.nodes
-
     # Clear all nodes
     tree_nodes.clear()
-
     # Add Background node
     node_background = tree_nodes.new(type='ShaderNodeBackground')
-
     # Add Environment Texture node
     node_environment = tree_nodes.new('ShaderNodeTexEnvironment')
     # Load and assign the image to the node property
@@ -1084,15 +888,12 @@ def add_world_HDRI():
     # Add Output node
     node_output = tree_nodes.new(type='ShaderNodeOutputWorld')
     node_output.location = 200, 0
-
     # Link all nodes
     links = node_tree.links
     links.new(node_environment.outputs["Color"], node_background.inputs["Color"])
     links.new(node_background.outputs["Background"], node_output.inputs["Surface"])
-
     # set film to transparent to hide background
     bpy.context.scene.render.film_transparent = True
-
     # change render preview mode
     # only updates windows in current tab, e.g. Sxripting but not Layout
     for area in bpy.context.screen.areas:
@@ -1103,7 +904,7 @@ def add_world_HDRI():
                 space.shading.type = 'RENDERED'
 
 
-def render(file_path, scene, start, end):
+def render(file_path, start, end):
     """Auxilliary function: renders a simulation to create a set of still images that can be made into a movie
 
     :param str file_path: The path of the folder used to store output images. 
@@ -1112,6 +913,7 @@ def render(file_path, scene, start, end):
     :param int end: The Blender ending frame. 
     :returns: None
     """
+    scene = bpy.context.scene
     # Set the image file format as PNG
     scene.render.image_settings.file_format = 'PNG'
     # Set the file path where the images will be saved
@@ -1142,13 +944,13 @@ def render(file_path, scene, start, end):
         bpy.app.handlers.frame_change_post.append(func)
     return
 
-
+# collections are currently manually created in Blender - this function is not being used
 def make_force_collections(master_collection, cell_types):
     """Auxilliary function: makes collections for forces to be stored in.
 
     :param bpy.context.view_layer.active_layer_collection master_collection: The collection in which the force
-        collections will be contained. 
-    :param list cell_types: The list of active cell types. 
+    collections will be contained. 
+    :param cell_types: list of active cell types
     :returns: None
     """
     bpy.context.view_layer.active_layer_collection = master_collection
@@ -1156,22 +958,36 @@ def make_force_collections(master_collection, cell_types):
         collection = bpy.context.blend_data.collections.new(name=type+"_forces")
         bpy.context.collection.children.link(collection)
 
+def calculate_com(cell): 
+    """Function to calculate the center of mass of a cell Blender object. 
+
+    :param bpy.data.objects[cell.name] cell: cell
+    :returns: The coordinate of the center of mass of the cell. 
+    :rtype: Tuple(x,y,z)
+    """
+    bpy.context.view_layer.objects.active = cell
+    dg = bpy.context.evaluated_depsgraph_get()
+    cell_eval = cell.evaluated_get(dg)
+    vertices = cell_eval.data.vertices
+    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+
+    x = vert_coords[:, 0]
+    y = vert_coords[:, 1]
+    z = vert_coords[:, 2]
+    COM = (np.mean(x), np.mean(y), np.mean(z))
+    return COM
+
 
 class handler_class:
     # TODO document this class
-    """Core class: creates handler objects.  
-    
-    Handlers trigger actions on Goo cells when certain criteria are met. 
-    
-    :returns: None
+    """
+    A class for creating different types of handlers that trigger
+    actions on ``Goo`` cells when certain criteria are met
     """
 
     # The initialization function specifies available cell types and associated
     # parameters like division rate, growth rate, and adhesion forces
     def __init__(self):
-        """
-        Constructor method
-        """
 
         self.cell_types = ['sphere', 'type1', 'type2']
         self.division_rates = {}
@@ -1193,61 +1009,84 @@ class handler_class:
         # Set active (dividing) cell types
         # add active types to know what collections to divide
         self.active_cell_types = []
+
+        # for adhesion handler
         self.forces = []
+
+        # for motion handler
+        self.random_motion_speed = 0
+
+        # for data handler 
+            # for cell deformability 
+        self.all_vertices = [[]]
+        self.COMs = {}
+            # for total distance between cells - simulation stability
+        self.frames = []
+        self.distances_tot = []
+        self.data_file_path = ''
+        self.time = None
+        self.times = [0]
+        self.absolute_time = [0]
+        self.frame_interval = [None, None]
+        self.strength = None
+        self.falloff = None
+        self.master_dict = None
+        self.data_dict = {'Frames': [], 'Distances': [], 'Times': []}
+            # for computational cost
+        self.cell_number = 0
+
         return
 
     # Member function to set division rate for a cell type
     def set_division_rate(self, cell_type, rate):
         # assume 60 frames per second
         # rate is in divisions per second
-        """Sets division rate in the handler class that div_handler() can reference later. 
-
-        :param str cell_type: The name of cell type to apply this division rate to. 
-        :param int rate: The number of frames between each division. 
-     
-        .. note:: The cell type must be one of the active cell types.
-        .. note:: The rate is in divisions per second ans assumes 60 frames per second. 
-
-        :returns: None
+        """
+        Sets division rate in the handler class that div_handler() can reference later
+        :param cell_type: Name of cell type to apply this division rate to.
+        Must be one of the active cell types. (String)
+        :param rate: number of frames between each division (int)
+        :return: None
         """
         self.division_rates[cell_type] = rate
         return
 
     # Member function to set growth rate for a cell type
     def set_growth_rate(self, cell_type, rate):
-        """Sets growth rate in the handler class that growth_handler() can reference later.
-
-        The growth rate should be between 0 and 1.
-
-        :param str cell_type: The name of cell type to apply this division rate to.
-        :param float rate: The amount to change ``cell.modifiers["Cloth"].settings.shrink_min`` each frame.
-
-        :returns: None
+        """
+        Sets rate rate in the handler class that growth_handler() can reference later
+        :param cell_type: Name of cell type to apply this division rate to.
+        Must be one of the active cell types. (String)
+        :param rate: amount to change cell.modifiers["Cloth"].
+        settings.shrink_min each frame.
+        Should be between 0 and 1. (float)
+        :return: None
         """
         if(rate > 0 and rate < 1):
             self.growth_rates[cell_type] = rate
         return
 
-    # Member function to set adhesion forces between cell types
+
+    # Member function to set adhesion forces between cell types 
+    # currently not used
     def set_adhesion(self, type1, type2, force):
-        """Sets a value adhesion_forces in the handler class that 
+        """
+        Sets a value adhesion_forces in the handler class that
         apply_forces() can reference later
-
-        The cell type must be one of the actives.
-
-        :param str type1: The name of cell type that the force is attatched to.
-        :param str type2: The name of cell type that the force affects.
-        :param int force: The strength of the force between type1 and type2 cells. 
-
-        :returns: None
+        :param type1: Name of cell type that the force is attatched to.
+        Must be one of the active cell types. (String)
+        :param type1: Name of cell type that the force affects.
+        Must be one of the active cell types. (String)
+        :param force: the strenfgth of the force (int)
+        :return: None
         """
         self.adhesion_forces[type1][type2] = force
         return
 
     def apply_forces(self):
-        """Adds force fields to force collections and make them affect the
-        corresponding cell types. 
-
+        """
+        Add force fields to force collections and make them affect corresponding cell
+        types
         :return: None
         """
         master_collection = bpy.context.view_layer.active_layer_collection
@@ -1324,6 +1163,9 @@ class handler_class:
                     # Turn on the physics for this daughter cell
                     turn_on_physics()
                     bpy.data.objects[d2.data["name"]].select_set(False)
+                
+                #self.apply_forces()
+
 
     # Member function to handle cell growth
     def growth_handler(self, scene, depsgraph):
@@ -1335,12 +1177,11 @@ class handler_class:
                 cell.modifiers["Cloth"].settings.shrink_min -= 0.01
 
     def set_scale(self, scale, cell_type):
-        """Changes the size of all cells of a certain type. 
-
-        :param float scale: value to set ``cell.modifiers["Cloth"].settings.shrink_min`` to.
-        :param str cell_type: Name of cell type to scale.
-
-        :returns: None
+        """
+        Change the size of all cells of a certain type
+        :param scale: value to set cell.modifiers["Cloth"].settings.shrink_min to.
+        :param cell_type: Name of cell type to scale. (String)
+        :return: None
         """
         num_cells = len(bpy.data.collections[cell_type].objects)
         for i in range(num_cells):
@@ -1348,18 +1189,281 @@ class handler_class:
             cell = bpy.data.objects[cell_name]
             cell.modifiers["Cloth"].settings.shrink_min = scale
 
+
     def adhesion_handler(self, scene, depsgraph):
         for force in self.forces:
             assoc_cell = force.associated_cell
+            #print(bpy.data.objects[assoc_cell].data['mass'])
             bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
+
+            
             dg = bpy.context.evaluated_depsgraph_get()
             cell_eval = bpy.data.objects[assoc_cell].evaluated_get(dg)
             vertices = cell_eval.data.vertices
-            vert_coords = [(cell_eval.matrix_world @ v.co) for v in vertices]
-            vert_coords = np.asarray(vert_coords)
+            vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
 
             x = vert_coords[:, 0]
             y = vert_coords[:, 1]
             z = vert_coords[:, 2]
             COM = (np.mean(x), np.mean(y), np.mean(z))
             bpy.data.objects[force.name].location = COM
+
+
+
+    def set_random_motion_speed(self, motion_speed: float):
+        self.random_motion_speed = motion_speed
+
+
+    def data_handler(self, scene, depsgraph): 
+
+        # initialization
+        location_list = []
+        com_list = []
+        distances = set()
+        total_dist = 0
+        current_frame = bpy.data.scenes[0].frame_current
+
+        print(f'Frame number: {current_frame}')
+        print(self.data_file_path)
+
+        # loop over each collection, then over each object
+        for collection in bpy.data.collections:
+            if 'Cells' in collection.name_full:
+                coll_name = collection.name_full
+
+                # calculate the center of mass of cells in the scene
+                for idx, cell in enumerate(collection.objects):
+                    location_list.append((cell.name, cell.location))
+                    bpy.context.view_layer.objects.active = cell
+                    dg = bpy.context.evaluated_depsgraph_get()
+                    cell_eval = cell.evaluated_get(dg)
+                    vertices = cell_eval.data.vertices
+                    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+
+                    x = vert_coords[:, 0]
+                    y = vert_coords[:, 1]
+                    z = vert_coords[:, 2]
+                    COM = (np.mean(x), np.mean(y), np.mean(z))
+                    
+                    # initialize the key for the cell name if the class dictionary 
+                    com_list.append(COM)
+
+                    # measure cell deformability between two frames
+                    # idea: store coord of cell's COM, store coord of each vertex of each cell's mesh at each frame
+                    # at the end of the simulation, substract the COM's coord from each vertex coord to isolate displacement caused by deformability
+                    # at each frame, sum the 3D distance (displacement) between vertices of current frame to previous frame 
+                    # sum the overall displacement over the number of frame 
+
+
+
+                for i in range(len(com_list)):
+                    for j in range(len(com_list)):
+                        # Calculate the Euclidean distance between the two coordinates
+                        distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(com_list[i], com_list[j])]))
+                        # Add the distance to the list of distances
+                        distances.add(distance)
+
+                total_dist = sum(distances)
+                self.distances_tot.append(total_dist)
+                self.frames.append(current_frame)
+
+        # write the list at the end of the simulation
+        if scene.frame_current == self.frame_interval[1]:
+
+            self.data_dict['Frames'].append(self.frames)
+            self.data_dict['Distances'].append(self.distances_tot)
+            self.data_dict['Times'].append(self.times)
+
+            # if file already exists, then merge new data to existing file
+            # allows to save results over multiple runs in a single dict
+            if os.path.isfile(f"{self.data_file_path}.json"): 
+                with open(f"{self.data_file_path}.json", 'r') as f:
+                    #data = f.read()
+                    self.master_dict = json.load(f)
+
+                    # append results of new run to the master dict
+                    self.master_dict['Frames'].append(self.frames)
+                    self.master_dict['Distances'].append(self.distances_tot)
+                    self.master_dict['Times'].append(self.times)
+
+                    # write master dict to file
+                    with open(f"{self.data_file_path}.json", 'w') as write_file:
+                        write_file.write(json.dumps(self.master_dict))
+
+            # if file does not exist, create it with first dict
+            else: 
+                with open(f"{self.data_file_path}.json", 'a') as convert_file:
+                    convert_file.write(json.dumps(self.data_dict))
+
+            # log file 
+            with open(f"{self.data_file_path}.txt", "a") as file1:
+                file1.write(f'details: strength={self.strength}, falloff={self.falloff}\n')     
+                file1.write(f'distances = {self.distances_tot}\n')     
+                file1.write(f'frames = {self.frames}\n')        
+                file1.write(f'times = {self.times}\n') 
+
+            subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
+        
+
+    '''
+    # handlers should have a least one argument even if they don't use it
+    def random_motion_handler(self, scene, depsgraph):
+
+        for collection in bpy.data.collections:
+            if 'Cells' in collection.name_full:
+                coll_name = collection.name_full
+                for cell in collection.objects:
+                    cell.select_set(True)
+                    x = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    y = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    z = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    translation_coord = (x,y,z)
+                    # translate the object the given value towards its corresponding axis
+                    bpy.ops.transform.translate(value=translation_coord)
+                    cell.select_set(False)
+    '''
+    
+    # random motion and adhesion forces    
+    def motion_handler(self, scene, depsgraph):
+        for force in self.forces:
+            assoc_cell = force.associated_cell
+            bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
+
+            
+            dg = bpy.context.evaluated_depsgraph_get()
+            cell_eval = bpy.data.objects[assoc_cell].evaluated_get(dg)
+            vertices = cell_eval.data.vertices
+            vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+
+            x = vert_coords[:, 0]
+            y = vert_coords[:, 1]
+            z = vert_coords[:, 2]
+            COM = (np.mean(x), np.mean(y), np.mean(z))
+            bpy.data.objects[force.name].location = COM
+            cell_collection = bpy.data.objects[assoc_cell].users_collection[0]
+            #print('=====', cell_collection.objects)
+
+            for cell in cell_collection.objects: 
+                # calculate the distance between the associated cell and cells from the same collection
+                assoc_cell_com = COM
+                # don't check the distance between the same object
+                if cell == assoc_cell: 
+                    print('Cells are the same thus the distance is not calculated')
+                else: 
+                    bpy.context.view_layer.objects.active = cell
+                    dg = bpy.context.evaluated_depsgraph_get()
+                    cell_eval = cell.evaluated_get(dg)
+                    vertices = cell_eval.data.vertices
+                    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+                    x = vert_coords[:, 0]
+                    y = vert_coords[:, 1]
+                    z = vert_coords[:, 2]
+                    other_com = (np.mean(x), np.mean(y), np.mean(z))
+                    x1, y1, z1 = assoc_cell_com
+                    x2, y2, z2 = other_com
+                    # Calculate the distance between the points
+                    distance = math.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
+                    print(f'COMs: {assoc_cell_com}; {other_com}')
+                    #distance = (assoc_cell_com - other_com).length
+                    print('===========================================================', distance)
+                if distance > 2:
+                    print('keep on random motion')
+                    cell.select_set(True)
+                    x = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    y = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    z = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    translation_coord = (x,y,z)
+                    # translate the object the given value towards its corresponding axis
+                    bpy.ops.transform.translate(value=translation_coord)
+                    cell.select_set(False)
+                    # add random motion
+
+
+      # Member function to remove forces that belong to mother cell(which will 
+    # dispear after new daughter cells are produced) and also make the each 
+    # force moves as the corresponding cell moves
+    def adhesion_division_handler(self, scene, depsgraph):
+        """
+        A handler that focuses on force number and force loction.
+        It will make the number of force the same as the number of cells,
+        and moves the force as the corresponding cell moves
+
+        """
+        current_cells_names = []
+        current_forces = []
+
+        # get all force objects store in the list of forces
+        for f in self.forces:
+            current_forces.append(f)
+        # get all the cell (actice cell type) names and store in the list
+        for cell_type in self.active_cell_types:
+            num_cells = len(bpy.data.collections[cell_type].objects)
+            for i in range(num_cells):
+                cell_name = bpy.data.collections[cell_type].objects[i].name
+                current_cells_names.append(cell_name)
+                # print(cell_name)
+
+        # print("How many forces: ", len(self.forces))
+
+        # if the corresponding cell of a force does not exist in the colletion
+        # this force will be removed, others stay the same 
+        for force in self.forces:
+            if force.associated_cell not in current_cells_names:
+                # print(force.name, ' is removed')
+                bpy.data.objects.remove(
+                                 bpy.data.objects[force.get_blender_force().name],
+                                 do_unlink=True)
+                current_forces.remove(force)
+            else:
+                # print(force.name, ' is not removed')
+
+                # calculate the location of each cell
+                assoc_cell = force.associated_cell
+                bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
+                dg = bpy.context.evaluated_depsgraph_get()
+                cell_eval = bpy.data.objects[assoc_cell].evaluated_get(dg)
+                vertices = cell_eval.data.vertices
+                vert_coords = [(cell_eval.matrix_world @ v.co) for v in vertices]
+                vert_coords = np.asarray(vert_coords)
+
+                x = vert_coords[:, 0]
+                y = vert_coords[:, 1]
+                z = vert_coords[:, 2]
+                COM = (np.mean(x), np.mean(y), np.mean(z))
+                # set the location of the force exactly the same as the cell that
+                # force attaches to
+                bpy.data.objects[force.name].location = COM
+        
+        # after deletion, put exsiting forces into the list of forces
+        self.forces = current_forces
+
+
+    def timing_init_handler(self, scene, depsgraph): 
+        if bpy.data.scenes[0].frame_current == 2: 
+            self.time = datetime.now()
+            print(f'Render started for Frame 2 at: {self.time}')
+
+
+    def timing_elapsed_handler(self, scene, depsgraph): 
+        elpased_time = datetime.now() - self.time
+        elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
+        self.times.append(elapsed_time_secs*100000)
+        print('________________________________________________________')
+        print(f"Render Started at:{self.time}")  
+        print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs*100000:.1f}")
+
+
+    def stop_animation(self, scene, depsgraph):
+        # checks if the simulation has ended
+        if scene.frame_current == self.frame_interval[1]:
+            print('_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _')
+            print(f"The simulation has ended.")
+            bpy.ops.screen.animation_cancel(restore_frame=True) #True enables the last frame not to be repeated
+            # closes Blender then
+            bpy.ops.wm.quit_blender()
+
+
+
+
+
+
