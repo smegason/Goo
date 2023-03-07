@@ -32,5 +32,4 @@ ___
 <li>Jiangli Gui, KU Leuven
 
 ## Documentation
-  Full documentation for Goo is at Github Pages
-  https://smegason.github.io/Goo/
+  Full documentation available on <a href="https://antoineruzette.github.io/goo_gallery/">Goo's website</a>. 
