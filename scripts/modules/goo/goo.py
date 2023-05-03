@@ -2980,6 +2980,7 @@ class handler_class:
         #print(f"Contact ratios A1, A2: {contact_area1}, {surface_area1}, {ratio1}")
         #ratio = get_contact_area()
         self.contact_area.append(ratio1)'''
+        # test
 
         '''# loop over each collection, then over each collection of cells, then over each cell
         for collection in bpy.data.collections:
