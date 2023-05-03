@@ -1130,10 +1130,16 @@ def make_cell(name, loc, collection, remeshing = True, scale = (1,1,1), stiffnes
     bpy.context.object.modifiers['Collision'].settings.thickness_inner = 0.2
     bpy.context.object.modifiers['Collision'].settings.cloth_friction = 80
 
-    '''bpy.ops.object.constraint_add(type='MAINTAIN_VOLUME')
-    bpy.context.object.constraints["Maintain Volume"].volume = 1
-    bpy.context.object.constraints["Maintain Volume"].owner_space = 'WORLD'
-    bpy.context.object.constraints["Maintain Volume"].free_axis = 'SAMEVOL_Z'''
+    '''    
+    if force == None: 
+        # FIXME: add forces to daughter cells!!
+        bpy.ops.object.forcefield_toggle()
+        bpy.context.object.field.type = 'FORCE'
+        bpy.context.object.field.strength = -20
+        bpy.context.object.field.shape = 'POINT'
+    elif type(force) == Force(): 
+        # link force to cell 
+    '''
 
     if remeshing == True: 
         '''bpy.ops.object.modifier_add(type='REMESH')
@@ -1499,7 +1505,6 @@ def make_force(force_name, cell_name, strength, falloff, collection, motion = Fa
     bpy.context.object.field.distance_min = min_dist
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
-    # add links for falloff_type and shape
 
     bpy.context.object['cell'] = cell_name
 
@@ -2998,6 +3003,4 @@ class handler_class:
             y = vert_coords[:, 1]
             z = vert_coords[:, 2]
             COM = (np.mean(x), np.mean(y), np.mean(z))
-            bpy.data.objects[force.name].location = COM'''
-        
-        
+            bpy.data.objects[force.name].location = COM
