@@ -3003,4 +3003,4 @@ class handler_class:
             y = vert_coords[:, 1]
             z = vert_coords[:, 2]
             COM = (np.mean(x), np.mean(y), np.mean(z))
-            bpy.data.objects[force.name].location = COM
+            bpy.data.objects[force.name].location = COM'''
