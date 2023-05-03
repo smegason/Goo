@@ -2,6 +2,7 @@
 # with different balances of cortical tension and cell adhesion
 
 from goo import goo
+<<<<<<< HEAD
 from importlib import reload
 import bpy
 reload(goo)
@@ -134,6 +135,6 @@ handlers.launch_simulation(start = 1, # default, 1
                            filepath = "C:\\Users\\anr9744\\Projects\\Goo\\data\\cell_sorting", 
                            adhesion = True, # default, True
                            data = False, # default, False
-                           growth = True, 
+                           growth = True,
                            motility = True
                            )
