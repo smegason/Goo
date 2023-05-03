@@ -64,8 +64,6 @@ goo.make_cell("cell_A23", loc = (2.74,-0.34,-1.8), material = ('red', 0.2, 0, 0)
 goo.make_cell("cell_A24", loc = (-2.1,0.9,1.81), material = ('red', 0.2, 0, 0), collection = "B_Cells")
 
 
-
-
 #================== Force A Collection ==================
 
 strength = -2000

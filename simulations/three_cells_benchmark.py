@@ -164,4 +164,8 @@ bpy.app.handlers.frame_change_post.clear()
 bpy.app.handlers.frame_change_post.append(handlers.adhesion_handler)
 bpy.app.handlers.frame_change_pre.append(handlers.data_handler)
 
+<<<<<<< HEAD
 bpy.app.handlers.frame_change_post.append(handlers.timing_elapsed_handler)
+=======
+bpy.app.handlers.frame_change_post.append(handlers.timing_elapsed_handler)
+>>>>>>> 784994e237308e3e1c5832067ba898aaf8a42ec5

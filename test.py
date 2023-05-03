@@ -16,7 +16,7 @@ for collection in bpy.data.collections:  # loop through the existing collection
 cA_collection = bpy.data.collections.new("A_Cells")
 bpy.context.scene.collection.children.link(cA_collection)
 
-cell = goo.Cell("cell_A1", loc=(2, 2, 0))
+cell = goo.Cell("cell_A1", loc=(2, 2, 0), -1000, 1)
 goo.make_cell(cell)
 
 obj = bpy.context.active_object

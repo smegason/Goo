@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # create cells in the blender way without using Python classes
 import bpy
 import sys
@@ -102,6 +103,45 @@ def make_cell_blender(name, radius, location, material):
     obj['vertices_global'] = [(obj.matrix_world @ v.co) for v in obj.data.vertices]
     obj['vertices_coord_test'] = obj['vertices_global'][0][0]
 
+=======
+import bpy
+import mathutils
+import numpy as np
+import sys
+
+
+def make_cell(name: str, location: tuple, radius: float, size: float, scale: tuple):
+    """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell` object. 
+
+    :param `Cell` cell: The Goo :class:`Cell` object. 
+    :returns: None
+    """
+
+    matg = bpy.data.materials.new("Green")
+    matg.diffuse_color = (0,0.1,0,0.8)
+
+    #invariant parameters
+    subdiv = 2
+    vertex_mass = 0.3
+    air_damping = 10
+
+    # Making cell
+    print('Making cell')
+
+
+    bpy.ops.mesh.primitive_ico_sphere_add(enter_editmode=False,
+                                            align='WORLD',
+                                            location=location,
+                                            scale=scale,
+                                            radius=radius)
+
+
+    # Give the Blender object the cell's name
+    bpy.ops.object.select = True
+    obj = bpy.context.active_object
+    obj.name = name
+    bpy.context.view_layer.objects.active = bpy.data.objects[name]
+>>>>>>> 784994e237308e3e1c5832067ba898aaf8a42ec5
 
     # Smooth the mesh
     bpy.ops.object.select = True
@@ -109,15 +149,24 @@ def make_cell_blender(name, radius, location, material):
 
     # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type='SUBSURF')
+<<<<<<< HEAD
     bpy.context.object.modifiers["Subdivision"].levels = cell_rendering_data.get('subdiv')
+=======
+    bpy.context.object.modifiers["Subdivision"].levels = subdiv
+>>>>>>> 784994e237308e3e1c5832067ba898aaf8a42ec5
 
     # Add cloth settings for physics
     bpy.ops.object.modifier_add(type='CLOTH')
     bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
     bpy.context.object.modifiers["Cloth"].settings.quality = 5
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
+<<<<<<< HEAD
     bpy.context.object.modifiers["Cloth"].settings.mass = cell_rendering_data.get('vertex_mass')
     obj.modifiers["Cloth"].settings.air_damping = cell_rendering_data.get('air_damping')
+=======
+    bpy.context.object.modifiers["Cloth"].settings.mass = vertex_mass
+    bpy.context.object.modifiers["Cloth"].settings.air_damping = air_damping
+>>>>>>> 784994e237308e3e1c5832067ba898aaf8a42ec5
     bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
     bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
@@ -136,6 +185,7 @@ def make_cell_blender(name, radius, location, material):
 
     # add Collision modifier for physics
     bpy.ops.object.modifier_add(type='COLLISION')
+<<<<<<< HEAD
     bpy.context.object.collision.use_culling = True
     bpy.context.object.collision.damping = 0.579821
     bpy.context.object.collision.thickness_outer = 0.02
@@ -160,3 +210,23 @@ def data_handler(self, scence, depsgraph):
                         cell['vertices_global'] = [(cell.matrix_world @ v.co) for v in cell.data.vertices]
                         cell['vertices_coord_test'] = cell['vertices_global'][0][0]
 '''
+=======
+    bpy.context.object.collision.use_culling = False
+    # bpy.context.object.collision.damping = 0.579821
+    # bpy.context.object.collision.thickness_outer = 0.02
+    # bpy.context.object.collision.thickness_inner = 0.2
+    # bpy.context.object.collision.cloth_friction = 5
+    # bpy.ops.object.forcefield_toggle()
+    # bpy.context.object.field.type = 'FORCE'
+    # bpy.context.object.field.strength = -600
+    # bpy.context.object.field.strength = 0
+    # bpy.context.object.field.shape = 'POINT'
+    # bpy.context.object.name = cell.name
+
+    # add material to cell based on name of material
+    obj = bpy.context.active_object
+    obj.active_material = matg
+
+
+make_cell(name='Cell1', location=(0,0,0), radius=1, size=1, scale=(1, 1, 1))
+>>>>>>> 784994e237308e3e1c5832067ba898aaf8a42ec5

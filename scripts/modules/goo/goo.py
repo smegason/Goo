@@ -3,7 +3,6 @@
 
 from collections import defaultdict
 import bpy
-import bmesh
 import mathutils
 from mathutils import Vector, Matrix
 import numpy as np
@@ -18,7 +17,20 @@ import mathutils.bvhtree as bvhtree
 import itertools
 from mathutils.kdtree import KDTree
 from importlib import reload
+import bmesh
 
+"""
+Refactored by Antoine Ruzette, Jan. 2022.
+
+Note on comments: 
+Core functions are required for ``Goo`` to correctly run. 
+Auxilliary function are not required for ``Goo`` to run but are used for supporting tasks such as retrieving metrics - typically they can be removed. 
+
+Sphynx docstring was enhanced by adding types, and written in a more sphynx-ic way. 
+"""
+
+# TODO: explain differences between edit and object mode
+# TODO: explain Blender's modifiers as a data type
 
 """
 Refactored by Antoine Ruzette, November 2022.
@@ -1227,6 +1239,7 @@ class Cell():
         # The volume and mass are calculated from values in the data dictionary
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
         self.data['mass'] = self.data['density']*self.data['init_volume']
+        print(self.data['mass'])
 
     # Member function for obtaining the Blender object corresponding to the cell
     def get_blender_object(self):
@@ -1664,6 +1677,25 @@ def make_force_collections(master_collection, cell_types):
     for type in cell_types:
         collection = bpy.context.blend_data.collections.new(name=type+"_forces")
         bpy.context.collection.children.link(collection)
+
+def calculate_com(cell): 
+    """Function to calculate the center of mass of a cell Blender object. 
+
+    :param bpy.data.objects[cell.name] cell: cell
+    :returns: The coordinate of the center of mass of the cell. 
+    :rtype: Tuple(x,y,z)
+    """
+    bpy.context.view_layer.objects.active = cell
+    dg = bpy.context.evaluated_depsgraph_get()
+    cell_eval = cell.evaluated_get(dg)
+    vertices = cell_eval.data.vertices
+    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+
+    x = vert_coords[:, 0]
+    y = vert_coords[:, 1]
+    z = vert_coords[:, 2]
+    COM = (np.mean(x), np.mean(y), np.mean(z))
+    return COM
 
 
 def get_contact_area_raycast():
@@ -2904,6 +2936,31 @@ class handler_class:
                             print(f"Current volume: {volume} is within target {target_volume}")
 
 
+    def motion_handler(self, scene, depsgraph): 
+        if scene.frame_current == 1: 
+            for collection in bpy.data.collections: 
+                # Exclude the objects in the force collections
+                if collection.get('type') == 'cell':                        
+                    motion_collection_name = f"motion_{collection.name}"
+                    if any(c.name == motion_collection_name for c in bpy.data.collections):
+                        print(f"Motion collection '{motion_collection_name}' already exists.")
+                        collection_motion = bpy.data.collections[motion_collection_name]
+                    else: 
+                        collection_motion = make_collection(motion_collection_name, type='motion')
+                        for cell in bpy.data.collections.get(collection.name_full).all_objects: 
+                            make_force(f'motion_{cell.name}', f'{cell.name}', -500, 0, collection_motion.name_full, motion = True, min_dist=0, max_dist=10)
+
+        else: 
+            for collection in bpy.data.collections: 
+                if collection.get('type') == 'motion':  
+                    forces = bpy.data.collections.get(collection.name_full).all_objects
+                    for force in forces: 
+                        rand_coord = tuple(np.random.uniform(low=-5, high=5, size=(3,)))
+                        new_coord = tuple(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), rand_coord)))
+                        force.location = new_coord 
+                        # cells will only adhere with other cells that are in the same collection
+                        bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
+
 
     def set_scale(self, scale, cell_type):
         """
@@ -2918,23 +2975,6 @@ class handler_class:
             cell = bpy.data.objects[cell_name]
             cell.modifiers["Cloth"].settings.shrink_min = scale
 
-    def get_snapshot(self, scene, depsgraph):
-        # Get the current frame
-        frame = bpy.context.scene.frame_current
-
-        # Check if the current frame is 300
-        if frame in [1, 100, 200, 300, 400, 500]:
-            # Set the output path and filename
-            output_path = f"{self.data_file_path}_frame.png"
-
-            if bpy.data.objects.get("Camera"): 
-                # Set the camera to be the active camera
-                camera = bpy.data.objects["Camera"]
-                bpy.context.scene.camera = camera
-
-                # Render the frame as a still image
-                bpy.ops.render.render(write_still=True, filepath=output_path)
-        
     def adhesion_handler(self, scene, depsgraph):
         force_list = Force.force_list
         print([force.name for force in force_list])
@@ -2951,22 +2991,22 @@ class handler_class:
             # cells will only adhere with other cells that are in the same collection
             bpy.data.objects[assoc_cell].modifiers["Cloth"].settings.effector_weights.collection = bpy.data.collections[force_collection]
 
+
     def set_random_motion_speed(self, motion_speed: float):
         self.random_motion_speed = motion_speed
 
 
     def data_handler(self, scene, depsgraph): 
+
         # initialization
+        location_list = []
         com_list = []
         distances = set()
         total_dist = 0
         current_frame = bpy.data.scenes[0].frame_current
-        vec_axis = {}
-        len_axis = {}
 
         print(f'Frame number: {current_frame}')
         print(self.data_file_path)
-        self.frames.append(scene.frame_current)
 
         '''ratio1, ratio2 = get_contact_area()
         print(f"Contact area: {ratio1}, {ratio2}")
@@ -2981,26 +3021,161 @@ class handler_class:
         #ratio = get_contact_area()
         self.contact_area.append(ratio1)'''
 
-        '''# loop over each collection, then over each collection of cells, then over each cell
+        # loop over each collection, then over each object
         for collection in bpy.data.collections:
-            if collection['type'] == 'cells':
+            if 'Cells' in collection.name_full:
+                coll_name = collection.name_full
 
+                # calculate the center of mass of cells in the scene
                 for idx, cell in enumerate(collection.objects):
-                    print(f"--- {cell.name}")
-
-                    # append center of mass
-                    COM = get_centerofmass(cell)
-                    com_list.append(COM)
-
-                    # get current set of vertices
+                    location_list.append((cell.name, cell.location))
                     bpy.context.view_layer.objects.active = cell
                     dg = bpy.context.evaluated_depsgraph_get()
                     cell_eval = cell.evaluated_get(dg)
                     vertices = cell_eval.data.vertices
-                    current_vert = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+                    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+
+                    x = vert_coords[:, 0]
+                    y = vert_coords[:, 1]
+                    z = vert_coords[:, 2]
+                    COM = (np.mean(x), np.mean(y), np.mean(z))
+                    
+                    # initialize the key for the cell name if the class dictionary 
+                    com_list.append(COM)
+
+                    # measure cell deformability between two frames
+                    # idea: store coord of cell's COM, store coord of each vertex of each cell's mesh at each frame
+                    # at the end of the simulation, substract the COM's coord from each vertex coord to isolate displacement caused by deformability
+                    # at each frame, sum the 3D distance (displacement) between vertices of current frame to previous frame 
+                    # sum the overall displacement over the number of frame 
+
+
+
+                for i in range(len(com_list)):
+                    for j in range(len(com_list)):
+                        # Calculate the Euclidean distance between the two coordinates
+                        distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(com_list[i], com_list[j])]))
+                        # Add the distance to the list of distances
+                        distances.add(distance)
+
+                total_dist = sum(distances)
+                self.distances_tot.append(total_dist)
+                self.frames.append(current_frame)
+
+        # write the list at the end of the simulation
+        if scene.frame_current == self.frame_interval[1]:
+
+            self.data_dict['Frames'].append(self.frames)
+            self.data_dict['Distances'].append(self.distances_tot)
+            self.data_dict['Times'].append(self.times)
+
+            # if file already exists, then merge new data to existing file
+            # allows to save results over multiple runs in a single dict
+            if os.path.isfile(f"{self.data_file_path}.json"): 
+                with open(f"{self.data_file_path}.json", 'r') as f:
+                    #data = f.read()
+                    self.master_dict = json.load(f)
+
+                    # append results of new run to the master dict
+                    self.master_dict['Frames'].append(self.frames)
+                    self.master_dict['Distances'].append(self.distances_tot)
+                    self.master_dict['Times'].append(self.times)
+
+                    # write master dict to file
+                    with open(f"{self.data_file_path}.json", 'w') as write_file:
+                        write_file.write(json.dumps(self.master_dict))
+
+            # if file does not exist, create it with first dict
+            else: 
+                with open(f"{self.data_file_path}.json", 'a') as convert_file:
+                    convert_file.write(json.dumps(self.data_dict))
+
+            subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
+        
+
+    
+    '''# random motion and adhesion forces    
+    def motion_handler(self, scene, depsgraph):
+        for force in self.forces:
+            assoc_cell = force.associated_cell
+            bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
+
+            
+            dg = bpy.context.evaluated_depsgraph_get()
+            cell_eval = bpy.data.objects[assoc_cell].evaluated_get(dg)
+            vertices = cell_eval.data.vertices
+            vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
 
             x = vert_coords[:, 0]
             y = vert_coords[:, 1]
             z = vert_coords[:, 2]
             COM = (np.mean(x), np.mean(y), np.mean(z))
             bpy.data.objects[force.name].location = COM
+            cell_collection = bpy.data.objects[assoc_cell].users_collection[0]
+            #print('=====', cell_collection.objects)
+
+            for cell in cell_collection.objects: 
+                # calculate the distance between the associated cell and cells from the same collection
+                assoc_cell_com = COM
+                # don't check the distance between the same object
+                if cell == assoc_cell: 
+                    print('Cells are the same thus the distance is not calculated')
+                else: 
+                    bpy.context.view_layer.objects.active = cell
+                    dg = bpy.context.evaluated_depsgraph_get()
+                    cell_eval = cell.evaluated_get(dg)
+                    vertices = cell_eval.data.vertices
+                    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
+                    x = vert_coords[:, 0]
+                    y = vert_coords[:, 1]
+                    z = vert_coords[:, 2]
+                    other_com = (np.mean(x), np.mean(y), np.mean(z))
+                    x1, y1, z1 = assoc_cell_com
+                    x2, y2, z2 = other_com
+                    # Calculate the distance between the points
+                    distance = math.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
+                    print(f'COMs: {assoc_cell_com}; {other_com}')
+                    #distance = (assoc_cell_com - other_com).length
+                    print('===========================================================', distance)
+                if distance > 2:
+                    print('keep on random motion')
+                    cell.select_set(True)
+                    x = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    y = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    z = random.uniform(-self.random_motion_speed, self.random_motion_speed)
+                    translation_coord = (x,y,z)
+                    # translate the object the given value towards its corresponding axis
+                    bpy.ops.transform.translate(value=translation_coord)
+                    cell.select_set(False)
+                    # add random motion'''
+
+
+    def timing_init_handler(self, scene, depsgraph): 
+        if bpy.data.scenes[0].frame_current == 2: 
+            self.time = datetime.now()
+            print(f'Render started for Frame 2 at: {self.time}')
+
+
+    def timing_elapsed_handler(self, scene, depsgraph): 
+        elpased_time = datetime.now() - self.time
+        elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
+        self.times.append(elapsed_time_secs*100000)
+        print('________________________________________________________')
+        print(f"Render Started at:{self.time}")  
+        print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs*100000:.1f}")
+
+
+    def stop_animation(self, scene, depsgraph):
+        # checks if the simulation has ended
+        if scene.frame_current == self.frame_interval[1]:
+            print('_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _')
+            print(f"The simulation has ended.")
+            bpy.ops.screen.animation_cancel(restore_frame=True) #True enables the last frame not to be repeated
+            # closes Blender then
+            bpy.ops.wm.quit_blender()
+
+
+
+
+
+
