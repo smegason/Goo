@@ -9,37 +9,35 @@ reload(goo)
 goo.setup_world()
 
 #================== Cell A Collection ==================
-# Create a collection for cell A
-goo.make_collection(name = "cellsA", type = 'cell')
 # Define cell A1
-goo.make_cell("cell_A1", loc = (3,0,0), collection = "cellsA", scale = (0.85, 0.85, 0.85))
+goo.make_cell("cell_A1", loc = (3,0,0), type = "cellsA", scale = (0.85, 0.85, 0.85))
 # Define cell A2
-goo.make_cell("cell_A2", loc = (5,0,0), collection = "cellsA", scale = (0.75, 0.75, 0.75))
+goo.make_cell("cell_A2", loc = (5,0,0), type = "cellsA", scale = (0.75, 0.75, 0.75))
 
-# Create a collection for cell A
-'''goo.make_collection(name = "cellsB", type = 'cell')
 # Define cell A1
-goo.make_cell("cell_A3", loc = (3,3,0), collection = "cellsB")
+goo.make_cell("cell_B3", loc = (3,3,0), type = "cellsB")
 # Define cell A2
-goo.make_cell("cell_A4", loc = (5,3,0), collection = "cellsB")
-'''
+goo.make_cell("cell_B4", loc = (5,3,0), type = "cellsB")
+
 
 
 #================== Force A Collection ==================
 
-# Create a collection for force A
-goo.make_collection(name = "forcesA", type = 'force')         
 # Define force A1
-goo.make_force("force_A1", "cell_A1", -2000, 0, "forcesA")
-# Define force A2
-goo.make_force("force_A2", "cell_A2", -2000, 0, "forcesA")
+goo.make_force("force_A1", "cell_A1", 'cellsA', -2000, 0)
+goo.add_motion('cell_A1', -500)
 
-# Create a collection for force A
-'''goo.make_collection(name = "forcesB", type = 'force')         
-# Define force A1
-goo.make_force("force_A3", "cell_A3", -1000, 1, "forcesB")
 # Define force A2
-goo.make_force("force_A4", "cell_A4", -1000, 1, "forcesB")'''
+goo.make_force("force_A2", "cell_A2", 'cellsA', -2000, 0)
+# Add random motion for cell type A
+goo.add_motion('cell_A2', -500)
+
+# Define force A1
+goo.make_force("force_B3", "cell_B3", 'cellsB', -1000, 0)
+# Define force A2
+goo.make_force("force_B4", "cell_B4", 'cellsB', -1000, 0)
+# Add random motion for cell type A
+#goo.add_motion('cellsB', -1000)
 
 #================== Simulation setup ==================
 handlers = goo.handler_class()
@@ -49,5 +47,6 @@ handlers.launch_simulation(start = 1, # default, 1
                            adhesion = True, # default, True
                            data = True, # default, False
                            growth = True, 
-                           division = False
+                           division = False, 
+                           motility = True
                            )
