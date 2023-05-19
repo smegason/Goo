@@ -18,6 +18,8 @@ import itertools
 from mathutils.kdtree import KDTree
 from importlib import reload
 import bmesh
+import bgl
+
 
 """
 Refactored by Antoine Ruzette, Jan. 2022.
@@ -1029,24 +1031,64 @@ def turn_on_physics():
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
 
 def make_collection(name, type): 
-    allowed_type = ['cell', 'force', 'motion']
-    if type in allowed_type: 
-        collection = bpy.data.collections.new(name)
-        collection['type'] = type
-        # link the collection to the scene for visualization 
-        bpy.context.scene.collection.children.link(collection)
-        return collection
-    
+    #allowed_type = ['cell', 'force', 'motion', 'global']
+    #if type in allowed_type: 
+    collection = bpy.data.collections.new(name)
+    collection['type'] = type
+    collection['object'] = 'collection'
+    # link the collection to the scene for visualization 
+    bpy.context.scene.collection.children.link(collection)
+
+    '''if type == 'force': 
+        # check if global collection is already created 
+        if any(c.name == "Global force collection" for c in bpy.data.collections):
+            print(f'Global force collection already created')
+            global_force_collection = bpy.data.collections["Global force collection"]
+            global_force_collection['type'] = 'global'
+        else: 
+            print(f'Global force collection created')
+            global_force_collection = bpy.data.collections.new("Global force collection")
+            global_force_collection['type'] = 'global'
+            bpy.context.scene.collection.children.link(global_force_collection)
+            bpy.context.scene.collection.children.unlink(collection)
+            global_force_collection.children.link(collection)
+            return collection, global_force_collection
+    else: '''
+
+    return collection
+    #else: 
+    #    print(f"Only the following types are allowed: {allowed_type}")
+
+    '''if type == 'force' or type == 'motion': 
+        # check if global collection is already created 
+        if any(c.name == "Global force collection" for c in bpy.data.collections):
+            print(f'Global force collection already created')
+            global_force_collection = bpy.data.collections["Global force collection"]
+            global_force_collection['type'] = 'global'
+        else: 
+            print(f'Global force collection created')
+            global_force_collection = bpy.data.collections.new("Global force collection")
+            global_force_collection['type'] = 'global'
+            bpy.context.scene.collection.children.link(global_force_collection)
+            bpy.context.scene.collection.children.unlink(collection)
+            global_force_collection.children.link(collection)
+            return collection, global_force_collection
     else: 
-        print(f"{type} is not a valid collection type, should be in {allowed_type}")
-        return 
-def make_cell(name, loc, collection, remeshing = True, scale = (1,1,1), stiffness = 1, material = ("bubble", 0.007, 0.021, 0.3)):
+        return collection
+
+else: 
+    print(f"{type} is not a valid collection type, should be in {allowed_type}")
+    return''' 
+
+def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1, material = ("bubble", 0.007, 0.021, 0.3)):
     # add mesh type as an cell argument? 
     """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell` object. 
 
     :param :class:`Cell` cell: The Goo :class:`Cell` object. 
     :returns: None
     """
+
+    collection = make_collection(f'{name}_collection', type = type)
 
     # Initialize Cell python object
     cell = Cell(name, loc, material, scale)
@@ -1077,7 +1119,15 @@ def make_cell(name, loc, collection, remeshing = True, scale = (1,1,1), stiffnes
     bpy.context.object.scale[1] = scale[1]
     bpy.context.object.scale[2] = scale[2]
 
-    bpy.context.object.name = cell.data['name']
+    bpy.context.object.name = name
+    bpy.context.object['object'] = 'cell'
+    bpy.context.object['past position'] = obj.location
+    bpy.context.object['current position'] = obj.location
+    bpy.context.object['displacement'] = 0 
+
+    #bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
+
+
     # bpy.context.view_layers.active = bpy.data.objects[cell.data['name']]
 
     # Smooth the mesh
@@ -1160,9 +1210,9 @@ def make_cell(name, loc, collection, remeshing = True, scale = (1,1,1), stiffnes
         obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
         remesh_mod.mode = 'SMOOTH'
         remesh_mod.octree_depth = 4
-        remesh_mod.scale = 0.75
+        remesh_mod.scale = 0.7
         remesh_mod.use_remove_disconnected = True
-        remesh_mod.use_smooth_shade = False
+        remesh_mod.use_smooth_shade = True
         remesh_mod.show_in_editmode = True
         bpy.ops.object.modifier_move_to_index(modifier=f"Remesh1_{obj.name}", index=3)
 
@@ -1173,14 +1223,14 @@ def make_cell(name, loc, collection, remeshing = True, scale = (1,1,1), stiffnes
 
 
     # add material, default is purple bubble
-    bpy.context.view_layer.objects.active = bpy.data.objects[cell.data['name']]
+    bpy.context.view_layer.objects.active = bpy.data.objects[name]
     mat = add_material(material[0], float(material[1]), float(material[2]), float(material[3]))
     bpy.context.active_object.data.materials.append(mat)
 
     # remove duplicate objects outside of the collection
     bpy.ops.collection.objects_remove_all()
     # Add the active cell to our specific collection 
-    bpy.data.collections[collection].objects.link(bpy.data.objects[cell.data['name']])
+    bpy.data.collections[collection.name].objects.link(bpy.data.objects[name])
 
     handler = handler_class()
 
@@ -1213,7 +1263,7 @@ class Cell():
             'scale': scale,
             'arcdiv': 4, # changes vertices in object mode
             'subdiv': 1, # changes vertices in edit mode (of the cloth)
-            'vertex_mass': 3,
+            'vertex_mass': 2,
             'density': 1.0,
             #'edges_pull': 0.5,
             #'edges_bend': 0.5,
@@ -1473,20 +1523,111 @@ class Force():
     def get_blender_force(self):
         obj = bpy.data.objects[self.name]
         return obj
+  
 
-    
-def make_force(force_name, cell_name, strength, falloff, collection, motion = False, min_dist = 0.5, max_dist = 1.5):
+def add_motion(effector_name, strength, persistence = 0, randomness = 1):    
+
+    if isinstance(effector_name, str) \
+        and isinstance(strength, (int, float)) \
+        and isinstance(persistence, (int, float)) \
+        and isinstance(randomness, (int, float)):
+
+        force = make_force(f'motion_{effector_name}', 
+                        f'{effector_name}', 
+                        f"{bpy.data.objects[effector_name].users_collection[0]['type']}", 
+                        strength, 0, 
+                        motion=True, 
+                        min_dist=0, max_dist=4)
+        force = bpy.data.objects[force.name]
+
+        force['persistence'] = persistence
+        force['randomness'] = randomness
+        cell = bpy.data.objects[force.get('cell')]
+        com = get_centerofmass(cell)
+        dir_vec = (Vector(com) - bpy.data.objects[force.name].location)
+        dir_vec.normalize()
+        force['persistent direction'] = dir_vec
+
+        # Create curve and delete one of the initial points
+                
+        # Define the list of coordinates
+        coords = [(com[0], com[1], com[2])]
+        # Create a new curve data block
+        curve_data = bpy.data.curves.new(name='My Curve', type='CURVE')
+        curve_data.dimensions = '3D'
+
+        # Create a new spline and add it to the curve data block
+        spline = curve_data.splines.new(type='POLY')
+        spline.points.add(len(coords)-1)
+
+        # Set the coordinates for each control point in the spline
+        for i, coord in enumerate(coords):
+            x, y, z = coord
+            spline.points[i].co = (x, y, z, 1)
+
+        # Create a new object and link it to the scene
+        curve_obj = bpy.data.objects.new(f'{cell.name}_tracks', curve_data)
+        #bpy.context.scene.collection.objects.link(curve_obj)
+        cell.users_collection[0].objects.link(curve_obj)
+
+        # Set the object to be in edit mode and select all points
+        bpy.context.view_layer.objects.active = curve_obj
+        bpy.context.object.data.bevel_depth = 0.005
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.curve.select_all(action='SELECT')
+        # Update the curve display and exit edit mode
+        bpy.ops.curve.reveal()
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+
+
+    else: 
+        print('---- Types not supported')
+        
+        '''# collective motion on a whole cell type
+        if type == 'collective':
+            make_force(f'motion_{effector_name}', 
+                        f'{effector_name}', 
+                        f"{effector_name}", 
+                        strength, 0, 
+                        motion=True, 
+                        collective=True, 
+                        min_dist=0, max_dist=10)
+
+        # individual motion for a single cell
+        elif type == 'random' or type == 'persistent': 
+            make_force(f'motion_{effector_name}', 
+                        f'{effector_name}', 
+                        f"{bpy.data.objects[effector_name].users_collection[0]['type']}", 
+                        strength, 0, 
+                        motion=True, 
+                        collective =False,
+                        min_dist=0, max_dist=10)'''
+        
+    '''if type == 'collection': 
+        if bpy.data.collections[collection_name] and bpy.data.collections[collection_name]['type'] == 'cell':
+            for cell in bpy.data.collections.get(collection_name).all_objects:
+                make_force(f'motion_{cell.name}', f'{cell.name}', strength, 0, motion=True, min_dist=0, max_dist=10)
+    elif type == 'individual': 
+        for cell in bpy.data.collections.get(collection_name).all_objects:
+            collection = make_collection(f'forces_{cell.name}', type = 'force')
+            collection.children.link(cell['adhesion force'])
+            collection.children.link(cell['motion force'])'''
+            
+def make_force(force_name, cell_name, type, strength, falloff, motion = False, min_dist = 0.5, max_dist = 1.5):
     """Core function: creates a Blender force from a Goo :class:`Force` object. 
       
     :param :class:`Force` force: The Goo force object. 
     :returns: None
     """
+    collection = bpy.data.objects[cell_name].users_collection[0]
+    force = Force(force_name, cell_name, strength, falloff, collection.name, motion)
 
-    force = Force(force_name, cell_name, strength, falloff, collection, motion)
 
     # Add a force object
     cell = force.associated_cell
-    bpy.data.objects.get(cell_name)["force"] = force_name
+
+    same_collections = [coll for coll in bpy.data.collections if coll.get('type') in type]
 
     if motion == False: 
         bpy.ops.object.effector_add(type='FORCE',
@@ -1494,15 +1635,42 @@ def make_force(force_name, cell_name, strength, falloff, collection, motion = Fa
                                     align='WORLD',
                                     location=get_centerofmass(bpy.data.objects[cell]),
                                     scale=(1, 1, 1))
-        
-    else: 
-        rand_coord = tuple(np.random.uniform(low=-5, high=5, size=(3,)))
-        #print(tuple(map(sum, zip(get_centerofmass(bpy.data.objects[cell]), motion[1]))))
+        bpy.context.object['motion'] = False
+        bpy.context.object.name = force_name
+        bpy.data.objects.get(cell_name)["adhesion force"] = force_name
+        # Add the active cell to our specific collection 
+        for coll in same_collections: 
+            coll.objects.link(bpy.data.objects[force.name])
+
+    elif motion == True: 
+        rand_coord = tuple(np.random.uniform(low=-0.5, high=0.5, size=(3,)))
         bpy.ops.object.effector_add(type='FORCE',
                                     enter_editmode=False,
                                     align='WORLD',
                                     location=tuple(map(sum, zip(get_centerofmass(bpy.data.objects[cell]), rand_coord))),
                                     scale=(1, 1, 1))
+        bpy.context.object['motion'] = True
+        bpy.context.object.name = force_name
+        bpy.data.objects.get(cell_name)["motion force"] = force_name
+        collection.objects.link(bpy.data.objects[force_name])
+
+    else: 
+        print('---- Unsupported forces ----')
+
+    '''elif motion == True and collective == True: 
+        bpy.ops.object.effector_add(type='FORCE',
+                                enter_editmode=False,
+                                align='WORLD',
+                                location= tuple(np.random.uniform(low=-5, high=5, size=(3,))),
+                                scale=(1, 1, 1))
+        bpy.context.object['motion'] = True
+        bpy.context.object.name = force_name
+        for coll in same_collections: 
+            for cell in coll.all_objects: 
+                if cell.get('object') == 'cell': 
+                    bpy.data.objects.get(cell.name)["motion force"] = force_name
+            coll.objects.link(bpy.data.objects[force_name])'''
+
 
     # Add force parameters
     bpy.context.object.field.strength = force.strength
@@ -1515,13 +1683,17 @@ def make_force(force_name, cell_name, strength, falloff, collection, motion = Fa
     # add links for falloff_type and shape
 
     bpy.context.object['cell'] = cell_name
+    '''# Add the active cell to our specific collection 
+    for collection in same_collections: 
+        collection.objects.link(bpy.data.objects[force.name])'''
 
     # Set the force as active object
-    bpy.context.view_layer.objects.active = bpy.data.objects[force.name]
+    #bpy.context.view_layer.objects.active = bpy.data.objects[force.name]
+    #collection = bpy.data.objects[force.name].users_collection[0]
     # Remove duplicate objects outside of the collection
-    bpy.ops.collection.objects_remove_all()
-    # Add the active cell to our specific collection 
-    bpy.data.collections[collection].objects.link(bpy.data.objects[force.name])
+    #collection.objects.unlink(bpy.data.objects[force.name])
+    scene_collection = bpy.context.scene.collection
+    scene_collection.objects.unlink(bpy.data.objects[force.name])
 
     return force
 
@@ -1552,6 +1724,16 @@ def setup_world():
             bpy.data.objects.remove(objs)
         # Delete collection
         bpy.data.collections.remove(collection)
+    
+    '''# Deselect all objects
+    for obj in bpy.context.selected_objects:
+        obj.select_set(False)
+
+    for collection in bpy.data.collections:
+        collection.select_set(True)
+
+    # Delete all selected collections
+    bpy.ops.outliner.delete(hierarchy=True)'''
 
     # Add an HDRI image for illumination
     add_world_HDRI()
@@ -2589,6 +2771,10 @@ class handler_class:
             # for growth 
         self.volumes = defaultdict(list)
 
+            # for random motion
+        self.seed = int()
+        self.prev_frame = int()
+
         return
     
     def launch_simulation(self, 
@@ -2596,6 +2782,8 @@ class handler_class:
                           division_rate = 100, 
                           start = 1, 
                           end = 250, 
+                          motion_strength = -500,
+                          seed = datetime.now().timestamp(),
                           adhesion = True, 
                           growth = False, 
                           division = False, 
@@ -2610,15 +2798,16 @@ class handler_class:
 
         self.data_file_path = filepath
         self.division_rate = division_rate
+        self.motion_strength = motion_strength
+        self.seed = seed
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after 250 frames
         if bpy.context.scene.frame_current == start: 
             for collection in bpy.data.collections:
-                # Exclude the objects in the force collections
-                if collection['type'] == 'cell':
-                    # Loop through the objects existed in the collection 
-                    for obj in collection.objects:     
+                # Loop through the objects existed in the collection 
+                for obj in collection.objects:     
+                    if obj.get('object') == 'cell': 
                         obj.modifiers["Cloth"].point_cache.frame_start = start   
                         obj.modifiers["Cloth"].point_cache.frame_end = end   
 
@@ -2905,34 +3094,40 @@ class handler_class:
     # Member function to handle cell growth
     def growth_handler(self, scene, depsgraph):
         for collection in bpy.data.collections: 
-                # Exclude the objects in the force collections
-                if collection['type'] == 'cell':
-                    # Loop through the objects existed in the collection 
-                    cells = bpy.data.collections.get(collection.name_full).all_objects
-                    for cell in cells: 
-                        volume = calculate_volume(cell)
-                        target_volume = ((4/3)*np.pi*(1)**3)*1
-                        self.volumes[f"{cell.name}"].append(volume)
-                        # growth
-                        if volume < (target_volume - target_volume * 0.2): 
-                            print(f"Current volume: {volume} is lower than target {target_volume} - 20%")
-                            cell.modifiers["Cloth"].settings.shrink_min -= 0.01
-                        elif volume < (target_volume - target_volume * 0.05): 
-                            print(f"Current volume: {volume} is lower than target {target_volume} - 5%")
-                            cell.modifiers["Cloth"].settings.shrink_min -= 0.001
-                        # shrink
-                        elif volume > (target_volume + target_volume * 0.2): 
-                            print(f"Current volume: {volume} is lower than target {target_volume} - 20%")
-                            cell.modifiers["Cloth"].settings.shrink_min -= 0.01
-                        elif volume > (target_volume + target_volume * 0.05): 
-                            print(f"Current volume: {volume} is higher than target {target_volume} - 5%")
-                            cell.modifiers["Cloth"].settings.shrink_min += 0.001
-                        else: 
-                            print(f"Current volume: {volume} is within target {target_volume}")
+            # Exclude the objects in the force collections
+            #if collection['type'] == 'cell':
+            # Loop through the objects existed in the collection 
+            cells = bpy.data.collections.get(collection.name_full).all_objects
+            for cell in cells: 
+                if (cell.get('adhesion force') is not None) or \
+                    (cell.get('motion force') is not None) or \
+                    (cell.get('adhesion force') is not None and cell.get('motion force') is not None): 
+
+                    volume = calculate_volume(cell)
+                    target_volume = ((4/3)*np.pi*(1)**3)*1
+                    cell['target volume'] = target_volume
+                    cell['volume'] = volume
+                    self.volumes[f"{cell.name}"].append(volume)
+                    # growth
+                    if volume < (target_volume - target_volume * 0.2): 
+                        print(f"Current volume: {volume} is lower than target {target_volume} - 20%")
+                        cell.modifiers["Cloth"].settings.shrink_min -= 0.01
+                    elif volume < (target_volume - target_volume * 0.05): 
+                        print(f"Current volume: {volume} is lower than target {target_volume} - 5%")
+                        cell.modifiers["Cloth"].settings.shrink_min -= 0.001
+                    # shrink
+                    elif volume > (target_volume + target_volume * 0.2): 
+                        print(f"Current volume: {volume} is higher than target {target_volume} - 20%")
+                        cell.modifiers["Cloth"].settings.shrink_min += 0.01
+                    elif volume > (target_volume + target_volume * 0.05): 
+                        print(f"Current volume: {volume} is higher than target {target_volume} - 5%")
+                        cell.modifiers["Cloth"].settings.shrink_min += 0.001
+                    else: 
+                        print(f"Current volume: {volume} is within target {target_volume}")
 
 
-    def motion_handler(self, scene, depsgraph): 
-        if scene.frame_current == 1: 
+    '''def motion_handler(self, scene, depsgraph): 
+        if scene.frame_current == 2: 
             for collection in bpy.data.collections: 
                 # Exclude the objects in the force collections
                 if collection.get('type') == 'cell':                        
@@ -2943,19 +3138,116 @@ class handler_class:
                     else: 
                         collection_motion = make_collection(motion_collection_name, type='motion')
                         for cell in bpy.data.collections.get(collection.name_full).all_objects: 
-                            make_force(f'motion_{cell.name}', f'{cell.name}', -500, 0, collection_motion.name_full, motion = True, min_dist=0, max_dist=10)
+                            make_force(f'motion_{cell.name}', f'{cell.name}', self.motion_strength, 0, collection_motion.name_full, motion = True, min_dist=0, max_dist=10)
 
         else: 
             for collection in bpy.data.collections: 
                 if collection.get('type') == 'motion':  
                     forces = bpy.data.collections.get(collection.name_full).all_objects
                     for force in forces: 
+                        random.seed(10)
                         rand_coord = tuple(np.random.uniform(low=-5, high=5, size=(3,)))
                         new_coord = tuple(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), rand_coord)))
                         force.location = new_coord 
                         # cells will only adhere with other cells that are in the same collection
-                        bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
+                        bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection'''
 
+    def motion_handler(self, scene, depsgraph): 
+        '''if scene.frame_current == 2: 
+            for collection in bpy.data.collections: 
+                # Exclude the objects in the force collections
+                if collection.get('type') == 'cell':
+                    for cell in bpy.data.collections.get(collection.name_full).all_objects:
+                        #motion_collection_name = f"motion_{cell.name}"
+                        #if any(c.name == motion_collection_name for c in bpy.data.collections):
+                        #    print(f"Motion collection '{motion_collection_name}' already exists.")
+                        #    collection_motion = bpy.data.collections[motion_collection_name]
+                        #else: 
+                        #    collection_motion, global_force_collection = make_collection(motion_collection_name, type='motion')
+                        
+                        make_force(f'motion_{cell.name}', f'{cell.name}', self.motion_strength, 0, bpy.data.objects[cell['force']].users_collection[0].name, motion=True, min_dist=0, max_dist=10)
+
+        else: '''
+
+        # TODO allow for collective motion in the handler (challenge is that the motion force is not only linked to one collection)
+        random.seed(self.seed)      
+        #self.prev_frame = scene.frame_current - 1
+
+        for collection in bpy.data.collections: 
+
+            forces = bpy.data.collections.get(collection.name_full).all_objects
+
+            for force in forces: 
+                if force.get('motion') is not None and force.get('motion') == True: 
+                    
+                    #initial_pos = tuple(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), tuple(np.random.uniform(low=-5, high=5, size=(3,))))))
+                    # Get the active object
+                    cell = bpy.data.objects[force.get('cell')]
+
+                    com = get_centerofmass(cell)
+                    cell['current position'] = com
+                    disp = (Vector(cell.get('current position')) - Vector(cell.get('past position'))).length
+                    cell['displacement'] = disp
+                    rand_coord = Vector(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
+                    #rand_coord.normalize()
+                    #rand = Vector(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), rand_coord)))
+                    new_loc = Vector(force.location) - (Vector(force.get('persistent direction')) * disp) * force['persistence']
+                    #Vector(force.location + Vector((Vector(force.get('persistent direction')) * disp)) * force['persistence'])
+                    new_loc_rand = new_loc + Vector((rand_coord) * force['randomness'])
+                    force.location = new_loc_rand
+
+                    # Define the name of the curve object and the new point coordinates
+                    # Find the curve object by name
+                    curve_obj = bpy.data.objects[f'{cell.name}_tracks']
+                    # Enter edit mode for the curve object
+                    bpy.context.view_layer.objects.active = curve_obj
+                    bpy.ops.object.mode_set(mode='EDIT')
+
+                    # Add a new control point to the curve
+                    spline = curve_obj.data.splines[0]
+
+                    # Get the current frame number and the previous frame number
+                    #prev_frame = 
+
+                    if scene.frame_current == 1:
+                    # If the current frame is 1, remove all points from the curve except the first one
+                        while len(spline.points) > 0:
+                            spline.points.remove(spline.points[1])
+                    elif scene.frame_current < self.prev_frame:
+                        # If the simulation is running backward, remove the last point at each frame
+                        if len(spline.points) > 0:
+                            spline.points.remove(spline.points[1])
+                    else: 
+                        spline.points.add(1)
+                        new_point_index = len(spline.points) - 1
+                        spline.points[new_point_index].co = (*com, 1)
+
+                    self.prev_frame = scene.frame_current
+
+                    # Update the curve display and exit edit mode
+                    bpy.ops.curve.reveal()
+                    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+                    '''# plot tracking lines
+
+                    # Create a new curve object
+                    curve = bpy.data.curves.new(name="LineCurve", type='CURVE')
+                    spline = curve.splines.new('BEZIER')
+                    # Add control points
+                    spline.bezier_points.add(1)
+                    point1 = spline.bezier_points[0]
+                    point2 = spline.bezier_points[1]
+                    point1.co = cell['past position']
+                    point2.co = cell['current position']
+
+                    obj = bpy.data.objects.new("Line", curve)
+                    bpy.context.scene.collection.objects.link(obj)'''
+
+                    # cells will only adhere with other cells that are in the same collection
+                    bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
+                    # update position of cell
+                    cell['past position'] = com
 
     def set_scale(self, scale, cell_type):
         """
@@ -2969,22 +3261,23 @@ class handler_class:
             cell_name = bpy.data.collections[cell_type].objects[i].name
             cell = bpy.data.objects[cell_name]
             cell.modifiers["Cloth"].settings.shrink_min = scale
-
+ 
     def adhesion_handler(self, scene, depsgraph):
         force_list = Force.force_list
         print([force.name for force in force_list])
 
         for force in force_list:
-            assoc_cell = force.associated_cell
-            bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
-            # retrieve center of mass
-            COM = get_centerofmass(bpy.data.objects[assoc_cell])
-            # update the force location to its corresponding cell's center of mass
-            bpy.data.objects[force.name].location = COM
-            # allow for distinct cell types
-            force_collection = bpy.data.objects[force.name].users_collection[0].name
-            # cells will only adhere with other cells that are in the same collection
-            bpy.data.objects[assoc_cell].modifiers["Cloth"].settings.effector_weights.collection = bpy.data.collections[force_collection]
+            if bpy.data.objects[force.name]['motion'] == False: 
+                assoc_cell = force.associated_cell
+                bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
+                # retrieve center of mass
+                COM = get_centerofmass(bpy.data.objects[assoc_cell])
+                # update the force location to its corresponding cell's center of mass
+                bpy.data.objects[force.name].location = COM
+                # allow for distinct cell types
+                #force_collection = bpy.data.objects[force.name].users_collection[0].name
+                # cells will only adhere with other cells that are in the same collection
+                bpy.data.objects[assoc_cell].modifiers["Cloth"].settings.effector_weights.collection = bpy.data.objects[assoc_cell].users_collection[0]
 
 
     def set_random_motion_speed(self, motion_speed: float):
