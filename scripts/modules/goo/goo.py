@@ -2774,6 +2774,7 @@ class handler_class:
             # for random motion
         self.seed = int()
         self.prev_frame = int()
+        self.sorting_scores = defaultdict(list)
 
         return
     
@@ -3170,20 +3171,59 @@ class handler_class:
         else: '''
 
         # TODO allow for collective motion in the handler (challenge is that the motion force is not only linked to one collection)
-        random.seed(self.seed)      
-        #self.prev_frame = scene.frame_current - 1
+        random.seed(self.seed)
+
+        # Initialize a dictionary to store the sorting scores for each cell type
+        cell_types = np.unique([coll['type'] for coll in bpy.data.collections])
+        cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
+
+        neighbors = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
+        neighbors_same_type = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
+        sorting_scores = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
+        sorting_scores_same_type = {cell_type: 0 for cell_type in cell_types}
+
+        # loop for each cell
+        for cell in cells:
+            collection = cell.users_collection[0]
+            for other_cell in cells:  
+                if cell is not other_cell: 
+                    # get neighbors 
+                    distance = (bpy.data.objects[cell.get('adhesion force')].location - bpy.data.objects[other_cell.get('adhesion force')].location).length
+                    if distance < 1.95:
+                        # get number of neighbors for a specific cell
+                        neighbors[collection.get('type')][cell.name] += 1
+
+                        # get neighbors of same cell type
+                        if collection.get('type') == other_cell.users_collection[0].get('type'):
+                            neighbors_same_type[collection.get('type')][cell.name] += 1
+
+            # sorting is null if cell has no neighbors                 
+            if neighbors[collection.get('type')][cell.name] == 0: 
+                sorting_scores[collection.get('type')][cell.name] = 0 
+            else: 
+                sorting_scores[collection.get('type')][cell.name] = neighbors_same_type[collection.get('type')][cell.name] / neighbors[collection.get('type')][cell.name]
+            
+            cell['sorting score'] = sorting_scores[collection.get('type')][cell.name]
+            print(neighbors)
+            print(neighbors_same_type)
+        
+        for cell_type, cell_dict in sorting_scores.items():
+            values = cell_dict.values()
+            average = sum(values) / len(values)
+            sorting_scores_same_type[cell_type] = average
+
+        # Print the sorting scores for each cell type
+        for cell_type, score in sorting_scores_same_type.items():
+            for coll in [coll for coll in bpy.data.collections if coll['type'] == cell_type]:
+                coll['sorting score'] = score
+            print(f"Cell Type: {cell}, Sorting Score: {score}")
+
 
         for collection in bpy.data.collections: 
-
             forces = bpy.data.collections.get(collection.name_full).all_objects
-
             for force in forces: 
                 if force.get('motion') is not None and force.get('motion') == True: 
-                    
-                    #initial_pos = tuple(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), tuple(np.random.uniform(low=-5, high=5, size=(3,))))))
-                    # Get the active object
                     cell = bpy.data.objects[force.get('cell')]
-
                     com = get_centerofmass(cell)
                     cell['current position'] = com
                     disp = (Vector(cell.get('current position')) - Vector(cell.get('past position'))).length
@@ -3206,23 +3246,14 @@ class handler_class:
                     # Add a new control point to the curve
                     spline = curve_obj.data.splines[0]
 
-                    # Get the current frame number and the previous frame number
-                    #prev_frame = 
-
                     if scene.frame_current == 1:
                     # If the current frame is 1, remove all points from the curve except the first one
                         while len(spline.points) > 0:
-                            spline.points.remove(spline.points[1])
-                    elif scene.frame_current < self.prev_frame:
-                        # If the simulation is running backward, remove the last point at each frame
-                        if len(spline.points) > 0:
                             spline.points.remove(spline.points[1])
                     else: 
                         spline.points.add(1)
                         new_point_index = len(spline.points) - 1
                         spline.points[new_point_index].co = (*com, 1)
-
-                    self.prev_frame = scene.frame_current
 
                     # Update the curve display and exit edit mode
                     bpy.ops.curve.reveal()
