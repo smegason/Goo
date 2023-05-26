@@ -2724,7 +2724,7 @@ class handler_class:
         self.distances_tot = []
         self.data_file_path = ''
         self.time = None
-        self.times = [0]
+        self.times = defaultdict()
         self.absolute_time = [0]
         self.frame_interval = [None, None]
         self.strength = None
@@ -3279,6 +3279,10 @@ class handler_class:
             with open(f"{self.data_file_path}.json", 'w') as write_file:
                 write_file.write(json.dumps(self.sorting_scores))
 
+            with open(f"{self.data_file_path}_time.json", 'w') as write_file:
+                write_file.write(json.dumps(self.times))
+
+
         '''# write the list at the end of the simulation
         if scene.frame_current == self.frame_interval[1]:
             # if file already exists, then merge new data to existing file
@@ -3455,18 +3459,20 @@ class handler_class:
 
 
     def timing_init_handler(self, scene, depsgraph): 
-        if bpy.data.scenes[0].frame_current == 2: 
+        if scene.frame_current == 2: 
             self.time = datetime.now()
-            print(f'Render started for Frame 2 at: {self.time}')
+            print(f'Render started for Frame 1 at: {self.time}')
 
 
     def timing_elapsed_handler(self, scene, depsgraph): 
         elpased_time = datetime.now() - self.time
         elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
-        self.times.append(elapsed_time_secs*100000)
+        frame_written = scene.frame_current
+        if frame_written != 1: 
+            self.times.update({frame_written: elapsed_time_secs})
         print('________________________________________________________')
         print(f"Render Started at:{self.time}")  
-        print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs*100000:.1f}")
+        print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs:.1f}")
 
 
     def stop_animation(self, scene, depsgraph):

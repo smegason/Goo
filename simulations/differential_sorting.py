@@ -5,7 +5,7 @@ from goo import goo
 from importlib import reload
 import bpy
 reload(goo)
-goo.setup_world()
+goo.setup_world(seed = 1)
 
 #================== Cell A Collection ==================
 
@@ -170,11 +170,10 @@ goo.add_motion('cell_B26', -1000)
 #================== Simulation setup ==================
 handlers = goo.handler_class()
 handlers.launch_simulation(start = 1, # default, 1
-                           end = 1000, # default, 250
+                           end = 500, # default, 250
                            filepath = "C:\\Users\\anr9744\\Projects\\Goo\\data\\cell_sorting", 
                            adhesion = True, # default, True
                            data = False, # default, False
                            growth = True,
                            motility = True,
-                           seed = 5
                            )

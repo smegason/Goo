@@ -6,7 +6,7 @@ import bpy
 from importlib import reload
 
 reload(goo)
-goo.setup_world()
+goo.setup_world(seed = 1)
 
 #================== Cell A Collection ==================
 # Define cell A1
