@@ -1697,13 +1697,15 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
 
     return force
 
-def setup_world():
+def setup_world(seed):
     """Auxilliary function: sets up the default values used for simulations in Goo 
     including units and rendering background. 
 
     :returns: None
     """
-
+    # random seed for reproducability 
+    # by default, seed use the current system time
+    random.seed(seed)
 
     # Turn off gravity so cells don't fall in the simulation
     bpy.context.scene.use_gravity = False
@@ -1724,16 +1726,6 @@ def setup_world():
             bpy.data.objects.remove(objs)
         # Delete collection
         bpy.data.collections.remove(collection)
-    
-    '''# Deselect all objects
-    for obj in bpy.context.selected_objects:
-        obj.select_set(False)
-
-    for collection in bpy.data.collections:
-        collection.select_set(True)
-
-    # Delete all selected collections
-    bpy.ops.outliner.delete(hierarchy=True)'''
 
     # Add an HDRI image for illumination
     add_world_HDRI()
@@ -2732,7 +2724,7 @@ class handler_class:
         self.distances_tot = []
         self.data_file_path = ''
         self.time = None
-        self.times = [0]
+        self.times = defaultdict()
         self.absolute_time = [0]
         self.frame_interval = [None, None]
         self.strength = None
@@ -2774,7 +2766,7 @@ class handler_class:
             # for random motion
         self.seed = int()
         self.prev_frame = int()
-        self.sorting_scores = defaultdict(list)
+        self.sorting_scores = defaultdict(dict)
 
         return
     
@@ -2784,7 +2776,6 @@ class handler_class:
                           start = 1, 
                           end = 250, 
                           motion_strength = -500,
-                          seed = datetime.now().timestamp(),
                           adhesion = True, 
                           growth = False, 
                           division = False, 
@@ -2798,9 +2789,9 @@ class handler_class:
         bpy.context.scene.frame_end = end
 
         self.data_file_path = filepath
+        bpy.context.scene.render.filepath = filepath
         self.division_rate = division_rate
         self.motion_strength = motion_strength
-        self.seed = seed
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after 250 frames
@@ -2818,7 +2809,7 @@ class handler_class:
         if adhesion: 
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
         if data: 
-            bpy.app.handlers.frame_change_post.append(self.data_handler)
+            bpy.app.handlers.frame_change_post.append(self.data_export)
         if growth: 
             bpy.app.handlers.frame_change_post.append(self.growth_handler)
         if division: 
@@ -3154,24 +3145,52 @@ class handler_class:
                         bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection'''
 
     def motion_handler(self, scene, depsgraph): 
-        '''if scene.frame_current == 2: 
-            for collection in bpy.data.collections: 
-                # Exclude the objects in the force collections
-                if collection.get('type') == 'cell':
-                    for cell in bpy.data.collections.get(collection.name_full).all_objects:
-                        #motion_collection_name = f"motion_{cell.name}"
-                        #if any(c.name == motion_collection_name for c in bpy.data.collections):
-                        #    print(f"Motion collection '{motion_collection_name}' already exists.")
-                        #    collection_motion = bpy.data.collections[motion_collection_name]
-                        #else: 
-                        #    collection_motion, global_force_collection = make_collection(motion_collection_name, type='motion')
-                        
-                        make_force(f'motion_{cell.name}', f'{cell.name}', self.motion_strength, 0, bpy.data.objects[cell['force']].users_collection[0].name, motion=True, min_dist=0, max_dist=10)
 
-        else: '''
+        for collection in bpy.data.collections: 
+            forces = bpy.data.collections.get(collection.name_full).all_objects
+            for force in forces: 
+                if force.get('motion') is not None and force.get('motion') == True: 
+                    cell = bpy.data.objects[force.get('cell')]
+                    com = get_centerofmass(cell)
+                    cell['current position'] = com
+                    disp = (Vector(cell.get('current position')) - Vector(cell.get('past position'))).length
+                    cell['displacement'] = disp
+                    rand_coord = Vector(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
+                    #rand_coord.normalize()
+                    #rand = Vector(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), rand_coord)))
+                    new_loc = Vector(force.location) - (Vector(force.get('persistent direction')) * disp) * force['persistence']
+                    #Vector(force.location + Vector((Vector(force.get('persistent direction')) * disp)) * force['persistence'])
+                    new_loc_rand = new_loc + Vector((rand_coord) * force['randomness'])
+                    force.location = new_loc_rand
 
-        # TODO allow for collective motion in the handler (challenge is that the motion force is not only linked to one collection)
-        random.seed(self.seed)
+                    # Define the name of the curve object and the new point coordinates
+                    # Find the curve object by name
+                    curve_obj = bpy.data.objects[f'{cell.name}_tracks']
+                    # Enter edit mode for the curve object
+                    bpy.context.view_layer.objects.active = curve_obj
+                    bpy.ops.object.mode_set(mode='EDIT')
+
+                    # Add a new control point to the curve
+                    spline = curve_obj.data.splines[0]
+
+                    if scene.frame_current == 1:
+                    # If the current frame is 1, remove all points from the curve except the first one
+                        while len(spline.points) > 0:
+                            spline.points.remove(spline.points[1])
+                    else: 
+                        spline.points.add(1)
+                        new_point_index = len(spline.points) - 1
+                        spline.points[new_point_index].co = (*com, 1)
+
+                    # Update the curve display and exit edit mode
+                    bpy.ops.curve.reveal()
+                    bpy.ops.object.mode_set(mode='OBJECT')
+
+                    # cells will only adhere with other cells that are in the same collection
+                    bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
+                    # update position of cell
+                    cell['past position'] = com
+
 
         # Initialize a dictionary to store the sorting scores for each cell type
         cell_types = np.unique([coll['type'] for coll in bpy.data.collections])
@@ -3217,68 +3236,7 @@ class handler_class:
             for coll in [coll for coll in bpy.data.collections if coll['type'] == cell_type]:
                 coll['sorting score'] = score
             print(f"Cell Type: {cell}, Sorting Score: {score}")
-
-
-        for collection in bpy.data.collections: 
-            forces = bpy.data.collections.get(collection.name_full).all_objects
-            for force in forces: 
-                if force.get('motion') is not None and force.get('motion') == True: 
-                    cell = bpy.data.objects[force.get('cell')]
-                    com = get_centerofmass(cell)
-                    cell['current position'] = com
-                    disp = (Vector(cell.get('current position')) - Vector(cell.get('past position'))).length
-                    cell['displacement'] = disp
-                    rand_coord = Vector(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
-                    #rand_coord.normalize()
-                    #rand = Vector(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), rand_coord)))
-                    new_loc = Vector(force.location) - (Vector(force.get('persistent direction')) * disp) * force['persistence']
-                    #Vector(force.location + Vector((Vector(force.get('persistent direction')) * disp)) * force['persistence'])
-                    new_loc_rand = new_loc + Vector((rand_coord) * force['randomness'])
-                    force.location = new_loc_rand
-
-                    # Define the name of the curve object and the new point coordinates
-                    # Find the curve object by name
-                    curve_obj = bpy.data.objects[f'{cell.name}_tracks']
-                    # Enter edit mode for the curve object
-                    bpy.context.view_layer.objects.active = curve_obj
-                    bpy.ops.object.mode_set(mode='EDIT')
-
-                    # Add a new control point to the curve
-                    spline = curve_obj.data.splines[0]
-
-                    if scene.frame_current == 1:
-                    # If the current frame is 1, remove all points from the curve except the first one
-                        while len(spline.points) > 0:
-                            spline.points.remove(spline.points[1])
-                    else: 
-                        spline.points.add(1)
-                        new_point_index = len(spline.points) - 1
-                        spline.points[new_point_index].co = (*com, 1)
-
-                    # Update the curve display and exit edit mode
-                    bpy.ops.curve.reveal()
-                    bpy.ops.object.mode_set(mode='OBJECT')
-
-
-                    '''# plot tracking lines
-
-                    # Create a new curve object
-                    curve = bpy.data.curves.new(name="LineCurve", type='CURVE')
-                    spline = curve.splines.new('BEZIER')
-                    # Add control points
-                    spline.bezier_points.add(1)
-                    point1 = spline.bezier_points[0]
-                    point2 = spline.bezier_points[1]
-                    point1.co = cell['past position']
-                    point2.co = cell['current position']
-
-                    obj = bpy.data.objects.new("Line", curve)
-                    bpy.context.scene.collection.objects.link(obj)'''
-
-                    # cells will only adhere with other cells that are in the same collection
-                    bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
-                    # update position of cell
-                    cell['past position'] = com
+        self.sorting_scores.update({scene.frame_current: sorting_scores_same_type})
 
     def set_scale(self, scale, cell_type):
         """
@@ -3314,6 +3272,37 @@ class handler_class:
     def set_random_motion_speed(self, motion_speed: float):
         self.random_motion_speed = motion_speed
 
+
+    def data_export(self, scene, depsgraph): 
+        # Write the list at the end of the simulation
+        if scene.frame_current == self.frame_interval[1]:
+            with open(f"{self.data_file_path}.json", 'w') as write_file:
+                write_file.write(json.dumps(self.sorting_scores))
+
+            with open(f"{self.data_file_path}_time.json", 'w') as write_file:
+                write_file.write(json.dumps(self.times))
+
+
+        '''# write the list at the end of the simulation
+        if scene.frame_current == self.frame_interval[1]:
+            # if file already exists, then merge new data to existing file
+            # allows to save results over multiple runs in a single dict
+            if os.path.isfile(f"{self.data_file_path}.json"): 
+                with open(f"{self.data_file_path}.json", 'r') as f:
+                    #data = f.read()
+                    self.sorting_scores = json.load(f)
+
+                    # write master dict to file
+                    with open(f"{self.data_file_path}.json", 'w') as write_file:
+                        write_file.write(json.dumps(self.sorting_scores))
+
+            # if file does not exist, create it with first dict
+            else: 
+                with open(f"{self.data_file_path}.json", 'a') as convert_file:
+                    convert_file.write(json.dumps(self.sorting_scores))'''
+
+            #subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
+        
 
     def data_handler(self, scene, depsgraph): 
 
@@ -3470,18 +3459,20 @@ class handler_class:
 
 
     def timing_init_handler(self, scene, depsgraph): 
-        if bpy.data.scenes[0].frame_current == 2: 
+        if scene.frame_current == 2: 
             self.time = datetime.now()
-            print(f'Render started for Frame 2 at: {self.time}')
+            print(f'Render started for Frame 1 at: {self.time}')
 
 
     def timing_elapsed_handler(self, scene, depsgraph): 
         elpased_time = datetime.now() - self.time
         elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
-        self.times.append(elapsed_time_secs*100000)
+        frame_written = scene.frame_current
+        if frame_written != 1: 
+            self.times.update({frame_written: elapsed_time_secs})
         print('________________________________________________________')
         print(f"Render Started at:{self.time}")  
-        print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs*100000:.1f}")
+        print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs:.1f}")
 
 
     def stop_animation(self, scene, depsgraph):
