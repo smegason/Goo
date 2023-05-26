@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.colors as mcolors
 from matplotlib.pyplot import xticks
 import sys
-<<<<<<< HEAD
 import pandas as pd
 import seaborn as sns
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -331,7 +330,6 @@ else:
 
 
 '''
-=======
 import os 
 
 
@@ -393,4 +391,3 @@ else:
     locs, labels = xticks()
 
     plt.savefig(f"{sys.argv[1]}.png", dpi=500)
->>>>>>> 784994e237308e3e1c5832067ba898aaf8a42ec5
