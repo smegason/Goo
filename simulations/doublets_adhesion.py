@@ -10,20 +10,20 @@ goo.setup_world()
 
 #================== Cell A Collection ==================
 # Define cell A1
-goo.make_cell("cell_A1", loc = (-0.95,0,0),  type = "cellsA")
+goo.make_cell("cell_A1", loc = (-1,0,0),  type = "cellsA")
 # Define cell A2
-goo.make_cell("cell_A2", loc = (0.95,0,0),  type = "cellsA")
+goo.make_cell("cell_A2", loc = (1,0,0),  type = "cellsA")
 
 # Define cell A1
-goo.make_cell("cell_B3", loc = (-0.95,2.2,0), material = ('green', 0,.1,0), type = "cellsB")
+goo.make_cell("cell_B3", loc = (-1,2.2,0), material = ('green', 0,.1,0), type = "cellsB")
 # Define cell A2
-goo.make_cell("cell_B4", loc = (0.95,2.2,0), material = ('green', 0,.1,0), type = "cellsB")
+goo.make_cell("cell_B4", loc = (1,2.2,0), material = ('green', 0,.1,0), type = "cellsB")
 
 
 # Define cell A1
-goo.make_cell("cell_C5", loc = (-0.95,4.4,0), material = ('red', .1,0,0), type = "cellsC")
+goo.make_cell("cell_C5", loc = (-1,4.4,0), material = ('red', .1,0,0), type = "cellsC")
 # Define cell A2
-goo.make_cell("cell_C6", loc = (0.95,4.4,0), material = ('red', .1,0,0), type = "cellsC")
+goo.make_cell("cell_C6", loc = (1,4.4,0), material = ('red', .1,0,0), type = "cellsC")
 
 #================== Force A Collection ==================
 

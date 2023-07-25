@@ -19,6 +19,7 @@ from mathutils.kdtree import KDTree
 from importlib import reload
 import bmesh
 import bgl
+import argparse
 
 
 """
@@ -1143,7 +1144,7 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
     bpy.context.object.modifiers['Cloth'].settings.quality = 3
-    bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
+    bpy.context.object.modifiers['Cloth'].settings.air_damping = 1000
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
@@ -1163,7 +1164,7 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_length = 1
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion = 0.785398
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_normal_check = True
-    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness = 10
+    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness = 1
     bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness = 10
     bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness_max = 10000
     bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness_max = 10000
@@ -1210,7 +1211,7 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
         obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
         remesh_mod.mode = 'SMOOTH'
         remesh_mod.octree_depth = 4
-        remesh_mod.scale = 0.7
+        remesh_mod.scale = 0.85
         remesh_mod.use_remove_disconnected = True
         remesh_mod.use_smooth_shade = True
         remesh_mod.show_in_editmode = True
@@ -1261,10 +1262,10 @@ class Cell():
             'material': material,
             'size': (1, 1, 1),
             'scale': scale,
-            'arcdiv': 6, # changes vertices in object mode
+            'arcdiv': 8, # changes vertices in object mode
             'subdiv': 1, # changes vertices in edit mode (of the cloth)
-            'vertex_mass': 2,
-            'density': 1.0,
+            'vertex_mass': 1,
+            'density': 1.05,
             #'edges_pull': 0.5,
             #'edges_bend': 0.5,
             #'air_damping': 10,
@@ -1525,7 +1526,7 @@ class Force():
         return obj
   
 
-def add_motion(effector_name, strength, persistence = 0, randomness = 1):    
+def add_motion(effector_name, strength, persistence = 0, randomness = 1, distribution = 'uniform', size = 0.1):    
 
     if isinstance(effector_name, str) \
         and isinstance(strength, (int, float)) \
@@ -1537,11 +1538,14 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1):
                         f"{bpy.data.objects[effector_name].users_collection[0]['type']}", 
                         strength, 0, 
                         motion=True, 
-                        min_dist=0, max_dist=4)
+                        min_dist=0, max_dist=100)
         force = bpy.data.objects[force.name]
 
         force['persistence'] = persistence
         force['randomness'] = randomness
+        force['distribution'] = distribution
+        force['distribution size'] = size
+
         cell = bpy.data.objects[force.get('cell')]
         com = get_centerofmass(cell)
         dir_vec = (Vector(com) - bpy.data.objects[force.name].location)
@@ -1552,27 +1556,64 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1):
                 
         # Define the list of coordinates
         coords = [(com[0], com[1], com[2])]
+
         # Create a new curve data block
-        curve_data = bpy.data.curves.new(name='My Curve', type='CURVE')
-        curve_data.dimensions = '3D'
-
+        curve_cell_data = bpy.data.curves.new(name='cell motion', type='CURVE')
+        curve_cell_data.dimensions = '3D'
         # Create a new spline and add it to the curve data block
-        spline = curve_data.splines.new(type='POLY')
+        spline = curve_cell_data.splines.new(type='POLY')
         spline.points.add(len(coords)-1)
-
         # Set the coordinates for each control point in the spline
         for i, coord in enumerate(coords):
             x, y, z = coord
             spline.points[i].co = (x, y, z, 1)
 
+
+        curve_force_data = bpy.data.curves.new(name='force motion', type='CURVE')
+        curve_force_data.dimensions = '3D'
+        # Create a new spline and add it to the curve data block
+        spline_force = curve_force_data.splines.new(type='POLY')
+        spline_force.points.add(len(coords)-1)
+        # Set the coordinates for each control point in the spline
+        for i, coord in enumerate(coords):
+            x, y, z = coord
+            spline_force.points[i].co = (x, y, z, 1)
+
         # Create a new object and link it to the scene
-        curve_obj = bpy.data.objects.new(f'{cell.name}_tracks', curve_data)
+        curve_cell_obj = bpy.data.objects.new(f'{cell.name}_tracks', curve_cell_data)
+        curve_force_obj = bpy.data.objects.new(f'{force.name}_force_tracks', curve_force_data)
+
         #bpy.context.scene.collection.objects.link(curve_obj)
-        cell.users_collection[0].objects.link(curve_obj)
+        cell.users_collection[0].objects.link(curve_cell_obj)
+        cell.users_collection[0].objects.link(curve_force_obj)
 
         # Set the object to be in edit mode and select all points
-        bpy.context.view_layer.objects.active = curve_obj
-        bpy.context.object.data.bevel_depth = 0.005
+        bpy.context.view_layer.objects.active = curve_cell_obj
+        bpy.context.object.data.bevel_depth = 0.008
+        # Assign the material to the curve object
+
+        cell_curve_mat = add_material('cell_curve', 0, 1, 0)
+        if curve_cell_obj.data.materials:
+            curve_cell_obj.data.materials[0] = cell_curve_mat
+        else:
+            curve_cell_obj.data.materials.append(cell_curve_mat)
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.curve.select_all(action='SELECT')
+        # Update the curve display and exit edit mode
+        bpy.ops.curve.reveal()
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+
+        bpy.context.view_layer.objects.active = curve_force_obj
+        bpy.context.object.data.bevel_depth = 0.008
+
+        force_curve_mat = add_material('force_curve', 1, 0, 0)
+        if curve_force_obj.data.materials:
+            curve_force_obj.data.materials[0] = force_curve_mat
+        else:
+            curve_force_obj.data.materials.append(force_curve_mat)
+
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.curve.select_all(action='SELECT')
         # Update the curve display and exit edit mode
@@ -2108,7 +2149,7 @@ def get_contact_area():
     contact_ratio_dict = {}
 
     # Get all cell objects in the scene
-    cell_objects = [obj for obj in bpy.context.scene.objects if obj.name.startswith('cell_')]
+    cell_objects = [obj for obj in bpy.context.scene.objects if obj.get('object') is not None and obj.get('object') == 'cell']
 
     # Loop over cell pairs to compute contact ratio
     for i in range(len(cell_objects) - 1):
@@ -2802,7 +2843,12 @@ def get_division_angles(cell, alpha):
 
     # separate mesh in two along the intersection vertices
 
-
+# Function to parse command-line arguments
+def parse_args():
+    parser = argparse.ArgumentParser(description="Script to simulate cells adhering to each other.")
+    parser.add_argument("--seed", type=int, help="Seed for random number generation.")
+    args = parser.parse_args()
+    return args
 
 class handler_class:
     # TODO document this class
@@ -2890,6 +2936,8 @@ class handler_class:
         self.prev_frame = int()
         self.sorting_scores = defaultdict(dict)
         self.msd = defaultdict(list)
+        self.speed = defaultdict(list)
+        self.motion_path = defaultdict(list)
 
         return
     
@@ -2946,7 +2994,7 @@ class handler_class:
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
 
-        #bpy.ops.screen.animation_play()
+        bpy.ops.screen.animation_play()
 
         return 
 
@@ -3282,46 +3330,57 @@ class handler_class:
             forces = bpy.data.collections.get(collection.name_full).all_objects
             for force in forces: 
                 if force.get('motion') is not None and force.get('motion') == True: 
-                    
+                    #self.force_path[f'{force.name}_force_tracks'].append(tuple(force.location))
+
                     cell = bpy.data.objects[force.get('cell')]
                     com = get_centerofmass(cell)
                     cell['current position'] = com
                     disp = (Vector(cell.get('current position')) - Vector(cell.get('past position'))).length
-                    cell['displacement'] = disp
+                    cell['speed'] = disp
 
-                    # have to use random module because of multi-threading
-                    '''rand_coord_x = random.uniform(-0.5, 0.5)
-                    rand_coord_y = random.uniform(-0.5, 0.5)
-                    rand_coord_z = random.uniform(-0.5, 0.5)
-                    rand_coord = tuple((rand_coord_x, rand_coord_y, rand_coord_z))'''
+                    if force.get('distribution') == 'uniform': 
+                        rand_coord = Vector(np.random.uniform(low=-force['distribution size'], high=force['distribution size'], size=(3,)))
+                    elif force.get('distribution') == 'gaussian': 
+                        rand_coord = Vector(np.random.normal(loc=0, scale=force['distribution size'], size=(3,)))
+                    else: 
+                        print(f'{force.get("distribution")} is not a supported distribution')
 
-                    rand_coord = Vector(np.random.uniform(low=-0.1, high=0.1, size=(3,)))
-
-                    #rand_coord.normalize()
-                    #rand = Vector(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), rand_coord)))
-                    new_loc = Vector(force.location) - (Vector(force.get('persistent direction')) * disp) * force['persistence']
-                    #Vector(force.location + Vector((Vector(force.get('persistent direction')) * disp)) * force['persistence'])
-                    new_loc_rand = new_loc + Vector((rand_coord) * force['randomness'])
+                    new_loc = Vector(force.location) 
+                    #- (Vector(force.get('persistent direction')) * disp) * force['persistence']
+                    new_loc_rand = new_loc + Vector(rand_coord) * force['randomness']
                     force.location = new_loc_rand
 
+                    # cell tracks 
                     # Define the name of the curve object and the new point coordinates
                     # Find the curve object by name
                     curve_obj = bpy.data.objects[f'{cell.name}_tracks']
+
                     # Enter edit mode for the curve object
                     bpy.context.view_layer.objects.active = curve_obj
                     bpy.ops.object.mode_set(mode='EDIT')
 
                     # Add a new control point to the curve
                     spline = curve_obj.data.splines[0]
+                    spline.points.add(1)
+                    new_point_index = len(spline.points) - 1
+                    spline.points[new_point_index].co = (*com, 1)
 
-                    if scene.frame_current == 1:
-                    # If the current frame is 1, remove all points from the curve except the first one
-                        while len(spline.points) > 0:
-                            spline.points.remove(spline.points[1])
-                    else: 
-                        spline.points.add(1)
-                        new_point_index = len(spline.points) - 1
-                        spline.points[new_point_index].co = (*com, 1)
+                    # Update the curve display and exit edit mode
+                    bpy.ops.curve.reveal()
+                    bpy.ops.object.mode_set(mode='OBJECT')
+
+                    # force tracks
+                    curve_force_obj = bpy.data.objects[f'{force.name}_force_tracks']
+
+                    # Enter edit mode for the curve object
+                    bpy.context.view_layer.objects.active = curve_force_obj
+                    bpy.ops.object.mode_set(mode='EDIT')
+
+                    # Add a new control point to the curve
+                    spline = curve_force_obj.data.splines[0]
+                    spline.points.add(1)
+                    new_point_index = len(spline.points) - 1
+                    spline.points[new_point_index].co = (*force.location, 1)
 
                     # Update the curve display and exit edit mode
                     bpy.ops.curve.reveal()
@@ -3331,35 +3390,32 @@ class handler_class:
                     bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
                     # update position of cell
                     cell['past position'] = com
-
-
-            # Iterate over all spline objects in the scene
-            tracks = [obj for obj in collection.objects if obj.type == 'CURVE']
-
+        
+        if scene.frame_current == self.frame_interval[1] - 1:
+        # Iterate over all spline objects in the scene
+            tracks = [obj for collection in bpy.data.collections for obj in collection.objects if obj.type == 'CURVE']
+            
             for obj in tracks:
-                # Initialize variables
-                displacement_sum = 0
-                displacement_count = 0
+                    # Initialize variables
+                    spline = obj.data.splines[0]
+                    points = spline.points
 
-                spline = obj.data.splines[0]
-                points = spline.points
+                    # Iterate over control points and calculate displacements
+                    for i in range(1, len(points)):
+                        intial_point = points[0].co
+                        prev_point = points[i-1].co
+                        curr_point = points[i].co
+                        # Mean Squared Displacement for single particle
+                        displacement = (curr_point - intial_point).length_squared
+                        # Single particle speed
+                        speed = (curr_point - prev_point).length
 
-                # Iterate over control points and calculate displacements
-                for i in range(1, len(points)):
-                    prev_point = points[0].co
-                    curr_point = points[i].co
-                    displacement = (curr_point - prev_point).length_squared
-                    displacement_sum += displacement
-                    displacement_count += 1
+                        msd = displacement / 1
+                        obj['MSD'] = msd
 
-                # Calculate the mean squared displacement
-                if displacement_count > 0:
-                    msd = displacement_sum / displacement_count
-                    obj['MSD'] = msd
-                else:
-                    obj['MSD'] = 0
-
-                self.msd[f'{obj.name}'].append(msd)
+                        self.msd[f'{obj.name}'].append(msd)
+                        self.speed[f'{obj.name}'].append(speed)
+                        self.motion_path[f'{obj.name}'].append(tuple(curr_point)[:3])
 
         # Initialize a dictionary to store the sorting scores for each cell type
         cell_types = np.unique([coll['type'] for coll in bpy.data.collections])
@@ -3456,27 +3512,22 @@ class handler_class:
         self.random_motion_speed = motion_speed
 
     def data_export(self, scene, depsgraph): 
-
-        '''var_to_export = ["sorting_scores", "times", "msd", "contact_ratios"]
+        #var_to_export = ["sorting_scores", "times", "msd", "contact_ratios"]
         # Write the list at the end of the simulation
         if scene.frame_current == self.frame_interval[1]:
-            for var in var_to_export:
-                data = getattr(self, var)
-                with open(f"{self.data_file_path}_{var}.json", 'w') as write_file:
-                    write_file.write(json.dumps(data))'''
-
-        var_to_export = ["sorting_scores", "times", "msd", "contact_ratios"]
-        # Write the list at the end of the simulation
-        if scene.frame_current == self.frame_interval[1]:
-            with open(f"{self.data_file_path}_sorting_scores.json", 'w') as write_file:
-                write_file.write(json.dumps(self.sorting_scores))
             with open(f"{self.data_file_path}_times.json", 'w') as write_file:
                 write_file.write(json.dumps(self.times))
-            with open(f"{self.data_file_path}_msd.json", 'w') as write_file:
-                write_file.write(json.dumps(self.msd))
             with open(f"{self.data_file_path}_contact_ratios.json", 'w') as write_file:
                 write_file.write(json.dumps(self.contact_ratios))
-
+        #else: # data over simulation time
+            with open(f"{self.data_file_path}_msd.json", 'w') as write_file:
+                write_file.write(json.dumps(self.msd))
+            with open(f"{self.data_file_path}_sorting_scores.json", 'w') as write_file:
+                write_file.write(json.dumps(self.sorting_scores))
+            with open(f"{self.data_file_path}_speed.json", 'w') as write_file:
+                write_file.write(json.dumps(self.speed))
+            with open(f"{self.data_file_path}_motion_path.json", 'w') as write_file:
+                write_file.write(json.dumps(self.motion_path))
             #subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
         
 
@@ -3658,7 +3709,7 @@ class handler_class:
             print(f"The simulation has ended.")
             bpy.ops.screen.animation_cancel(restore_frame=True) #True enables the last frame not to be repeated
             # closes Blender then
-            #bpy.ops.wm.quit_blender()
+            bpy.ops.wm.quit_blender()
 
 
 
