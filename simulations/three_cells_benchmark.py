@@ -18,6 +18,7 @@ goo.make_cell("cell_A3", loc = (3,0,-2.2), type = "cellsA")
 # Define cell A2
 goo.make_cell("cell_A4", loc = (5,0,-2.2), type = "cellsA")
 
+
 # Define cell A1
 goo.make_cell("cell_B3", loc = (3,2,0), material = ('red', 0.1,0,0), type = "cellsB")
 # Define cell A2
@@ -31,36 +32,34 @@ goo.make_cell("cell_B6", loc = (5,2,-2.2), material = ('red', 0.1,0,0), type = "
 #================== Force A Collection ==================
 
 # Define force A1
-goo.make_force("force_A1", "cell_A1", 'cellsA', -2000, 0)
+goo.add_homo_adhesion('cell_A1', -2000)
 goo.add_motion('cell_A1', -500)
 # Define force A2
-goo.make_force("force_A2", "cell_A2", 'cellsA', -2000, 0)
+goo.add_homo_adhesion('cell_A2', -2000)
 # Add random motion for cell type A
 goo.add_motion('cell_A2', -500)
 # Define force A1
-goo.make_force("force_A3", "cell_A3", 'cellsA', -2000, 0)
+goo.add_homo_adhesion('cell_A3', -2000)
 goo.add_motion('cell_A3', -500)
 # Define force A2
-goo.make_force("force_A4", "cell_A4", 'cellsA', -2000, 0)
+goo.add_homo_adhesion('cell_A4', -2000)
 # Add random motion for cell type A
 goo.add_motion('cell_A4', -500)
 
 
 # Define force A1
-goo.make_force("force_B3", "cell_B3", 'cellsB', -1000, 0)
+goo.add_homo_adhesion('cell_B3', -2000)
 goo.add_motion('cell_B3', -500)
 # Define force A2
-goo.make_force("force_B4", "cell_B4", 'cellsB', -1000, 0)
+goo.add_homo_adhesion('cell_B4', -2000)
 goo.add_motion('cell_B4', -500)
 # Define force A1
-goo.make_force("force_B5", "cell_B5", 'cellsB', -1000, 0)
+goo.add_homo_adhesion('cell_B5', -2000)
 goo.add_motion('cell_B5', -500)
 # Define force A2
-goo.make_force("force_B6", "cell_B6", 'cellsB', -1000, 0)
+goo.add_homo_adhesion('cell_B6', -2000)
 goo.add_motion('cell_B6', -500)
 
-# Add random motion for cell type A
-#goo.add_motion('cellsB', -1000)
 
 #================== Simulation setup ==================
 handlers = goo.handler_class()

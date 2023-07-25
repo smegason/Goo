@@ -69,7 +69,7 @@ goo.add_motion('cell_A9', motion)
 handlers = goo.handler_class()
 handlers.launch_simulation(start = 1, # default, 1
                            end = 500, # default, 250
-                           filepath = "C:\\tmp\\layer_clumping", 
+                           filepath = "C:\\tmp\\layer_clumping\\", 
                            adhesion = True, # default, True
                            data = False, # default, False
                            growth = True, 

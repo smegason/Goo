@@ -3,10 +3,11 @@
 
 from goo import goo
 import bpy
+import random
 from importlib import reload
 
 reload(goo)
-goo.setup_world(seed = 1)
+goo.setup_world(seed=1)
 
 #================== Cell A Collection ==================
 # Define cell A1
