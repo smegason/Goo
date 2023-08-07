@@ -1233,7 +1233,7 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     # Add the active cell to our specific collection 
     bpy.data.collections[collection.name].objects.link(bpy.data.objects[name])
 
-    handler = handler_class()
+    #handler = handler_class()
 
 
 # Defines the Cell class
@@ -1776,7 +1776,7 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
 
     return force
 
-def setup_world(seed=datetime.now().timestamp()):
+def setup_world(seed=None):
     """Auxiliary function: sets up the default values used for simulations in Goo 
     including units and rendering background. 
 
@@ -1785,7 +1785,11 @@ def setup_world(seed=datetime.now().timestamp()):
     :returns: None
     """
     # Set the random seed for reproducibility
+    if seed is None:
+        seed = int(datetime.now().timestamp())
+
     np.random.seed(seed)
+    bpy.context.scene['seed'] = seed
 
     # Turn off gravity so cells don't fall in the simulation
     bpy.context.scene.use_gravity = False
@@ -2856,6 +2860,7 @@ class handler_class:
     # parameters like division rate, growth rate, and adhesion forces
     def __init__(self):
 
+        self.seed = None
         self.cell_types = ['sphere', 'type1', 'type2']
         self.division_rates = {}
         self.growth_rates = {}
@@ -3485,7 +3490,7 @@ class handler_class:
  
     def adhesion_handler(self, scene, depsgraph):
 
-        if scene.frame_current == self.frame_interval[1]:
+        if scene.frame_current in range(self.frame_interval[0], self.frame_interval[1], 1):
             contact_ratio_dict = get_contact_area()
             # Merge the dictionaries
             for key, value in contact_ratio_dict.items():
@@ -3519,6 +3524,7 @@ class handler_class:
         self.random_motion_speed = motion_speed
 
     def data_export(self, scene, depsgraph): 
+        self.seed = bpy.context.scene.get("seed")
         #var_to_export = ["sorting_scores", "times", "msd", "contact_ratios"]
         # Write the list at the end of the simulation
         if scene.frame_current == self.frame_interval[1]:
@@ -3535,6 +3541,9 @@ class handler_class:
                 write_file.write(json.dumps(self.speed))
             with open(f"{self.data_file_path}_motion_path.json", 'w') as write_file:
                 write_file.write(json.dumps(self.motion_path))
+            if self.seed is not None: 
+                with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
+                    write_file.write(json.dumps(self.seed))
             #subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
         
 
