@@ -32,7 +32,7 @@ goo.make_cell("cell_A4", loc = (10,0,0), type = "cellsA")
 
 # Define force A1
 goo.add_homo_adhesion("cell_A1", -2000)
-goo.add_motion('cell_A1', -0)
+goo.add_motion('cell_A1', -0, distribution = 'uniform', size = 0.1)
 # Define force A2
 goo.add_homo_adhesion("cell_A2", -2000)
 goo.add_motion('cell_A2', -500)
