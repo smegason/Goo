@@ -15,13 +15,13 @@ def main(seed):
 
     #================== Force A Collection ==================
     # Define force A1
-    goo.add_motion('cell_A1', -500, distribution = 'uniform', size = 0.1)
+    goo.add_motion('cell_A1', -500, distribution = 'uniform', size = 1)
 
     #================== Simulation setup ==================
     handlers = goo.handler_class()
     handlers.launch_simulation(start = 1, # default, 1
                             end = 5000, # default, 250
-                            filepath = f"C:\\tmp\\differential_motion\\single_cell_motion_seed_1to100\\data_test_background_{seed}", 
+                            filepath = f"C:\\tmp\\differential_motion\\single_cell_motion_seed_1to100_uni10\\data_{seed}", 
                             adhesion = True, # default, True
                             data = True, # default, False
                             growth = True, 

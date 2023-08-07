@@ -1557,7 +1557,7 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1, distrib
         # Define the list of coordinates
         coords = [(com[0], com[1], com[2])]
 
-        # Create a new curve data block
+        '''# Create a new curve data block
         curve_cell_data = bpy.data.curves.new(name='cell motion', type='CURVE')
         curve_cell_data.dimensions = '3D'
         # Create a new spline and add it to the curve data block
@@ -1618,7 +1618,7 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1, distrib
         bpy.ops.curve.select_all(action='SELECT')
         # Update the curve display and exit edit mode
         bpy.ops.curve.reveal()
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='OBJECT')'''
 
 
 
@@ -1776,7 +1776,7 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
 
     return force
 
-def setup_world(seed=None):
+def setup_world(seed=datetime.now().timestamp()):
     """Auxiliary function: sets up the default values used for simulations in Goo 
     including units and rendering background. 
 
@@ -2843,12 +2843,7 @@ def get_division_angles(cell, alpha):
 
     # separate mesh in two along the intersection vertices
 
-# Function to parse command-line arguments
-def parse_args():
-    parser = argparse.ArgumentParser(description="Script to simulate cells adhering to each other.")
-    parser.add_argument("--seed", type=int, help="Seed for random number generation.")
-    args = parser.parse_args()
-    return args
+
 
 class handler_class:
     # TODO document this class
@@ -2941,7 +2936,7 @@ class handler_class:
 
         return
     
-    def launch_simulation(self, 
+    def launch_simulation(self,
                           filepath, 
                           division_rate = 100, 
                           start = 1, 
@@ -2949,6 +2944,7 @@ class handler_class:
                           motion_strength = -500,
                           adhesion = True, 
                           growth = False, 
+                          target = 1,
                           division = False, 
                           data = False, 
                           motility = False,
@@ -2982,7 +2978,7 @@ class handler_class:
         if data: 
             bpy.app.handlers.frame_change_post.append(self.data_export)
         if growth: 
-            bpy.app.handlers.frame_change_post.append(self.growth_handler)
+            bpy.app.handlers.frame_change_post.append(lambda scene, depsgraph: self.growth_handler(scene, depsgraph, target))
         if division: 
             bpy.app.handlers.frame_change_post.append(self.division_handler)
         if motility: 
@@ -2994,7 +2990,7 @@ class handler_class:
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
 
-        bpy.ops.screen.animation_play()
+        #bpy.ops.screen.animation_play()
 
         return 
 
@@ -3255,7 +3251,7 @@ class handler_class:
                                                                                   
 
     # Member function to handle cell growth
-    def growth_handler(self, scene, depsgraph):
+    def growth_handler(self, scene, depsgraph, target):
         for collection in bpy.data.collections: 
             # Exclude the objects in the force collections
             #if collection['type'] == 'cell':
@@ -3267,7 +3263,8 @@ class handler_class:
                     (cell.get('adhesion force') is not None and cell.get('motion force') is not None): 
 
                     volume = calculate_volume(cell)
-                    target_volume = ((4/3)*np.pi*(1)**3)*1
+                    #target_volume = target
+                    target_volume = ((4/3)*np.pi*(1)**3)*target
                     cell['target volume'] = target_volume
                     cell['volume'] = volume
                     self.volumes[f"{cell.name}"].append(volume)
@@ -3337,6 +3334,16 @@ class handler_class:
                     cell['current position'] = com
                     disp = (Vector(cell.get('current position')) - Vector(cell.get('past position'))).length
                     cell['speed'] = disp
+                    self.motion_path[f'{cell.name}'].append(tuple(com)[:3])
+                    self.motion_path[f'{force.name}'].append(tuple(force.location)[:3])
+                    self.speed[f'{cell.name}'].append(disp)
+                    # Mean Squared Displacement for single particle
+                    sq_displacement_cell = (Vector(self.motion_path.get(cell.name)[-1]) - Vector(self.motion_path.get(cell.name)[0])).length_squared
+                    sq_displacement_force = (Vector(self.motion_path.get(force.name)[-1]) - Vector(self.motion_path.get(force.name)[0])).length_squared
+                    self.msd[f'{cell.name}'].append(sq_displacement_cell)
+                    self.msd[f'{force.name}'].append(sq_displacement_force)
+                    cell['MSD'] = msd
+                    force['MSD'] = msd
 
                     if force.get('distribution') == 'uniform': 
                         rand_coord = Vector(np.random.uniform(low=-force['distribution size'], high=force['distribution size'], size=(3,)))
@@ -3345,12 +3352,12 @@ class handler_class:
                     else: 
                         print(f'{force.get("distribution")} is not a supported distribution')
 
-                    new_loc = Vector(force.location) 
+                    new_loc = Vector(com) 
                     #- (Vector(force.get('persistent direction')) * disp) * force['persistence']
                     new_loc_rand = new_loc + Vector(rand_coord) * force['randomness']
                     force.location = new_loc_rand
 
-                    # cell tracks 
+                    '''# cell tracks 
                     # Define the name of the curve object and the new point coordinates
                     # Find the curve object by name
                     curve_obj = bpy.data.objects[f'{cell.name}_tracks']
@@ -3384,14 +3391,14 @@ class handler_class:
 
                     # Update the curve display and exit edit mode
                     bpy.ops.curve.reveal()
-                    bpy.ops.object.mode_set(mode='OBJECT')
+                    bpy.ops.object.mode_set(mode='OBJECT')'''
 
                     # cells will only adhere with other cells that are in the same collection
                     bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
                     # update position of cell
                     cell['past position'] = com
         
-        if scene.frame_current == self.frame_interval[1] - 1:
+        '''if scene.frame_current == self.frame_interval[1] - 1:
         # Iterate over all spline objects in the scene
             tracks = [obj for collection in bpy.data.collections for obj in collection.objects if obj.type == 'CURVE']
             
@@ -3415,7 +3422,7 @@ class handler_class:
 
                         self.msd[f'{obj.name}'].append(msd)
                         self.speed[f'{obj.name}'].append(speed)
-                        self.motion_path[f'{obj.name}'].append(tuple(curr_point)[:3])
+                        self.motion_path[f'{obj.name}'].append(tuple(curr_point)[:3])'''
 
         # Initialize a dictionary to store the sorting scores for each cell type
         cell_types = np.unique([coll['type'] for coll in bpy.data.collections])
@@ -3709,7 +3716,7 @@ class handler_class:
             print(f"The simulation has ended.")
             bpy.ops.screen.animation_cancel(restore_frame=True) #True enables the last frame not to be repeated
             # closes Blender then
-            bpy.ops.wm.quit_blender()
+            #bpy.ops.wm.quit_blender()
 
 
 

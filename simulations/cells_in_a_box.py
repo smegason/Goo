@@ -6,35 +6,31 @@ import bpy
 from importlib import reload
 
 reload(goo)
-goo.setup_world()
+goo.setup_world(seed = 1)
 
 #================== Cell A Collection ==================
 # Define cell A1
-goo.make_cell("cell_A1", loc = (-0.34,-0.15,-0.86), type = "cellsA")
+goo.make_cell("cell_A1", loc = (-3,1.5,1.5), type = "cellsA", stiffness = 2)
 # Define cell A2
-goo.make_cell("cell_A2", loc = (2.76,0,0.56), type = "cellsA")
+goo.make_cell("cell_A2", loc = (-3,-1.5,1.5), type = "cellsA", stiffness = 2)
+# Define cell A3
+goo.make_cell("cell_A3", loc = (0,1.5,1.5), type = "cellsA", stiffness = 2)
+# Define cell A4
+goo.make_cell("cell_A4", loc = (0,-1.5,1.5), type = "cellsA", stiffness = 2)
+# Define cell A3
+goo.make_cell("cell_A5", loc = (0,1.5,-1.5), type = "cellsA", stiffness = 2)
+# Define cell A4
+goo.make_cell("cell_A6", loc = (0,-1.5,-1.5), type = "cellsA", stiffness = 2)
 # Define cell A1
-goo.make_cell("cell_A3", loc = (-1,2.69,-0.15), type = "cellsA")
+goo.make_cell("cell_A7",  loc = (-3,1.5,-1.5), type = "cellsA", stiffness = 2)
 # Define cell A2
-goo.make_cell("cell_A4", loc = (0.2,0.4,1.39), type = "cellsA")
-
-
-# Define cell A1
-goo.make_cell("cell_B5", loc = (0.69,2.88,0.93), type = "cellsA")
-# Define cell A2
-goo.make_cell("cell_B6", loc = (2,2.66,-0.57), type = "cellsA")
-# Define cell A1
-goo.make_cell("cell_B7", loc = (1.31,1.16,-1.96), type = "cellsA")
-# Define cell A2
-#goo.make_cell("cell_B8", loc = (2.08,1.5,1.87), type = "cellsA")
-
+goo.make_cell("cell_A8", loc = (-3,-1.5,-1.5), type = "cellsA", stiffness = 2)
 
 #================== Force A Collection ==================
 
-homoA = 2500
-homoB = 2500
+homoA = 2000
 #heteroAB = 500
-motion = 1000
+motion = 500
 
 # Define force A1
 goo.add_homo_adhesion('cell_A1', -homoA)
@@ -55,21 +51,21 @@ goo.add_motion('cell_A4', -motion)
 
 
 # Define force A1
-goo.add_homo_adhesion('cell_B5', -homoB)
+goo.add_homo_adhesion('cell_A5', -homoA)
 #goo.add_hetero_adhesion('cell_B5', 'cellsA', -heteroAB)
-goo.add_motion('cell_B5', -motion)
+goo.add_motion('cell_A5', -motion)
 # Define force A2
-goo.add_homo_adhesion('cell_B6', -homoB)
+goo.add_homo_adhesion('cell_A6', -homoA)
 #goo.add_hetero_adhesion('cell_B6', 'cellsA', -heteroAB)
-goo.add_motion('cell_B6', -motion)
+goo.add_motion('cell_A6', -motion)
 # Define force A2
-goo.add_homo_adhesion('cell_B7', -homoB)
+goo.add_homo_adhesion('cell_A7', -homoA)
 #goo.add_hetero_adhesion('cell_B7', 'cellsA', -heteroAB)
-goo.add_motion('cell_B7', -motion)
+goo.add_motion('cell_A7', -motion)
 # Define force A2
-#goo.add_homo_adhesion('cell_B8', -homoB)
+goo.add_homo_adhesion('cell_A8', -homoA)
 #goo.add_hetero_adhesion('cell_B8', 'cellsA', -heteroAB)
-#goo.add_motion('cell_B8', -motion)
+goo.add_motion('cell_A8', -motion)
 
 #================== Simulation setup ==================
 handlers = goo.handler_class()
