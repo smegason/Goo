@@ -2149,7 +2149,7 @@ def get_contact_area():
     - A dictionary containing cells in contact as keys and their contact ratio as values.
     """
 
-    threshold = 0.03
+    threshold = 0.05
     contact_ratio_dict = {}
 
     # Get all cell objects in the scene
@@ -2180,8 +2180,8 @@ def get_contact_area():
                 contact_verts2 = []
 
                 # Compute the contact area for each mesh.
-                contact_area1 = 0.0
-                contact_area2 = 0.0
+                contact_area1 = 0.00
+                contact_area2 = 0.00
 
                 for v1 in verts1:
                     for v2 in verts2:
@@ -2214,7 +2214,9 @@ def get_contact_area():
 
                 # Add contact ratio to the dictionary
                 contact_ratio_dict[f"{mesh1.name}-{mesh2.name}"] = bidir_ratio
-                #print(contact_ratio_dict)
+
+            else: 
+                contact_ratio_dict[f"{mesh1.name}-{mesh2.name}"] = 0
 
     return contact_ratio_dict
 
@@ -3490,18 +3492,18 @@ class handler_class:
  
     def adhesion_handler(self, scene, depsgraph):
 
-        if scene.frame_current in range(self.frame_interval[0], self.frame_interval[1], 1):
-            contact_ratio_dict = get_contact_area()
-            # Merge the dictionaries
-            for key, value in contact_ratio_dict.items():
-                if key not in self.contact_ratios:
-                    # If the key is not present in the master dictionary, create a new list with the current value
-                    self.contact_ratios[key] = [value]
-                else:
-                    # If the key is already present in the master dictionary, append the value to the existing list
-                    self.contact_ratios[key].append(value)
-        
-            print(self.contact_ratios)
+        #if scene.frame_current in range(self.frame_interval[0], self.frame_interval[1], 1):
+        contact_ratio_dict = get_contact_area()
+        # Merge the dictionaries
+        for key, value in contact_ratio_dict.items():
+            if key not in self.contact_ratios:
+                # If the key is not present in the master dictionary, create a new list with the current value
+                self.contact_ratios[key] = [value]
+            else:
+                # If the key is already present in the master dictionary, append the value to the existing list
+                self.contact_ratios[key].append(value)
+    
+        print(self.contact_ratios)
 
         force_list = Force.force_list
         #print([force.name for force in force_list])
