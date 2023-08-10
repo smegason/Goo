@@ -2149,8 +2149,9 @@ def get_contact_area():
     - A dictionary containing cells in contact as keys and their contact ratio as values.
     """
 
-    threshold = 0.03
+    threshold = 0.05
     contact_ratio_dict = {}
+    contact_areas_dict = {}
 
     # Get all cell objects in the scene
     cell_objects = [obj for obj in bpy.context.scene.objects if obj.get('object') is not None and obj.get('object') == 'cell']
@@ -2180,8 +2181,8 @@ def get_contact_area():
                 contact_verts2 = []
 
                 # Compute the contact area for each mesh.
-                contact_area1 = 0.0
-                contact_area2 = 0.0
+                contact_area1 = 0.00
+                contact_area2 = 0.00
 
                 for v1 in verts1:
                     for v2 in verts2:
@@ -2211,12 +2212,18 @@ def get_contact_area():
 
                 # avg ratio because bidirectional contact areas
                 bidir_ratio = (ratio1 + ratio2) / 2
+                bidir_areas = (contact_area1 + contact_area2) / 2
 
                 # Add contact ratio to the dictionary
                 contact_ratio_dict[f"{mesh1.name}-{mesh2.name}"] = bidir_ratio
-                #print(contact_ratio_dict)
+                contact_areas_dict[f"{mesh1.name}-{mesh2.name}"] = bidir_areas
 
-    return contact_ratio_dict
+
+            else: 
+                contact_ratio_dict[f"{mesh1.name}-{mesh2.name}"] = 0
+                contact_areas_dict[f"{mesh1.name}-{mesh2.name}"] = 0
+
+    return contact_ratio_dict, contact_areas_dict
 
 
 def separate_mesh(obj): 
@@ -2921,6 +2928,7 @@ class handler_class:
 
             # for contact area 
         self.contact_ratios = defaultdict(list)
+        self.contact_areas = defaultdict(list)
 
             # for division
         self.division_rate = 0.0
@@ -2938,6 +2946,9 @@ class handler_class:
         self.msd = defaultdict(list)
         self.speed = defaultdict(list)
         self.motion_path = defaultdict(list)
+
+            # for computational optimization (launch_simulation)
+        self.data_flag = None
 
         return
     
@@ -2964,6 +2975,7 @@ class handler_class:
         bpy.context.scene.render.filepath = filepath
         self.division_rate = division_rate
         self.motion_strength = motion_strength
+        self.data_flag = data # used to decide if data are computed
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after 250 frames
@@ -2982,6 +2994,7 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
         if data: 
             bpy.app.handlers.frame_change_post.append(self.data_export)
+            bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
         if growth: 
             bpy.app.handlers.frame_change_post.append(lambda scene, depsgraph: self.growth_handler(scene, depsgraph, target))
         if division: 
@@ -3428,52 +3441,53 @@ class handler_class:
                         self.msd[f'{obj.name}'].append(msd)
                         self.speed[f'{obj.name}'].append(speed)
                         self.motion_path[f'{obj.name}'].append(tuple(curr_point)[:3])'''
+        if self.data_flag: 
+            # Initialize a dictionary to store the sorting scores for each cell type
+            cell_types = np.unique([coll['type'] for coll in bpy.data.collections])
+            #cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
 
-        # Initialize a dictionary to store the sorting scores for each cell type
-        cell_types = np.unique([coll['type'] for coll in bpy.data.collections])
-        #cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
+            neighbors = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
+            neighbors_same_type = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
+            sorting_scores = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
+            sorting_scores_same_type = {cell_type: 0 for cell_type in cell_types}
 
-        neighbors = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
-        neighbors_same_type = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
-        sorting_scores = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
-        sorting_scores_same_type = {cell_type: 0 for cell_type in cell_types}
+            # loop for each cell
+            for cell in cells:
+                collection = cell.users_collection[0]
+                for other_cell in cells:  
+                    if cell is not other_cell: 
+                        # get neighbors 
+                        distance = (bpy.data.objects[cell.get('adhesion force')].location - bpy.data.objects[other_cell.get('adhesion force')].location).length
+                        if distance < 1.95:
+                            # get number of neighbors for a specific cell
+                            neighbors[collection.get('type')][cell.name] += 1
 
-        # loop for each cell
-        for cell in cells:
-            collection = cell.users_collection[0]
-            for other_cell in cells:  
-                if cell is not other_cell: 
-                    # get neighbors 
-                    distance = (bpy.data.objects[cell.get('adhesion force')].location - bpy.data.objects[other_cell.get('adhesion force')].location).length
-                    if distance < 1.95:
-                        # get number of neighbors for a specific cell
-                        neighbors[collection.get('type')][cell.name] += 1
+                            # get neighbors of same cell type
+                            if collection.get('type') == other_cell.users_collection[0].get('type'):
+                                neighbors_same_type[collection.get('type')][cell.name] += 1
 
-                        # get neighbors of same cell type
-                        if collection.get('type') == other_cell.users_collection[0].get('type'):
-                            neighbors_same_type[collection.get('type')][cell.name] += 1
-
-            # sorting is null if cell has no neighbors                 
-            if neighbors[collection.get('type')][cell.name] == 0: 
-                sorting_scores[collection.get('type')][cell.name] = 0 
-            else: 
-                sorting_scores[collection.get('type')][cell.name] = neighbors_same_type[collection.get('type')][cell.name] / neighbors[collection.get('type')][cell.name]
+                # sorting is null if cell has no neighbors                 
+                if neighbors[collection.get('type')][cell.name] == 0: 
+                    sorting_scores[collection.get('type')][cell.name] = 0 
+                else: 
+                    sorting_scores[collection.get('type')][cell.name] = neighbors_same_type[collection.get('type')][cell.name] / neighbors[collection.get('type')][cell.name]
+                
+                cell['sorting score'] = sorting_scores[collection.get('type')][cell.name]
+                print(neighbors)
+                print(neighbors_same_type)
             
-            cell['sorting score'] = sorting_scores[collection.get('type')][cell.name]
-            print(neighbors)
-            print(neighbors_same_type)
-        
-        for cell_type, cell_dict in sorting_scores.items():
-            values = cell_dict.values()
-            average = sum(values) / len(values)
-            sorting_scores_same_type[cell_type] = average
+            # avg sorting score over cells among the same type
+            for cell_type, cell_dict in sorting_scores.items():
+                values = cell_dict.values()
+                average = sum(values) / len(values)
+                sorting_scores_same_type[cell_type] = average
 
-        # Print the sorting scores for each cell type
-        for cell_type, score in sorting_scores_same_type.items():
-            for coll in [coll for coll in bpy.data.collections if coll['type'] == cell_type]:
-                coll['sorting score'] = score
-            print(f"Cell Type: {cell}, Sorting Score: {score}")
-        self.sorting_scores.update({scene.frame_current: sorting_scores_same_type})
+            # Print the sorting scores for each cell type
+            for cell_type, score in sorting_scores_same_type.items():
+                for coll in [coll for coll in bpy.data.collections if coll['type'] == cell_type]:
+                    coll['sorting score'] = score
+                print(f"Cell Type: {cell}, Sorting Score: {score}")
+            self.sorting_scores.update({scene.frame_current: sorting_scores_same_type})
 
     def set_scale(self, scale, cell_type):
         """
@@ -3487,11 +3501,13 @@ class handler_class:
             cell_name = bpy.data.collections[cell_type].objects[i].name
             cell = bpy.data.objects[cell_name]
             cell.modifiers["Cloth"].settings.shrink_min = scale
- 
-    def adhesion_handler(self, scene, depsgraph):
 
-        if scene.frame_current in range(self.frame_interval[0], self.frame_interval[1], 1):
-            contact_ratio_dict = get_contact_area()
+    
+    def contact_area_handler(self, scene, depsgraph): 
+         
+         if self.data_flag: 
+            #if scene.frame_current in range(self.frame_interval[0], self.frame_interval[1], 1):
+            contact_ratio_dict, contact_areas_dict = get_contact_area()
             # Merge the dictionaries
             for key, value in contact_ratio_dict.items():
                 if key not in self.contact_ratios:
@@ -3500,8 +3516,20 @@ class handler_class:
                 else:
                     # If the key is already present in the master dictionary, append the value to the existing list
                     self.contact_ratios[key].append(value)
-        
-            print(self.contact_ratios)
+
+            # Merge the dictionaries
+            for key, value in contact_areas_dict.items():
+                if key not in self.contact_areas:
+                    # If the key is not present in the master dictionary, create a new list with the current value
+                    self.contact_areas[key] = [value]
+                else:
+                    # If the key is already present in the master dictionary, append the value to the existing list
+                    self.contact_areas[key].append(value)
+            
+                print(self.contact_areas)
+
+
+    def adhesion_handler(self, scene, depsgraph):
 
         force_list = Force.force_list
         #print([force.name for force in force_list])
@@ -3541,12 +3569,16 @@ class handler_class:
                 write_file.write(json.dumps(self.speed))
             with open(f"{self.data_file_path}_motion_path.json", 'w') as write_file:
                 write_file.write(json.dumps(self.motion_path))
+            with open(f"{self.data_file_path}_contact_areas.json", 'w') as write_file:
+                write_file.write(json.dumps(self.contact_areas))
+            
             if self.seed is not None: 
                 with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
                     write_file.write(json.dumps(self.seed))
+
             #subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
         
-
+    # not used
     def data_handler(self, scene, depsgraph): 
 
         # initialization
