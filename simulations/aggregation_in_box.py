@@ -31,41 +31,42 @@ goo.make_cell("cell_A8", loc = (-3,-1.5,-1.5), type = "cellsA", stiffness = 1)
 homoA = 2000
 #heteroAB = 500
 motion = 500
+size = 2
 
 # Define force A1
 goo.add_homo_adhesion('cell_A1', -homoA)
 #goo.add_hetero_adhesion('cell_A1', 'cellsB', -heteroAB)
-goo.add_motion('cell_A1', -motion, size = 5)
+goo.add_motion('cell_A1', -motion, size = size)
 # Define force A2
 goo.add_homo_adhesion('cell_A2', -homoA)
 #goo.add_hetero_adhesion('cell_A2', 'cellsB', -heteroAB)
-goo.add_motion('cell_A2', -motion, size = 5)
+goo.add_motion('cell_A2', -motion, size = size)
 # Define force A2
 goo.add_homo_adhesion('cell_A3', -homoA)
 #goo.add_hetero_adhesion('cell_A3', 'cellsB', -heteroAB)
-goo.add_motion('cell_A3', -motion, size = 5)
+goo.add_motion('cell_A3', -motion, size = size)
 # Define force A2
 goo.add_homo_adhesion('cell_A4', -homoA)
 #goo.add_hetero_adhesion('cell_A4', 'cellsB', -heteroAB)
-goo.add_motion('cell_A4', -motion, size = 5)
+goo.add_motion('cell_A4', -motion, size = size)
 
 
 # Define force A1
 goo.add_homo_adhesion('cell_A5', -homoA)
 #goo.add_hetero_adhesion('cell_B5', 'cellsA', -heteroAB)
-goo.add_motion('cell_A5', -motion, size = 5)
+goo.add_motion('cell_A5', -motion, size = size)
 # Define force A2
 goo.add_homo_adhesion('cell_A6', -homoA)
 #goo.add_hetero_adhesion('cell_B6', 'cellsA', -heteroAB)
-goo.add_motion('cell_A6', -motion, size = 5)
+goo.add_motion('cell_A6', -motion, size = size)
 # Define force A2
 goo.add_homo_adhesion('cell_A7', -homoA)
 #goo.add_hetero_adhesion('cell_B7', 'cellsA', -heteroAB)
-goo.add_motion('cell_A7', -motion, size = 5)
+goo.add_motion('cell_A7', -motion, size = size)
 # Define force A2
 goo.add_homo_adhesion('cell_A8', -homoA)
 #goo.add_hetero_adhesion('cell_B8', 'cellsA', -heteroAB)
-goo.add_motion('cell_A8', -motion, size = 5)
+goo.add_motion('cell_A8', -motion, size = size)
 
 
 #================== Simulation setup ==================
