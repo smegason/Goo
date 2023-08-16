@@ -15,7 +15,7 @@ def main(seed):
 
     #================== Force A Collection ==================
     # Define force A1
-    goo.add_motion('cell_A1', -500, distribution = 'uniform', size = 1)
+    goo.add_motion('cell_A1', -200, distribution = 'uniform', size = 5)
 
     #================== Simulation setup ==================
     handlers = goo.handler_class()

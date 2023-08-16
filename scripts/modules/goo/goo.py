@@ -694,7 +694,7 @@ def apply_physics(obj, modifiers):
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5
     bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
-    bpy.context.object.modifiers['Cloth'].settings.target_volume = 1
+    bpy.context.object.modifiers['Cloth'].settings.target_volume = 0
     bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 1
     bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.05
     # Cloth > Collisions
@@ -1144,7 +1144,7 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
     bpy.context.object.modifiers['Cloth'].settings.quality = 3
-    bpy.context.object.modifiers['Cloth'].settings.air_damping = 1000
+    bpy.context.object.modifiers['Cloth'].settings.air_damping = 0
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
@@ -1524,7 +1524,40 @@ class Force():
     def get_blender_force(self):
         obj = bpy.data.objects[self.name]
         return obj
-  
+    
+
+def add_boundaries(loc, size, shape='BOX', type = 'REFLECTIVE'):
+
+    if not isinstance(loc, tuple) or len(loc) != 3:
+        raise ValueError("Invalid 'loc' argument. It should be a tuple containing X, Y, and Z coordinates.")
+
+    if not all(isinstance(coord, (int, float)) for coord in loc):
+        raise ValueError("Invalid 'loc' coordinates. Coordinates should be integers or floats.")
+
+    if not isinstance(size, tuple) or len(size) != 3:
+        raise ValueError("Invalid 'size' argument. It should be a tuple containing dimensions in X, Y, and Z.")
+
+    if not all(isinstance(dim, (int, float)) for dim in size):
+        raise ValueError("Invalid 'size' dimensions. Dimensions should be integers or floats.")
+
+    if shape not in ['BOX', 'SPHERE']:
+        raise ValueError("Invalid 'shape' argument. Supported shapes are 'BOX' and 'SPHERE'.")
+
+    if shape == 'BOX':
+        bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=loc)
+        bpy.context.object.scale[0] = -size[0]
+        bpy.context.object.scale[1] = -size[1]
+        bpy.context.object.scale[2] = -size[2]
+        bpy.ops.object.modifier_add(type='COLLISION')
+        bpy.ops.object.modifier_add(type='WIREFRAME')
+    elif shape == 'SPHERE':
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=size[0], enter_editmode=False, align='WORLD', location=loc)
+        bpy.context.object.scale[0] = -size[0]
+        bpy.context.object.scale[1] = -size[0]
+        bpy.context.object.scale[2] = -size[0]
+        bpy.ops.object.modifier_add(type='COLLISION')
+        bpy.ops.object.modifier_add(type='WIREFRAME')
+
 
 def add_motion(effector_name, strength, persistence = 0, randomness = 1, distribution = 'uniform', size = 0.1):    
 
@@ -1538,7 +1571,7 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1, distrib
                         f"{bpy.data.objects[effector_name].users_collection[0]['type']}", 
                         strength, 0, 
                         motion=True, 
-                        min_dist=0, max_dist=100)
+                        min_dist=0, max_dist=50)
         force = bpy.data.objects[force.name]
 
         force['persistence'] = persistence
@@ -1722,7 +1755,7 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
         rand_coord_z = random.uniform(-0.5, 0.5)
         rand_coord = tuple((rand_coord_x, rand_coord_y, rand_coord_z))'''
 
-        rand_coord = tuple(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
+        rand_coord = tuple(np.random.uniform(low=-0.01, high=0.01, size=(3,)))
         bpy.ops.object.effector_add(type='FORCE',
                                     enter_editmode=False,
                                     align='WORLD',
@@ -2964,7 +2997,8 @@ class handler_class:
                           division = False, 
                           data = False, 
                           motility = False,
-                          remeshing = False): 
+                          remeshing = False, 
+                          visualize = False): 
 
         self.frame_interval = [start, end]
         bpy.context.scene.frame_set(start)
@@ -3004,6 +3038,8 @@ class handler_class:
         if remeshing: 
             bpy.app.handlers.frame_change_post.append(self.remeshing_handler)
             #bpy.app.handlers.frame_change_post.append(self.select_dividing_cell)
+        if visualize: 
+            bpy.app.handlers.frame_change_post.append(self.visualize_stretching)
 
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
@@ -3266,7 +3302,11 @@ class handler_class:
 
         bm.to_mesh(obj.data)
         bm.free()'''
-                                                                                  
+
+    def adjust_shrink_min(volume, target_volume):
+        volume_deviation = (volume - target_volume) / target_volume
+        shrink_adjustment = 0.01 * math.tanh(5 * volume_deviation)
+        return shrink_adjustment                                                                             
 
     # Member function to handle cell growth
     def growth_handler(self, scene, depsgraph, target):
@@ -3282,12 +3322,22 @@ class handler_class:
 
                     volume = calculate_volume(cell)
                     #target_volume = target
-                    target_volume = ((4/3)*np.pi*(1)**3)*target
+                    target_volume = ((4/3)*np.pi*(1)**3)
                     cell['target volume'] = target_volume
                     cell['volume'] = volume
                     self.volumes[f"{cell.name}"].append(volume)
+
+                    #TODO allow for multiple growth rate, with different functions
+                    volume_deviation = (volume - target_volume) / target_volume
+                    print(f"Current volume deviation: {volume_deviation}")
+                    #shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
+                    shrink_adjustment = 0.001 * (math.exp(volume_deviation) - 1)
+                    #shrink_adjustment = 0.01 * volume_deviation
+                    cell.modifiers["Cloth"].settings.shrink_min += shrink_adjustment
+
+
                     # growth
-                    if volume < (target_volume - target_volume * 0.2): 
+                    '''if volume < (target_volume - target_volume * 0.2): 
                         print(f"Current volume: {volume} is lower than target {target_volume} - 20%")
                         cell.modifiers["Cloth"].settings.shrink_min -= 0.01
                     elif volume < (target_volume - target_volume * 0.05): 
@@ -3307,34 +3357,7 @@ class handler_class:
                         print(f"Current volume: {volume} is higher than target {target_volume} - 1%")
                         cell.modifiers["Cloth"].settings.shrink_min += 0.0005
                     else: 
-                        print(f"Current volume: {volume} is within target {target_volume}")
-
-
-    '''def motion_handler(self, scene, depsgraph): 
-        if scene.frame_current == 2: 
-            for collection in bpy.data.collections: 
-                # Exclude the objects in the force collections
-                if collection.get('type') == 'cell':                        
-                    motion_collection_name = f"motion_{collection.name}"
-                    if any(c.name == motion_collection_name for c in bpy.data.collections):
-                        print(f"Motion collection '{motion_collection_name}' already exists.")
-                        collection_motion = bpy.data.collections[motion_collection_name]
-                    else: 
-                        collection_motion = make_collection(motion_collection_name, type='motion')
-                        for cell in bpy.data.collections.get(collection.name_full).all_objects: 
-                            make_force(f'motion_{cell.name}', f'{cell.name}', self.motion_strength, 0, collection_motion.name_full, motion = True, min_dist=0, max_dist=10)
-
-        else: 
-            for collection in bpy.data.collections: 
-                if collection.get('type') == 'motion':  
-                    forces = bpy.data.collections.get(collection.name_full).all_objects
-                    for force in forces: 
-                        random.seed(10)
-                        rand_coord = tuple(np.random.uniform(low=-5, high=5, size=(3,)))
-                        new_coord = tuple(map(sum, zip(get_centerofmass(bpy.data.objects[force.get('cell')]), rand_coord)))
-                        force.location = new_coord 
-                        # cells will only adhere with other cells that are in the same collection
-                        bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection'''
+                        print(f"Current volume: {volume} is within target {target_volume}")'''
 
     def motion_handler(self, scene, depsgraph): 
         
@@ -3364,16 +3387,64 @@ class handler_class:
                     force['MSD'] = msd
 
                     if force.get('distribution') == 'uniform': 
-                        rand_coord = Vector(np.random.uniform(low=-force['distribution size'], high=force['distribution size'], size=(3,)))
+                        while True:
+                            rand_coord = Vector(np.random.uniform(low=-force['distribution size'], high=force['distribution size'], size=(3,)))
+                            new_loc = Vector(com) + rand_coord
+                            if (new_loc - Vector(com)).length >= 1:
+                                break
                     elif force.get('distribution') == 'gaussian': 
-                        rand_coord = Vector(np.random.normal(loc=0, scale=force['distribution size'], size=(3,)))
+                        while True:
+                            rand_coord = Vector(np.random.normal(loc=0, scale=force['distribution size'], size=(3,)))
+                            new_loc = Vector(com) + rand_coord
+                            if (new_loc - Vector(com)).length >= 1:
+                                break
                     else: 
                         print(f'{force.get("distribution")} is not a supported distribution')
+                        return
+                    
+                    force.location = new_loc
 
-                    new_loc = Vector(com) 
-                    #- (Vector(force.get('persistent direction')) * disp) * force['persistence']
-                    new_loc_rand = new_loc + Vector(rand_coord) * force['randomness']
-                    force.location = new_loc_rand
+                    # constraint force field within the box
+
+                    # Define the box's dimensions and center
+                    box_length = 4.5  # Define the box's length (half of the actual length)
+                    box_center = Vector((-1.5, 0, 0))  # Define the center of the box
+
+                    # Calculate the boundaries of the box
+                    x_min = box_center.x - box_length
+                    x_max = box_center.x + box_length
+                    y_min = box_center.y - box_length
+                    y_max = box_center.y + box_length
+                    z_min = box_center.z - box_length
+                    z_max = box_center.z + box_length
+
+                    constrained_force_location = force.location
+                    # Constrain the x-coordinate within the box
+                    #force.location.x = max(x_min, min(x_max, force.location.x))
+                    # Constrain the y-coordinate within the box
+                    #force.location.y = max(y_min, min(y_max, force.location.y))
+                    # Constrain the z-coordinate within the box
+                    #force.location.z = max(z_min, min(z_max, force.location.z))
+
+                    # Reflect x-coordinate if it's outside the box boundaries
+                    if constrained_force_location.x < x_min:
+                        constrained_force_location.x = 2 * x_min - constrained_force_location.x
+                    elif constrained_force_location.x > x_max:
+                        constrained_force_location.x = 2 * x_max - constrained_force_location.x
+
+                    # Reflect y-coordinate if it's outside the box boundaries
+                    if constrained_force_location.y < y_min:
+                        constrained_force_location.y = 2 * y_min - constrained_force_location.y
+                    elif constrained_force_location.y > y_max:
+                        constrained_force_location.y = 2 * y_max - constrained_force_location.y
+
+                    # Reflect z-coordinate if it's outside the box boundaries
+                    if constrained_force_location.z < z_min:
+                        constrained_force_location.z = 2 * z_min - constrained_force_location.z
+                    elif constrained_force_location.z > z_max:
+                        constrained_force_location.z = 2 * z_max - constrained_force_location.z
+
+                    force.location = constrained_force_location
 
                     '''# cell tracks 
                     # Define the name of the curve object and the new point coordinates
@@ -3571,13 +3642,76 @@ class handler_class:
                 write_file.write(json.dumps(self.motion_path))
             with open(f"{self.data_file_path}_contact_areas.json", 'w') as write_file:
                 write_file.write(json.dumps(self.contact_areas))
-            
+            with open(f"{self.data_file_path}_volumes.json", 'w') as write_file:
+                write_file.write(json.dumps(self.volumes))
+
             if self.seed is not None: 
                 with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
                     write_file.write(json.dumps(self.seed))
 
             #subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
-        
+
+    def visualize_stretching(self, scene, depsgraph):
+        cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
+
+        for cell in cells:
+            obj = bpy.data.objects.get(cell.name)
+
+            # Make sure the object is a mesh
+            if obj is not None and obj.type == 'MESH':
+                # Duplicate the object and apply all modifiers
+                mesh_eval = obj.evaluated_get(depsgraph)
+
+                # Get the vertex coordinates of the original mesh
+                vertices_original = [v.co for v in obj.data.vertices]
+
+                # Calculate stretching ratio for each vertex
+                stretching_ratios = []
+                for vert_original, vert_evaluated in zip(vertices_original, mesh_eval.data.vertices):
+                    stretching_ratio = (vert_evaluated.co - vert_original).length / vert_original.length
+                    stretching_ratios.append(stretching_ratio)
+
+                # Normalize the stretching ratios
+                max_ratio = max(stretching_ratios)
+                normalized_ratios = [ratio / max_ratio if max_ratio != 0 else 0 for ratio in stretching_ratios]
+                print(normalized_ratios)
+
+                # Create a new vertex color layer if it doesn't exist
+                color_layer = obj.data.vertex_colors.get("StretchingRatio")
+                if color_layer is None:
+                    color_layer = obj.data.vertex_colors.new(name="StretchingRatio")
+
+                # Set vertex colors based on stretching ratio (gray to red gradient)
+                for poly in obj.data.polygons:
+                    for loop_index in poly.loop_indices:
+                        vertex_index = obj.data.loops[loop_index].vertex_index
+                        stretching_ratio = normalized_ratios[vertex_index]
+                        color = (stretching_ratio, 1, 0, 1.0)  # Red-scale coloring
+                        color_layer.data[loop_index].color = color
+
+                # Create a new material and assign it to the object
+                material = bpy.data.materials.new(name="StretchingMaterial")
+                obj.data.materials.append(material)
+
+                # Create a material slot for the object and link the material
+                if obj.data.materials:
+                    obj.data.materials[0] = material
+                else:
+                    obj.data.materials.append(material)
+
+                # Set up vertex colors for the material
+                material.use_nodes = True
+                material.node_tree.nodes.clear()
+                vertex_color_node = material.node_tree.nodes.new(type='ShaderNodeVertexColor')
+                shader_node_output = material.node_tree.nodes.new(type='ShaderNodeOutputMaterial')
+                material.node_tree.links.new(vertex_color_node.outputs["Color"], shader_node_output.inputs["Surface"])
+                
+                # Update the mesh to reflect the color changes
+                obj.data.update()
+            else:
+                print("Object is not a mesh or not found.")
+
+
     # not used
     def data_handler(self, scene, depsgraph): 
 
