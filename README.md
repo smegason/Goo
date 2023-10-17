@@ -21,6 +21,7 @@ ___
 <li>Julie De Man, KU Leuven
 <li>Nenghan Lin, KU Leuven
 <li>Jiangli Gui, KU Leuven
+<li>Rifa Gowani, Texas Academy of Mathematics and Science (TAMS) at the University of North Texas (UNT)
 
 ## Documentation
   Full documentation available on <a href="https://antoineruzette.github.io/goo_gallery/">Goo's website</a>. 
