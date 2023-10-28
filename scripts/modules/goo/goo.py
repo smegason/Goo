@@ -13,27 +13,11 @@ import math
 from datetime import datetime
 import json
 import subprocess
-import mathutils.bvhtree as bvhtree
 import itertools
-from mathutils.kdtree import KDTree
 from importlib import reload
 import bmesh
-import bgl
 import argparse
 
-
-"""
-Refactored by Antoine Ruzette, Jan. 2022.
-
-Note on comments: 
-Core functions are required for ``Goo`` to correctly run. 
-Auxilliary function are not required for ``Goo`` to run but are used for supporting tasks such as retrieving metrics - typically they can be removed. 
-
-Sphynx docstring was enhanced by adding types, and written in a more sphynx-ic way. 
-"""
-
-# TODO: explain differences between edit and object mode
-# TODO: explain Blender's modifiers as a data type
 
 """
 Refactored by Antoine Ruzette, November 2022.
@@ -45,8 +29,6 @@ Auxilliary function are not required for ``Goo`` to run but are used for support
 Sphynx docstring was enhanced by adding types, and written in a more sphynx-ic way. 
 """
 
-# TODO: explain differences between edit and object mode
-# TODO: explain Blender's modifiers as a data type
 
 def calculate_volume(obj):
     """Core function: calculates the volume of the Blender mesh. 
