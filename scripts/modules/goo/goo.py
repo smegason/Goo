@@ -537,12 +537,12 @@ def divide_boolean(obj):
     solid_mod.thickness = 0.01
     bpy.ops.object.modifier_apply(modifier=solid_mod.name)
 
-    Force.force_list = [force for force in Force.force_list if force.name != obj['force']]
-    strength = bpy.data.objects[obj['force']].field.strength
-    falloff = bpy.data.objects[obj['force']].field.falloff_power
-    force_collection = bpy.data.objects[obj['force']].users_collection[0].name
-    if obj['force'] in bpy.data.objects:
-        bpy.data.objects.remove(bpy.data.objects[obj['force']], do_unlink=True)
+    Force.force_list = [force for force in Force.force_list if force.name != obj['adhesion force']]
+    strength = bpy.data.objects[obj['adhesion force']].field.strength
+    falloff = bpy.data.objects[obj['adhesion force']].field.falloff_power
+    force_collection = bpy.data.objects[obj['adhesion force']].users_collection[0].name
+    if obj['adhesion force'] in bpy.data.objects:
+        bpy.data.objects.remove(bpy.data.objects[obj['adhesion force']], do_unlink=True)
 
     # Add boolean modifier to the original object
     bpy.context.view_layer.objects.active = obj
@@ -1508,7 +1508,7 @@ class Force():
         return obj
     
 
-def add_boundaries(loc, size, shape='BOX', type = 'REFLECTIVE'):
+def add_boundaries(loc, size, shape='BOX', type='REFLECTIVE', name='box'):
 
     if not isinstance(loc, tuple) or len(loc) != 3:
         raise ValueError("Invalid 'loc' argument. It should be a tuple containing X, Y, and Z coordinates.")
@@ -1527,13 +1527,16 @@ def add_boundaries(loc, size, shape='BOX', type = 'REFLECTIVE'):
 
     if shape == 'BOX':
         bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=loc)
+        bpy.context.object.name = name
         bpy.context.object.scale[0] = -size[0]
         bpy.context.object.scale[1] = -size[1]
         bpy.context.object.scale[2] = -size[2]
         bpy.ops.object.modifier_add(type='COLLISION')
         bpy.ops.object.modifier_add(type='WIREFRAME')
+        
     elif shape == 'SPHERE':
         bpy.ops.mesh.primitive_uv_sphere_add(radius=size[0], enter_editmode=False, align='WORLD', location=loc)
+        bpy.context.object.name = name
         bpy.context.object.scale[0] = -size[0]
         bpy.context.object.scale[1] = -size[0]
         bpy.context.object.scale[2] = -size[0]
@@ -1553,15 +1556,16 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1, distrib
                         f"{bpy.data.objects[effector_name].users_collection[0]['type']}", 
                         strength, 0, 
                         motion=True, 
-                        min_dist=0, max_dist=50)
+                        min_dist=0, max_dist=4)
         force = bpy.data.objects[force.name]
+        print(force)
 
         force['persistence'] = persistence
         force['randomness'] = randomness
         force['distribution'] = distribution
         force['distribution size'] = size
 
-        cell = bpy.data.objects[force.get('cell')]
+        '''cell = bpy.data.objects[force.get('cell')]
         com = get_centerofmass(cell)
         dir_vec = (Vector(com) - bpy.data.objects[force.name].location)
         dir_vec.normalize()
@@ -1572,7 +1576,7 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1, distrib
         # Define the list of coordinates
         coords = [(com[0], com[1], com[2])]
 
-        '''# Create a new curve data block
+        # Create a new curve data block
         curve_cell_data = bpy.data.curves.new(name='cell motion', type='CURVE')
         curve_cell_data.dimensions = '3D'
         # Create a new spline and add it to the curve data block
@@ -1732,12 +1736,10 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
                 coll.objects.link(bpy.data.objects[force.name])'''
 
     elif motion == True: 
-        '''rand_coord_x = random.uniform(-0.5, 0.5)
-        rand_coord_y = random.uniform(-0.5, 0.5)
-        rand_coord_z = random.uniform(-0.5, 0.5)
-        rand_coord = tuple((rand_coord_x, rand_coord_y, rand_coord_z))'''
 
-        rand_coord = tuple(np.random.uniform(low=-0.01, high=0.01, size=(3,)))
+        rand_coord = tuple(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
+        print(f'Random displacement new coord: {tuple(map(sum, zip(get_centerofmass(bpy.data.objects[cell]), rand_coord)))}')
+        print(f'Random displacement from motion: {rand_coord}')
         bpy.ops.object.effector_add(type='FORCE',
                                     enter_editmode=False,
                                     align='WORLD',
@@ -1774,18 +1776,9 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
     bpy.context.object.field.distance_min = min_dist
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
-    # add links for falloff_type and shape
 
     bpy.context.object['cell'] = cell_name
-    '''# Add the active cell to our specific collection 
-    for collection in same_collections: 
-        collection.objects.link(bpy.data.objects[force.name])'''
-
-    # Set the force as active object
-    #bpy.context.view_layer.objects.active = bpy.data.objects[force.name]
-    #collection = bpy.data.objects[force.name].users_collection[0]
-    # Remove duplicate objects outside of the collection
-    #collection.objects.unlink(bpy.data.objects[force.name])
+ 
     scene_collection = bpy.context.scene.collection
     scene_collection.objects.unlink(bpy.data.objects[force.name])
 
@@ -1817,14 +1810,26 @@ def setup_world(seed=None):
     bpy.context.scene.unit_settings.time_unit = 'SECONDS'
     bpy.context.scene.unit_settings.temperature_unit = 'CELSIUS'
 
-    # Delete all existing collections 
+    '''# Delete all existing collections 
     for collection in bpy.data.collections:  # loop through the existing collection
         # loop through objects in collection
         for objs in collection.objects:
             # delete existing objects in collection 
             bpy.data.objects.remove(objs)
         # Delete collection
+        bpy.data.collections.remove(collection)'''
+    
+    # Delete all existing objects in the scene except cameras and lights
+    for obj in bpy.context.scene.objects:
+        if obj.type not in ['CAMERA', 'LIGHT']:
+            bpy.data.objects.remove(obj)
+
+    # Delete all existing collections 
+    for collection in bpy.data.collections:
+        # Delete collection
         bpy.data.collections.remove(collection)
+
+
 
     # Add an HDRI image for illumination
     add_world_HDRI()
@@ -2980,7 +2985,8 @@ class handler_class:
                           data = False, 
                           motility = False,
                           remeshing = False, 
-                          visualize = False): 
+                          visualize = False,
+                          boundary = False): 
 
         self.frame_interval = [start, end]
         bpy.context.scene.frame_set(start)
@@ -3017,6 +3023,8 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.division_handler)
         if motility: 
             bpy.app.handlers.frame_change_post.append(self.motion_handler)
+        if boundary: 
+            bpy.app.handlers.frame_change_post.append(self.boundary_handler)
         if remeshing: 
             bpy.app.handlers.frame_change_post.append(self.remeshing_handler)
             #bpy.app.handlers.frame_change_post.append(self.select_dividing_cell)
@@ -3151,10 +3159,10 @@ class handler_class:
 
     def division_handler(self, scene, despgraph): 
 
-        rates = np.arange(0, 1, 0.05, dtype=np.float)
+        #rates = np.arange(0, 1, 0.05, dtype=np.float)
         div_frames = range(self.frame_interval[0], self.frame_interval[1], self.division_rate)[1:]
         #sphere_frames = [num for start in div_frames for num in range(start+5, start+len(rates))]
-        div_frames_physics = range(self.frame_interval[0] + 3, self.frame_interval[1], self.division_rate)[1:]
+        div_frames_physics = range(self.frame_interval[0] + 0, self.frame_interval[1], self.division_rate)[1:]
         div_frames_sphere = range(self.frame_interval[0] + 5, self.frame_interval[1], self.division_rate)[1:]
             
         if scene.frame_current in div_frames: 
@@ -3165,15 +3173,18 @@ class handler_class:
 
             for collection in bpy.data.collections: 
                 # Exclude the objects in the force collections
-                if collection['type'] == 'cell':
-                    # Loop through the objects existed in the collection 
-                    print(f"Collection under division: {collection.name_full}")
-                    cells = bpy.data.collections.get(collection.name_full).all_objects
-                    #cells.append(None)
-                    print(f"Cells under division: {[obj.name for obj in cells]}")
+                #if collection['type'] == 'cell':
+                # Loop through the objects existed in the collection 
+                print(f"Collection under division: {collection.name_full}")
+                cells = [obj for obj in bpy.data.collections.get(collection.name_full).all_objects if obj.get('object') == 'cell']
+                '''for cell in cells: 
+                    print(cell.get('object'))
+                    if cell.get('object') and cell['object'] == 'cell': 
+                        #cells.append(None)'''
+                print(f"Cells under division: {[obj.name for obj in cells]}")
 
-                    # randomly choose a cell to divide
-                    self.cell_under_div = random.choice(cells)
+                # randomly choose a cell to divide
+                self.cell_under_div = random.choice(cells)
 
             if self.cell_under_div is not None: 
                 #for obj in cells:   
@@ -3211,13 +3222,13 @@ class handler_class:
             apply_daugther_force(self.daugthers[0], self.strength, self.force_collection, self.falloff)
             apply_daugther_force(self.daugthers[1], self.strength, self.force_collection, self.falloff)
 
-        if scene.frame_current in div_frames_sphere: 
+        #if scene.frame_current in div_frames_sphere: 
             
-            bpy.context.view_layer.objects.active = self.daugthers[0]
-            to_sphere(self.daugthers[0], 1)
+        #    bpy.context.view_layer.objects.active = self.daugthers[0]
+        #    to_sphere(self.daugthers[0], 1)
 
-            bpy.context.view_layer.objects.active = self.daugthers[1]
-            to_sphere(self.daugthers[1], 1)
+        #    bpy.context.view_layer.objects.active = self.daugthers[1]
+        #    to_sphere(self.daugthers[1], 1)
 
             #remesh(self.daugthers[0])
             #remesh(self.daugthers[1])
@@ -3341,9 +3352,64 @@ class handler_class:
                     else: 
                         print(f"Current volume: {volume} is within target {target_volume}")'''
 
+    def boundary_handler(self, scene, depsgraph):
+        # Get the 'box' object
+        box_object = bpy.data.objects.get('box')
+        print(box_object)
+
+        if box_object:
+            # Get the size and center from the object name
+            box_dimensions = box_object.dimensions
+            box_center = box_object.location
+
+            # Calculate the boundaries of the box
+            x_min = box_center.x - box_dimensions.x / 2
+            x_max = box_center.x + box_dimensions.x / 2
+            y_min = box_center.y - box_dimensions.y / 2
+            y_max = box_center.y + box_dimensions.y / 2
+            z_min = box_center.z - box_dimensions.z / 2
+            z_max = box_center.z + box_dimensions.z / 2
+
+            for collection in bpy.data.collections: 
+                forces = bpy.data.collections.get(collection.name_full).all_objects
+                for force in forces: 
+                    if force.get('motion') is not None and force.get('motion') == True: 
+
+                        constrained_force_location = force.location
+                        print(f'Before constrained: {force.location}')
+
+                        # Reflect x-coordinate if it's outside the box boundaries
+                        if constrained_force_location.x < x_min:
+                            constrained_force_location.x = 2 * x_min - constrained_force_location.x
+                        elif constrained_force_location.x > x_max:
+                            constrained_force_location.x = 2 * x_max - constrained_force_location.x
+
+                        # Reflect y-coordinate if it's outside the box boundaries
+                        if constrained_force_location.y < y_min:
+                            constrained_force_location.y = 2 * y_min - constrained_force_location.y
+                        elif constrained_force_location.y > y_max:
+                            constrained_force_location.y = 2 * y_max - constrained_force_location.y
+
+                        # Reflect z-coordinate if it's outside the box boundaries
+                        if constrained_force_location.z < z_min:
+                            constrained_force_location.z = 2 * z_min - constrained_force_location.z
+                        elif constrained_force_location.z > z_max:
+                            constrained_force_location.z = 2 * z_max - constrained_force_location.z
+
+                        force.location = constrained_force_location
+                        print(f'After constrained: {force.location}')
+
+                        # Check if the force location is outside the box
+                        if not (x_min <= constrained_force_location.x <= x_max and
+                                y_min <= constrained_force_location.y <= y_max and
+                                z_min <= constrained_force_location.z <= z_max):
+                            raise ValueError("Force location is outside the box boundaries.")
+
+
     def motion_handler(self, scene, depsgraph): 
         
         cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
+        print(cells)
         msd = dict()        
         
         for collection in bpy.data.collections: 
@@ -3369,24 +3435,18 @@ class handler_class:
                     force['MSD'] = msd
 
                     if force.get('distribution') == 'uniform': 
-                        while True:
-                            rand_coord = Vector(np.random.uniform(low=-force['distribution size'], high=force['distribution size'], size=(3,)))
-                            new_loc = Vector(com) + rand_coord
-                            if (new_loc - Vector(com)).length >= 1:
-                                break
+                        rand_coord = Vector(np.random.uniform(low=-force['distribution size'], high=force['distribution size'], size=(3,)))
+                        new_loc = Vector(com) + rand_coord
                     elif force.get('distribution') == 'gaussian': 
-                        while True:
-                            rand_coord = Vector(np.random.normal(loc=0, scale=force['distribution size'], size=(3,)))
-                            new_loc = Vector(com) + rand_coord
-                            if (new_loc - Vector(com)).length >= 1:
-                                break
+                        rand_coord = Vector(np.random.normal(loc=0, scale=force['distribution size'], size=(3,)))
+                        new_loc = Vector(com) + rand_coord
                     else: 
                         print(f'{force.get("distribution")} is not a supported distribution')
                         return
                     
                     force.location = new_loc
 
-                    # constraint force field within the box
+                    '''# constraint force field within the box
 
                     # Define the box's dimensions and center
                     box_length = 4.5  # Define the box's length (half of the actual length)
@@ -3426,7 +3486,7 @@ class handler_class:
                     elif constrained_force_location.z > z_max:
                         constrained_force_location.z = 2 * z_max - constrained_force_location.z
 
-                    force.location = constrained_force_location
+                    force.location = constrained_force_location'''
 
                     '''# cell tracks 
                     # Define the name of the curve object and the new point coordinates
@@ -3856,14 +3916,15 @@ class handler_class:
 
 
     def timing_elapsed_handler(self, scene, depsgraph): 
-        elpased_time = datetime.now() - self.time
-        elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
         frame_written = scene.frame_current
-        if frame_written != 1: 
+        if frame_written not in [1,2]: 
+            elpased_time = datetime.now() - self.time
+            elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
             self.times.update({frame_written: elapsed_time_secs})
-        print('________________________________________________________')
-        print(f"Render Started at:{self.time}")  
-        print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs:.1f}")
+            print('________________________________________________________')
+            print(f"Render Started at:{self.time}")  
+            print(f"Current frame: {frame_written}")
+            print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs:.1f}")
 
 
     def stop_animation(self, scene, depsgraph):
