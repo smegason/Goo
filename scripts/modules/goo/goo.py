@@ -83,7 +83,7 @@ def get_centerofmass(obj):
     vertices = obj_eval.data.vertices
     vert_coords = np.asarray([(obj_eval.matrix_world @ v.co) for v in vertices])
     COM = np.mean(vert_coords, axis=0)
-        
+ 
     return tuple(COM)
 
 
@@ -212,7 +212,7 @@ def get_long_axis(obj):
         (evaluated_object.matrix_world @ last_vertex.co) -
         (evaluated_object.matrix_world @ first_vertex.co)
     )
-    
+
     # Compute end points of the long axis
     endpoints = [first_vertex.co, last_vertex.co]
 
@@ -1094,11 +1094,11 @@ def make_collection(name, type):
     else: '''
 
     return collection
-    # else: 
+    # else:
     #    print(f"Only the following types are allowed: {allowed_type}")
 
-    '''if type == 'force' or type == 'motion': 
-        # check if global collection is already created 
+    '''if type == 'force' or type == 'motion':
+        # check if global collection is already created
         if any(c.name == "Global force collection" for c in bpy.data.collections):
             print(f'Global force collection already created')
             global_force_collection = bpy.data.collections["Global force collection"]
@@ -1112,12 +1112,12 @@ def make_collection(name, type):
             bpy.context.scene.collection.children.unlink(collection)
             global_force_collection.children.link(collection)
             return collection, global_force_collection
-    else: 
+    else:
         return collection
 
-else: 
+else:
     print(f"{type} is not a valid collection type, should be in {allowed_type}")
-    return''' 
+    return'''
 
 
 def make_cell(
@@ -4248,9 +4248,3 @@ class handler_class:
             bpy.ops.screen.animation_cancel(restore_frame=True) 
             # closes Blender then
             # bpy.ops.wm.quit_blender()
-
-
-
-
-
-
