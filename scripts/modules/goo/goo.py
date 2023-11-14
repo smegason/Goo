@@ -1,6 +1,3 @@
-# goo.py - This is the Goo library. It contains all helper functions for goo
-# goo is licensed under BSDv2
-
 from collections import defaultdict
 import bpy
 import mathutils
@@ -13,10 +10,7 @@ import math
 from datetime import datetime
 import json
 import subprocess
-import itertools
-from importlib import reload
 import bmesh
-import argparse
 
 
 """
@@ -24,7 +18,9 @@ Refactored by Antoine Ruzette, November 2022.
 
 Note on comments: 
 Core functions are required for ``Goo`` to correctly run. 
-Auxilliary function are not required for ``Goo`` to run but are used for supporting tasks such as retrieving metrics - typically they can be removed. 
+Auxilliary function are not required for ``Goo`` to run 
+but are used for supporting tasks such as retrieving 
+metrics - typically they can be removed. 
 
 Sphynx docstring was enhanced by adding types, and written in a more sphynx-ic way. 
 """
@@ -36,13 +32,17 @@ def calculate_volume(obj):
     In order to retrieve the mesh as it is currrently evaluated - including 
     the effect of all modifiers - in the simulation, its corresponding evaluated 
     ID is obtained from the dependency graph for the current context. 
-    .. seealso:: [Blender API Documentation > ``evaluated_get(depsgraph)``](https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get)
+
+    .. seealso:: [Blender API Documentation > 
+                ``evaluated_get(depsgraph)``]
+                (https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get)
 
     :param bpy.data.objects['name'] obj: The Blender mesh.
     :returns: The volume of the mesh. 
     :rtype: float
 
-    .. note:: The function may return a negative volume - see ``calc_volume(signed=True)``. 
+    .. note:: The function may return a negative volume. 
+                See ``calc_volume(signed=True)``. 
 
     """
 
@@ -64,6 +64,7 @@ def calculate_volume(obj):
 
     return volume
 
+
 def get_centerofmass(obj): 
     """Core function: calculates the center of mass of a mesh. 
 
@@ -84,6 +85,7 @@ def get_centerofmass(obj):
     COM = np.mean(vert_coords, axis=0)
         
     return tuple(COM)
+
 
 def get_long_axis_np(obj):
     """Calculates the long axis of a mesh.
@@ -115,7 +117,8 @@ def get_long_axis_np(obj):
 
     return tuple(long_axis)[:3]
 
-def get_long_axis_global(obj): 
+
+def get_long_axis_global(obj):
 
     # Get the evaluated object and its vertices
     dg = bpy.context.evaluated_depsgraph_get()
@@ -133,7 +136,8 @@ def get_long_axis_global(obj):
     major_axis = eigenvectors[:, 0]
 
     # Convert the major axis to global coordinates, no need for this line
-    major_axis_global = np.array(evaluated_object.matrix_world) @ np.append(major_axis, 1)
+    major_axis_global = np.array(evaluated_object.matrix_world) @ np.append(major_axis, 
+                                                                            1)
 
     return tuple(major_axis_global)[:3]
 
@@ -145,7 +149,8 @@ def get_long_axis(obj):
     which corresponds to the long axis.
 
     :param bpy.data.objects['name'] obj: The Blender mesh.
-    :returns: The coordinates of the long axis of the mesh as a tuple(x, y, z) which gives direction from the origin (0, 0, 0). 
+    :returns: The coordinates of the long axis of the mesh as a tuple(x, y, z) 
+                which gives direction from the origin (0, 0, 0). 
     :rtype: tuple
     """
 
@@ -203,7 +208,10 @@ def get_long_axis(obj):
     last_vertex = vertices[vertex_indices[-1]]
 
     # Calculate the length of the long axis contained in the mesh
-    long_axis_length = np.linalg.norm((evaluated_object.matrix_world @ last_vertex.co) - (evaluated_object.matrix_world @ first_vertex.co))
+    long_axis_length = np.linalg.norm(
+        (evaluated_object.matrix_world @ last_vertex.co) -
+        (evaluated_object.matrix_world @ first_vertex.co)
+    )
     
     # Compute end points of the long axis
     endpoints = [first_vertex.co, last_vertex.co]
@@ -212,12 +220,16 @@ def get_long_axis(obj):
 
 
 def get_longaxis_angles(axis):
-    """Auxilliary function: retrieves the 2 angles associated with the long axis of a cell. 
+    """Auxilliary function: retrieves the 2 angles associated 
+        with the long axis of a cell. 
 
-    :param tuple axis: Coordinates of the long axis to the division plane - as retrived by ``get_major_axis(obj)``.
+    :param tuple axis: Coordinates of the long axis to the division plane 
+                        as retrived by ``get_major_axis(obj)``.
     :returns: 
-        - phi (:py:class:`tuple`) - Phi is the angle between the division axis and the z-axis in spherical coordinates. 
-        - theta (:py:class:`tuple`) - Theta is the angle projected on the xy plane in cartesian 3D coordinates. 
+        - phi (:py:class:`tuple`) - Phi is the angle between the division axis 
+            and the z-axis in spherical coordinates. 
+        - theta (:py:class:`tuple`) - Theta is the angle projected on the xy plane 
+            in cartesian 3D coordinates. 
     """
 
     # We define the unit vector of z-axis
@@ -251,7 +263,8 @@ def repair_hole(obj):
 
     """Core function: repair the holes created by the bissection of the Blender mesh. 
     
-    This function adds a new face to the cell after division (bissection - in two equal parts) 
+    This function adds a new face to the cell 
+    after division (bisection in two equal parts) 
     of the mesh and regularizes the mesh so that the mesh is evenly covered with faces. 
 
     :param bpy.data.objects['name'] obj: The Blender mesh. 
@@ -276,7 +289,8 @@ def repair_hole(obj):
 
 
 def print_info(obj):
-    """Auxilliary function: Retrieves the number of vertices, edges and faces of a Blender object
+    """Auxilliary function: Retrieves the number of vertices, 
+        edges and faces of a Blender object
 
     :param bpy.data.objects['name'] obj: The Blender mesh. 
     :returns: The number of vertices, faces and edges of ``obj``. 
@@ -289,6 +303,7 @@ def print_info(obj):
     print(f'Vertices: {len(vertices)}; Edges: {len(edges)}; Faces: {len(faces)}')
     
     return [vertices, edges, faces]
+
 
 # not used
 def get_curvature_deviation(obj):
@@ -310,29 +325,32 @@ def get_curvature_deviation(obj):
         deviation_sum += deviation
         total_faces += 1
     
-    # Divide the sum of deviations by the total number of faces to get the average deviation
+    # Divide the sum of deviations by the total number of
+    # faces to get the average deviation
     avg_deviation = deviation_sum / total_faces
     
     return avg_deviation
 
 
 def select_translate_cell(obj, COM, major_axis):
-    """Core function: selects one of the daughter cells to translate. 
+    """Core function: selects one of the daughter cells to translate.
     
-    After dividing the mother cell, this function compares the 
-    center of mass of the original mother cell to that of the 
-    corresponding daughter cells. To do so, the signed distance 
-    between the daughter cell's center of mass and the original 
+    After dividing the mother cell, this function compares the
+    center of mass of the original mother cell to that of the
+    corresponding daughter cells. To do so, the signed distance
+    between the daughter cell's center of mass and the original
     plane of division is calculated.
     If this distance is positive, the function returns True
     and this selected daughter cell will be translated later.
     If this distance is negative, the function returns False
     and the other daughter cell will be translated later
 
-    :param bpy.data.objects['name'] obj: The Blender mesh of the mother cell. 
-    :param tuple COM: The XYZ coordinates of the center of mass of the mother cell. 
-    :param tuple major_axis: The major axis of the mother mesh specified by XYZ coordinates from the origin. 
-    :returns: A boolean flag indicating which cell has to be translated in ``translate_cell(obj, axis)``. 
+    :param bpy.data.objects['name'] obj: The Blender mesh of the mother cell.
+    :param tuple COM: The XYZ coordinates of the center of mass of the mother cell.
+    :param tuple major_axis: The major axis of the mother mesh
+        specified by XYZ coordinates from the origin.
+    :returns: A boolean flag indicating which cell has to be translated
+        in ``translate_cell(obj, axis)``.
     :rtype: Boolean
     """
 
@@ -345,18 +363,19 @@ def select_translate_cell(obj, COM, major_axis):
     # Calculate the signed distance between the new center of mass
     # and the plane of division
     distance = mathutils.geometry.distance_point_to_plane(new_COM, com, major_axis)
-    # If the signed distance is greater than 0, return True. Else, return False. 
+    # If the signed distance is greater than 0, return True. Else, return False.
     translated = True if distance > 0 else False
     return translated
 
 
 def translate_cell(obj, axis):
-    """Core function: translates cells along the given axis. 
+    """Core function: translates cells along the given axis.
 
-    This function is used during cell division so daughters have some space. 
+    This function is used during cell division so daughters have some space.
 
-    :param bpy.data.objects['name'] obj: The Blender mesh to translate. 
-    :param tuple axis: The XYZ coordinates of the major axis of the Blender mesh to translate.
+    :param bpy.data.objects['name'] obj: The Blender mesh to translate.
+    :param tuple axis: The XYZ coordinates of the major axis of
+        the Blender mesh to translate.
     :returns: None
     """
 
@@ -372,21 +391,26 @@ def translate_cell(obj, axis):
     # translate the cell
     bpy.ops.transform.translate(value=new_coord)    
 
-def seperate_cell(obj):
-    """Core function: splits one cell into two for cell division. 
-    
-    The mother Blender mesh is split in two given a division plane. 
-    The division plane is specified by a point on this plane, that is the center of mass of the mother,
-    and the direction of this point, given by the long axis of the mother mesh. 
-    By naming convention, the daughter cells inherit their mother name added with .001. 
 
-    :param bpy.data.objects['name'] obj: the Blender mesh to divide in two. 
-    :returns: 
-        - mother_name (:py:class:`str`) - The name of the mother cell. 
-        - daughter_name (:py:class:`str`) - The name of the daughter cell. 
-        - COM (:py:class:`tuple`) - The XYZ coordinates of the center of mass of the mother cell. 
-        - major_axis (:py:class:`tuple`) - The XYZ coordinates of the long axis of the mother cell. 
+def separate_cell(obj):
+    """Core function: splits one cell into two for cell division.
+
+    The mother Blender mesh is split in two given a division plane.
+    The division plane is specified by a point on this plane, 
+    which is the center of mass of the mother, and the direction of this point, 
+    given by the long axis of the mother mesh.
+    By naming convention, the daughter cells inherit their mother name added with .001.
+
+    :param bpy.data.objects['name'] obj: the Blender mesh to divide in two.
+    :returns:
+        - mother_name (:py:class:`str`) - The name of the mother cell.
+        - daughter_name (:py:class:`str`) - The name of the daughter cell.
+        - COM (:py:class:`tuple`) - The XYZ coordinates of the center of mass 
+            of the mother cell.
+        - major_axis (:py:class:`tuple`) - The XYZ coordinates of the long axis 
+            of the mother cell.
     """
+
     # TODO allow division along a supplied axis.
     # If none supplied then divide along major axis
 
@@ -421,7 +445,8 @@ def seperate_cell(obj):
     new_vert_coords = np.asarray(new_vert_coords)
 
     # We will choose half of the vertices to be separated into a new object.
-    # We create a list of the vertex indices we will use to create the daughter cell object
+    # We create a list of the vertex indices we will use 
+    # to create the daughter cell object
     separation_indices = []
     # We loop through each vertex and calculate the signed distance between the vertex
     # and the division plane (which is specified by the center of mass and major axis).
@@ -453,6 +478,7 @@ def seperate_cell(obj):
     bpy.data.objects[mother_name].select_set(True)
     return mother_name, daughter_name, COM, major_axis
 
+
 def get_line_angles(cell, p1, p2):
 
     # Calculate the direction vectors of the global axes
@@ -463,7 +489,8 @@ def get_line_angles(cell, p1, p2):
     # Get the vector representing the line
     line_vector = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
 
-    # Calculate the angles between the line and each axis, 90 is added to get the orthogonal
+    # Calculate the angles between the line and each axis
+    # 90 is added to get the orthogonal
     x_angle = math.radians(math.degrees(math.acos(line_vector.dot(x_dir))) + 90)
     y_angle = math.radians(math.degrees(math.acos(line_vector.dot(y_dir))) + 90)
     z_angle = math.radians(math.degrees(math.acos(line_vector.dot(z_dir))))
@@ -494,7 +521,6 @@ def divide_boolean(obj):
     for modifier_value in modifier_values:
         print(modifier_value)
 
-
     # Create a dictionary to store the modifier data
     '''modifier_data = {}
     # Loop through each modifier and store its properties in the dictionary
@@ -506,9 +532,9 @@ def divide_boolean(obj):
         modifier_data[mod.name] = mod_data'''
 
     # Center the long axis on the COM, and normalize vector
-    line = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
+    # line = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
     # Get the angles representing the orientation of the division plane
-    x,y,z = get_line_angles(obj, p1, p2)
+    x, y, z = get_line_angles(obj, p1, p2)
     # Get name of dividing cell
     mother_name = obj.name
     # Create division plane
@@ -517,7 +543,7 @@ def divide_boolean(obj):
                                              align='WORLD', 
                                              location=p1, 
                                              scale=(1, 1, 1), 
-                                             rotation = (x,y,z))
+                                             rotation=(x, y, z))
     # Set plane as active object
     plane = bpy.context.active_object
     # Rename plane with specific cell name
@@ -531,7 +557,9 @@ def divide_boolean(obj):
     solid_mod.thickness = 0.01
     bpy.ops.object.modifier_apply(modifier=solid_mod.name)
 
-    Force.force_list = [force for force in Force.force_list if force.name != obj['adhesion force']]
+    Force.force_list = [
+        force for force in Force.force_list if force.name != obj['adhesion force']
+    ]
     strength = bpy.data.objects[obj['adhesion force']].field.strength
     falloff = bpy.data.objects[obj['adhesion force']].field.falloff_power
     force_collection = bpy.data.objects[obj['adhesion force']].users_collection[0].name
@@ -552,10 +580,10 @@ def divide_boolean(obj):
     bpy.data.objects[plane_name].hide_set(True)
 
     # Deselect all vertices in edit mode
-    bpy.ops.object.mode_set(mode = 'EDIT')  
+    bpy.ops.object.mode_set(mode='EDIT')  
     bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     # Select a vertex in object mode
     mesh = obj.data
@@ -563,21 +591,30 @@ def divide_boolean(obj):
     vertex.select = True
 
     # select all vertices linked to the selected vertex
-    bpy.ops.object.mode_set(mode = 'EDIT') 
+    bpy.ops.object.mode_set(mode='EDIT') 
     bpy.ops.mesh.select_linked(delimit={'NORMAL'})
     # Separate the outer and inner parts of the mesh
     bpy.ops.mesh.separate(type='SELECTED')
-    bpy.ops.object.mode_set(mode = 'OBJECT')  
+    bpy.ops.object.mode_set(mode='OBJECT')  
 
-    d1 = bpy.context.selected_objects[0] # selects cell_003, to be renamed
-    d1.name = f"{mother_name}.001" # new cell
+    d1 = bpy.context.selected_objects[0]  # selects cell_003, to be renamed
+    d1.name = f"{mother_name}.001"  # new cell
 
     d2 = bpy.context.scene.objects[mother_name]
-    d2.name = f"{mother_name}.002" # mother cell
+    d2.name = f"{mother_name}.002"  # mother cell
 
     '''bpy.context.view_layer.objects.active = d1
-    bpy.ops.mesh.primitive_round_cube_add(change=True, radius= 1, size=(1, 1, 1), 
-                                          arc_div=4, lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False)
+    bpy.ops.mesh.primitive_round_cube_add(
+        change=True, 
+        radius=1, 
+        size=(1, 1, 1), 
+        arc_div=4, 
+        lin_div=0, 
+        div_type='CORNERS', 
+        odd_axis_align=False, 
+        no_limit=False
+    )
+
 
     # edit to object update
     bpy.ops.object.mode_set(mode = 'EDIT')  
@@ -588,8 +625,16 @@ def divide_boolean(obj):
     bpy.context.view_layer.update()
     
     bpy.context.view_layer.objects.active = d2
-    bpy.ops.mesh.primitive_round_cube_add(change=True, radius= 1, size=(1, 1, 1), 
-                                          arc_div=4, lin_div=0, div_type='CORNERS', odd_axis_align=False, no_limit=False)
+    bpy.ops.mesh.primitive_round_cube_add(
+        change=True,
+        radius=1,
+        size=(1, 1, 1),
+        arc_div=4,
+        lin_div=0,
+        div_type='CORNERS',
+        odd_axis_align=False,
+        no_limit=False
+    )
     bpy.context.object.scale = (1,1,1)
 
     # edit to object update
@@ -606,7 +651,8 @@ def divide_boolean(obj):
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
 
-    '''# Loop through each modifier in the modifier data dictionary and add it to the first empty object
+    '''# Loop through each modifier in the modifier data dictionary 
+    # and add it to the first empty object
     for mod_name, mod_data in modifier_data.items():
         mod = d1.modifiers.new(name=mod_name, type=mod_data['type'])
         for prop, value in mod_data.items():
@@ -621,13 +667,14 @@ def divide_boolean(obj):
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
-    #bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
     return d1, d2, strength, force_collection, falloff, modifier_values
 
+
 def apply_physics(obj, modifiers): 
 
-    print(f'Starting modifiers declaration')
+    print('Starting modifiers declaration')
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.objects.active = obj
@@ -636,8 +683,8 @@ def apply_physics(obj, modifiers):
     # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = 1
-    #subdiv_mod = obj.modifiers[-1]
-    #bpy.ops.object.modifier_apply(modifier=subdiv_mod.name)
+    # subdiv_mod = obj.modifiers[-1]
+    # bpy.ops.object.modifier_apply(modifier=subdiv_mod.name)
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
@@ -660,12 +707,15 @@ def apply_physics(obj, modifiers):
     # Cloth > Internal Springs
     bpy.context.object.modifiers['Cloth'].settings.use_internal_springs = True
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_length = 1
-    bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion = 0.785398
+    bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion = \
+        0.785398
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_normal_check = True
     bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness = 10
     bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness = 10
-    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness_max = 10000
-    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness_max = 10000
+    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness_max = \
+        10000
+    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness_max \
+        = 10000
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5
@@ -711,10 +761,11 @@ def apply_physics(obj, modifiers):
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
 
+
 def apply_daugther_force(obj, strength, collection, falloff): 
 
-    #strength = bpy.data.objects[d2['force']].field.strength
-    #force_collection = bpy.data.objects[d2['force']].users_collection[0].name
+    # strength = bpy.data.objects[d2['force']].field.strength
+    # force_collection = bpy.data.objects[d2['force']].users_collection[0].name
 
     if obj['force'] in bpy.data.objects:
         bpy.data.objects.remove(bpy.data.objects[obj['force']], do_unlink=True)
@@ -727,12 +778,13 @@ def apply_daugther_force(obj, strength, collection, falloff):
 
     return 
 
+
 def to_sphere(obj, rate): 
     print(f'{obj.name} under to_sphere')
 
     obj = bpy.context.active_object
 
-    hemi_key = obj.shape_key_add(name=f"{obj.name}_hemisphere", from_mix=False)
+    # hemi_key = obj.shape_key_add(name=f"{obj.name}_hemisphere", from_mix=False)
     bpy.context.object.active_shape_key_index = 0
 
     sphere_key = obj.shape_key_add(name=f"{obj.name}_sphere", from_mix=False)
@@ -777,7 +829,8 @@ def to_sphere(obj, rate):
     # Calculate the centroid of the selected vertices
     centroid = get_centerofmass(obj)
 
-    # Move each vertex towards the centroid until it lies on the surface of a sphere with the same radius as the original hemisphere
+    # Move each vertex towards the centroid until it lies on
+    # the surface of a sphere with the same radius as the original hemisphere
     for v in verts:
         v.co = Vector(centroid) + (v.co - Vector(centroid)).normalized() * 0.1
 
@@ -787,19 +840,19 @@ def to_sphere(obj, rate):
     bpy.ops.mesh.reveal()
     bpy.ops.object.mode_set(mode = 'OBJECT')'''
 
-    '''bpy.ops.object.mode_set(mode = 'EDIT')  
+    '''bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.reveal()
 
-    bpy.ops.transform.tosphere(value=rate, 
-                               mirror=True, 
-                               use_proportional_edit=False, 
-                               proportional_edit_falloff='SMOOTH', 
-                               proportional_size=1, 
-                               use_proportional_connected=False, 
+    bpy.ops.transform.tosphere(value=rate,
+                               mirror=True,
+                               use_proportional_edit=False,
+                               proportional_edit_falloff='SMOOTH',
+                               proportional_size=1,
+                               use_proportional_connected=False,
                                use_proportional_projected=False)
-        
+
     bpy.ops.mesh.reveal()
     bpy.ops.object.mode_set(mode = 'OBJECT')'''
     bpy.context.view_layer.update()
@@ -807,7 +860,7 @@ def to_sphere(obj, rate):
     sphere_key.slider_max = 1
     sphere_key.value = 1
 
-    #bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     bpy.ops.object.shape_key_remove(all=True, apply_mix=True)
 
     '''obj = bpy.context.active_object
@@ -817,15 +870,16 @@ def to_sphere(obj, rate):
     obj = bpy.context.active_object
 
     # simplify topology 
-    bpy.ops.object.mode_set(mode = 'EDIT')  
+    bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type="VERT")
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.decimate(ratio=0.3)
     bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.view_layer.update()
 
     obj.select_set(False)
+
 
 def remesh(obj): 
 
@@ -844,7 +898,9 @@ def remesh(obj):
         bpy.context.object.modifiers["Remesh"].use_smooth_shade = True
         
     return 
-def divide_new(obj, indices, line): 
+
+
+def divide_new(obj, indices, line):
 
     com = get_centerofmass(obj)
     # Get the cell as it is evaluated in Blender
@@ -853,42 +909,43 @@ def divide_new(obj, indices, line):
 
     # The mother cell name is the name of the cell currently being divided
     mother_name = obj.name
-    daughter_name = f"{mother_name}.001"
+    # daughter_name = f"{mother_name}.001"
 
     print(f"Bisection normal: {line}")
                                                            
-    bpy.ops.object.mode_set(mode = 'EDIT')  
+    bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type="VERT")
-    #bpy.context.space_data.overlay.show_wireframes = True
-    bpy.ops.mesh.select_all(action='SELECT') 
-    bpy.ops.mesh.bisect(plane_co=com, 
-                        plane_no=(line[0] + 0.005, line[1] + 0.005, line[2] + 0.005), 
-                        use_fill=True, 
-                        flip=False, 
-                        clear_outer=True)
+    # bpy.context.space_data.overlay.show_wireframes = True
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.bisect(plane_co=com,
+                        plane_no=(line[0] + 0.005, line[1] + 0.005, line[2] + 0.005),
+                        use_fill=True,
+                        flip=False,
+                        clear_outer=True
+                        )
     
     # Select the active vertex    
     bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     # Get the mesh data and select a random vertex
     mesh = obj.data
     vertex = mesh.vertices[0]
     vertex.select = True
 
-    bpy.ops.object.mode_set(mode = 'EDIT') 
+    bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_linked(delimit={'NORMAL'})
     bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.mode_set(mode='EDIT')
     
     # Separate the outer and inner parts of the mesh
     bpy.ops.mesh.separate(type='SELECTED')
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.reveal()
 
-    #bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode = 'OBJECT')  
+    # bpy.ops.mesh.reveal()
+    bpy.ops.object.mode_set(mode='OBJECT')  
     bpy.context.view_layer.update()
 
     # Get the selected objects (i.e., the newly separated meshes)
@@ -915,9 +972,6 @@ def divide_new(obj, indices, line):
     make_force(f"{d2.name}_force", f"{d2.name}", -1000, 1, collection_name)'''
 
             
-
-
-
 def divide(obj): 
     """Core function: divides a mother Blender mesh into two daughter Blender meshes. 
     
@@ -927,10 +981,12 @@ def divide(obj):
 
     :param bpy.data.objects['mother_name'] obj: The soon-to-be mother Blender mesh. 
     :returns: 
-        - daughter1 (bpy.data.objects['daughter1_name']) - The Blender mesh of one of the daughter cells. 
-        - daughter2 (bpy.data.objects['daughter2_name']) - The Blender mesh of the other daughter cell. 
+        - daughter1 (bpy.data.objects['daughter1_name']) - The Blender mesh of 
+            one of the daughter cells. 
+        - daughter2 (bpy.data.objects['daughter2_name']) - The Blender mesh of 
+            the other daughter cell. 
     """
-    # Select mother cell
+    '''# Select mother cell
     obj.select_set(True)
     # Split mother's Blender mesh in two
     m_name, d_name, COM, major_axis = seperate_cell(obj)
@@ -963,12 +1019,14 @@ def divide(obj):
     daughter2 = Cell(bpy.context.object.name, loc=bpy.context.object.location)
     daughter2.data['mother'] = m_name
     daughter2.data['daughters'] = ['none', 'none']
-    return daughter1, daughter2
+    return daughter1, daughter2'''
+
 
 def turn_off_physics():
     """Core function: turns physics off for the currently selected Blender object.
 
-    The cloth physics for cells are turned off before division to avoid irregular mesh behavior after. 
+    The cloth physics for cells are turned off before division to avoid 
+    irregular mesh behavior after. 
 
     :param: None
     :returns: None
@@ -979,7 +1037,8 @@ def turn_off_physics():
 def turn_on_physics():
     """Core function: turns physics on for the currently selected Blender object.
     
-    Physics are turned back on after cell division occurs to avoid irregular mesh behavior post-division.
+    Physics are turned back on after cell division occurs to avoid irregular mesh 
+    behavior post-division.
 
     :param: None
     :returns: None
@@ -1007,9 +1066,10 @@ def turn_on_physics():
     bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
     bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
 
+
 def make_collection(name, type): 
-    #allowed_type = ['cell', 'force', 'motion', 'global']
-    #if type in allowed_type: 
+    # allowed_type = ['cell', 'force', 'motion', 'global']
+    # if type in allowed_type: 
     collection = bpy.data.collections.new(name)
     collection['type'] = type
     collection['object'] = 'collection'
@@ -1024,7 +1084,8 @@ def make_collection(name, type):
             global_force_collection['type'] = 'global'
         else: 
             print(f'Global force collection created')
-            global_force_collection = bpy.data.collections.new("Global force collection")
+            global_force_collection = bpy.data.collections.new("Global force \
+                collection")
             global_force_collection['type'] = 'global'
             bpy.context.scene.collection.children.link(global_force_collection)
             bpy.context.scene.collection.children.unlink(collection)
@@ -1033,7 +1094,7 @@ def make_collection(name, type):
     else: '''
 
     return collection
-    #else: 
+    # else: 
     #    print(f"Only the following types are allowed: {allowed_type}")
 
     '''if type == 'force' or type == 'motion': 
@@ -1044,7 +1105,8 @@ def make_collection(name, type):
             global_force_collection['type'] = 'global'
         else: 
             print(f'Global force collection created')
-            global_force_collection = bpy.data.collections.new("Global force collection")
+            global_force_collection = bpy.data.collections.new("Global force \
+                collection")
             global_force_collection['type'] = 'global'
             bpy.context.scene.collection.children.link(global_force_collection)
             bpy.context.scene.collection.children.unlink(collection)
@@ -1057,37 +1119,48 @@ else:
     print(f"{type} is not a valid collection type, should be in {allowed_type}")
     return''' 
 
-def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1, material = ("bubble", 0.007, 0.021, 0.3)):
-    # add mesh type as an cell argument? 
-    """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell` object. 
 
-    :param :class:`Cell` cell: The Goo :class:`Cell` object. 
+def make_cell(
+    name,
+    loc,
+    type,
+    remeshing=True,
+    scale=(1, 1, 1),
+    stiffness=1,
+    material=("bubble", 0.007, 0.021, 0.3)
+):
+    # Function implementation
+    # add mesh type as an cell argument? 
+    """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell`
+    object.
+
+    :param :class:`Cell` cell: The Goo :class:`Cell` object.
     :returns: None
     """
 
-    collection = make_collection(f'{name}_collection', type = type)
+    collection = make_collection(f'{name}_collection', type=type)
 
     # Initialize Cell python object
     cell = Cell(name, loc, material, scale)
 
-    '''bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, 
-                                          radius=cell.data['radius'], 
-                                          calc_uvs=True, 
-                                          enter_editmode=False, 
-                                          align='WORLD', 
-                                          location=loc, 
+    '''bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,
+                                          radius=cell.data['radius'],
+                                          calc_uvs=True,
+                                          enter_editmode=False,
+                                          align='WORLD',
+                                          location=loc,
                                           scale=(1, 1, 1))'''
     
     # Create mesh
     bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                        radius=cell.data['radius'],
-                                        size=cell.data['size'],
-                                        arc_div=cell.data['arcdiv'],
-                                        lin_div=0,
-                                        div_type='CORNERS',
-                                        odd_axis_align=False,
-                                        no_limit=False,
-                                        location=cell.data['location'])
+                                          radius=cell.data['radius'],
+                                          size=cell.data['size'],
+                                          arc_div=cell.data['arcdiv'],
+                                          lin_div=0,
+                                          div_type='CORNERS',
+                                          odd_axis_align=False,
+                                          no_limit=False,
+                                          location=cell.data['location'])
 
     # Give the Blender object the cell's name
     obj = bpy.context.object
@@ -1102,9 +1175,7 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     bpy.context.object['current position'] = obj.location
     bpy.context.object['displacement'] = 0 
 
-    #bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
-
-
+    # bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
     # bpy.context.view_layers.active = bpy.data.objects[cell.data['name']]
 
     # Smooth the mesh
@@ -1114,8 +1185,8 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
-    #subdiv_mod = obj.modifiers[-1]
-    #bpy.ops.object.modifier_apply(modifier=subdiv_mod.name)
+    # subdiv_mod = obj.modifiers[-1]
+    # bpy.ops.object.modifier_apply(modifier=subdiv_mod.name)
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
@@ -1138,12 +1209,16 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     # Cloth > Internal Springs
     bpy.context.object.modifiers['Cloth'].settings.use_internal_springs = True
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_length = 1
-    bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion = 0.785398
+    bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion \
+        = 0.785398
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_normal_check = True
     bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness = 1
-    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness = 10
-    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness_max = 10000
-    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness_max = 10000
+    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness \
+        = 10
+    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness_max \
+        = 10000
+    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness_max \
+        = 10000
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5
@@ -1174,14 +1249,14 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     bpy.context.object.constraints["Maintain Volume"].owner_space = 'WORLD'
     bpy.context.object.constraints["Maintain Volume"].free_axis = 'SAMEVOL_Z'''
 
-    if remeshing == True: 
+    if remeshing: 
         '''bpy.ops.object.modifier_add(type='REMESH')
         bpy.context.object.modifiers["Remesh"].mode = 'SMOOTH'
         bpy.context.object.modifiers["Remesh"].octree_depth = 3
         bpy.context.object.modifiers["Remesh"].scale = 0.99
         bpy.context.object.modifiers["Remesh"].use_remove_disconnected = True
         bpy.context.object.modifiers["Remesh"].use_smooth_shade = False'''
-        #bpy.ops.object.modifier_move_to_index(modifier="Remesh", index=1)
+        # bpy.ops.object.modifier_move_to_index(modifier="Remesh", index=1)
 
         remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
         obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
@@ -1198,10 +1273,13 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
         bpy.context.object.modifiers["Remesh"].voxel_size = 0.3
         bpy.context.object.modifiers["Remesh"].use_smooth_shade = True'''
 
-
     # add material, default is purple bubble
     bpy.context.view_layer.objects.active = bpy.data.objects[name]
-    mat = add_material(material[0], float(material[1]), float(material[2]), float(material[3]))
+    mat = add_material(material[0], 
+                       float(material[1]), 
+                       float(material[2]), 
+                       float(material[3])
+                       )
     bpy.context.active_object.data.materials.append(mat)
 
     # remove duplicate objects outside of the collection
@@ -1209,7 +1287,7 @@ def make_cell(name, loc, type, remeshing = True, scale = (1,1,1), stiffness = 1,
     # Add the active cell to our specific collection 
     bpy.data.collections[collection.name].objects.link(bpy.data.objects[name])
 
-    #handler = handler_class()
+    # handler = handler_class()
 
 
 # Defines the Cell class
@@ -1220,7 +1298,8 @@ class Cell():
     :param tuple loc: The coordinates of the cell.   
     :returns None:
     '''
-    def __init__(self, name, loc, material, scale = (1, 1, 1), mesh_type=""):
+    
+    def __init__(self, name, loc, material, scale=(1, 1, 1), mesh_type=""):
         '''
         Constructor method
         '''
@@ -1238,51 +1317,25 @@ class Cell():
             'material': material,
             'size': (1, 1, 1),
             'scale': scale,
-            'arcdiv': 8, # changes vertices in object mode
-            'subdiv': 1, # changes vertices in edit mode (of the cloth)
+            'arcdiv': 8,  # changes vertices in object mode
+            'subdiv': 1,  # changes vertices in edit mode (of the cloth)
             'vertex_mass': 1,
             'density': 1.05,
-            #'edges_pull': 0.5,
-            #'edges_bend': 0.5,
-            #'air_damping': 10,
-            #'self_collision': True,
-            #'self_collision_stiffness': 0.01,
-            #'ball_size': 10,
-            #'softbody_goal': False,
-            #'sotbody_friction': 0.2,
             'phi': 0,
             'theta': 0,
-            #'div_axis': (0, 0, 0),
             'mother': 'none',
             'daughters': ['none', 'none'],
             'mesh_type': mesh_type
-        }
+            }
         # The volume and mass are calculated from values in the data dictionary
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
         self.data['mass'] = self.data['density']*self.data['init_volume']
         print(self.data['mass'])
 
-    # Member function for obtaining the Blender object corresponding to the cell
-    def get_blender_object(self):
-        obj = bpy.data.objects[self.data["name"]]
-        return obj
-
-'''
-def add_material(name, r, g, b): 
-    mat = bpy.data.materials.new(name)
-    # if material already exists
-    if mat:
-    # update the color
-     mat.diffuse_color = (r, g, b, 0.8)
-    else: 
-    # create the material
-        mat = bpy.data.materials.new(name=name)
-        mat.diffuse_color = (r, g, b, 0.8)
-    return mat
-'''
 
 def add_material(mat_name, r, g, b):
-    """Core function: creates a soap bubble-like Blender material for use in rendering cells.
+    """Core function: creates a soap bubble-like Blender material for use in rendering 
+    cells.
 
     The material has a name that allows it to be shared across multiple cells. 
 
@@ -1342,7 +1395,7 @@ def add_material(mat_name, r, g, b):
         # create second principled node for random color variation
         node_random = nodes.new(type='ShaderNodeBsdfPrincipled')
         node_random.location = -200, -100
-        node_random.inputs['Base Color'].default_value = (r, g, b, 1)  # RGB or HSV?? todo
+        node_random.inputs['Base Color'].default_value = (r, g, b, 1)
         node_random.inputs['Metallic'].default_value = 0.0
         node_random.inputs['Specular'].default_value = 0.500
         node_random.inputs['Specular Tint'].default_value = 0.0
@@ -1376,8 +1429,7 @@ def add_material(mat_name, r, g, b):
         links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out
 
     else: 
-        mat = bpy.data.materials.new(name = mat_name)
-        #print(mat)
+        mat = bpy.data.materials.new(name=mat_name)
         mat.diffuse_color = (0.1, 0, 0, 0.8)  # viewport color
         mat.use_nodes = True
         mat.blend_method = 'BLEND'
@@ -1425,7 +1477,7 @@ def add_material(mat_name, r, g, b):
         # create second principled node for random color variation
         node_random = nodes.new(type='ShaderNodeBsdfPrincipled')
         node_random.location = -200, -100
-        node_random.inputs['Base Color'].default_value = (r, g, b, 1)  # RGB or HSV?? todo
+        node_random.inputs['Base Color'].default_value = (r, g, b, 1)
         node_random.inputs['Metallic'].default_value = 0.0
         node_random.inputs['Specular'].default_value = 0.500
         node_random.inputs['Specular Tint'].default_value = 0.0
@@ -1460,6 +1512,7 @@ def add_material(mat_name, r, g, b):
 
     return mat
 
+
 class Force():
     """Core class: creates Goo force objects. 
 
@@ -1479,7 +1532,14 @@ class Force():
 
     force_list = []
 
-    def __init__(self, force_name, cell_name, strength, falloff_power, collection_name, type):
+    def __init__(self, 
+                 force_name, 
+                 cell_name, 
+                 strength, 
+                 falloff_power, 
+                 collection_name, 
+                 type
+                 ):
         self.name = force_name
         self.strength = strength
         self.associated_cell = cell_name
@@ -1487,9 +1547,9 @@ class Force():
         self.collection = collection_name
         self.falloff_type = 'SPHERE'
         self.shape = 'SURFACE'
-        self.type = type # boolean
-        if self.type == False: 
-            Force.force_list.append(self) # list of all the created forces
+        self.type = type  # boolean
+        if not self.type:
+            Force.force_list.append(self)  # list of all the created forces
 
     def get_strength(self): 
         return self.strength
@@ -1500,36 +1560,54 @@ class Force():
     def get_blender_force(self):
         obj = bpy.data.objects[self.name]
         return obj
-    
+
 
 def add_boundaries(loc, size, shape='BOX', type='REFLECTIVE', name='box'):
 
     if not isinstance(loc, tuple) or len(loc) != 3:
-        raise ValueError("Invalid 'loc' argument. It should be a tuple containing X, Y, and Z coordinates.")
+        raise ValueError(
+            "Invalid 'loc' argument. It should be a tuple containing X, Y, and Z \
+                coordinates."
+            )
 
     if not all(isinstance(coord, (int, float)) for coord in loc):
-        raise ValueError("Invalid 'loc' coordinates. Coordinates should be integers or floats.")
+        raise ValueError(
+            "Invalid 'loc' coordinates. Coordinates should be integers or floats."
+            )
 
     if not isinstance(size, tuple) or len(size) != 3:
-        raise ValueError("Invalid 'size' argument. It should be a tuple containing dimensions in X, Y, and Z.")
+        raise ValueError(
+            "Invalid 'size' argument. It should be a tuple containing dimensions in X, \
+                Y, and Z."
+            )
 
     if not all(isinstance(dim, (int, float)) for dim in size):
-        raise ValueError("Invalid 'size' dimensions. Dimensions should be integers or floats.")
+        raise ValueError(
+            "Invalid 'size' dimensions. Dimensions should be integers or floats."
+            )
 
     if shape not in ['BOX', 'SPHERE']:
-        raise ValueError("Invalid 'shape' argument. Supported shapes are 'BOX' and 'SPHERE'.")
+        raise ValueError(
+            "Invalid 'shape' argument. Supported shapes are 'BOX' and 'SPHERE'."
+            )
 
     if shape == 'BOX':
-        bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=loc)
+        bpy.ops.mesh.primitive_cube_add(enter_editmode=False,
+                                        align='WORLD',
+                                        location=loc
+                                        )
         bpy.context.object.name = name
         bpy.context.object.scale[0] = -size[0]
         bpy.context.object.scale[1] = -size[1]
         bpy.context.object.scale[2] = -size[2]
         bpy.ops.object.modifier_add(type='COLLISION')
         bpy.ops.object.modifier_add(type='WIREFRAME')
-        
+
     elif shape == 'SPHERE':
-        bpy.ops.mesh.primitive_uv_sphere_add(radius=size[0], enter_editmode=False, align='WORLD', location=loc)
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=size[0],
+                                             enter_editmode=False,
+                                             align='WORLD',
+                                             location=loc)
         bpy.context.object.name = name
         bpy.context.object.scale[0] = -size[0]
         bpy.context.object.scale[1] = -size[0]
@@ -1538,19 +1616,26 @@ def add_boundaries(loc, size, shape='BOX', type='REFLECTIVE', name='box'):
         bpy.ops.object.modifier_add(type='WIREFRAME')
 
 
-def add_motion(effector_name, strength, persistence = 0, randomness = 1, distribution = 'uniform', size = 0.1):    
+def add_motion(effector_name,
+               strength,
+               persistence=0,
+               randomness=1,
+               distribution='uniform',
+               size=0.1):
+    if (isinstance(effector_name, str)
+            and isinstance(strength, (int, float))
+            and isinstance(persistence, (int, float))
+            and isinstance(randomness, (int, float))):
 
-    if isinstance(effector_name, str) \
-        and isinstance(strength, (int, float)) \
-        and isinstance(persistence, (int, float)) \
-        and isinstance(randomness, (int, float)):
-
-        force = make_force(f'motion_{effector_name}', 
-                        f'{effector_name}', 
-                        f"{bpy.data.objects[effector_name].users_collection[0]['type']}", 
-                        strength, 0, 
-                        motion=True, 
-                        min_dist=0, max_dist=4)
+        cell_type = f"{bpy.data.objects[effector_name].users_collection[0]['type']}"
+        force = make_force(force_name=f'motion_{effector_name}',
+                           cell_name=f'{effector_name}',
+                           type=cell_type,
+                           strength=strength,
+                           falloff=0,
+                           motion=True,
+                           min_dist=0,
+                           max_dist=4)
         force = bpy.data.objects[force.name]
         print(force)
 
@@ -1594,7 +1679,8 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1, distrib
 
         # Create a new object and link it to the scene
         curve_cell_obj = bpy.data.objects.new(f'{cell.name}_tracks', curve_cell_data)
-        curve_force_obj = bpy.data.objects.new(f'{force.name}_force_tracks', curve_force_data)
+        curve_force_obj = bpy.data.objects.new(f'{force.name}_force_tracks', 
+                                                curve_force_data)
 
         #bpy.context.scene.collection.objects.link(curve_obj)
         cell.users_collection[0].objects.link(curve_cell_obj)
@@ -1633,74 +1719,95 @@ def add_motion(effector_name, strength, persistence = 0, randomness = 1, distrib
         bpy.ops.curve.reveal()
         bpy.ops.object.mode_set(mode='OBJECT')'''
 
-
-
     else: 
         print('---- Types not supported')
         
         '''# collective motion on a whole cell type
         if type == 'collective':
-            make_force(f'motion_{effector_name}', 
-                        f'{effector_name}', 
-                        f"{effector_name}", 
-                        strength, 0, 
-                        motion=True, 
-                        collective=True, 
+            make_force(f'motion_{effector_name}',
+                        f'{effector_name}',
+                        f"{effector_name}",
+                        strength, 0,
+                        motion=True,
+                        collective=True,
                         min_dist=0, max_dist=10)
 
         # individual motion for a single cell
-        elif type == 'random' or type == 'persistent': 
-            make_force(f'motion_{effector_name}', 
-                        f'{effector_name}', 
-                        f"{bpy.data.objects[effector_name].users_collection[0]['type']}", 
-                        strength, 0, 
-                        motion=True, 
+        elif type == 'random' or type == 'persistent':
+            make_force(f'motion_{effector_name}',
+                        f'{effector_name}',
+                        f"{bpy.data.objects[effector_name].users_collection[0]['type']}",
+                        strength, 0,
+                        motion=True,
                         collective =False,
                         min_dist=0, max_dist=10)'''
         
-    '''if type == 'collection': 
-        if bpy.data.collections[collection_name] and bpy.data.collections[collection_name]['type'] == 'cell':
+    '''if type == 'collection':
+        if (bpy.data.collections[collection_name]
+            and bpy.data.collections[collection_name]['type'] == 'cell'):
             for cell in bpy.data.collections.get(collection_name).all_objects:
-                make_force(f'motion_{cell.name}', f'{cell.name}', strength, 0, motion=True, min_dist=0, max_dist=10)
-    elif type == 'individual': 
+                make_force(f'motion_{cell.name}',
+                           f'{cell.name}',
+                           strength=strength,
+                           falloff=0,
+                           motion=True,
+                           min_dist=0,
+                           max_dist=10)
+    elif type == 'individual':
         for cell in bpy.data.collections.get(collection_name).all_objects:
             collection = make_collection(f'forces_{cell.name}', type = 'force')
             collection.children.link(cell['adhesion force'])
             collection.children.link(cell['motion force'])'''
-            
-def add_hetero_adhesion(cell_name, other_type_name, strength): 
 
-    hetero_collections = [coll for coll in bpy.data.collections if coll.get('type') in other_type_name]
 
-    force = make_force(f'heterotypic_{cell_name}_{other_type_name}', 
-                        cell_name, 
-                        type, 
-                        strength, 
-                        falloff = 0, 
-                        motion = False)
+def add_hetero_adhesion(cell_name, other_type_name, strength):
+
+    hetero_collections = [
+        coll for coll in bpy.data.collections if coll.get('type') in other_type_name
+    ]
+
+    force = make_force(force_name=f'heterotypic_{cell_name}_{other_type_name}',
+                       cell_name=cell_name,
+                       type=type,
+                       strength=strength,
+                       falloff=0,
+                       motion=False)
     
-    for coll in hetero_collections: 
+    for coll in hetero_collections:
         coll.objects.link(bpy.data.objects[force.name])
 
 
-def add_homo_adhesion(cell_name, strength): 
+def add_homo_adhesion(cell_name, strength):
 
-    homo_collections = [coll for coll in bpy.data.collections if coll.get('type') in bpy.data.objects[cell_name].users_collection[0].get("type")]
+    homo_collections = [
+        coll for coll in bpy.data.collections
+        if coll.get('type') 
+        in bpy.data.objects[cell_name].users_collection[0].get("type")
+    ]
 
-    force = make_force(f'homotypic_{cell_name}', 
-                        cell_name, 
-                        f"{bpy.data.objects[cell_name].users_collection[0]['type']}", 
-                        strength, 
-                        falloff = 0, 
-                        motion = False)
+    cell_type = f"{bpy.data.objects[cell_name].users_collection[0]['type']}"
+    force = make_force(force_name=f'homotypic_{cell_name}',
+                       cell_name=cell_name,
+                       type=cell_type,
+                       strength=strength,
+                       falloff=0,
+                       motion=False)
     
-    for coll in homo_collections: 
+    for coll in homo_collections:
         coll.objects.link(bpy.data.objects[force.name])
 
-def make_force(force_name, cell_name, type, strength, falloff, motion = False, min_dist = 0.5, max_dist = 1.5):
-    """Core function: creates a Blender force from a Goo :class:`Force` object. 
-      
-    :param :class:`Force` force: The Goo force object. 
+
+def make_force(force_name,
+               cell_name,
+               type,
+               strength,
+               falloff,
+               motion=False,
+               min_dist=0.5,
+               max_dist=1.5):
+    """Core function: creates a Blender force from a Goo :class:`Force` object.
+
+    :param :class:`Force` force: The Goo force object.
     :returns: None
     """
     collection = bpy.data.objects[cell_name].users_collection[0]
@@ -1709,49 +1816,45 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
     # Add a force object
     cell = force.associated_cell
 
-    #homo_collections = [coll for coll in bpy.data.collections if coll.get('type') in type]
-    #hetero_collections = [coll for coll in bpy.data.collections if coll.get('type') in type]
-
-    if motion == False: 
-        bpy.ops.object.effector_add(type='FORCE',
-                                    enter_editmode=False,
-                                    align='WORLD',
-                                    location=get_centerofmass(bpy.data.objects[cell]),
-                                    scale=(1, 1, 1))
+    if not motion:
+        bpy.ops.object.effector_add(
+            type='FORCE',
+            enter_editmode=False,
+            align='WORLD',
+            location=get_centerofmass(bpy.data.objects[cell]),
+            scale=(1, 1, 1)
+        )
         bpy.context.object['motion'] = False
         bpy.context.object.name = force_name
         bpy.data.objects.get(cell_name)["adhesion force"] = force_name
-        # Add the active cell to our specific collection 
-        '''if homo == True: 
-            for coll in homo_collections: 
-                coll.objects.link(bpy.data.objects[force.name])
-        else: 
-            for coll in same_collections: 
-                coll.objects.link(bpy.data.objects[force.name])'''
 
-    elif motion == True: 
+    elif motion:
 
         rand_coord = tuple(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
-        print(f'Random displacement new coord: {tuple(map(sum, zip(get_centerofmass(bpy.data.objects[cell]), rand_coord)))}')
-        print(f'Random displacement from motion: {rand_coord}')
+        force_rand_coord = zip(get_centerofmass(bpy.data.objects[cell]), rand_coord)
+        print(f"Random displacement new coord: "
+              f"{tuple(map(sum, force_rand_coord))}")
+        cell_com = get_centerofmass(bpy.data.objects[cell])
         bpy.ops.object.effector_add(type='FORCE',
                                     enter_editmode=False,
                                     align='WORLD',
-                                    location=tuple(map(sum, zip(get_centerofmass(bpy.data.objects[cell]), rand_coord))),
+                                    location=tuple(map(sum, zip(cell_com, rand_coord))),
                                     scale=(1, 1, 1))
         bpy.context.object['motion'] = True
         bpy.context.object.name = force_name
         bpy.data.objects.get(cell_name)["motion force"] = force_name
         collection.objects.link(bpy.data.objects[force_name])
 
-    else: 
+    else:
         print('---- Unsupported forces ----')
 
     '''elif motion == True and collective == True: 
         bpy.ops.object.effector_add(type='FORCE',
                                 enter_editmode=False,
                                 align='WORLD',
-                                location= tuple(np.random.uniform(low=-5, high=5, size=(3,))),
+                                location= tuple(np.random.uniform(low=-5, 
+                                                                  high=5, 
+                                                                  size=(3,))),
                                 scale=(1, 1, 1))
         bpy.context.object['motion'] = True
         bpy.context.object.name = force_name
@@ -1760,7 +1863,6 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
                 if cell.get('object') == 'cell': 
                     bpy.data.objects.get(cell.name)["motion force"] = force_name
             coll.objects.link(bpy.data.objects[force_name])'''
-
 
     # Add force parameters
     bpy.context.object.field.strength = force.strength
@@ -1777,6 +1879,7 @@ def make_force(force_name, cell_name, type, strength, falloff, motion = False, m
     scene_collection.objects.unlink(bpy.data.objects[force.name])
 
     return force
+
 
 def setup_world(seed=None):
     """Auxiliary function: sets up the default values used for simulations in Goo 
@@ -1822,8 +1925,6 @@ def setup_world(seed=None):
     for collection in bpy.data.collections:
         # Delete collection
         bpy.data.collections.remove(collection)
-
-
 
     # Add an HDRI image for illumination
     add_world_HDRI()
@@ -1892,7 +1993,8 @@ def add_world_HDRI():
 
 
 def render(file_path, start, end):
-    """Auxilliary function: renders a simulation to create a set of still images that can be made into a movie
+    """Auxilliary function: renders a simulation to create a set of still images that 
+    can be made into a movie
 
     :param str file_path: The path of the folder used to store output images. 
     :param bpy.context.scene scene: The Blender current scene. 
@@ -1931,12 +2033,13 @@ def render(file_path, start, end):
         bpy.app.handlers.frame_change_post.append(func)
     return
 
-# collections are currently manually created in Blender - this function is not being used
+
+# collections are currently manually created in Blender - not used
 def make_force_collections(master_collection, cell_types):
     """Auxilliary function: makes collections for forces to be stored in.
 
-    :param bpy.context.view_layer.active_layer_collection master_collection: The collection in which the force
-    collections will be contained. 
+    :param bpy.context.view_layer.active_layer_collection master_collection: The 
+    collection in which the force collections will be contained. 
     :param cell_types: list of active cell types
     :returns: None
     """
@@ -1944,6 +2047,7 @@ def make_force_collections(master_collection, cell_types):
     for type in cell_types:
         collection = bpy.context.blend_data.collections.new(name=type+"_forces")
         bpy.context.collection.children.link(collection)
+
 
 def calculate_com(cell): 
     """Function to calculate the center of mass of a cell Blender object. 
@@ -1990,18 +2094,26 @@ def get_contact_area_raycast():
     # Loop over the vertices of the first mesh
     for v1 in bm1.verts:
         # Cast a ray from the vertex and check for intersection with the second mesh
-        hit, loc, norm, face_index = obj2.ray_cast(obj1.matrix_world @ v1.co, -obj1.matrix_world @ v1.normal)
+        hit, loc, norm, face_index = obj2.ray_cast(
+            obj1.matrix_world @ v1.co, 
+            -obj1.matrix_world @ v1.normal
+        )
 
-        # If there is a hit and the distance is within a certain threshold, add the vertex to the contact list
+        # If there is a hit and the distance is within a certain threshold, add the 
+        # vertex to the contact list
         if hit and (loc - obj1.matrix_world @ v1.co).length < 0.1:
             contact_vertices1.append(v1.co)
 
     # Loop over the vertices of the second mesh
     for v2 in bm2.verts:
         # Cast a ray from the vertex and check for intersection with the first mesh
-        hit, loc, norm, face_index = obj1.ray_cast(obj2.matrix_world @ v2.co, -obj2.matrix_world @ v2.normal)
+        hit, loc, norm, face_index = obj1.ray_cast(
+            obj2.matrix_world @ v2.co, 
+            -obj2.matrix_world @ v2.normal
+        )
 
-        # If there is a hit and the distance is within a certain threshold, add the vertex to the contact list
+        # If there is a hit and the distance is within a certain threshold, add the 
+        # vertex to the contact list
         if hit and (loc - obj2.matrix_world @ v2.co).length < 0.1:
             contact_vertices2.append(v2.co)
 
@@ -2028,52 +2140,6 @@ def get_contact_area_raycast():
     bpy.data.meshes.remove(mesh_data2) 
     
     return 
-
-# not used
-def mesh_contact_area_KD(threshold):
-    scene = bpy.context.scene
-    meshes = [bpy.data.objects['cell_A1'], bpy.data.objects['cell_A2'], ]
-    contact_verts = []
-    total_areas = []
-    contact_areas = []
-    ratios = []
-    for i, mesh in enumerate(meshes):
-        # Get the evaluated mesh for accurate deformation and collision detection
-        eval_mesh = mesh.evaluated_get(scene.depsgraph)
-        # Get the vertices of the evaluated mesh in world space
-        verts = [eval_mesh.matrix_world @ v.co for v in eval_mesh.data.vertices]
-        # Build the KD tree for fast nearest neighbor searches
-        kd = KDTree(len(verts))
-        for j, v in enumerate(verts):
-            kd.insert(v, j)
-        kd.balance()
-        # Find vertices within threshold distance of other meshes
-        for k, other_mesh in enumerate(meshes[i+1:]):
-            # Get the evaluated mesh for accurate deformation and collision detection
-            eval_other_mesh = other_mesh.evaluated_get(scene.depsgraph)
-            # Get the vertices of the evaluated mesh in world space
-            other_verts = [eval_other_mesh.matrix_world @ v.co for v in eval_other_mesh.data.vertices]
-            # Search for vertices within threshold distance using the KD tree
-            for v in other_verts:
-                co, index, dist = kd.find(v)
-                if dist < threshold:
-                    contact_verts.append(index)
-        # Calculate the area of the evaluated mesh
-        bm = bmesh.new()
-        bm.from_mesh(eval_mesh.data)
-        total_area = sum(f.calc_area() for f in bm.faces)
-        total_areas.append(total_area)
-        bm.free()
-        # Calculate the area of the contact vertices
-        bm = bmesh.new()
-        bm.from_mesh(eval_mesh.data)
-        contact_area = sum(f.calc_area() for f in bm.faces if all(v.index in contact_verts for v in f.verts))
-        contact_areas.append(contact_area)
-        ratios.append(contact_area/total_area)
-        bm.free()
-        # Free the evaluated mesh
-        bpy.data.meshes.remove(eval_mesh.data)
-    return contact_areas, total_areas, ratios
 
 
 '''def get_contact_area():
@@ -2132,17 +2198,24 @@ def mesh_contact_area_KD(threshold):
                 contact_verts2.append(v2)
 
     for p in mesh1_eval.data.polygons:
-        poly_verts = [mesh1_eval.matrix_world @ mesh1_eval.data.vertices[i].co for i in p.vertices]
+        poly_verts = [
+            mesh1_eval.matrix_world @ mesh1_eval.data.vertices[i].co 
+            for i in p.vertices
+        ]
 
         # Check if any of the polygon vertices are in contact.
-        if any((v - v1).length < threshold for v in poly_verts for v1 in contact_verts2):
+        if any((v - v1).length < threshold for v in poly_verts 
+                                            for v1 in contact_verts2):
             contact_area1 += p.area
 
     for p in mesh2_eval.data.polygons:
-        poly_verts = [mesh2_eval.matrix_world @ mesh2_eval.data.vertices[i].co for i in p.vertices]
+        poly_verts = [
+            mesh2_eval.matrix_world @ mesh2_eval.data.vertices[i].co for i in p.vertices
+            ]
 
         # Check if any of the polygon vertices are in contact.
-        if any((v - v2).length < threshold for v in poly_verts for v2 in contact_verts1):
+        if any((v - v2).length < threshold for v in poly_verts 
+                                            for v2 in contact_verts1):
             contact_area2 += p.area
 
     # Compute the contact area ratio for each mesh.
@@ -2152,6 +2225,7 @@ def mesh_contact_area_KD(threshold):
     return ratio1, ratio2
 '''
 
+
 def get_contact_area():
     """
     Calculate the contact ratio between cells in the scene.
@@ -2160,7 +2234,8 @@ def get_contact_area():
     - scene: The Blender scene object.
 
     Returns:
-    - A dictionary containing cells in contact as keys and their contact ratio as values.
+    - A dictionary containing cells in contact as keys and their contact ratio as 
+        values.
     """
 
     threshold = 0.05
@@ -2168,7 +2243,10 @@ def get_contact_area():
     contact_areas_dict = {}
 
     # Get all cell objects in the scene
-    cell_objects = [obj for obj in bpy.context.scene.objects if obj.get('object') is not None and obj.get('object') == 'cell']
+    cell_objects = [
+        obj for obj in bpy.context.scene.objects 
+        if obj.get('object') is not None and obj.get('object') == 'cell'
+    ]
 
     # Loop over cell pairs to compute contact ratio
     for i in range(len(cell_objects) - 1):
@@ -2176,15 +2254,23 @@ def get_contact_area():
         for j in range(i + 1, len(cell_objects)):
             mesh2 = cell_objects[j]
 
-            if (Vector(get_centerofmass(mesh1)) - Vector(get_centerofmass(mesh2))).length < 2: 
+            com_mesh1 = get_centerofmass(mesh1)
+            com_mesh2 = get_centerofmass(mesh2)
+            if (Vector(com_mesh1) - Vector(com_mesh2)).length < 2: 
 
                 # Evaluate the meshes to account for deformations.
                 mesh1_eval = mesh1.evaluated_get(bpy.context.evaluated_depsgraph_get())
                 mesh2_eval = mesh2.evaluated_get(bpy.context.evaluated_depsgraph_get())
 
                 # Get the vertices of the meshes as global coordinates.
-                verts1 = [mesh1_eval.matrix_world @ v.co for v in mesh1_eval.data.vertices]
-                verts2 = [mesh2_eval.matrix_world @ v.co for v in mesh2_eval.data.vertices]
+                verts1 = [
+                    mesh1_eval.matrix_world @ v.co 
+                    for v in mesh1_eval.data.vertices
+                ]
+                verts2 = [
+                    mesh2_eval.matrix_world @ v.co 
+                    for v in mesh2_eval.data.vertices
+                ]
 
                 # Calculate the total surface area of each mesh.
                 area1 = sum(p.area for p in mesh1_eval.data.polygons)
@@ -2200,24 +2286,32 @@ def get_contact_area():
 
                 for v1 in verts1:
                     for v2 in verts2:
-                        # Check if the distance between the vertices is below the threshold.
+                        # Check if the distance between the vertices is below the 
+                        # threshold.
                         if (v1 - v2).length < threshold:
-                            #print(f"coord v1, v2; {v1}, {v2} and length: {(v1 - v2).length}")
                             contact_verts1.append(v1)
                             contact_verts2.append(v2)
 
                 for p in mesh1_eval.data.polygons:
-                    poly_verts = [mesh1_eval.matrix_world @ mesh1_eval.data.vertices[i].co for i in p.vertices]
+                    poly_verts = [
+                        mesh1_eval.matrix_world @ mesh1_eval.data.vertices[i].co 
+                        for i in p.vertices
+                    ]
 
                     # Check if any of the polygon vertices are in contact.
-                    if any((v - v1).length < threshold for v in poly_verts for v1 in contact_verts2):
+                    if any((v - v1).length < threshold for v in poly_verts 
+                           for v1 in contact_verts2):
                         contact_area1 += p.area
 
                 for p in mesh2_eval.data.polygons:
-                    poly_verts = [mesh2_eval.matrix_world @ mesh2_eval.data.vertices[i].co for i in p.vertices]
+                    poly_verts = [
+                        mesh2_eval.matrix_world @ mesh2_eval.data.vertices[i].co 
+                        for i in p.vertices
+                    ]
 
                     # Check if any of the polygon vertices are in contact.
-                    if any((v - v2).length < threshold for v in poly_verts for v2 in contact_verts1):
+                    if any((v - v2).length < threshold for v in poly_verts 
+                           for v2 in contact_verts1):
                         contact_area2 += p.area
 
                 # Compute the contact area ratio for each mesh.
@@ -2231,7 +2325,6 @@ def get_contact_area():
                 # Add contact ratio to the dictionary
                 contact_ratio_dict[f"{mesh1.name}-{mesh2.name}"] = bidir_ratio
                 contact_areas_dict[f"{mesh1.name}-{mesh2.name}"] = bidir_areas
-
 
             else: 
                 contact_ratio_dict[f"{mesh1.name}-{mesh2.name}"] = 0
@@ -2288,7 +2381,8 @@ def separate_mesh(obj):
         bm1 = bmesh.new()
         bm2 = bmesh.new()
         
-        # Loop through the faces in the original mesh and add them to the appropriate daughter mesh
+        # Loop through the faces in the original mesh and add them to the appropriate 
+        # daughter mesh
         for face in mesh.polygons:
             # Check if any of the vertices in the face are intersection vertices
             has_intersection = False
@@ -2299,9 +2393,13 @@ def separate_mesh(obj):
             
             # Add the face to the appropriate daughter mesh
             if has_intersection:
-                bm1_face = bm1.faces.new([bm1.verts[vert] for vert in [v.index for v in face.verts]])
+                bm1.faces.new(
+                    [bm1.verts[vert] for vert in [v.index for v in face.verts]]
+                    )
             else:
-                bm2_face = bm2.faces.new([bm2.verts[vert] for vert in [v.index for v in face.verts]])
+                bm2.faces.new(
+                    [bm2.verts[vert] for vert in [v.index for v in face.verts]]
+                    )
         
         # Finish the BMeshes
         bm1.normal_update()
@@ -2315,6 +2413,7 @@ def separate_mesh(obj):
         print("No intersection vertices found.")
 
     return
+
 
 # not used in division   
 def get_division_vertices(obj): 
@@ -2363,14 +2462,14 @@ def get_division_vertices(obj):
                 intersection_verts.append(vert_coord)
                 intersection_indices.append(vert.index)
 
-    print(f"Intersection coordinates: {len(intersection_verts)} vertices, {intersection_verts}")
+    print(f"Intersect coord: {len(intersection_verts)} vertices, {intersection_verts}")
 
     # Free the BMesh and the evaluated mesh
     bm.free()
-    #bpy.data.meshes.remove(mesh_eval)
     obj_eval.to_mesh_clear()
     
     return intersection_verts, intersection_indices, p1, line_vector
+
 
 def add_vertices(obj):
     
@@ -2416,23 +2515,16 @@ def add_vertices(obj):
                 intersection_verts.append(vert_coord)
                 intersection_indices.append(vert.index)
 
-    print(f"Intersection coordinates: {len(intersection_verts)} vertices, {intersection_verts}")
+    print(f"Intersect coord: {len(intersection_verts)} vertices, {intersection_verts}")
 
-    
     # Free the BMesh and the evaluated mesh
     bm.free()
-    #bpy.data.meshes.remove(mesh_eval)
     obj_eval.to_mesh_clear()
-    
-    # Set the active object and get the evaluated mesh
-    #bpy.context.view_layer.objects.active = obj
-    #mesh = bpy.context.active_object.data
 
     # Switch to edit mode and select the intersection vertices
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type="VERT")
 
-    first_vert = mesh.vertices[intersection_indices[0]]
     # Retrieve the linked edges for the vertex object
     linked_edges = [e for e in mesh.edges if intersection_indices[0] in e.vertices]
     print(f"Linked edges index: {[edge.index for edge in linked_edges]}")
@@ -2440,7 +2532,9 @@ def add_vertices(obj):
 
     # Get the vector representing the direction of the edge
     for edge in linked_edges: 
-        edge_vector = (mesh.vertices[edge.vertices[1]].co - mesh.vertices[edge.vertices[0]].co).normalized()
+        edge_vector = (
+            mesh.vertices[edge.vertices[1]].co - mesh.vertices[edge.vertices[0]].co
+        ).normalized()
         # Get the vector representing the direction orthogonal to the division plane
         ortho_vector = line_vector.cross(edge_vector)
         # Get the vector representing the direction orthogonal to the division plane
@@ -2451,19 +2545,40 @@ def add_vertices(obj):
     print(f"Edges index being refined: {edges_target}")
 
     for edge in edges_target: 
-        bpy.ops.mesh.loopcut_slide(MESH_OT_loopcut={"number_cuts":3, "smoothness":0, "falloff":'INVERSE_SQUARE', 
-                                                    "object_index":0, "edge_index":edge.index, "mesh_select_mode_init":(True, False, False)}, 
-                                TRANSFORM_OT_edge_slide={"value":0, "single_side":False, "use_even":False, "flipped":False, 
-                                                            "use_clamp":True, "mirror":True, "snap":False, 
-                                                            "snap_elements":{'INCREMENT'}, "use_snap_project":False, 
-                                                            "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, 
-                                                            "use_snap_nonedit":True, "use_snap_selectable_only":False, 
-                                                            "use_snap_to_same_target":False, "snap_face_nearest_steps":1, 
-                                                            "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), 
-                                                            "correct_uv":True, "release_confirm":True, "use_accurate":False})
+        bpy.ops.mesh.loopcut_slide(
+            MESH_OT_loopcut={"number_cuts": 3,
+                             "smoothness": 0,
+                             "falloff": 'INVERSE_SQUARE',
+                             "object_index": 0,
+                             "edge_index": edge.index,
+                             "mesh_select_mode_init": (True, False, False)
+                             },
+            TRANSFORM_OT_edge_slide={
+                "value": 0,
+                "single_side": False,
+                "use_even": False,
+                "flipped": False,
+                "use_clamp": True,
+                "mirror": True,
+                "snap": False,
+                "snap_elements": {'INCREMENT'},
+                "use_snap_project": False,
+                "snap_target": 'CLOSEST',
+                "use_snap_self": True,
+                "use_snap_edit": True,
+                "use_snap_nonedit": True,
+                "use_snap_selectable_only": False,
+                "use_snap_to_same_target": False,
+                "snap_face_nearest_steps": 1,
+                "snap_point": (0, 0, 0),
+                "snap_align": False,
+                "snap_normal": (0, 0, 0),
+                "correct_uv": True,
+                "release_confirm": True,
+                "use_accurate": False})
 
     bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     # Set the active object and get the evaluated mesh
     bpy.context.view_layer.objects.active = obj
@@ -2501,7 +2616,6 @@ def add_vertices(obj):
     
     # Free the BMesh and the evaluated mesh
     bm.free()
-    #bpy.data.meshes.remove(mesh_eval)
     obj_eval.to_mesh_clear()
 
     # Sort the indices to ensure that the vertices are selected in order
@@ -2518,24 +2632,24 @@ def constrict(obj, indices):
     print(f'COM: {p1}, long axis: {p2}')
     
     # Get the vector representing the line
-    line_vector = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
+    # line_vector = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
     
     # Set the active object and get the evaluated mesh
     bpy.context.view_layer.objects.active = obj
-    obj_eval = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
-    #mesh_eval = obj_eval.to_mesh()
+    # obj_eval = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    # mesh_eval = obj_eval.to_mesh()
     
     # List of intersection vertices and their indices
-    #intersection_verts = []
-    #intersection_indices = []
+    # intersection_verts = []
+    # intersection_indices = []
     
     # Get the edit-mode mesh and create a BMesh
     mesh = obj.data
-    #bm = bmesh.new()
-    #bm.from_mesh(mesh)
+    # bm = bmesh.new()
+    # bm.from_mesh(mesh)
 
     # Ensure that the index table of the BMesh is up to date
-    #bm.verts.ensure_lookup_table()
+    # bm.verts.ensure_lookup_table()
     
     '''# Loop through the vertices in the evaluated mesh
     for vert_eval in mesh_eval.vertices:
@@ -2554,7 +2668,7 @@ def constrict(obj, indices):
                 intersection_verts.append(vert_coord)
                 intersection_indices.append(vert.index)
 
-    print(f"Intersection coordinates: {len(intersection_verts)} vertices, {intersection_verts}")
+    print(f"Intersect coord: {len(intersection_verts)} vertices, {intersection_verts}")
 
     
     # Free the BMesh and the evaluated mesh
@@ -2563,12 +2677,12 @@ def constrict(obj, indices):
     obj_eval.to_mesh_clear()'''
     
     # Set the active object and get the evaluated mesh
-    #bpy.context.view_layer.objects.active = obj
-    #mesh = bpy.context.active_object.data
+    # bpy.context.view_layer.objects.active = obj
+    # mesh = bpy.context.active_object.data
 
     # Switch to edit mode and select the intersection vertices
-    #bpy.ops.object.mode_set(mode='EDIT')
-    #bpy.ops.mesh.select_mode(type="VERT")
+    # bpy.ops.object.mode_set(mode='EDIT')
+    # bpy.ops.mesh.select_mode(type="VERT")
 
     '''first_vert = mesh.vertices[intersection_indices[0]]
     # Retrieve the linked edges for the vertex object
@@ -2577,8 +2691,10 @@ def constrict(obj, indices):
     edges_target = []
 
     # Get the vector representing the direction of the edge
-    for edge in linked_edges: 
-        edge_vector = (mesh.vertices[edge.vertices[1]].co - mesh.vertices[edge.vertices[0]].co).normalized()
+    for edge in linked_edges:
+        edge_vector = (
+            mesh.vertices[edge.vertices[1]].co - mesh.vertices[edge.vertices[0]].co
+            ).normalized()
         # Get the vector representing the direction orthogonal to the division plane
         ortho_vector = line_vector.cross(edge_vector)
         # Get the vector representing the direction orthogonal to the division plane
@@ -2587,20 +2703,41 @@ def constrict(obj, indices):
         else:
             print('No edge to further subdivide')
 
-    for edge in edges_target: 
-        bpy.ops.mesh.loopcut_slide(MESH_OT_loopcut={"number_cuts":1, "smoothness":0, "falloff":'INVERSE_SQUARE', 
-                                                    "object_index":0, "edge_index":edge.index, "mesh_select_mode_init":(True, False, False)}, 
-                                TRANSFORM_OT_edge_slide={"value":0, "single_side":False, "use_even":False, "flipped":False, 
-                                                            "use_clamp":True, "mirror":True, "snap":False, 
-                                                            "snap_elements":{'INCREMENT'}, "use_snap_project":False, 
-                                                            "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, 
-                                                            "use_snap_nonedit":True, "use_snap_selectable_only":False, 
-                                                            "use_snap_to_same_target":False, "snap_face_nearest_steps":1, 
-                                                            "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), 
-                                                            "correct_uv":True, "release_confirm":True, "use_accurate":False})'''
+    for edge in edges_target:
+        bpy.ops.mesh.loopcut_slide(
+            MESH_OT_loopcut={"number_cuts": 1,
+                             "smoothness": 0,
+                             "falloff": 'INVERSE_SQUARE',
+                             "object_index": 0,
+                             "edge_index": edge.index,
+                             "mesh_select_mode_init": (True, False, False)
+                             },
+            TRANSFORM_OT_edge_slide={
+                "value": 0,
+                "single_side": False,
+                "use_even": False,
+                "flipped": False,
+                "use_clamp": True,
+                "mirror": True,
+                "snap": False,
+                "snap_elements": {'INCREMENT'},
+                "use_snap_project": False,
+                "snap_target": 'CLOSEST',
+                "use_snap_self": True,
+                "use_snap_edit": True,
+                "use_snap_nonedit": True,
+                "use_snap_selectable_only": False,
+                "use_snap_to_same_target": False,
+                "snap_face_nearest_steps": 1,
+                "snap_point": (0, 0, 0),
+                "snap_align": False,
+                "snap_normal": (0, 0, 0),
+                "correct_uv": True,
+                "release_confirm": True,
+                "use_accurate": False})'''
 
-    #bpy.ops.mesh.select_all(action='DESELECT')
-    #bpy.ops.object.mode_set(mode = 'OBJECT')
+    # bpy.ops.mesh.select_all(action='DESELECT')
+    # bpy.ops.object.mode_set(mode = 'OBJECT')
 
     '''# Set the active object and get the evaluated mesh
     bpy.context.view_layer.objects.active = obj
@@ -2642,32 +2779,36 @@ def constrict(obj, indices):
     obj_eval.to_mesh_clear()'''
 
     # Sort the indices to ensure that the vertices are selected in order
-    #intersection_indices.sort()
+    # intersection_indices.sort()
     for index in indices:
         mesh.vertices[index].select = True
 
-    bpy.ops.object.mode_set(mode = 'EDIT') 
+    bpy.ops.object.mode_set(mode='EDIT') 
 
-    '''bpy.ops.transform.shrink_fatten(value=-rate, use_even_offset=False, 
-                                    mirror=True, use_proportional_edit=False, 
-                                    proportional_edit_falloff='SMOOTH', proportional_size=1, 
-                                    use_proportional_connected=False, use_proportional_projected=False, 
+    '''bpy.ops.transform.shrink_fatten(value=-rate,
+                                    use_even_offset=False,
+                                    mirror=True,
+                                    use_proportional_edit=False,
+                                    proportional_edit_falloff='SMOOTH',
+                                    proportional_size=1,
+                                    use_proportional_connected=False,
+                                    use_proportional_projected=False,
                                     release_confirm=True)'''
     
-    bpy.ops.transform.resize(value=(0.1, 0.1, 0.1), 
-                             orient_type='GLOBAL', 
-                             orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
-                             orient_matrix_type='GLOBAL', mirror=True, 
-                             use_proportional_edit=False, 
-                             proportional_edit_falloff='SHARP', 
-                             proportional_size=1, use_proportional_connected=False, 
+    bpy.ops.transform.resize(value=(0.1, 0.1, 0.1),
+                             orient_type='GLOBAL',
+                             orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+                             orient_matrix_type='GLOBAL', mirror=True,
+                             use_proportional_edit=False,
+                             proportional_edit_falloff='SHARP',
+                             proportional_size=1, use_proportional_connected=False,
                              use_proportional_projected=False)
 
     # Update the view
     bpy.ops.mesh.reveal()
     bpy.ops.object.mode_set(mode='OBJECT')
-    #bpy.ops.object.mode_set(mode='EDIT') 
-    #bpy.ops.object.mode_set(mode='OBJECT')
+    # bpy.ops.object.mode_set(mode='EDIT')
+    # bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.view_layer.update()
 
 
@@ -2700,9 +2841,8 @@ def get_division_angles(cell, alpha):
     print("Y angle:", math.degrees(y_angle))
     print("Z angle:", math.degrees(z_angle))'''
 
-        
     # Calculate a vector perpendicular to the line direction
-    perp_dir = Vector((-line_vector.y, line_vector.x, 0)).normalized()
+    # perp_dir = Vector((-line_vector.y, line_vector.x, 0)).normalized()
 
     # Calculate a second perpendicular vector
     if abs(line_vector.z) < 0.999:
@@ -2718,7 +2858,9 @@ def get_division_angles(cell, alpha):
     rotation_matrix = Matrix((side_dir, up_dir, line_vector)).transposed()
     quat = rotation_matrix.to_quaternion()
     # Create the plane primitive
-    plane = bpy.ops.mesh.primitive_plane_add(size=2, enter_editmode=False, location=p1)
+    '''plane = bpy.ops.mesh.primitive_plane_add(size=2,
+                                             enter_editmode=False,
+                                             location=p1)'''
     # Get a reference to the created plane object
     plane_obj = bpy.context.active_object
     # Set the plane's rotation
@@ -2779,7 +2921,7 @@ def get_division_angles(cell, alpha):
                     # Update the vertex coordinate in the mesh data
                     cell.data.vertices[vert.index].co = local_vert_coord'''
 
-    print(f"Intersection coordinates: {len(intersection_verts)} vertices, {intersection_verts}")
+    print(f"Intersect coord: {len(intersection_verts)} vertices, {intersection_verts}")
 
     '''cell_mesh = cell.data
 
@@ -2787,7 +2929,8 @@ def get_division_angles(cell, alpha):
     mesh1_verts = []
     mesh2_verts = []
 
-    # Iterate over the vertices in the original mesh and add them to the appropriate list
+    # Iterate over the vertices in the original mesh and 
+    # add them to the appropriate list
     for vert in cell_mesh.vertices:
         if vert.co in intersection_verts:
             # If the vertex is an intersection vertex, add it to both lists
@@ -2824,10 +2967,22 @@ def get_division_angles(cell, alpha):
     #d1_com = sum(mesh1_verts, Vector()) / len(mesh1_verts)
     #d2_com = sum(mesh2_verts, Vector()) / len(mesh2_verts)
 
-    make_cell(name=f"{cell.name}_d1", loc=d1_com, collection=cell.users_collection[0].name)
-    make_force(force_name=f"force_{cell.name}_d1", cell_name=f"{cell.name}_d1", strength=-1000, falloff=1, collection="A_Forces")
-    make_cell(name=f"{cell.name}_d2", loc=d2_com, collection=cell.users_collection[0].name)
-    make_force(force_name=f"force_{cell.name}_d2", cell_name=f"{cell.name}_d2", strength=-1000, falloff=1, collection="A_Forces")
+    make_cell(name=f"{cell.name}_d1", 
+              loc=d1_com, 
+              collection=cell.users_collection[0].name)
+    make_force(force_name=f"force_{cell.name}_d1", 
+               cell_name=f"{cell.name}_d1", 
+               strength=-1000, 
+               falloff=1, 
+               collection="A_Forces")
+    make_cell(name=f"{cell.name}_d2", 
+              loc=d2_com, 
+              collection=cell.users_collection[0].name)
+    make_force(force_name=f"force_{cell.name}_d2", 
+               cell_name=f"{cell.name}_d2", 
+               strength=-1000, 
+               falloff=1, 
+               collection="A_Forces")
 
     for force in Force.force_list: 
         if force.associated_cell == cell.name: 
@@ -2835,7 +2990,6 @@ def get_division_angles(cell, alpha):
 
     # Delete the original object
     bpy.data.objects.remove(cell, do_unlink=True)'''
-
 
     # Create new vertices from intersection coordinates
     mesh = bpy.data.meshes.new('Intersection')
@@ -2847,9 +3001,9 @@ def get_division_angles(cell, alpha):
     mesh.update()
 
     # Create an empty object at p1
-    empty1 = bpy.ops.object.empty_add(type='PLAIN_AXES', location=p1)
+    # empty1 = bpy.ops.object.empty_add(type='PLAIN_AXES', location=p1)
     # Create an empty object at p2
-    empty2 = bpy.ops.object.empty_add(type='PLAIN_AXES', location=p2)
+    # empty2 = bpy.ops.object.empty_add(type='PLAIN_AXES', location=p2)
     # Create a new curve object and add a new spline to it
     curve_data = bpy.data.curves.new(name='MyCurve', type='CURVE')
     curve_data.dimensions = '3D'
@@ -2865,9 +3019,6 @@ def get_division_angles(cell, alpha):
     curve_object = bpy.data.objects.new(name='MyCurveObject', object_data=curve_data)
     # Add the object to the scene
     bpy.context.scene.collection.objects.link(curve_object)  
-
-    # separate mesh in two along the intersection vertices
-
 
 
 class handler_class:
@@ -2898,17 +3049,16 @@ class handler_class:
         # Set active (dividing) cell types
         self.active_cell_types = []
 
-        # for adhesion handler
+        # For adhesion handler
         self.forces = []
 
-        # for motion handler
+        # For motion handler
         self.random_motion_speed = 0
 
-        # for data handler 
-            # for cell deformability 
+        # Data handler: for cell deformability 
         self.all_vertices = [[]]
         self.COMs = {}
-            # for total distance between cells - simulation stability
+        # Data handler: for total distance between cells - simulation stability
         self.frames = []
         self.distances_tot = []
         self.data_file_path = ''
@@ -2919,11 +3069,21 @@ class handler_class:
         self.strength = None
         self.falloff = None
         self.master_dict = None
-        self.data_dict = {'Frames': [], 'Distances': [], 'Times': [], 'Deformability': {}, 'Contact area': [],
-                          'Axis direction': [], 'Axis length': [], 'Tension': [], 'Adhesion': [], 'Volume': {}}
-            # for computational cost
+        self.data_dict = {
+            'Frames': [],
+            'Distances': [],
+            'Times': [],
+            'Deformability': {},
+            'Contact area': [],
+            'Axis direction': [],
+            'Axis length': [],
+            'Tension': [],
+            'Adhesion': [],
+            'Volume': {}
+        }
+        # Data handler: for computational cost
         self.cell_number = 0
-            # for deformability
+        # Data handler: for deformability
         self.displacement = defaultdict(list)
         self.previous_vertices = defaultdict(list)
         self.current_vertices = defaultdict(list)
@@ -2931,29 +3091,29 @@ class handler_class:
         self.sphere_centered = defaultdict(list)
         self.deformability = defaultdict(list)
 
-            # for phase diagrams
+        # Data handler: for phase diagrams
         self.stable_measure = []
         self.tension = []
         self.adhesion = []
 
-            # for long axis
+        # For long axis
         self.vec_axis = defaultdict(list)
         self.len_axis = defaultdict(list)
 
-            # for contact area 
+        # Data handler: for contact area 
         self.contact_ratios = defaultdict(list)
         self.contact_areas = defaultdict(list)
 
-            # for division
+        # For cell division
         self.division_rate = 0.0
         self.division_indices = defaultdict(list)
         self.cell_under_div = None
         self.daugthers = []
 
-            # for growth 
+        # For cell growth 
         self.volumes = defaultdict(list)
 
-            # for random motion
+        # For random motion
         self.seed = int()
         self.prev_frame = int()
         self.sorting_scores = defaultdict(dict)
@@ -2961,26 +3121,27 @@ class handler_class:
         self.speed = defaultdict(list)
         self.motion_path = defaultdict(list)
 
-            # for computational optimization (launch_simulation)
+        # Data handler: flag in launch simulation
         self.data_flag = None
 
         return
-    
-    def launch_simulation(self,
-                          filepath, 
-                          division_rate = 100, 
-                          start = 1, 
-                          end = 250, 
-                          motion_strength = -500,
-                          adhesion = True, 
-                          growth = False, 
-                          target = 1,
-                          division = False, 
-                          data = False, 
-                          motility = False,
-                          remeshing = False, 
-                          visualize = False,
-                          boundary = False): 
+
+    def launch_simulation(
+            self,
+            filepath,
+            division_rate=100,
+            start=1,
+            end=250,
+            motion_strength=-500,
+            adhesion=True,
+            growth=False,
+            target=1,
+            division=False,
+            data=False,
+            motility=False,
+            remeshing=False,
+            visualize=False,
+            boundary=False):
 
         self.frame_interval = [start, end]
         bpy.context.scene.frame_set(start)
@@ -2991,7 +3152,7 @@ class handler_class:
         bpy.context.scene.render.filepath = filepath
         self.division_rate = division_rate
         self.motion_strength = motion_strength
-        self.data_flag = data # used to decide if data are computed
+        self.data_flag = data  # used to decide if data are computed
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after 250 frames
@@ -2999,44 +3160,46 @@ class handler_class:
             for collection in bpy.data.collections:
                 # Loop through the objects existed in the collection 
                 for obj in collection.objects:     
-                    if obj.get('object') == 'cell': 
+                    if obj.get('object') == 'cell':
                         obj.modifiers["Cloth"].point_cache.frame_start = start   
                         obj.modifiers["Cloth"].point_cache.frame_end = end   
 
         bpy.app.handlers.frame_change_pre.append(self.timing_init_handler)
         bpy.app.handlers.frame_change_post.clear()
 
-        if adhesion: 
+        if adhesion:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
-        if data: 
+        if data:
             bpy.app.handlers.frame_change_post.append(self.data_export)
             bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
-        if growth: 
-            bpy.app.handlers.frame_change_post.append(lambda scene, depsgraph: self.growth_handler(scene, depsgraph, target))
-        if division: 
+        if growth:
+            bpy.app.handlers.frame_change_post.append(
+                lambda scene,
+                depsgraph: self.growth_handler(scene,
+                                               depsgraph,
+                                               target)
+                                               )
+        if division:
             bpy.app.handlers.frame_change_post.append(self.division_handler)
-        if motility: 
+        if motility:
             bpy.app.handlers.frame_change_post.append(self.motion_handler)
-        if boundary: 
+        if boundary:
             bpy.app.handlers.frame_change_post.append(self.boundary_handler)
-        if remeshing: 
+        if remeshing:
             bpy.app.handlers.frame_change_post.append(self.remeshing_handler)
-            #bpy.app.handlers.frame_change_post.append(self.select_dividing_cell)
-        if visualize: 
+            # bpy.app.handlers.frame_change_post.append(self.select_dividing_cell)
+        if visualize:
             bpy.app.handlers.frame_change_post.append(self.visualize_stretching)
 
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
 
-        #bpy.ops.screen.animation_play()
+        # bpy.ops.screen.animation_play()
 
         return 
 
-
     # Member function to set division rate for a cell type
     def set_division_rate(self, cell_type, rate):
-        # assume 60 frames per second
-        # rate is in divisions per second
         """
         Sets division rate in the handler class that div_handler() can reference later
         :param cell_type: Name of cell type to apply this division rate to.
@@ -3044,6 +3207,7 @@ class handler_class:
         :param rate: number of frames between each division (int)
         :return: None
         """
+
         self.division_rates[cell_type] = rate
         return
 
@@ -3058,10 +3222,11 @@ class handler_class:
         Should be between 0 and 1. (float)
         :return: None
         """
-        if(rate > 0 and rate < 1):
-            self.growth_rates[cell_type] = rate
-        return
 
+        if (rate > 0 and rate < 1):
+            self.growth_rates[cell_type] = rate
+
+        return
 
     # Member function to set adhesion forces between cell types 
     # currently not used
@@ -3076,7 +3241,9 @@ class handler_class:
         :param force: the strenfgth of the force (int)
         :return: None
         """
+
         self.adhesion_forces[type1][type2] = force
+
         return
 
     # currently not used
@@ -3086,6 +3253,7 @@ class handler_class:
         types
         :return: None
         """
+
         master_collection = bpy.context.view_layer.active_layer_collection
         for cell_type in self.active_cell_types:
             num_cells = len(bpy.data.collections[cell_type].objects)
@@ -3122,17 +3290,20 @@ class handler_class:
                 self.cell_under_div = random.choice(cells)'''
 
     def remeshing_handler(self, scene, depsgraph): 
-        remesh_frames = div_frames = range(self.frame_interval[0], self.frame_interval[1], 1)[1:]
-        if scene.frame_current in remesh_frames: 
-            for collection in bpy.data.collections: 
+        remesh_frames = range(self.frame_interval[0], self.frame_interval[1], 1)[1:]
+        # div_frames = range(self.frame_interval[0], self.frame_interval[1], 1)[1:]
+        if scene.frame_current in remesh_frames:
+            for collection in bpy.data.collections:
                 # Exclude the objects in the force collections
                 if collection['type'] == 'cell':
                     cells = bpy.data.collections.get(collection.name_full).all_objects
-                    for cell in cells: 
+                    for cell in cells:
                         cell.select_set(True)
                     for cell in bpy.context.selected_objects:
-                        mod = cell.modifiers.new(name=f"Remesh_tmp_{cell.name}", type='REMESH')
-                        #cell.modifiers[f"Remesh_tmp_{cell.name}"].name = f"Remesh_tmp_{cell.name}"
+                        cell.modifiers.new(
+                            name=f"Remesh_tmp_{cell.name}",
+                            type='REMESH'
+                            )
                         remesh_mod = cell.modifiers.get(f"Remesh_tmp_{cell.name}")
                         remesh_mod.mode = 'SMOOTH'
                         remesh_mod.octree_depth = 3
@@ -3141,23 +3312,43 @@ class handler_class:
                         remesh_mod.use_smooth_shade = False
                         remesh_mod.show_in_editmode = True
                         remesh_mod.show_in_editmode = True
-                        #bpy.ops.object.modifier_move_to_index(modifier=f"Remesh_tmp_{cell.name}", index=-1)
-
-                        bpy.context.view_layer.objects.active = bpy.data.objects[cell.name]                 
-                        bpy.ops.object.modifier_apply(modifier=f"Remesh_tmp_{cell.name}")
+                        bpy.ops.object.modifier_move_to_index(
+                            modifier=f"Remesh_tmp_{cell.name}",
+                            index=-1
+                            )
+                        bpy.context.view_layer.objects.active = \
+                            bpy.data.objects[cell.name]      
+                        bpy.ops.object.modifier_apply(
+                            modifier=f"Remesh_tmp_{cell.name}"
+                            )
                         # deselect all vertices in edit mode
-                        bpy.ops.object.mode_set(mode = 'EDIT')  
+                        bpy.ops.object.mode_set(mode='EDIT')
                         bpy.ops.mesh.select_mode(type="VERT")
                         bpy.ops.mesh.reveal()
-                        bpy.ops.object.mode_set(mode = 'OBJECT')
+                        bpy.ops.object.mode_set(mode='OBJECT')
 
-    def division_handler(self, scene, despgraph): 
+    def division_handler(self, scene, despgraph):
 
-        #rates = np.arange(0, 1, 0.05, dtype=np.float)
-        div_frames = range(self.frame_interval[0], self.frame_interval[1], self.division_rate)[1:]
-        #sphere_frames = [num for start in div_frames for num in range(start+5, start+len(rates))]
-        div_frames_physics = range(self.frame_interval[0] + 0, self.frame_interval[1], self.division_rate)[1:]
-        div_frames_sphere = range(self.frame_interval[0] + 5, self.frame_interval[1], self.division_rate)[1:]
+        # rates = np.arange(0, 1, 0.05, dtype=np.float)
+        div_frames = range(
+            self.frame_interval[0],
+            self.frame_interval[1],
+            self.division_rate
+            )[1:]
+        '''sphere_frames = [
+            num for start in div_frames 
+            for num in range(start+5, start+len(rates))
+            ]'''
+        div_frames_physics = range(
+            self.frame_interval[0] + 0, 
+            self.frame_interval[1], 
+            self.division_rate
+            )[1:]
+        '''div_frames_sphere = range(
+            self.frame_interval[0] + 5, 
+            self.frame_interval[1], 
+            self.division_rate
+            )[1:]'''
             
         if scene.frame_current in div_frames: 
             self.daugthers.clear()
@@ -3167,10 +3358,14 @@ class handler_class:
 
             for collection in bpy.data.collections: 
                 # Exclude the objects in the force collections
-                #if collection['type'] == 'cell':
+                # if collection['type'] == 'cell':
                 # Loop through the objects existed in the collection 
                 print(f"Collection under division: {collection.name_full}")
-                cells = [obj for obj in bpy.data.collections.get(collection.name_full).all_objects if obj.get('object') == 'cell']
+                cells = [
+                    obj for obj 
+                    in bpy.data.collections.get(collection.name_full).all_objects 
+                    if obj.get('object') == 'cell'
+                    ]
                 '''for cell in cells: 
                     print(cell.get('object'))
                     if cell.get('object') and cell['object'] == 'cell': 
@@ -3181,10 +3376,12 @@ class handler_class:
                 self.cell_under_div = random.choice(cells)
 
             if self.cell_under_div is not None: 
-                #for obj in cells:   
+                # for obj in cells:   
                 cell_name = self.cell_under_div.name
-                print(f"-- Starting division of {cell_name} at frame {scene.frame_current}")
-                d1, d2, tmp_strength, tmp_collection, tmp_falloff, mother_modifiers = divide_boolean(self.cell_under_div) 
+                print(f"-- Starting division of {cell_name} "
+                      f"at frame {scene.frame_current}")
+                d1, d2, tmp_strength, tmp_collection, tmp_falloff, mother_modifiers = \
+                    divide_boolean(self.cell_under_div) 
                 print(f"{tmp_strength}; {tmp_collection}; {tmp_falloff}")
 
                 self.strength = tmp_strength
@@ -3196,9 +3393,10 @@ class handler_class:
                 self.daugthers.append(d1)     
                 self.daugthers.append(d2)      
 
-                #bpy.context.scene.frame_set(1)
+                # bpy.context.scene.frame_set(1)
 
-                print(f"-- Finishing division of {cell_name} at frame {scene.frame_current}")
+                print(f"-- Finishing division of {cell_name} "
+                      f"at frame {scene.frame_current}")
 
             else: 
                 print('No cells under division')
@@ -3208,15 +3406,27 @@ class handler_class:
             apply_physics(self.daugthers[0], self.modifiers)
             apply_physics(self.daugthers[1], self.modifiers)
 
-            self.daugthers[0].modifiers["Cloth"].point_cache.frame_start = self.frame_interval[0]   
-            self.daugthers[0].modifiers["Cloth"].point_cache.frame_end = self.frame_interval[1]  
-            self.daugthers[1].modifiers["Cloth"].point_cache.frame_start = self.frame_interval[0]   
-            self.daugthers[1].modifiers["Cloth"].point_cache.frame_end = self.frame_interval[1]  
+            self.daugthers[0].modifiers["Cloth"].point_cache.frame_start = \
+                self.frame_interval[0]   
+            self.daugthers[0].modifiers["Cloth"].point_cache.frame_end = \
+                self.frame_interval[1]  
+            self.daugthers[1].modifiers["Cloth"].point_cache.frame_start = \
+                self.frame_interval[0]   
+            self.daugthers[1].modifiers["Cloth"].point_cache.frame_end = \
+                self.frame_interval[1]  
 
-            apply_daugther_force(self.daugthers[0], self.strength, self.force_collection, self.falloff)
-            apply_daugther_force(self.daugthers[1], self.strength, self.force_collection, self.falloff)
+            apply_daugther_force(
+                self.daugthers[0], 
+                self.strength, 
+                self.force_collection, 
+                self.falloff)
+            apply_daugther_force(
+                self.daugthers[1], 
+                self.strength, 
+                self.force_collection, 
+                self.falloff)
 
-        #if scene.frame_current in div_frames_sphere: 
+        # if scene.frame_current in div_frames_sphere: 
             
         #    bpy.context.view_layer.objects.active = self.daugthers[0]
         #    to_sphere(self.daugthers[0], 1)
@@ -3224,52 +3434,66 @@ class handler_class:
         #    bpy.context.view_layer.objects.active = self.daugthers[1]
         #    to_sphere(self.daugthers[1], 1)
 
-            #remesh(self.daugthers[0])
-            #remesh(self.daugthers[1])
+            # remesh(self.daugthers[0])
+            # remesh(self.daugthers[1])
 
         # CODE FOR TO SPHERE IMPLEMENTATION
-        '''div_frames_sphere = range(self.frame_interval[0] + 2, self.frame_interval[1], self.division_rate)[1:]
+        '''div_frames_sphere = range(
+            self.frame_interval[0] + 2, 
+            self.frame_interval[1], 
+            self.division_rate
+            [1:]
         frames = range(div_frames[0], div_frames[0] + len(rates), 1)
 
         if scene.frame_current in sphere_frames: 
 
             bpy.context.view_layer.objects.active = self.daugthers[0]
-            to_sphere(self.daugthers[0], rates[sphere_frames.index(scene.frame_current)])
+            to_sphere(
+                self.daugthers[0], 
+                rates[sphere_frames.index(scene.frame_current)]
+                )
             #bpy.context.view_layer.objects.active = None
 
             bpy.context.view_layer.objects.active = self.daugthers[1]
-            to_sphere(self.daugthers[1], rates[sphere_frames.index(scene.frame_current)])'''
+            to_sphere(
+                self.daugthers[1], 
+                rates[sphere_frames.index(scene.frame_current)]
+                )'''
 
     def get_division_vertices(self, scene, depsgraph): 
 
         cell = bpy.data.objects['cell_A1']
 
         if scene.frame_current == 100:
-            print(f"Long axis: np {get_long_axis_np(cell)}; global {get_long_axis_global(cell)}")
+            print(f"Long axis: np {get_long_axis_np(cell)}; "
+                  f"global {get_long_axis_global(cell)}")
             get_division_angles(cell, 0.9)
 
         '''if scene.frame_current == 102:
-            print(f"Long axis: np {get_long_axis_np(cell)}; global {get_long_axis_global(cell)}")
+            print(f"Long axis: np {get_long_axis_np(cell)}; "
+                  f"global {get_long_axis_global(cell)}")
             get_division_angles(cell, 0.6)
 
         if scene.frame_current == 104:
-            print(f"Long axis: np {get_long_axis_np(cell)}; global {get_long_axis_global(cell)}")
             get_division_angles(cell, 0.8)'''
 
         '''obj = bpy.data.objects['cell_A1']
 
         # Define the long axis as a vector
-        long_axis = mathutils.Vector((0, 0, 2)) # Change this vector to match your desired long axis
+        # Change this vector to match your desired long axis
+        long_axis = mathutils.Vector((0, 0, 2)) 
 
         # Define the center of mass as a point in world coordinates
-        center_of_mass = mathutils.Vector(get_centerofmass(obj)) # Change this vector to match your desired center of mass
+        # Change this vector to match your desired center of mass
+        center_of_mass = mathutils.Vector(get_centerofmass(obj)) 
 
         # Convert the center of mass to mesh-relative coordinates
         mat = obj.matrix_world.inverted()
         center_of_mass_rel = mat @ center_of_mass
 
         # Create a new plane to represent the division plane
-        normal = long_axis.cross(mathutils.Vector((0, 0, 2))) # Assume up direction is +Z
+        # Assume up direction is +Z
+        normal = long_axis.cross(mathutils.Vector((0, 0, 2))) 
         normal.normalize()
         point = center_of_mass_rel
         division_plane = (point, normal)
@@ -3285,7 +3509,11 @@ class handler_class:
 
             if (p1 - point).dot(normal) * (p2 - point).dot(normal) <= 0:
                 # If the edge intersects the division plane
-                new_vert = bm.verts.new(tuple(mathutils.geometry.intersect_line_plane(p1, p2, point, normal)))
+                intersection_point = mathutils.geometry.intersect_line_plane(p1, 
+                                                                             p2, 
+                                                                             point, 
+                                                                             normal)
+                new_vert = bm.verts.new(tuple(intersection_point))
 
         bm.to_mesh(obj.data)
         bm.free()'''
@@ -3299,52 +3527,60 @@ class handler_class:
     def growth_handler(self, scene, depsgraph, target):
         for collection in bpy.data.collections: 
             # Exclude the objects in the force collections
-            #if collection['type'] == 'cell':
+            # if collection['type'] == 'cell':
             # Loop through the objects existed in the collection 
             cells = bpy.data.collections.get(collection.name_full).all_objects
             for cell in cells: 
-                if (cell.get('adhesion force') is not None) or \
-                    (cell.get('motion force') is not None) or \
-                    (cell.get('adhesion force') is not None and cell.get('motion force') is not None): 
+                if (
+                    cell.get('adhesion force') is not None or
+                    cell.get('motion force') is not None or
+                    (cell.get('adhesion force') is not None and 
+                     cell.get('motion force') is not None)
+                ):
 
                     volume = calculate_volume(cell)
-                    #target_volume = target
                     target_volume = ((4/3)*np.pi*(1)**3)
                     cell['target volume'] = target_volume
                     cell['volume'] = volume
                     self.volumes[f"{cell.name}"].append(volume)
 
-                    #TODO allow for multiple growth rate, with different functions
+                    # TODO allow for multiple growth rate, with different functions
                     volume_deviation = (volume - target_volume) / target_volume
                     print(f"Current volume deviation: {volume_deviation}")
-                    #shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
+                    # shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
                     shrink_adjustment = 0.001 * (math.exp(volume_deviation) - 1)
-                    #shrink_adjustment = 0.01 * volume_deviation
+                    # shrink_adjustment = 0.01 * volume_deviation
                     cell.modifiers["Cloth"].settings.shrink_min += shrink_adjustment
 
-
-                    # growth
+                    # volume control
                     '''if volume < (target_volume - target_volume * 0.2): 
-                        print(f"Current volume: {volume} is lower than target {target_volume} - 20%")
+                        print(f"Current volume: {volume} is lower"
+                              f"than target {target_volume} - 20%")
                         cell.modifiers["Cloth"].settings.shrink_min -= 0.01
                     elif volume < (target_volume - target_volume * 0.05): 
-                        print(f"Current volume: {volume} is lower than target {target_volume} - 5%")
+                        print(f"Current volume: {volume} is lower"
+                              f"than target {target_volume} - 5%")
                         cell.modifiers["Cloth"].settings.shrink_min -= 0.001
                     elif volume < (target_volume - target_volume * 0.01): 
-                        print(f"Current volume: {volume} is lower than target {target_volume} - 1%")
+                        print(f"Current volume: {volume} is lower"
+                              f"than target {target_volume} - 1%")
                         cell.modifiers["Cloth"].settings.shrink_min -= 0.0005
                     # shrink
                     elif volume > (target_volume + target_volume * 0.2): 
-                        print(f"Current volume: {volume} is higher than target {target_volume} - 20%")
+                        print(f"Current volume: {volume} is higher"
+                              f"than target {target_volume} - 20%")
                         cell.modifiers["Cloth"].settings.shrink_min += 0.01
                     elif volume > (target_volume + target_volume * 0.05): 
-                        print(f"Current volume: {volume} is higher than target {target_volume} - 5%")
+                        print(f"Current volume: {volume} is higher"
+                              f"than target {target_volume} - 5%")
                         cell.modifiers["Cloth"].settings.shrink_min += 0.001
                     elif volume < (target_volume + target_volume * 0.01): 
-                        print(f"Current volume: {volume} is higher than target {target_volume} - 1%")
+                        print(f"Current volume: {volume} is higher"
+                              f"than target {target_volume} - 1%")
                         cell.modifiers["Cloth"].settings.shrink_min += 0.0005
                     else: 
-                        print(f"Current volume: {volume} is within target {target_volume}")'''
+                        print(f"Current volume: {volume} is within"
+                              f"target {target_volume}")'''
 
     def boundary_handler(self, scene, depsgraph):
         # Get the 'box' object
@@ -3367,28 +3603,34 @@ class handler_class:
             for collection in bpy.data.collections: 
                 forces = bpy.data.collections.get(collection.name_full).all_objects
                 for force in forces: 
-                    if force.get('motion') is not None and force.get('motion') == True: 
+                    if (force.get('motion') is not None and force.get('motion')): 
 
                         constrained_force_location = force.location
                         print(f'Before constrained: {force.location}')
 
                         # Reflect x-coordinate if it's outside the box boundaries
                         if constrained_force_location.x < x_min:
-                            constrained_force_location.x = 2 * x_min - constrained_force_location.x
+                            constrained_force_location.x = \
+                                2 * x_min - constrained_force_location.x
                         elif constrained_force_location.x > x_max:
-                            constrained_force_location.x = 2 * x_max - constrained_force_location.x
+                            constrained_force_location.x = \
+                                2 * x_max - constrained_force_location.x
 
                         # Reflect y-coordinate if it's outside the box boundaries
                         if constrained_force_location.y < y_min:
-                            constrained_force_location.y = 2 * y_min - constrained_force_location.y
+                            constrained_force_location.y = \
+                                2 * y_min - constrained_force_location.y
                         elif constrained_force_location.y > y_max:
-                            constrained_force_location.y = 2 * y_max - constrained_force_location.y
+                            constrained_force_location.y = \
+                                2 * y_max - constrained_force_location.y
 
                         # Reflect z-coordinate if it's outside the box boundaries
                         if constrained_force_location.z < z_min:
-                            constrained_force_location.z = 2 * z_min - constrained_force_location.z
+                            constrained_force_location.z = \
+                                2 * z_min - constrained_force_location.z
                         elif constrained_force_location.z > z_max:
-                            constrained_force_location.z = 2 * z_max - constrained_force_location.z
+                            constrained_force_location.z = \
+                                2 * z_max - constrained_force_location.z
 
                         force.location = constrained_force_location
                         print(f'After constrained: {force.location}')
@@ -3397,53 +3639,77 @@ class handler_class:
                         if not (x_min <= constrained_force_location.x <= x_max and
                                 y_min <= constrained_force_location.y <= y_max and
                                 z_min <= constrained_force_location.z <= z_max):
-                            raise ValueError("Force location is outside the box boundaries.")
-
+                            raise ValueError(
+                                "Force location is outside the box boundaries."
+                                )
 
     def motion_handler(self, scene, depsgraph): 
         
-        cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
+        cells = [
+            obj for obj in bpy.data.objects 
+            if "object" in obj.keys() and obj["object"] == "cell"
+            ]
         print(cells)
         msd = dict()        
         
         for collection in bpy.data.collections: 
             forces = bpy.data.collections.get(collection.name_full).all_objects
+            print(forces)
             for force in forces: 
-                if force.get('motion') is not None and force.get('motion') == True: 
-                    #self.force_path[f'{force.name}_force_tracks'].append(tuple(force.location))
-
+                if (force.get('motion') is not None and force.get('motion')): 
+                    print('Entering force loop')
+                    # self.force_path[f'{force.name}_force_tracks'].append(tuple(force.location))
                     cell = bpy.data.objects[force.get('cell')]
                     com = get_centerofmass(cell)
                     cell['current position'] = com
-                    disp = (Vector(cell.get('current position')) - Vector(cell.get('past position'))).length
+                    disp = (Vector(cell.get('current position')) - 
+                            Vector(cell.get('past position'))).length
                     cell['speed'] = disp
                     self.motion_path[f'{cell.name}'].append(tuple(com)[:3])
                     self.motion_path[f'{force.name}'].append(tuple(force.location)[:3])
                     self.speed[f'{cell.name}'].append(disp)
                     # Mean Squared Displacement for single particle
-                    sq_displacement_cell = (Vector(self.motion_path.get(cell.name)[-1]) - Vector(self.motion_path.get(cell.name)[0])).length_squared
-                    sq_displacement_force = (Vector(self.motion_path.get(force.name)[-1]) - Vector(self.motion_path.get(force.name)[0])).length_squared
+                    sq_displacement_cell = (
+                        Vector(self.motion_path.get(cell.name)[-1]) - 
+                        Vector(self.motion_path.get(cell.name)[0])
+                        ).length_squared
+                    sq_displacement_force = (
+                        Vector(self.motion_path.get(force.name)[-1]) - 
+                        Vector(self.motion_path.get(force.name)[0])
+                        ).length_squared
                     self.msd[f'{cell.name}'].append(sq_displacement_cell)
                     self.msd[f'{force.name}'].append(sq_displacement_force)
                     cell['MSD'] = msd
                     force['MSD'] = msd
 
                     if force.get('distribution') == 'uniform': 
-                        rand_coord = Vector(np.random.uniform(low=-force['distribution size'], high=force['distribution size'], size=(3,)))
+                        print('Distribution is uniform')
+                        rand_coord = Vector(np.random.uniform(
+                            low=-force['distribution size'],
+                            high=force['distribution size'], 
+                            size=(3,)
+                        ))
                         new_loc = Vector(com) + rand_coord
+                        print(new_loc)
                     elif force.get('distribution') == 'gaussian': 
-                        rand_coord = Vector(np.random.normal(loc=0, scale=force['distribution size'], size=(3,)))
+                        rand_coord = Vector(np.random.normal(
+                            loc=0, 
+                            scale=force['distribution size'], 
+                            size=(3,)
+                        ))
                         new_loc = Vector(com) + rand_coord
                     else: 
-                        print(f'{force.get("distribution")} is not a supported distribution')
-                        return
+                        print(f'{force.get("distribution")} '
+                              f'is not a supported distribution')
+                        continue
                     
                     force.location = new_loc
 
                     '''# constraint force field within the box
 
                     # Define the box's dimensions and center
-                    box_length = 4.5  # Define the box's length (half of the actual length)
+                    # Define the box's length (half of the actual length)
+                    box_length = 4.5  
                     box_center = Vector((-1.5, 0, 0))  # Define the center of the box
 
                     # Calculate the boundaries of the box
@@ -3464,21 +3730,27 @@ class handler_class:
 
                     # Reflect x-coordinate if it's outside the box boundaries
                     if constrained_force_location.x < x_min:
-                        constrained_force_location.x = 2 * x_min - constrained_force_location.x
+                        constrained_force_location.x = \
+                            2 * x_min - constrained_force_location.x
                     elif constrained_force_location.x > x_max:
-                        constrained_force_location.x = 2 * x_max - constrained_force_location.x
+                        constrained_force_location.x = \
+                            2 * x_max - constrained_force_location.x
 
                     # Reflect y-coordinate if it's outside the box boundaries
                     if constrained_force_location.y < y_min:
-                        constrained_force_location.y = 2 * y_min - constrained_force_location.y
+                        constrained_force_location.y = \
+                            2 * y_min - constrained_force_location.y
                     elif constrained_force_location.y > y_max:
-                        constrained_force_location.y = 2 * y_max - constrained_force_location.y
+                        constrained_force_location.y = \
+                            2 * y_max - constrained_force_location.y
 
                     # Reflect z-coordinate if it's outside the box boundaries
                     if constrained_force_location.z < z_min:
-                        constrained_force_location.z = 2 * z_min - constrained_force_location.z
+                        constrained_force_location.z = \
+                            2 * z_min - constrained_force_location.z
                     elif constrained_force_location.z > z_max:
-                        constrained_force_location.z = 2 * z_max - constrained_force_location.z
+                        constrained_force_location.z = \
+                            2 * z_max - constrained_force_location.z
 
                     force.location = constrained_force_location'''
 
@@ -3518,14 +3790,25 @@ class handler_class:
                     bpy.ops.curve.reveal()
                     bpy.ops.object.mode_set(mode='OBJECT')'''
 
-                    # cells will only adhere with other cells that are in the same collection
-                    bpy.data.objects[force.get('cell')].modifiers["Cloth"].settings.effector_weights.collection = collection
+                    # cells will only adhere with other cells 
+                    # that are in the same collection
+                    obj_cell = bpy.data.objects[force.get('cell')]
+                    cloth_modifier = obj_cell.modifiers["Cloth"]
+                    cloth_modifier.settings.effector_weights.collection = collection
                     # update position of cell
                     cell['past position'] = com
+
+                else: 
+                    print('Motion handler is not working')
         
         '''if scene.frame_current == self.frame_interval[1] - 1:
         # Iterate over all spline objects in the scene
-            tracks = [obj for collection in bpy.data.collections for obj in collection.objects if obj.type == 'CURVE']
+            tracks = [
+                obj 
+                for collection in bpy.data.collections 
+                for obj in collection.objects 
+                if obj.type == 'CURVE'
+                ]
             
             for obj in tracks:
                     # Initialize variables
@@ -3551,12 +3834,42 @@ class handler_class:
         if self.data_flag: 
             # Initialize a dictionary to store the sorting scores for each cell type
             cell_types = np.unique([coll['type'] for coll in bpy.data.collections])
-            #cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
+            '''cells = [
+                obj for obj in bpy.data.objects 
+                if "object" in obj.keys() and obj["object"] == "cell"
+                ]'''
 
-            neighbors = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
-            neighbors_same_type = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
-            sorting_scores = {cell_type: {cell.name: 0 for cell in cells if cell.users_collection[0].get('type') == cell_type} for cell_type in cell_types}
-            sorting_scores_same_type = {cell_type: 0 for cell_type in cell_types}
+            neighbors = {
+                cell_type: {
+                    cell.name: 0 
+                    for cell in cells 
+                    if cell.users_collection[0].get('type') == cell_type
+                } 
+                for cell_type in cell_types
+            }
+
+            neighbors_same_type = {
+                cell_type: {
+                    cell.name: 0 
+                    for cell in cells 
+                    if cell.users_collection[0].get('type') == cell_type
+                } 
+                for cell_type in cell_types
+            }
+
+            sorting_scores = {
+                cell_type: {
+                    cell.name: 0 
+                    for cell in cells 
+                    if cell.users_collection[0].get('type') == cell_type
+                } 
+                for cell_type in cell_types
+            }
+
+            sorting_scores_same_type = {
+                cell_type: 0 
+                for cell_type in cell_types
+            }
 
             # loop for each cell
             for cell in cells:
@@ -3564,22 +3877,34 @@ class handler_class:
                 for other_cell in cells:  
                     if cell is not other_cell: 
                         # get neighbors 
-                        distance = (bpy.data.objects[cell.get('adhesion force')].location - bpy.data.objects[other_cell.get('adhesion force')].location).length
+                        distance = (
+                            bpy.data.objects[cell.get('adhesion force')].location - 
+                            bpy.data.objects[other_cell.get('adhesion force')].location
+                        ).length
                         if distance < 1.95:
                             # get number of neighbors for a specific cell
                             neighbors[collection.get('type')][cell.name] += 1
 
                             # get neighbors of same cell type
-                            if collection.get('type') == other_cell.users_collection[0].get('type'):
-                                neighbors_same_type[collection.get('type')][cell.name] += 1
-
+                            other_type = other_cell.users_collection[0].get('type')
+                            if (
+                                collection.get('type') is other_type
+                            ):
+                                neighbor_type = neighbors_same_type[
+                                    collection.get('type')
+                                    ]
+                                neighbor_type[cell.name] += 1
                 # sorting is null if cell has no neighbors                 
                 if neighbors[collection.get('type')][cell.name] == 0: 
                     sorting_scores[collection.get('type')][cell.name] = 0 
                 else: 
-                    sorting_scores[collection.get('type')][cell.name] = neighbors_same_type[collection.get('type')][cell.name] / neighbors[collection.get('type')][cell.name]
-                
-                cell['sorting score'] = sorting_scores[collection.get('type')][cell.name]
+                    sorting_scores[collection.get('type')][cell.name] = (
+                        neighbors_same_type[collection.get('type')][cell.name] / 
+                        neighbors[collection.get('type')][cell.name]
+                        )
+                cell['sorting score'] = (
+                    sorting_scores[collection.get('type')][cell.name]
+                )
                 print(neighbors)
                 print(neighbors_same_type)
             
@@ -3591,7 +3916,11 @@ class handler_class:
 
             # Print the sorting scores for each cell type
             for cell_type, score in sorting_scores_same_type.items():
-                for coll in [coll for coll in bpy.data.collections if coll['type'] == cell_type]:
+                for coll in [
+                    coll 
+                    for coll in bpy.data.collections 
+                    if coll['type'] == cell_type
+                ]:
                     coll['sorting score'] = score
                 print(f"Cell Type: {cell}, Sorting Score: {score}")
             self.sorting_scores.update({scene.frame_current: sorting_scores_same_type})
@@ -3603,71 +3932,83 @@ class handler_class:
         :param cell_type: Name of cell type to scale. (String)
         :return: None
         """
+
         num_cells = len(bpy.data.collections[cell_type].objects)
         for i in range(num_cells):
             cell_name = bpy.data.collections[cell_type].objects[i].name
             cell = bpy.data.objects[cell_name]
             cell.modifiers["Cloth"].settings.shrink_min = scale
 
-    
     def contact_area_handler(self, scene, depsgraph): 
-         
-         if self.data_flag: 
-            #if scene.frame_current in range(self.frame_interval[0], self.frame_interval[1], 1):
+
+        if self.data_flag: 
+            '''if (
+                scene.frame_current 
+                in range(self.frame_interval[0], self.frame_interval[1], 1)
+            ):'''
             contact_ratio_dict, contact_areas_dict = get_contact_area()
             # Merge the dictionaries
             for key, value in contact_ratio_dict.items():
                 if key not in self.contact_ratios:
-                    # If the key is not present in the master dictionary, create a new list with the current value
+                    # If the key is not present in the master dictionary, 
+                    # create a new list with the current value
                     self.contact_ratios[key] = [value]
                 else:
-                    # If the key is already present in the master dictionary, append the value to the existing list
+                    # If the key is already present in the master dictionary, 
+                    # append the value to the existing list
                     self.contact_ratios[key].append(value)
 
             # Merge the dictionaries
             for key, value in contact_areas_dict.items():
                 if key not in self.contact_areas:
-                    # If the key is not present in the master dictionary, create a new list with the current value
+                    # If the key is not present in the master dictionary, 
+                    # create a new list with the current value
                     self.contact_areas[key] = [value]
                 else:
-                    # If the key is already present in the master dictionary, append the value to the existing list
+                    # If the key is already present in the master dictionary, 
+                    # append the value to the existing list
                     self.contact_areas[key].append(value)
             
                 print(self.contact_areas)
 
-
     def adhesion_handler(self, scene, depsgraph):
 
         force_list = Force.force_list
-        #print([force.name for force in force_list])
+        # print([force.name for force in force_list])
 
         for force in force_list:
-            if bpy.data.objects[force.name]['motion'] == False: 
+            if not bpy.data.objects[force.name]['motion']: 
                 assoc_cell = force.associated_cell
                 bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
                 # retrieve center of mass
                 COM = get_centerofmass(bpy.data.objects[assoc_cell])
                 # update the force location to its corresponding cell's center of mass
                 bpy.data.objects[force.name].location = COM
-                # allow for distinct cell types
-                #force_collection = bpy.data.objects[force.name].users_collection[0].name
-                # cells will only adhere with other cells that are in the same collection
-                bpy.data.objects[assoc_cell].modifiers["Cloth"].settings.effector_weights.collection = bpy.data.objects[assoc_cell].users_collection[0]
+                # cell type: 
+                # cells will only adhere with cells from the same collection
+                cloth_modifier = bpy.data.objects[assoc_cell].modifiers["Cloth"]
+                cloth_settings = cloth_modifier.settings
+                cloth_collection = bpy.data.objects[assoc_cell].users_collection[0]
+                cloth_settings.effector_weights.collection = cloth_collection
 
+                # bpy.data.objects[assoc_cell].modifiers["Cloth"].settings.effector_weights.
+                # collection = bpy.data.objects[assoc_cell].users_collection[0]
 
     def set_random_motion_speed(self, motion_speed: float):
-        self.random_motion_speed = motion_speed
 
+        self.random_motion_speed = motion_speed
+        
     def data_export(self, scene, depsgraph): 
+
         self.seed = bpy.context.scene.get("seed")
-        #var_to_export = ["sorting_scores", "times", "msd", "contact_ratios"]
+        # var_to_export = ["sorting_scores", "times", "msd", "contact_ratios"]
         # Write the list at the end of the simulation
         if scene.frame_current == self.frame_interval[1]:
             with open(f"{self.data_file_path}_times.json", 'w') as write_file:
                 write_file.write(json.dumps(self.times))
             with open(f"{self.data_file_path}_contact_ratios.json", 'w') as write_file:
                 write_file.write(json.dumps(self.contact_ratios))
-        #else: # data over simulation time
+        # else: # data over simulation time
             with open(f"{self.data_file_path}_msd.json", 'w') as write_file:
                 write_file.write(json.dumps(self.msd))
             with open(f"{self.data_file_path}_sorting_scores.json", 'w') as write_file:
@@ -3685,10 +4026,18 @@ class handler_class:
                 with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
                     write_file.write(json.dumps(self.seed))
 
-            #subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
+            '''subprocess.run([
+                "python",
+                "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py",
+                f"{self.data_file_path}"
+            ])'''
 
     def visualize_stretching(self, scene, depsgraph):
-        cells = [obj for obj in bpy.data.objects if "object" in obj.keys() and obj["object"] == "cell"]
+        cells = [
+            obj 
+            for obj in bpy.data.objects 
+            if "object" in obj.keys() and obj["object"] == "cell"
+            ]
 
         for cell in cells:
             obj = bpy.data.objects.get(cell.name)
@@ -3703,13 +4052,21 @@ class handler_class:
 
                 # Calculate stretching ratio for each vertex
                 stretching_ratios = []
-                for vert_original, vert_evaluated in zip(vertices_original, mesh_eval.data.vertices):
-                    stretching_ratio = (vert_evaluated.co - vert_original).length / vert_original.length
+                for vert_original, vert_evaluated in zip(
+                    vertices_original, mesh_eval.data.vertices
+                ):
+                    stretching_ratio = (
+                        (vert_evaluated.co - vert_original).length / 
+                        vert_original.length
+                    )
                     stretching_ratios.append(stretching_ratio)
 
                 # Normalize the stretching ratios
                 max_ratio = max(stretching_ratios)
-                normalized_ratios = [ratio / max_ratio if max_ratio != 0 else 0 for ratio in stretching_ratios]
+                normalized_ratios = [
+                    ratio / max_ratio if max_ratio != 0 else 0 
+                    for ratio in stretching_ratios
+                ]
                 print(normalized_ratios)
 
                 # Create a new vertex color layer if it doesn't exist
@@ -3738,15 +4095,21 @@ class handler_class:
                 # Set up vertex colors for the material
                 material.use_nodes = True
                 material.node_tree.nodes.clear()
-                vertex_color_node = material.node_tree.nodes.new(type='ShaderNodeVertexColor')
-                shader_node_output = material.node_tree.nodes.new(type='ShaderNodeOutputMaterial')
-                material.node_tree.links.new(vertex_color_node.outputs["Color"], shader_node_output.inputs["Surface"])
+                vertex_color_node = material.node_tree.nodes.new(
+                    type='ShaderNodeVertexColor'
+                )
+                shader_node_output = material.node_tree.nodes.new(
+                    type='ShaderNodeOutputMaterial'
+                )
+                material.node_tree.links.new(
+                    vertex_color_node.outputs["Color"], 
+                    shader_node_output.inputs["Surface"]
+                )
                 
                 # Update the mesh to reflect the color changes
                 obj.data.update()
             else:
                 print("Object is not a mesh or not found.")
-
 
     # not used
     def data_handler(self, scene, depsgraph): 
@@ -3765,19 +4128,19 @@ class handler_class:
         print(f"Contact area: {ratio1}, {ratio2}")
 
         # get area with KD trees
-        #areas, totals, ratios = mesh_contact_area_KD(0.03)
-        #print(f"Contact area: {ratios[0]}, {ratios[1]}")
+        # areas, totals, ratios = mesh_contact_area_KD(0.03)
+        # print(f"Contact area: {ratios[0]}, {ratios[1]}")
 
         # contact area 
-        #contact_area1, surface_area1, ratio1 = compute_contact_area()
-        #print(f"Contact ratios A1, A2: {contact_area1}, {surface_area1}, {ratio1}")
-        #ratio = get_contact_area()
+        # contact_area1, surface_area1, ratio1 = compute_contact_area()
+        # print(f"Contact ratios A1, A2: {contact_area1}, {surface_area1}, {ratio1}")
+        # ratio = get_contact_area()
         '''self.contact_area.append(ratio1)'''
 
         # loop over each collection, then over each object
         for collection in bpy.data.collections:
             if 'Cells' in collection.name_full:
-                coll_name = collection.name_full
+                # coll_name = collection.name_full
 
                 # calculate the center of mass of cells in the scene
                 for idx, cell in enumerate(collection.objects):
@@ -3786,8 +4149,9 @@ class handler_class:
                     dg = bpy.context.evaluated_depsgraph_get()
                     cell_eval = cell.evaluated_get(dg)
                     vertices = cell_eval.data.vertices
-                    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
-
+                    vert_coords = np.asarray([
+                        (cell_eval.matrix_world @ v.co) for v in vertices
+                    ])
                     x = vert_coords[:, 0]
                     y = vert_coords[:, 1]
                     z = vert_coords[:, 2]
@@ -3797,17 +4161,22 @@ class handler_class:
                     com_list.append(COM)
 
                     # measure cell deformability between two frames
-                    # idea: store coord of cell's COM, store coord of each vertex of each cell's mesh at each frame
-                    # at the end of the simulation, substract the COM's coord from each vertex coord to isolate displacement caused by deformability
-                    # at each frame, sum the 3D distance (displacement) between vertices of current frame to previous frame 
+                    # idea: store coord of cell's COM, store coord of each vertex 
+                    # of each cell's mesh at each frame
+                    # at the end of the simulation, substract the COM's coord from each 
+                    # vertex coord to isolate displacement caused by deformability
+                    # at each frame, sum the 3D distance (displacement) between vertices 
+                    # of current frame to previous frame 
                     # sum the overall displacement over the number of frame 
-
-
 
                 for i in range(len(com_list)):
                     for j in range(len(com_list)):
                         # Calculate the Euclidean distance between the two coordinates
-                        distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(com_list[i], com_list[j])]))
+                        distance = math.sqrt(
+                            sum(
+                                [(a - b) ** 2 for a, b in zip(com_list[i], com_list[j])]
+                            )
+                        )
                         # Add the distance to the list of distances
                         distances.add(distance)
 
@@ -3826,7 +4195,7 @@ class handler_class:
             # allows to save results over multiple runs in a single dict
             if os.path.isfile(f"{self.data_file_path}.json"): 
                 with open(f"{self.data_file_path}.json", 'r') as f:
-                    #data = f.read()
+                    # data = f.read()
                     self.master_dict = json.load(f)
 
                     # append results of new run to the master dict
@@ -3843,92 +4212,42 @@ class handler_class:
                 with open(f"{self.data_file_path}.json", 'a') as convert_file:
                     convert_file.write(json.dumps(self.data_dict))
 
-            subprocess.run(["python", "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\modules\\goo\\visualization.py", f"{self.data_file_path}"])
-        
-
-    
-    '''# random motion and adhesion forces    
-    def motion_handler(self, scene, depsgraph):
-        for force in self.forces:
-            assoc_cell = force.associated_cell
-            bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
-
-            
-            dg = bpy.context.evaluated_depsgraph_get()
-            cell_eval = bpy.data.objects[assoc_cell].evaluated_get(dg)
-            vertices = cell_eval.data.vertices
-            vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
-
-            x = vert_coords[:, 0]
-            y = vert_coords[:, 1]
-            z = vert_coords[:, 2]
-            COM = (np.mean(x), np.mean(y), np.mean(z))
-            bpy.data.objects[force.name].location = COM
-            cell_collection = bpy.data.objects[assoc_cell].users_collection[0]
-            #print('=====', cell_collection.objects)
-
-            for cell in cell_collection.objects: 
-                # calculate the distance between the associated cell and cells from the same collection
-                assoc_cell_com = COM
-                # don't check the distance between the same object
-                if cell == assoc_cell: 
-                    print('Cells are the same thus the distance is not calculated')
-                else: 
-                    bpy.context.view_layer.objects.active = cell
-                    dg = bpy.context.evaluated_depsgraph_get()
-                    cell_eval = cell.evaluated_get(dg)
-                    vertices = cell_eval.data.vertices
-                    vert_coords = np.asarray([(cell_eval.matrix_world @ v.co) for v in vertices])
-                    x = vert_coords[:, 0]
-                    y = vert_coords[:, 1]
-                    z = vert_coords[:, 2]
-                    other_com = (np.mean(x), np.mean(y), np.mean(z))
-                    x1, y1, z1 = assoc_cell_com
-                    x2, y2, z2 = other_com
-                    # Calculate the distance between the points
-                    distance = math.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
-                    print(f'COMs: {assoc_cell_com}; {other_com}')
-                    #distance = (assoc_cell_com - other_com).length
-                    print('===========================================================', distance)
-                if distance > 2:
-                    print('keep on random motion')
-                    cell.select_set(True)
-                    x = random.uniform(-self.random_motion_speed, self.random_motion_speed)
-                    y = random.uniform(-self.random_motion_speed, self.random_motion_speed)
-                    z = random.uniform(-self.random_motion_speed, self.random_motion_speed)
-                    translation_coord = (x,y,z)
-                    # translate the object the given value towards its corresponding axis
-                    bpy.ops.transform.translate(value=translation_coord)
-                    cell.select_set(False)
-                    # add random motion'''
-
+            subprocess.run([
+                "python",
+                "C:\\Users\\anr9744\\Projects\\Goo\\scripts\\ \
+                    modules\\goo\\visualization.py",
+                f"{self.data_file_path}"
+            ])        
 
     def timing_init_handler(self, scene, depsgraph): 
+
         if scene.frame_current == 2: 
             self.time = datetime.now()
             print(f'Render started for Frame 1 at: {self.time}')
 
-
     def timing_elapsed_handler(self, scene, depsgraph): 
+
         frame_written = scene.frame_current
-        if frame_written not in [1,2]: 
+        if frame_written not in [1, 2]: 
             elpased_time = datetime.now() - self.time
             elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
             self.times.update({frame_written: elapsed_time_secs})
             print('________________________________________________________')
             print(f"Render Started at:{self.time}")  
             print(f"Current frame: {frame_written}")
-            print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f}; {elapsed_time_secs:.1f}")
-
+            print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f};"
+                  f" {elapsed_time_secs:.1f}")
 
     def stop_animation(self, scene, depsgraph):
+
         # checks if the simulation has ended
         if scene.frame_current == self.frame_interval[1]:
             print('_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _')
-            print(f"The simulation has ended.")
-            bpy.ops.screen.animation_cancel(restore_frame=True) #True enables the last frame not to be repeated
+            print("The simulation has ended.")
+            # True enables the last frame not to be repeated
+            bpy.ops.screen.animation_cancel(restore_frame=True) 
             # closes Blender then
-            #bpy.ops.wm.quit_blender()
+            # bpy.ops.wm.quit_blender()
 
 
 
