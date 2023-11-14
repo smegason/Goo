@@ -53,16 +53,10 @@ def calculate_volume(obj):
     mesh_from_eval = obj_eval.to_mesh()
     bm = bmesh.new()
     bm.from_mesh(mesh_from_eval)
-
     # Apply the object's scale and dimensions to the bmesh
     bm.transform(obj_eval.matrix_world)
-
+    # Calculate volume
     volume = bm.calc_volume()
-
-    # Adjust the volume for the object's scale and dimensions
-    #scale = obj_eval.scale.x * obj_eval.scale.y * obj_eval.scale.z
-    #volume *= scale / (obj_eval.dimensions.x * obj_eval.dimensions.y * obj_eval.dimensions.z)
-
     # Output the result
     print(f"Volume of {obj.name}: {abs(volume)}")
     # Free the bmesh
