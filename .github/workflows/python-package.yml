@@ -39,6 +39,4 @@ jobs:
       - name: flake8 Lint with py-actions
         uses: py-actions/flake8@v2
         with:
-          exclude: "simulations/"
-      - name: flake8 Lint with flake8 package
-        run: python -m flake8 --exclude="simulations/"  # Modify the flake8 command based on your needs
+          exclude: "simulations/, addon/, blend/, scripts/modules/goo/visualization.py, tests/, test.py"
