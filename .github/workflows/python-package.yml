@@ -34,6 +34,6 @@ jobs:
           python -m pip install pytest-blender
           pip install pylint
       - name: Check directory
-        run: ls ../../simulations
+        run: ls /simulations
       - name: flake8 Lint
         run: python -m flake8 --exclude="../../simulations/*"  # Modify the flake8 command based on your needs
