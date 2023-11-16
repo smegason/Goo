@@ -353,35 +353,6 @@ else:
             plt.savefig(f"{sys.argv[1]}_volume_{cell_name}.png", dpi=500)
 
 
-'''
-#--------------------------------- LONG AXIS ----------------------------------------#
-
-    for cell_name, data in master_dict.get('Axis length').items():
-        
-        fig, ax1 = plt.subplots(1, figsize = (9, 4))
-
-        # plot
-        ax1.plot(times[0], data, color = colors[0], label = f'{cell_name}')    
-
-        # secondary axis: frame number
-        ax2 = ax1.secondary_xaxis('top', functions=(poly3_forward, poly3_reverse))
-        ax2.set_xlabel(r'frame')
-        ax2.tick_params(axis='both', which='both', length=0) 
-
-        # layout
-        plt.xlabel(r'time [s]')
-        plt.ylabel(r'long axis length [$\mu m$]')
-        plt.setp(ax1.get_xticklabels(), visible=True)
-        ax1.grid(False)
-        locs, labels = xticks()
-        plt.legend()
-
-        # save image
-        plt.savefig(f"{sys.argv[1]}_axis_length_{cell_name}.png", dpi=500)
-
-
-'''
-
 with open(f"{sys.argv[1]}.json", 'r') as f:
     print(f"TEST: {sys.argv[1]}.json")
     # data = f.read()
