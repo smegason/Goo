@@ -37,4 +37,4 @@ jobs:
       - name: Check directory
         run: ls simulations
       - name: flake8 Lint
-        run: flake8 . --exclude addon/,simulations/,blend/,tests/ --max-line-length 88
+        run: flake8 . --exclude addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
