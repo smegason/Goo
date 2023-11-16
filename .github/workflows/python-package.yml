@@ -64,7 +64,7 @@ jobs:
           pip install pylint
 
       - name: flake8 Lint
-        run: flake8 . --exclude addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
+        run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
 
       - name: Run pytest with pytest-blender
         run: |
