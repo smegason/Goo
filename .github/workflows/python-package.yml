@@ -36,7 +36,5 @@ jobs:
           pip install flake8
       - name: Check directory
         run: ls simulations
-      - name: flake8 Lint with py-actions
-        uses: py-actions/flake8@v2
-        with:
-          exclude: "simulations/"
+      - name: flake8 Lint
+        run: flake8 --exclude simulations/, addon/
