@@ -52,6 +52,7 @@ jobs:
           python_blender_executable="$(pytest-blender --blender-executable $blender_executable)"
           $python_blender_executable -m ensurepip
           $python_blender_executable -m pip install pytest
+          echo "::set-output name=blender-executable::$blender_executable"
           pip install pylint
       - name: flake8 Lint
         uses: py-actions/flake8@v2
