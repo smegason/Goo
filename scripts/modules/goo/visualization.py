@@ -6,7 +6,6 @@ import matplotlib.colors as mcolors
 from matplotlib.pyplot import xticks
 import sys
 import pandas as pd
-import seaborn as sns
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 with open(f"{sys.argv[1]}.json", 'r') as f:
@@ -16,16 +15,19 @@ with open(f"{sys.argv[1]}.json", 'r') as f:
 # plot when .json file contains data for multiple runs (then plots a legend)
 if len(master_dict["Distances"]) > 1: 
 
-#------------------------ DISTANCE BETWEEN CELLS, MULTIPLE -------------------------------#
-    
-    if master_dict.get("Distances") is not None and master_dict.get("Times") is not None:
+    # ---------------- DISTANCE BETWEEN CELLS, MULTIPLE ------------------------#
+    if (
+        master_dict.get("Distances") is not None 
+        and master_dict.get("Times") is not None
+    ):
+
         fig, ax = plt.subplots()
         enum = list(range(len(master_dict["Distances"])))
         times_tmp = master_dict['Times']
         times = [[time / 1000000 for time in times_tmp[i]] for i in enum]
         distances = master_dict['Distances']
 
-        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue,0.9,0.7])
+        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue, 0.9, 0.7])
         hues = np.linspace(0, 0.7, len(enum))
         colors = [hsv2rgb(hue) for hue in hues]
 
@@ -43,21 +45,27 @@ if len(master_dict["Distances"]) > 1:
 
         plt.ylabel(r'distance between cells [$\mu m$]')
         plt.xlabel(r'time [s]')
-        #plt.legend(title = r'$falloff\_power = 0;   strength = -1000$')
+        # plt.legend(title = r'$falloff\_power = 0;   strength = -1000$')
         ax.grid(False)
         locs, labels = xticks()
 
         plt.savefig(f"{sys.argv[1]}_multiple.png", dpi=500)
 
 
-#--------------------------------- PHASE DIAGRAMS ----------------------------------------#
+# ----------------------- PHASE DIAGRAMS -------------------------------#
     
-    if master_dict.get("Distances") is not None and master_dict.get("Tension") is not None and master_dict.get("Adhesion") is not None: 
+    if (
+        master_dict.get("Distances") is not None 
+        and master_dict.get("Tension") is not None 
+        and master_dict.get("Adhesion") is not None
+    ): 
+
         tension = master_dict['Tension']
         adhesion = master_dict['Adhesion']
         steady_distance = [dist[-1] for dist in master_dict['Distances']]
 
-        data_array = np.array(steady_distance).reshape(len(np.unique(adhesion)), len(np.unique(tension)))
+        data_array = np.array(steady_distance).reshape(len(np.unique(adhesion)), 
+                                                       len(np.unique(tension)))
 
         # Create the heatmap using imshow()
         fig, ax = plt.subplots()
@@ -78,7 +86,6 @@ if len(master_dict["Distances"]) > 1:
         cbar = ax.figure.colorbar(im, cax=cax)
         cbar.set_label(r'distance between cells [$\mu m$]')
 
-
         # Add labels and title to the plot
         plt.ylabel(r'adhesion strength [$-$]')
         plt.xlabel(r'tension stiffness [$-$]')
@@ -90,11 +97,14 @@ if len(master_dict["Distances"]) > 1:
 # plot data for single run
 else: 
 
-#----------------------------- DISTANCE BETWEEN CELLS ------------------------------------#
+    # -------------------------- DISTANCE BETWEEN CELLS ------------------------------#
     data_needed = ["Distances", "Times", "Frames"]
-    if all(key in master_dict for key in data_needed) and all(master_dict[key] for key in data_needed):
+    if (
+        all(key in master_dict for key in data_needed) and 
+        all(master_dict[key] for key in data_needed)
+    ):
     
-        fig, ax1 = plt.subplots(1, figsize = (9, 3.7))
+        fig, ax1 = plt.subplots(1, figsize=(9, 3.7))
 
         enum = list(range(len(master_dict["Distances"])))
         times_tmp = master_dict['Times']
@@ -105,12 +115,12 @@ else:
         # mapping from time to frame
         df = pd.DataFrame({'x': times[0], 'y': frames[0]})
         # fit a polynomial curve on forward data
-        poly3_forward = np.poly1d(np.polyfit(df.x, df.y, deg = 5))
+        poly3_forward = np.poly1d(np.polyfit(df.x, df.y, deg=5))
         # fit a polynomial curve on reverse data
-        poly3_reverse = np.poly1d(np.polyfit(df.y, df.x, deg = 5))
+        poly3_reverse = np.poly1d(np.polyfit(df.y, df.x, deg=5))
 
         # declare colors for multiple plots
-        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue,0.9,0.7])
+        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue, 0.9, 0.7])
         hues = np.linspace(0, 0.7, len(enum))
         colors = [hsv2rgb(hue) for hue in hues]
 
@@ -132,29 +142,48 @@ else:
         # save image
         plt.savefig(f"{sys.argv[1]}_single.png", dpi=500)
 
-#---------------------------------- DISPLACEMENT -----------------------------------------#
+# ---------------------------- DISPLACEMENT ----------------------------------#
     data_needed = ["Displacement"]
-    if all(key in master_dict for key in data_needed) and all(master_dict[key] for key in data_needed):
+    if (
+        all(key in master_dict for key in data_needed) 
+        and all(master_dict[key] for key in data_needed)
+    ):
 
-        enum = ('x','y','z')
+        enum = ('x', 'y', 'z')
 
-        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue,0.9,0.7])
+        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue, 0.9, 0.7])
         hues = np.linspace(0, 0.7, len(enum))
         colors = [hsv2rgb(hue) for hue in hues]
 
-
         for cell_name, data in master_dict.get('Displacement').items():
             
-            fig, ax1 = plt.subplots(1, figsize = (9, 4))
+            fig, ax1 = plt.subplots(1, figsize=(9, 4))
 
             x = [d[0] for d in data]
             y = [d[1] for d in data]
             z = [d[2] for d in data]
             
             # plot
-            ax1.plot(times[0], x, color = colors[0], linestyle='dashed', marker = 'o', ms = 3, label = f'{cell_name}, x')    
-            ax1.plot(times[0], y, color = colors[1], linestyle = 'solid', marker = 'v', ms = 3, label = f'{cell_name}, y')    
-            ax1.plot(times[0], z, color = colors[2], linestyle = 'dotted', marker = 's', ms = 2, label = f'{cell_name}, z')   
+            ax1.plot(times[0],
+                     x,
+                     color=colors[0], 
+                     linestyle='dashed',
+                     marker='o',
+                     ms=3,
+                     label=f'{cell_name}, x')    
+            ax1.plot(times[0],
+                     y, color=colors[1],
+                     linestyle='solid',
+                     marker='v',
+                     ms=3,
+                     label=f'{cell_name}, y')    
+            ax1.plot(times[0],
+                     z,
+                     color=colors[2],
+                     linestyle='dotted',
+                     marker='s',
+                     ms=2,
+                     label=f'{cell_name}, z')   
 
             # secondary axis: frame number
             ax2 = ax1.secondary_xaxis('top', functions=(poly3_forward, poly3_reverse))
@@ -172,22 +201,40 @@ else:
             # save image
             plt.savefig(f"{sys.argv[1]}_displacement_{cell_name}.png", dpi=500)
 
-#--------------------------------- DEFORMABILITY ----------------------------------------#
+    # ---------------------------- DEFORMABILITY ----------------------------------#
     data_needed = ["Deformability"]
-    if all(key in master_dict for key in data_needed) and all(master_dict[key] for key in data_needed):       
+    if (
+        all(key in master_dict for key in data_needed) 
+        and all(master_dict[key] for key in data_needed)
+    ):       
 
         for cell_name, data in master_dict.get('Deformability').items():
             
-            fig, ax1 = plt.subplots(1, figsize = (9, 4))
+            fig, ax1 = plt.subplots(1, figsize=(9, 4))
 
             x = [d[0] for d in data]
             y = [d[1] for d in data]
             z = [d[2] for d in data]
             
             # plot
-            ax1.plot(times[0], x, linestyle='dashed', marker = 'o', ms = 3, label = f'{cell_name}, x')    
-            ax1.plot(times[0], y, linestyle = 'solid', marker = 'v', ms = 3, label = f'{cell_name}, y')    
-            ax1.plot(times[0], z, linestyle = 'dotted', marker = 's', ms = 2, label = f'{cell_name}, z')    
+            ax1.plot(times[0],
+                     x,
+                     linestyle='dashed',
+                     marker='o',
+                     ms=3,
+                     label=f'{cell_name}, x')    
+            ax1.plot(times[0],
+                     y,
+                     linestyle='solid',
+                     marker='v',
+                     ms=3,
+                     label=f'{cell_name}, y')    
+            ax1.plot(times[0],
+                     z,
+                     linestyle='dotted',
+                     marker='s',
+                     ms=2,
+                     label=f'{cell_name}, z')    
 
             # secondary axis: frame number
             ax2 = ax1.secondary_xaxis('top', functions=(poly3_forward, poly3_reverse))
@@ -205,13 +252,15 @@ else:
             # save image
             plt.savefig(f"{sys.argv[1]}_deformability_{cell_name}.png", dpi=500)
 
-
-#--------------------------------- CONTACT AREA ----------------------------------------#
+    # --------------------------- CONTACT AREA ---------------------------------#
 
     data_needed = ["Contact area", "Times", "Frames"]
-    if all(key in master_dict for key in data_needed) and all(master_dict[key] for key in data_needed):
+    if (
+        all(key in master_dict for key in data_needed) 
+        and all(master_dict[key] for key in data_needed)
+    ):
 
-        fig, ax1 = plt.subplots(1, figsize = (9, 3.7))
+        fig, ax1 = plt.subplots(1, figsize=(9, 3.7))
 
         enum = list(range(len(master_dict["Contact area"])))
         times_tmp = master_dict['Times']
@@ -220,7 +269,7 @@ else:
         frames = master_dict['Frames']
 
         # declare colors for multiple plots
-        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue,0.9,0.7])
+        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue, 0.9, 0.7])
         hues = np.linspace(0, 0.7, len(enum))
         colors = [hsv2rgb(hue) for hue in hues]
 
@@ -242,7 +291,7 @@ else:
         # save image
         plt.savefig(f"{sys.argv[1]}_contact.png", dpi=500)
 
-#--------------------------------- VOLUME ----------------------------------------#
+    # --------------------------- VOLUME ----------------------------------#
     data_needed = ["Volume", "Times", "Frames"]
     if all(key in master_dict and len(master_dict[key]) > 0 for key in data_needed):
 
@@ -255,22 +304,24 @@ else:
         # mapping from time to frame
         df = pd.DataFrame({'x': times[0], 'y': frames[0]})
         # fit a polynomial curve on forward data
-        poly3_forward = np.poly1d(np.polyfit(df.x, df.y, deg = 5))
+        poly3_forward = np.poly1d(np.polyfit(df.x, df.y, deg=5))
         # fit a polynomial curve on reverse data
-        poly3_reverse = np.poly1d(np.polyfit(df.y, df.x, deg = 5))
-
+        poly3_reverse = np.poly1d(np.polyfit(df.y, df.x, deg=5))
 
         # declare colors for multiple plots
-        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue,0.9,0.7])
+        hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue, 0.9, 0.7])
         hues = np.linspace(0, 0.7, len(enum))
         colors = [hsv2rgb(hue) for hue in hues]
 
         for cell_name, data in master_dict.get('Volume').items():
         
-            fig, ax1 = plt.subplots(1, figsize = (9, 4))
+            fig, ax1 = plt.subplots(1, figsize=(9, 4))
 
             # plot
-            ax1.plot(times[0][:-1], volumes.get(f'{cell_name}'), color = colors[0], label = f'{cell_name}')    
+            ax1.plot(times[0][:-1],
+                     volumes.get(f'{cell_name}'),
+                     color=colors[0],
+                     label=f'{cell_name}')    
 
             # Add horizontal lines with the first and last values of volumes
             first_vol = volumes.get(f'{cell_name}')[0]
@@ -330,14 +381,12 @@ else:
 
 
 '''
-import os 
-
 
 with open(f"{sys.argv[1]}.json", 'r') as f:
     print(f"TEST: {sys.argv[1]}.json")
-    #data = f.read()
+    # data = f.read()
     master_dict = json.load(f)
-#len(master_dict['Times'][0])
+# len(master_dict['Times'][0])
 
 if len(master_dict["Distances"]) > 1: 
 
@@ -346,7 +395,7 @@ if len(master_dict["Distances"]) > 1:
     times = master_dict['Times']
     distances = master_dict['Distances']
 
-    hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue,0.9,0.7])
+    hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue, 0.9, 0.7])
     hues = np.linspace(0, 0.7, len(enum))
     colors = [hsv2rgb(hue) for hue in hues]
 
@@ -364,7 +413,7 @@ if len(master_dict["Distances"]) > 1:
 
     plt.ylabel('Total distance between cells')
     plt.xlabel('Times')
-    plt.legend(title = r'$falloff\_power = 0;   strength = -1000$')
+    plt.legend(title=r'$falloff\_power = 0; strength = -1000$')
     ax.grid(False)
     locs, labels = xticks()
 
@@ -378,7 +427,7 @@ else:
     times = master_dict['Times']
     distances = master_dict['Distances']
 
-    hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue,0.9,0.7])
+    hsv2rgb = lambda hue: mcolors.hsv_to_rgb([hue, 0.9, 0.7])
     hues = np.linspace(0, 0.7, len(enum))
     colors = [hsv2rgb(hue) for hue in hues]
 
@@ -386,7 +435,7 @@ else:
 
     plt.ylabel('Total distance between cells')
     plt.xlabel('Times')
-    plt.legend(title = r'$falloff\_power = 0;   strength = -1000$')
+    plt.legend(title=r'$falloff\_power = 0; strength = -1000$')
     ax.grid(False)
     locs, labels = xticks()
 
