@@ -36,4 +36,4 @@ jobs:
       - name: flake8 Lint
         uses: py-actions/flake8@v2
         with:
-          exclude: "blender*, ../../simulations/*, ../../blend/*, ../../tests/*, ../../scripts/modules/goo/visualization.py, ../../sphinx/*, ../../data/*, ../../app/*, ../../addon/*, ../../_notebooks/*, ../../docs/*, ../../img/*"
+          exclude: "../../simulations/"
