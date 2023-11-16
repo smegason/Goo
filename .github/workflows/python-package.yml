@@ -28,26 +28,8 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Upgrade PIP
+      - name: Upgrade pip
         run: python -m pip install --upgrade pip
-
-      - name: Install dependencies
-        id: install-dependencies
-        run: |
-          python -m pip install .[test]
-          python -m pip install pytest-blender
-          python -m pip install --upgrade pip
-          pip install pylint
-          pip install flake8
-          blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
-          python_blender_executable="$(pytest-blender --blender-executable $blender_executable)"
-          $python_blender_executable -m ensurepip
-          $python_blender_executable -m pip install pytest
-          echo "::set-output name=blender-executable::$blender_executable"
-          pip install pylint
-
-      - name: flake8 Lint
-        run: flake8 . --exclude addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
 
       - name: Cache Blender ${{ matrix.blender-version }}
         uses: actions/cache@v2
@@ -66,6 +48,23 @@ jobs:
           echo "$(blender-downloader \
           ${{ matrix.blender-version }} --extract --remove-compressed \
           --quiet --print-blender-executable)" > _blender-executable-path.txt
+
+      - name: Install dependencies
+        id: install-dependencies
+        run: |
+          python -m pip install .[test]
+          python -m pip install pytest-blender
+          pip install pylint
+          pip install flake8
+          blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
+          python_blender_executable="$(pytest-blender --blender-executable $blender_executable)"
+          $python_blender_executable -m ensurepip
+          $python_blender_executable -m pip install pytest
+          echo "::set-output name=blender-executable::$blender_executable"
+          pip install pylint
+
+      - name: flake8 Lint
+        run: flake8 . --exclude addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
 
       - name: Run pytest with pytest-blender
         run: |
