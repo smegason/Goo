@@ -15,7 +15,6 @@ jobs:
       matrix:
         platform:
           - macos-latest
-          - ubuntu-latest
         blender-version:
           - '3.3.12'
 
