@@ -73,7 +73,7 @@ jobs:
       - name: Test with pytest-blender using cached blender version
         if: steps.cache-blender.outputs.cache-hit == 'true'
         run: |
-          cached_blender_executable=$(find ${{ steps.cache-blender.outputs.paths }} -name blender)
+          cached_blender_executable=$(< _blender-executable-path.txt)
           pytest -svv --blender-executable "${cached_blender_executable}" tests/
       
       
