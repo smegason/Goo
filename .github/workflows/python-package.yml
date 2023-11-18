@@ -65,9 +65,11 @@ jobs:
       - name: flake8 Lint
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
 
-      - name: Print Blender Executable Path
+      - name: Print All Output Properties
         run: |
-          echo "Blender Executable: ${{ steps.download-blender.outputs }}"
+          for key in "${!steps.download-blender.outputs[@]}"; do
+            echo "$key: ${steps.download-blender.outputs[$key]}"
+          done
       
       - name: Test with pytest in Blender
         run: |
