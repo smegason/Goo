@@ -38,16 +38,21 @@ jobs:
             _blender-executable-path.txt
           key: ${{ runner.os }}-${{ matrix.blender-version }}
 
-      - name: Download Blender ${{ matrix.blender-version }}
-        if: steps.cache-blender.outputs.cache-hit != 'true'
-        id: download-blender
+      - name: Download or Use Cached Blender ${{ matrix.blender-version }}
+        id: download-or-use-cached-blender
         run: |
-          python -m pip install --upgrade blender-downloader
-          printf "%s" "$(blender-downloader \
-          ${{ matrix.blender-version }} --extract --remove-compressed \
-          --quiet --print-blender-executable)" > _blender-executable-path.txt
-          blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
-          echo "blender-executable=${blender_executable}" >> $GITHUB_OUTPUT
+          if [ "${{ steps.cache-blender.outputs.cache-hit }}" != 'true' ]; then
+            python -m pip install --upgrade blender-downloader
+            printf "%s" "$(blender-downloader \
+              ${{ matrix.blender-version }} --extract --remove-compressed \
+              --quiet --print-blender-executable)" > _blender-executable-path.txt
+            blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
+            echo "blender-executable=${blender_executable}" >> $GITHUB_OUTPUT
+          else
+            echo "Using cached Blender version: ${{ steps.cache-blender.outputs.paths }}"
+            blender_executable=$(find ${{ steps.cache-blender.outputs.paths }} -name blender)
+            echo "blender-executable=${blender_executable}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Install dependencies
         id: install-dependencies
