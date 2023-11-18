@@ -63,7 +63,7 @@ jobs:
           $python_blender_executable -m pip install pytest
 
       - name: flake8 Lint
-        run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
+        run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py --max-line-length 88
 
       - name: Print Blender Executable Path
         run: |
