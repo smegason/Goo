@@ -38,21 +38,16 @@ jobs:
             _blender-executable-path.txt
           key: ${{ runner.os }}-${{ matrix.blender-version }}
 
-      - name: Download or Use Cached Blender ${{ matrix.blender-version }}
-        id: download-or-use-cached-blender
+      - name: Download Blender ${{ matrix.blender-version }}
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        id: download-blender
         run: |
-          if [ "${{ steps.cache-blender.outputs.cache-hit }}" != 'true' ]; then
-            python -m pip install --upgrade blender-downloader
-            printf "%s" "$(blender-downloader \
-              ${{ matrix.blender-version }} --extract --remove-compressed \
-              --quiet --print-blender-executable)" > _blender-executable-path.txt
-            blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
-            echo "blender-executable=${blender_executable}" >> $GITHUB_OUTPUT
-          else
-            echo "Using cached Blender version: ${{ steps.cache-blender.outputs.paths }}"
-            blender_executable=$(find ${{ steps.cache-blender.outputs.paths }} -name blender)
-            echo "blender-executable=${blender_executable}" >> $GITHUB_OUTPUT
-          fi
+          python -m pip install --upgrade blender-downloader
+          printf "%s" "$(blender-downloader \
+          ${{ matrix.blender-version }} --extract --remove-compressed \
+          --quiet --print-blender-executable)" > _blender-executable-path.txt
+          blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
+          echo "blender-executable=${blender_executable}" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         id: install-dependencies
@@ -70,11 +65,16 @@ jobs:
       - name: flake8 Lint
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py --max-line-length 88
 
-      - name: Print Blender Executable Path
-        run: |
-          echo "Blender Executable: ${{ steps.download-blender.outputs.blender-executable }}"
-      
-      - name: Test with pytest in Blender
+      - name: Test with pytest-blender using cached blender version
+        if: steps.cache-blender.outputs.cache-hit != 'true'
         run: |
           pytest -svv --blender-executable "${{ steps.download-blender.outputs.blender-executable }}" tests/
+
+      - name: Test with pytest-blender using cached blender version
+        if: steps.cache-blender.outputs.cache-hit == 'true'
+        run: |
+          cached_blender_executable=$(find ${{ steps.cache-blender.outputs.paths }} -name blender)
+          pytest -svv --blender-executable "${cached_blender_executable}" tests/
+      
+      
       
