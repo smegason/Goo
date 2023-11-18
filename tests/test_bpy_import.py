@@ -4,7 +4,6 @@ import pytest
 @pytest.mark.parametrize(
     "imported", ("bpy"), ids=("import bpy")
 )
-
 def test_bpy_import(testing_context, imported, plugin_args, expected_exitcode):
     with testing_context(
         {
