@@ -1,3 +1,7 @@
+from goo import goo
+import bpy
+
+
 def test_uppercase():
     assert "loud noises".upper() == "LOUD NOISES"
 
@@ -15,8 +19,6 @@ def test_some_primes():
 
 
 def test_make_cell_with_attributes():
-    from goo import goo
-    import bpy
 
     # Define attributes for the cell
     name = "MyCell"
