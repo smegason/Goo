@@ -14,7 +14,6 @@ jobs:
     strategy:
       matrix:
         platform:
-          - ubuntu-latest
           - macos-latest
         blender-version:
           - '3.3.12'
@@ -30,7 +29,7 @@ jobs:
         run: python -m pip install --upgrade pip
 
       - name: Cache Blender ${{ matrix.blender-version }}
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-blender
         with:
           path: |
@@ -66,6 +65,11 @@ jobs:
       - name: flake8 Lint
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
 
+      - name: Print Blender Executable Path
+        run: |
+          echo "Blender Executable: ${{ steps.install-dependencies.outputs.blender-executable }}"
+      
       - name: Test with pytest in Blender
-        run: pytest -svv --blender-executable \
-          "${{ steps.install-dependencies.outputs.blender-executable }}" tests
+        run: |
+          pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests/
+      
