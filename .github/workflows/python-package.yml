@@ -67,9 +67,9 @@ jobs:
 
       - name: Print Blender Executable Path
         run: |
-          echo "Blender Executable: ${{ steps.install-dependencies.outputs.blender-executable }}"
+          echo "Blender Executable: ${{ steps.download-blender.outputs.GITHUB_OUTPUT }}"
       
       - name: Test with pytest in Blender
         run: |
-          pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender-executable }}" tests/
+          pytest -svv --blender-executable "${{ steps.download-blender.outputs.GITHUB_OUTPUT }}" tests/
       
