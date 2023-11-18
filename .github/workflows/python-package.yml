@@ -21,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python v3.9
+        id: setup-python
         uses: actions/setup-python@v3
         with:
           python-version: 3.9
@@ -45,9 +46,8 @@ jobs:
           printf "%s" "$(blender-downloader \
           ${{ matrix.blender-version }} --extract --remove-compressed \
           --quiet --print-blender-executable)" > _blender-executable-path.txt
-          blender_executable="$(< _blender-executable-path.txt)"
-          echo "blender-executable=$blender_executable" 
-          echo "blender-executable=$BLENDER_EXECUTABLE" >> $GITHUB_OUTPUT
+          blender-executable="$(< _blender-executable-path.txt)"
+          echo "blender-executable=$blender-executable" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         id: install-dependencies
@@ -65,13 +65,17 @@ jobs:
       - name: flake8 Lint
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
 
+      - name: Print Blender Executable Path
+        run: |
+          echo "Blender Executable: ${{ steps.download-blender.outputs.blender-executable }}"
+
       - name: Print All Output Properties
         run: |
-          for key in "${!steps.download-blender.outputs[@]}"; do
+          for key in $(echo "${!steps.download-blender.outputs[@]}"); do
             echo "$key: ${steps.download-blender.outputs[$key]}"
           done
       
       - name: Test with pytest in Blender
         run: |
-          pytest -svv --blender-executable "${{ steps.download-blender.outputs.GITHUB_OUTPUT }}" tests/
+          pytest -svv --blender-executable "${{ steps.download-blender.outputs.blender-executable }}" tests/
       
