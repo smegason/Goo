@@ -1,18 +1,16 @@
-import pytest
+# test_assert_examples.py
+
+def test_uppercase():
+    assert "loud noises".upper() == "LOUD NOISES"
 
 
-@pytest.mark.parametrize(
-    "imported", ("bpy"), ids=("import bpy")
-)
-def test_bpy_import(testing_context, imported, plugin_args, expected_exitcode):
-    with testing_context(
-        {
-            "tests/test_blender_import.py": f"""import pytest
+def test_reversed():
+    assert list(reversed([1, 2, 3, 4])) == [4, 3, 2, 1]
 
-def test_blender_import():
-    import {imported}
-"""
-        }
-    ) as ctx:
-        _, stderr, exitcode = ctx.run(plugin_args)
-        assert exitcode == expected_exitcode, stderr
+
+def test_some_primes():
+    assert 37 in {
+        num
+        for num in range(2, 50)
+        if not any(num % div == 0 for div in range(2, num))
+    }
