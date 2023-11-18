@@ -46,6 +46,8 @@ jobs:
           printf "%s" "$(blender-downloader \
           ${{ matrix.blender-version }} --extract --remove-compressed \
           --quiet --print-blender-executable)" > _blender-executable-path.txt
+          blender_executable="$(< _blender-executable-path.txt)"
+          echo "::set-output name=blender-executable::$blender_executable"
 
       - name: Install dependencies
         id: install-dependencies
@@ -55,26 +57,19 @@ jobs:
           pip install flake8
 
           python -m pip install .[test]
-          blender_executable="$(< _blender-executable-path.txt tr -d '\n')"
+          blender_executable="$(< _blender-executable-path.txt)"
           python_blender_executable="$(pytest-blender --blender-executable $blender_executable)"
           $python_blender_executable -m ensurepip
           $python_blender_executable -m pip install pytest
-          echo "::set-output name=blender-executable::$blender_executable"
 
       - name: flake8 Lint
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,tests/ --max-line-length 88
 
       - name: Print Blender Executable Path
         run: |
-          echo "Blender Executable: ${{ steps.install-dependencies.outputs }}"
-
-      - name: Print All Output Properties
-        run: |
-          for key in $(echo "${!steps.download-blender.outputs[@]}"); do
-            echo "$key: ${steps.download-blender.outputs[$key]}"
-          done
+          echo "Blender Executable: ${{ steps.download-blender.outputs.blender_executable }}"
       
       - name: Test with pytest in Blender
         run: |
-          pytest -svv --blender-executable "${{ steps.install-dependencies.outputs.blender_executable }}" tests/
+          pytest -svv --blender-executable "${{ steps.download-blender.outputs.blender_executable }}" tests/
       
