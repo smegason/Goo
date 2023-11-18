@@ -65,10 +65,8 @@ jobs:
       - name: Configure Blender Test Environment
         run: |
           blender_executable=$(< _blender-executable-path.txt)
-          # Run a script or commands to configure Blender's environment for testing
           # For example, to add your package to Blender's Python path:
-          ${cached_blender_executable} --background --python-use-system-env --python-expr "import sys; sys.path.append('scripts/')"
-          # Ensure the necessary environment setup for your package testing
+          ${blender_executable} --background --python-use-system-env --python-expr "import sys; sys.path.append('scripts/')"
 
       - name: flake8 Lint
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py --max-line-length 88
