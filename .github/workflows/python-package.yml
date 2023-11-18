@@ -14,17 +14,16 @@ jobs:
     strategy:
       matrix:
         platform:
-          - ubuntu-latest
           - macos-latest
         blender-version:
           - '3.3.12'
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python v3.9
+      - name: Set up Python v3.8
         uses: actions/setup-python@v3
         with:
-          python-version: 3.9
+          python-version: 3.8
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
@@ -46,6 +45,8 @@ jobs:
           printf "%s" "$(blender-downloader \
           ${{ matrix.blender-version }} --extract --remove-compressed \
           --quiet --print-blender-executable)" > _blender-executable-path.txt
+          blender_executable="$(< _blender-executable-path.txt)"
+          echo "blender-executable=$BLENDER_EXECUTABLE" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         id: install-dependencies
