@@ -67,7 +67,7 @@ jobs:
 
       - name: Print Blender Executable Path
         run: |
-          echo "Blender Executable: ${{ steps.download-blender.outputs.GITHUB_OUTPUT }}"
+          echo "Blender Executable: ${{ steps.download-blender.outputs }}"
       
       - name: Test with pytest in Blender
         run: |
