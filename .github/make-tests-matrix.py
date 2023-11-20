@@ -1,5 +1,5 @@
-import re
-from urllib import request
+# import re
+# from urllib import request
 
 
 jobs = [
@@ -7,21 +7,19 @@ jobs = [
         "version": "3.3.0",
         "version_x_y": "3.3",
         "sha": "released",
-        "download_url": "https://download.blender.org/release/Blender3.3\
-            /blender-3.3.0-linux-x64.tar.xz",
+        "download_url": "https://download.blender.org/release/Blender3.3/blender-3.3.0-linux-x64.tar.xz",
     },
     {
         "version": "3.3.12",
         "version_x_y": "3.3",
         "sha": "released",
-        "download_url": "https://download.blender.org/release/Blender3.3\
-            /blender-3.3.12-linux-x64.tar.xz",
+        "download_url": "https://download.blender.org/release/Blender3.3/blender-3.3.12-linux-x64.tar.xz",
     },
     # {'version': '', 'version_x_y': '', 'download_url': ''},
 ]
 
 
-def get_daily_builds(jobs: list):
+'''def get_daily_builds(jobs: list):
     resp = request.urlopen("https://builder.blender.org/download/daily/")
     page = resp.read().decode("utf-8")
     regex_pattern = (
@@ -47,10 +45,10 @@ def get_daily_builds(jobs: list):
             new_job["version"].removesuffix("-stable")
             not in [job["version"] for job in jobs]
         ):
-            jobs.append(new_job)
+            jobs.append(new_job)'''
 
 
 if __name__ == "__main__":
-    get_daily_builds(jobs)
+    # get_daily_builds(jobs)
     matrix = {"include": jobs}
     print(f"matrix={matrix}")

@@ -69,7 +69,7 @@ jobs:
           ${blender_executable} --background --python-use-system-env --python-expr "import sys; sys.path.append('scripts/')"
 
       - name: flake8 Lint
-        run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py --max-line-length 88
+        run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py, .github/ --max-line-length 88
 
       - name: Test with pytest-blender using downloaded blender version
         if: steps.cache-blender.outputs.cache-hit != 'true'
