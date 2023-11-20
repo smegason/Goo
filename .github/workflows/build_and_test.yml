@@ -9,7 +9,7 @@ on:
 
 jobs:
   make-tests-matrix:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -20,7 +20,7 @@ jobs:
   TESTS:
     needs: make-tests-matrix
     continue-on-error: true
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJSON(needs.make-tests-matrix.outputs.matrix) }}
     steps:
