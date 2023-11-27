@@ -1,6 +1,12 @@
 import bpy
-from goo import goo
+print('bpy imported')
 
+# Set the path to your scripts folder
+scripts_path = "scripts/"
+print(scripts_path)
 
-print('Hello World!')
-print(bpy.context.scene)
+# Access the preferences
+prefs = bpy.context.preferences
+
+# Set the scripts path
+prefs.filepaths.script_directory = scripts_path
