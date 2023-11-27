@@ -11,13 +11,13 @@ if directory_path not in sys.path:
 
 # Import the goo module and access its functions
 try:
-    from goo import goo  # Replace 'goo_function' with the actual function name you want to use
+    import goo  # Replace 'goo_function' with the actual function name you want to use
+    from goo import setup_world
 except ImportError:
     print("Error: Unable to import 'goo' module")
 
 # Test using the imported function
 try:
-    from goo import setup_world
     setup_world()  # Replace 'goo_function' with the actual function you want to use
 except Exception as e:
     print("Error:", e)
