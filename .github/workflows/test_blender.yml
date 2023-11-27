@@ -36,10 +36,16 @@ jobs:
         run: curl ${{ matrix.download_url }} -o /home/runner/blender.tar.xz
       - name: Mkdir
         run: mkdir {/home/runner/.local/bin,/home/runner/blender} -p
+      - name: Get goo.py from GitHub
+        run: |
+          mkdir -p /home/runner/work/Goo/Goo/scripts/
+          curl -o /home/runner/work/Goo/Goo/scripts/goo.py https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/goo.py
       - name: Extract Blender
         if: steps.blenderBinaryCache.outputs.cache-hit != 'true'
         run: tar -xf /home/runner/blender.tar.xz -C /home/runner/blender --strip-components=1
       - name: Add Blender to PATH
         run: ln -s /home/runner/blender/blender /home/runner/.local/bin/blender
+      - name: Run Blender script using goo.py
+        run: blender -b -P /home/runner/work/Goo/Goo/scripts/goo.py
       - name: TEST
         run: blender -b -P .github/load_goo.py
