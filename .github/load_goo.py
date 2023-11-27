@@ -1,30 +1,22 @@
+import bpy
+import sys
+import os
 
-import os 
+# Set the path to the directory containing the goo module
+directory_path = "/home/runner/work/Goo/Goo/scripts/"
 
-# Check if bpy can be imported
+# Add the directory to sys.path to enable module import
+if directory_path not in sys.path:
+    sys.path.append(directory_path)
+
+# Import the goo module and access its functions
 try:
-    import bpy
+    from goo import goo  # Replace 'goo_function' with the actual function name you want to use
 except ImportError:
-    print("Error: Unable to import 'bpy'")
+    print("Error: Unable to import 'goo' module")
 
-# Check if sys can be imported
+# Test using the imported function
 try:
-    import sys
-except ImportError:
-    print("Error: Unable to import 'sys'")
-
-# Set the path to the directory
-directory_path = "/home/runner/work/Goo/Goo/scripts/modules/goo"
-
-# Check if the directory exists
-if os.path.exists(directory_path):
-    # Perform an ls in the directory
-    try:
-        files = os.listdir(directory_path)
-        print("Files in the directory:")
-        for file in files:
-            print(file)
-    except Exception as e:
-        print(f"Error: {e}")
-else:
-    print("Error: Directory does not exist")
+    goo.setup_world()  # Replace 'goo_function' with the actual function you want to use
+except Exception as e:
+    print("Error:", e)
