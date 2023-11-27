@@ -1,5 +1,3 @@
-import bpy
-
 # Check if bpy can be imported
 try:
     import bpy
@@ -12,15 +10,18 @@ try:
 except ImportError:
     print("Error: Unable to import 'sys'")
 
-# Check if goo can be imported and set the script path
-try:    
-    # Access the preferences
-    prefs = bpy.context.preferences
-    # Set the scripts path
-    scripts_path = "/home/runner/work/Goo/Goo/scripts/"
-    prefs.filepaths.script_directory = scripts_path
+# Set the path to the directory
+directory_path = "/home/runner/work/Goo/Goo/scripts/modules/goo"
 
-    from goo import goo
-    
-except ImportError:
-    print("Error: Unable to import 'goo'")
+# Check if the directory exists
+if os.path.exists(directory_path):
+    # Perform an ls in the directory
+    try:
+        files = os.listdir(directory_path)
+        print("Files in the directory:")
+        for file in files:
+            print(file)
+    except Exception as e:
+        print(f"Error: {e}")
+else:
+    print("Error: Directory does not exist")
