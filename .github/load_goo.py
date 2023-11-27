@@ -3,7 +3,7 @@ import sys
 import os
 
 # Set the path to the directory containing the goo module
-directory_path = "/home/runner/work/Goo/Goo/scripts/modules/goo"
+directory_path = "/home/runner/work/Goo/Goo/scripts/modules"
 
 # Add the directory to sys.path to enable module import
 if directory_path not in sys.path:
@@ -11,7 +11,7 @@ if directory_path not in sys.path:
 
 # Import the goo module and access its functions
 try:
-    from goo import goo  # Replace 'goo_function' with the actual function name you want to use
+    import goo  # Replace 'goo_function' with the actual function name you want to use
 except ImportError:
     print("Error: Unable to import 'goo' module")
 
