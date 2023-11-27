@@ -1124,10 +1124,13 @@ def make_cell(
     name,
     loc,
     type,
+    radius=1,
     remeshing=True,
     scale=(1, 1, 1),
     stiffness=1,
-    material=("bubble", 0.007, 0.021, 0.3)
+    material=("bubble", 0.007, 0.021, 0.3), 
+    arcdiv=8,
+    subdiv=1
 ):
     # Function implementation
     # add mesh type as an cell argument? 
@@ -1141,7 +1144,7 @@ def make_cell(
     collection = make_collection(f'{name}_collection', type=type)
 
     # Initialize Cell python object
-    cell = Cell(name, loc, material, scale)
+    # cell = Cell(name, loc, material, scale)
 
     '''bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,
                                           radius=cell.data['radius'],
@@ -1153,14 +1156,14 @@ def make_cell(
     
     # Create mesh
     bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                          radius=cell.data['radius'],
-                                          size=cell.data['size'],
-                                          arc_div=cell.data['arcdiv'],
+                                          radius=radius,
+                                          size=scale,
+                                          arc_div=arcdiv,
                                           lin_div=0,
                                           div_type='CORNERS',
                                           odd_axis_align=False,
                                           no_limit=False,
-                                          location=cell.data['location'])
+                                          location=loc)
 
     # Give the Blender object the cell's name
     obj = bpy.context.object
@@ -1184,7 +1187,7 @@ def make_cell(
 
     # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type='SUBSURF')
-    bpy.context.object.modifiers["Subdivision"].levels = cell.data['subdiv']
+    bpy.context.object.modifiers["Subdivision"].levels = subdiv
     # subdiv_mod = obj.modifiers[-1]
     # bpy.ops.object.modifier_apply(modifier=subdiv_mod.name)
 
@@ -1193,7 +1196,7 @@ def make_cell(
     bpy.context.object.modifiers['Cloth'].settings.quality = 3
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 0
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
-    bpy.context.object.modifiers["Cloth"].settings.mass = cell.data['vertex_mass']
+    bpy.context.object.modifiers["Cloth"].settings.mass = 1
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
 
     # Cloth > Stiffness 
@@ -1290,7 +1293,7 @@ def make_cell(
     # handler = handler_class()
 
 
-# Defines the Cell class
+"""# Defines the Cell class
 class Cell():
     '''Core class: creates Goo cell object. 
 
@@ -1330,7 +1333,7 @@ class Cell():
         # The volume and mass are calculated from values in the data dictionary
         self.data['init_volume'] = ((4/3)*np.pi*(self.data['radius'])**3)
         self.data['mass'] = self.data['density']*self.data['init_volume']
-        print(self.data['mass'])
+        print(self.data['mass'])"""
 
 
 def add_material(mat_name, r, g, b):

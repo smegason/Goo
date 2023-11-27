@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Developer’s Guide &#8212; Goo 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/pyramid.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="User’s Guide" href="userguide.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="userguide.html" title="User’s Guide"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Goo 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer’s Guide</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="developer-s-guide">
+<h1>Developer’s Guide<a class="headerlink" href="#developer-s-guide" title="Permalink to this heading">¶</a></h1>
+<p>We welcome everyone who is interested in creating 3D models of biological stem cells on Blender!</p>
+<p>The developer’s guide is to help contributors on how to start working and contributing
+on Goo. If you are interested in join, please contact Sean Megason on his email address. sean.megason(AT)hms.harvard.edu.</p>
+<section id="git-github">
+<h2>Git/Github<a class="headerlink" href="#git-github" title="Permalink to this heading">¶</a></h2>
+<p>The first thing you need to do is to fork Goo repository and then clone the forked repository into your local machine. This
+Will give you the freedom to test and make changes to the project without affecting the original repository.</p>
+<p>Make sure you have git installed on your local machine.  If you do not have it install on your system, refer to this guide: <a class="reference external" href="https://github.com/git-guides/install-git">https://github.com/git-guides/install-git</a></p>
+<section id="fork-clone">
+<h3>Fork &amp; clone<a class="headerlink" href="#fork-clone" title="Permalink to this heading">¶</a></h3>
+<p>If you are new to Git/Github, here is detailed info on how to fork and clone a repository from Github:
+<a class="reference external" href="https://docs.github.com/en/get-started/quickstart/fork-a-repo">https://docs.github.com/en/get-started/quickstart/fork-a-repo</a></p>
+</section>
+<section id="push">
+<h3>Push<a class="headerlink" href="#push" title="Permalink to this heading">¶</a></h3>
+<p>Once you make final changes and the scripts run with no issues, you can push them into the main project. <a class="reference external" href="https://docs.github.com/en/get-started/importing-your-projects-to-github/importing-source-code-to-github/adding-locally-hosted-code-to-github">Here</a> is an instruction on how to push using git.</p>
+</section>
+</section>
+<section id="blender">
+<h2>Blender<a class="headerlink" href="#blender" title="Permalink to this heading">¶</a></h2>
+<p>Blender is an open source 3D computer software. It is free to <a class="reference external" href="https://www.blender.org/download/">download</a>. Blender has a huge community and contributors all over the world. You may find Python <a class="reference external" href="https://docs.blender.org/api/current/index.html">API</a> for Blender very useful.</p>
+<p>Once you have downloaded and installed Blender, launch Blender and select <em>General</em> for the new file. <strong>Scripting</strong> tab allows you to interact with Blender using Python language. By clicking <strong>scripting</strong>, a list of windows will open:</p>
+<ul class="simple">
+<li><p><em>3D Viewport</em> allows you to interact with 3D objects.</p></li>
+<li><p><em>Python Interactive Console</em> allows you to interact with Blender using Python language.</p></li>
+<li><p><em>Info Console Menu</em> or <em>Report console</em> creates a log in Python of the executed actions on Blender. In another words, it translates the clicks you made in Blender into code. This is very useful especially when you try to automate procedures of actions on <em>scripting</em>.</p></li>
+</ul>
+<a class="reference internal image-reference" href="_images/basic_blender.png"><img alt="_images/basic_blender.png" src="_images/basic_blender.png" style="width: 800px;" /></a>
+<section id="creating-python-file">
+<h3>Creating Python File<a class="headerlink" href="#creating-python-file" title="Permalink to this heading">¶</a></h3>
+<p>You can create a Python file and run it on Blender. Once you are in <strong>Scripting</strong> tab, click on the <em>+ New</em> icon.</p>
+<a class="reference internal image-reference" href="_images/python_file.png"><img alt="_images/python_file.png" src="_images/python_file.png" style="width: 800px;" /></a>
+<p>Blender Python’s API, named <em>bpy</em>, allows Python and Blender to fit together. To use it, the following package should be imported:</p>
+<blockquote>
+<div><p>import bpy</p>
+</div></blockquote>
+<p>The Blender API can used with no installation nor importing into the Python Interactive Console. The Python file can be run on Blender by clicking on <em>play</em> icon.</p>
+<a class="reference internal image-reference" href="_images/play_button.png"><img alt="_images/play_button.png" src="_images/play_button.png" style="width: 800px;" /></a>
+</section>
+<section id="viewing-python-error-messages">
+<h3>Viewing Python Error Messages<a class="headerlink" href="#viewing-python-error-messages" title="Permalink to this heading">¶</a></h3>
+<p><strong>PC</strong>: <em>Window -&gt; Toggle System Console</em></p>
+<p><strong>Mac</strong>: <em>Finder -&gt; Applications -&gt; right-click on Blender -&gt; Show Package Content -&gt; Contents -&gt; MacOS -&gt; right-click on Blender -&gt; Make Alias</em>. Blender will be launched by double-clicking the Blender alias and any error messages will display on the alias window. You can store the alia any folder.</p>
+</section>
+<section id="blender-python-tutorials">
+<h3>Blender Python Tutorials<a class="headerlink" href="#blender-python-tutorials" title="Permalink to this heading">¶</a></h3>
+<p>You can  find many free tutorials on YouTube and the Internet. here is a great tutorial, made by <a class="reference external" href="https://www.youtube.com/watch?v=cyt0O7saU4Q&amp;list=PLFtLHTf5bnym_wk4DcYIMq1DkjqB7kDb-&amp;ab_channel=Darkfall">Darkfall</a>, on YouTube on how to write a Python script in Blender.</p>
+</section>
+<section id="useful-blender-tips">
+<h3>Useful Blender Tips<a class="headerlink" href="#useful-blender-tips" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>To Display <em>Line Numbers</em> on a Python file, click <em>View</em> and mark the checkbox of <em>Line Numbers</em>. <em>View</em> tab will appear once you create a Python file.</p></li>
+<li><p>To turn on <em>Highlight Line</em> at the line currently at, click <em>View</em> and mark the checkbox of <em>Highlight Line</em>. <em>View</em> tab will appear once you create a Python file.</p></li>
+<li><p><em>Developer Extras</em> allows users to examine Python codes on any features or buttons on Blender by right-clicking for example on a Render button and then select <em>Edit Source</em>.  To enable this <em>Developer Extras</em>, go to <em>Edit</em> -&gt; <em>Preferences</em> -&gt; <em>Interface</em> -&gt; check <em>Developer Extras</em></p></li>
+<li><p><em>Python Tooltips</em> also allows users to examine the Python codes behind any bulit-in Blender features by just hovering the mouse on top and a pops-up window will appear.  To enable <em>Python Tooltips</em>, <em>Edit</em> -&gt; <em>Preferences</em> -&gt; <em>Interface</em> -&gt; Check <em>Python Tooltips</em></p></li>
+</ul>
+</section>
+</section>
+<section id="visual-studio-code-vscode">
+<h2>Visual Studio Code (VSCode)<a class="headerlink" href="#visual-studio-code-vscode" title="Permalink to this heading">¶</a></h2>
+<p>You can use any IDE softwares (Atom, PyCharm, Anaconda,…etc) available on the internet, but from our experience Visual Studio Code has been very smooth and convenient to use.</p>
+<section id="getting-started-with-vscode">
+<h3>Getting started with VSCode:<a class="headerlink" href="#getting-started-with-vscode" title="Permalink to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Install Python</strong> - Make sure you have Python already installed in your machine. If you are not sure, you can check by typing “python –version” on Terminal/Command Window.  If it returns python with some numbers, then you know Python already was installed.  But if it does not, you need install <a class="reference external" href="https://www.python.org/downloads/">Python</a>.</p></li>
+<li><p><strong>Install Blender API</strong> - Open Terminal/Command Window and type “<em>pip install fake-bpy-module-latest</em>”.  This command line will install the latest Blender’s version available using Pip package manager. For more info on visit <a class="reference external" href="https://github.com/nutti/fake-bpy-module">Fake Blender Github</a>.</p></li>
+<li><p><strong>Download and install VSCode software</strong> - <a class="reference external" href="https://code.visualstudio.com/download">Visual Studio Code</a>.</p></li>
+<li><p><strong>Install Python extension</strong> - open VSCode and go to the extension tab and search for “Python” by Microsoft. The VSCode extensions enhance developer’s experience.</p></li>
+<li><p><strong>Open Goo folder in VSCode</strong> - <em>File &gt; Open Folder</em> (See <strong>Git/GitHub</strong> section on how to clone Goo on your local machine if you have not done it yet).</p></li>
+<li><p><strong>Enable and Select Linter</strong> - Before you start working on Goo, you need to enable Linter which advise you about the code quality.  We are following fake8 style. To enable linter in VSCode, hit <em>ctl + shift + P</em> and type “Python: Enable/Disable Linting”.  Click on it and enable it. Now you need to select the code style.  Again click <em>ctl + shift + P</em> and type “Python: Select Linter” and then select <em>fake8</em></p></li>
+<li><p><strong>Open Terminal</strong> - if needed, you can open Terminal in VSCode. Go to Terminal tab and then select New Terminal.</p></li>
+</ol>
+<p>We have already shown how to run Python codes in Blender (see <em>Creating Python file</em> above). In this section, we will show you how to run Python scripts on VSCode written exclusively for Blender.</p>
+<p>There are two ways you can develop/execute your Python codes in VSCode.</p>
+</section>
+<section id="a-developing-executing-python-codes-in-vscode">
+<h3>A) Developing/Executing Python codes in VSCode<a class="headerlink" href="#a-developing-executing-python-codes-in-vscode" title="Permalink to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Install Blender extenion</strong>: same as before open up VSCode and got to extension and search for “Blender Development” by Jacques Lucke</p></li>
+<li><p><strong>Python file</strong>: Create a Python file in VSCode.</p></li>
+<li><p><strong>Link Blender executable file</strong>: Click <em>ctl + shift + p</em> , select <em>Blender: Start</em>, and then select the executable Blender (you can find it in Blender folder). In <em>Mac</em>:  Finder &gt; Application &gt; right-click on Blender and choose “Show Package Content” &gt; Contents &gt; MacOS. In <em>PC</em>: find the path where blender.exe exists in Blender folder. Once you link the executable, Blender will launch.  Select <em>General</em> to start from scratch.</p></li>
+<li><p><strong>Run Python script</strong>: if you want to run your script, hit <em>ctl + shift + p</em> and select <em>Blender: Run Script</em>. Now, you can see the results in Blender.</p></li>
+</ol>
+</section>
+<section id="b-developing-a-python-script-in-vscode-and-executing-in-blender">
+<h3>B) Developing a Python script in VSCode and executing in Blender<a class="headerlink" href="#b-developing-a-python-script-in-vscode-and-executing-in-blender" title="Permalink to this heading">¶</a></h3>
+<ol class="arabic">
+<li><p><strong>Save changes in VSCode</strong>: Save the changes you made in goo.py or any other scripts in VSCode</p></li>
+<li><p><strong>Create a new script</strong>: In Blender, create a new Python script</p></li>
+<li><p><strong>Reload</strong>: To use the attributs/methods of the scripts you created or modified in Blender, you will need to add the following at the top of the script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
+<span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Developer’s Guide</a><ul>
+<li><a class="reference internal" href="#git-github">Git/Github</a><ul>
+<li><a class="reference internal" href="#fork-clone">Fork &amp; clone</a></li>
+<li><a class="reference internal" href="#push">Push</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#blender">Blender</a><ul>
+<li><a class="reference internal" href="#creating-python-file">Creating Python File</a></li>
+<li><a class="reference internal" href="#viewing-python-error-messages">Viewing Python Error Messages</a></li>
+<li><a class="reference internal" href="#blender-python-tutorials">Blender Python Tutorials</a></li>
+<li><a class="reference internal" href="#useful-blender-tips">Useful Blender Tips</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#visual-studio-code-vscode">Visual Studio Code (VSCode)</a><ul>
+<li><a class="reference internal" href="#getting-started-with-vscode">Getting started with VSCode:</a></li>
+<li><a class="reference internal" href="#a-developing-executing-python-codes-in-vscode">A) Developing/Executing Python codes in VSCode</a></li>
+<li><a class="reference internal" href="#b-developing-a-python-script-in-vscode-and-executing-in-blender">B) Developing a Python script in VSCode and executing in Blender</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="userguide.html"
+                          title="previous chapter">User’s Guide</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/devguide.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="userguide.html" title="User’s Guide"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Goo 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer’s Guide</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022. President and Fellows of Harvard College.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    </div>
+  </body>
+</html>
