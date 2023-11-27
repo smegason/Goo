@@ -13,16 +13,13 @@ except ImportError:
     print("Error: Unable to import 'sys'")
 
 # Check if goo can be imported and set the script path
-try:
-    sys.path.append("/home/runner/work/Goo/Goo/scripts/modules/goo")
-    print('Script path added successfully')
-    
+try:    
     # Access the preferences
     prefs = bpy.context.preferences
-
     # Set the scripts path
-    scripts_path = "/home/runner/work/Goo/Goo/scripts/modules/goo"
+    scripts_path = "/home/runner/work/Goo/Goo/scripts/"
     prefs.filepaths.script_directory = scripts_path
+
     from goo import goo
     
 except ImportError:
