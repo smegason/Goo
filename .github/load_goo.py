@@ -15,7 +15,6 @@ except ImportError:
 # Check if goo can be imported and set the script path
 try:
     sys.path.append("/home/runner/work/Goo/Goo/scripts/modules/goo")
-    from goo import goo
     print('Script path added successfully')
     
     # Access the preferences
@@ -24,6 +23,7 @@ try:
     # Set the scripts path
     scripts_path = "/home/runner/work/Goo/Goo/scripts/modules/goo"
     prefs.filepaths.script_directory = scripts_path
+    from goo import goo
     
 except ImportError:
     print("Error: Unable to import 'goo'")
