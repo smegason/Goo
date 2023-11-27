@@ -3,7 +3,7 @@ import sys
 import os
 
 # Set the path to the directory containing the goo module
-directory_path = "/home/runner/work/Goo/Goo/scripts/"
+directory_path = "/home/runner/work/Goo/Goo/scripts/modules/goo"
 
 # Add the directory to sys.path to enable module import
 if directory_path not in sys.path:
