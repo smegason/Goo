@@ -1,3 +1,6 @@
+
+import os 
+
 # Check if bpy can be imported
 try:
     import bpy
