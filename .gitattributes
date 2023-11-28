@@ -1,3 +1,5 @@
 *.psd filter=lfs diff=lfs merge=lfs -text
 *.blend filter=lfs diff=lfs merge=lfs -text
 _notebooks/* linguist-vendored
+docs_depreciated/* linguist-vendored
+sphinx_depreciated/* linguist-vendored
