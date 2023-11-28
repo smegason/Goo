@@ -1,4 +1,4 @@
-name: test_builds
+name: releases
 
 on:
   push:
