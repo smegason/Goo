@@ -51,3 +51,4 @@ jobs = [
 if __name__ == "__main__":
     # get_daily_builds(jobs)
     matrix = {"include": jobs}
+    print(matrix)
