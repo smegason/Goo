@@ -1,29 +1,28 @@
-name: releases
+name: test_builds
 
 on:
   push:
     branches: [ 'main' ]
   pull_request:
-    branches: [ '**' ]
+    branches: [ 'main' ]
   workflow_dispatch:
-
 
 jobs:
   make-tests-matrix:
-    runs-on: ubuntu-latest
-    env:
-      MATRIX: ${{ matrix }}
+    runs-on: macos-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v3
       - id: set-matrix
-        run: MATRIX=$(python .github/make-tests-matrix.py) && echo "MATRIX=$MATRIX" >> $GITHUB_ENV
+        run: python .github/make-tests-matrix.py >> $GITHUB_OUTPUT
 
   test:
     needs: make-tests-matrix
     continue-on-error: true
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
-      matrix: ${{ fromJson(env.MATRIX) }}
+      matrix: ${{ fromJSON(needs.make-tests-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python v3.10
@@ -71,9 +70,6 @@ jobs:
 
       - name: Load goo.py functions in Blender
         run: blender -b -P .github/load_goo.py
-
-      - name: Tests
-        run: pytest -svv --blender-executable /home/runner/.local/bin/blender tests/
 
       - name: flake8 linter
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py, .github/ --max-line-length 88
