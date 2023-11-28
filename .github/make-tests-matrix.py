@@ -1,6 +1,6 @@
 # import re
 # from urllib import request
-
+import json
 
 jobs = [
     {
@@ -51,4 +51,4 @@ jobs = [
 if __name__ == "__main__":
     # get_daily_builds(jobs)
     matrix = {"include": jobs}
-    print(matrix)
+    print(json.dumps(matrix))

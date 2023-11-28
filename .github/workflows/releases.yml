@@ -7,22 +7,23 @@ on:
     branches: [ 'main' ]
   workflow_dispatch:
 
+
 jobs:
   make-tests-matrix:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    env:
+      MATRIX: ${{ matrix }}
     steps:
       - uses: actions/checkout@v3
       - id: set-matrix
-        run: python .github/make-tests-matrix.py >> $GITHUB_OUTPUT
+        run: MATRIX=$(python .github/make-tests-matrix.py) && echo "MATRIX=$MATRIX" >> $GITHUB_ENV
 
-  TESTS:
+  test:
     needs: make-tests-matrix
     continue-on-error: true
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJSON(needs.make-tests-matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(env.MATRIX) }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python v3.10
