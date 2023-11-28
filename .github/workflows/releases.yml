@@ -5,13 +5,11 @@ on:
     branches: [ 'main' ]
   pull_request:
     branches: [ 'main' ]
-  workflow_dispatch:
 
 jobs:
   make-tests-matrix:
-    runs-on: 
-      - ubuntu-latest
-      - macos-latest
+    runs-on: macos-latest
+
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -22,9 +20,7 @@ jobs:
   test:
     needs: make-tests-matrix
     continue-on-error: true
-    runs-on: 
-      - ubuntu-latest
-      - macos-latest
+    runs-on: macos-latest
     strategy:
       matrix: ${{ fromJSON(needs.make-tests-matrix.outputs.matrix) }}
     steps:
