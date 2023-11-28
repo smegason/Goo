@@ -25,7 +25,6 @@ jobs:
       matrix: ${{ fromJSON(needs.make-tests-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up Python v3.8
         id: setup-python
         uses: actions/setup-python@v3
