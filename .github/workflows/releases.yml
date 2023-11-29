@@ -63,6 +63,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install pytest-blender
+          python -m pip install pytest
           pip install flake8
 
       - name: Load goo.py functions in Blender
