@@ -74,5 +74,5 @@ jobs:
 
 
       - name: flake8 linter
-        run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,.github/ --max-line-length 88
+        run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,.github/,docs/ --max-line-length 88
 
