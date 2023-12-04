@@ -52,7 +52,8 @@ jobs:
         run: |
           mkdir -p /home/runner/work/Goo/Goo/scripts/
           curl -o /home/runner/work/Goo/Goo/scripts/goo.py https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/goo.py
-
+          python .github/check_file_existence.py
+          
       - name: Extract Blender
         if: steps.blenderBinaryCache.outputs.cache-hit != 'true'
         run: tar -xf /home/runner/blender.tar.xz -C /home/runner/blender --strip-components=1
