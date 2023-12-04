@@ -52,7 +52,7 @@ jobs:
         run: |
           mkdir -p /home/runner/work/Goo/Goo/scripts/
           curl -o /home/runner/work/Goo/Goo/scripts/goo.py https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/goo.py
-          python .github/check_file_existence.py
+          python .github/check_hdr_file.py
           
       - name: Extract Blender
         if: steps.blenderBinaryCache.outputs.cache-hit != 'true'
