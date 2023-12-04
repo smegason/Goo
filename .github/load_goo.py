@@ -9,7 +9,6 @@ if directory_path not in sys.path:
 
 # Import the goo module and access its functions
 try:
-    import bpy
     from goo import goo 
 except ImportError:
     print("Error: Unable to import 'goo' module")
@@ -17,13 +16,13 @@ except ImportError:
 # Test using the imported function
 try:
     goo.setup_world(seed=1)
-    goo.make_cell(
+    '''goo.make_cell(
         name='cell_A1',
         loc=(0, 0, 0), 
         type='cellsA'        
     )
 
-    print(bpy.data.objects['cellA1'].users_collection[0])
+    print(bpy.data.objects['cellA1'].users_collection[0])'''
     
 except Exception as e:
     print("Error:", e)
