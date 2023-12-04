@@ -52,7 +52,7 @@ jobs:
         run: |
           mkdir -p /home/runner/work/Goo/Goo/scripts/
           curl -o /home/runner/work/Goo/Goo/scripts/goo.py https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/goo.py
-          curl -o /home/runner/blender/3.0/scripts/modules/goo/missile_launch_facility_01_4k.hdr' https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/missile_launch_facility_01_4k.hdr
+          curl -o /home/runner/blender/3.0/scripts/modules/goo/missile_launch_facility_01_4k.hdr https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/missile_launch_facility_01_4k.hdr
           python .github/check_hdr_file.py
           
       - name: Extract Blender
