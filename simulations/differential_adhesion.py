@@ -3,76 +3,73 @@
 
 from goo import goo
 from importlib import reload
-import bpy
 reload(goo)
-goo.setup_world(seed = 1)
+goo.setup_world(seed=1)
 
-#================== Cell A Collection ==================
+# Cells A
 
+# Define cell A1
+goo.make_cell("cell_A1", loc=(4, 0, -2), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A2", loc = (2,0,0), type = "A_Cells")
+goo.make_cell("cell_A2", loc=(2, 0, 0), type="A_Cells")
 # Define cell A3
-goo.make_cell("cell_A3", loc = (0,2,0), type = "A_Cells")
+goo.make_cell("cell_A3", loc=(0, 2, 0), type="A_Cells")
 # Define cell A4
-goo.make_cell("cell_A4", loc = (4,2,0), type = "A_Cells")
-# Define cell A3
-goo.make_cell("cell_A5", loc = (0,-2,0), type = "A_Cells")
-# Define cell A4
-goo.make_cell("cell_A6", loc = (4,-2,0), type = "A_Cells")
+goo.make_cell("cell_A4", loc=(4, 2, 0), type="A_Cells")
+# Define cell A5
+goo.make_cell("cell_A5", loc=(0, -2, 0), type="A_Cells")
+# Define cell A6
+goo.make_cell("cell_A6", loc=(4, -2, 0), type="A_Cells")
 
-# Define cell A1
-goo.make_cell("cell_A7", loc = (0,0,2), type = "A_Cells")
-# Define cell A2
-goo.make_cell("cell_A8", loc = (4,0,2), type = "A_Cells")
-# Define cell A3
-goo.make_cell("cell_A9", loc = (2,2,2), type = "A_Cells")
-# Define cell A3
-goo.make_cell("cell_A11", loc = (2,-2,2), type = "A_Cells")
+# Define cell A7
+goo.make_cell("cell_A7", loc=(0, 0, 2), type="A_Cells")
+# Define cell A8
+goo.make_cell("cell_A8", loc=(4, 0, 2), type="A_Cells")
+# Define cell A9
+goo.make_cell("cell_A9", loc=(2, 2, 2), type="A_Cells")
+# Define cell A10
+goo.make_cell("cell_A10", loc=(0, 0, -2), type="A_Cells")
+# Define cell A11
+goo.make_cell("cell_A11", loc=(2, -2, 2), type="A_Cells")
+# Define cell A12
+goo.make_cell("cell_A12", loc=(2, 2, -2), type="A_Cells")
+# Define cell A13
+goo.make_cell("cell_A13", loc=(2, -2, -2), type="A_Cells")
 
-# Define cell A4
-goo.make_cell("cell_A10", loc = (0,0,-2), type = "A_Cells")
-# Define cell A1
-goo.make_cell("cell_A1", loc = (4,0,-2), type = "A_Cells")
-# Define cell A4
-goo.make_cell("cell_A12", loc = (2,2,-2), type = "A_Cells")
-# Define cell A4
-goo.make_cell("cell_A13", loc = (2,-2,-2), type = "A_Cells")
+# Cells B
 
+# Define cell B1
+goo.make_cell("cell_B13", loc=(0, 0, 0), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B2
+goo.make_cell("cell_B14", loc=(4, 0, 0), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B3
+goo.make_cell("cell_B15", loc=(2, 2, 0), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B4
+goo.make_cell("cell_B17", loc=(2, -2, 0), material=('red', 0.2, 0, 0), type="B_Cells")
 
+# Define cell B5
+goo.make_cell("cell_B18", loc=(2, 0, -2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B6
+goo.make_cell("cell_B16", loc=(0, 2, -2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B7
+goo.make_cell("cell_B19", loc=(4, 2, -2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B8
+goo.make_cell("cell_B25", loc=(0, -2, -2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B9
+goo.make_cell("cell_B26", loc=(4, -2, -2), material=('red', 0.2, 0, 0), type="B_Cells")
 
-# Define cell A1
-goo.make_cell("cell_B13", loc = (0,0,0), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A2
-goo.make_cell("cell_B14", loc = (4,0,0), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A1
-goo.make_cell("cell_B15", loc = (2,2,0), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A1
-goo.make_cell("cell_B17", loc = (2,-2,0), material = ('red', 0.2, 0, 0), type = "B_Cells")
+# Define cell B10
+goo.make_cell("cell_B20", loc=(2, 0, 2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B12
+goo.make_cell("cell_B21", loc=(0, 2, 2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B13
+goo.make_cell("cell_B22", loc=(4, 2, 2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B14
+goo.make_cell("cell_B23", loc=(0, -2, 2), material=('red', 0.2, 0, 0), type="B_Cells")
+# Define cell B15
+goo.make_cell("cell_B24", loc=(4, -2, 2), material=('red', 0.2, 0, 0), type="B_Cells")
 
-# Define cell A2
-goo.make_cell("cell_B18", loc = (2,0,-2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A2
-goo.make_cell("cell_B16", loc = (0,2,-2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A1
-goo.make_cell("cell_B19", loc = (4,2,-2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A1
-goo.make_cell("cell_B25", loc = (0,-2,-2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A1
-goo.make_cell("cell_B26", loc = (4,-2,-2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-
-# Define cell A2
-goo.make_cell("cell_B20", loc = (2,0,2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A1
-goo.make_cell("cell_B21", loc = (0,2,2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A2
-goo.make_cell("cell_B22", loc = (4,2,2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A1
-goo.make_cell("cell_B23", loc = (0,-2,2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-# Define cell A2
-goo.make_cell("cell_B24", loc = (4,-2,2), material = ('red', 0.2, 0, 0), type = "B_Cells")
-
-
-#================== Force A Collection ==================
+# Forces A 
 
 strength = -2000
 falloff = 0
@@ -119,60 +116,59 @@ goo.add_motion('cell_A12', motion)
 goo.make_force("force_A13", "cell_A13", "A_Cells", strength, falloff)
 goo.add_motion('cell_A13', motion)
 
+# Forces B
 
-
-# Define force A1
+# Define force B1
 goo.make_force("force_B13", "cell_B13", "B_Cells", strength, falloff)
 goo.add_motion('cell_B13', motion)
-# Define force A2
+# Define force B2
 goo.make_force("force_B14", "cell_B14", "B_Cells", strength, falloff)
 goo.add_motion('cell_B14', motion)
-# Define force A1
+# Define force B3
 goo.make_force("force_B15", "cell_B15", "B_Cells", strength, falloff)
 goo.add_motion('cell_B15', motion)
-# Define force A2
+# Define force B4
 goo.make_force("force_B16", "cell_B16", "B_Cells", strength, falloff)
 goo.add_motion('cell_B16', motion)
-# Define force A1
+# Define force B5
 goo.make_force("force_B17", "cell_B17", "B_Cells", strength, falloff)
 goo.add_motion('cell_B17', motion)
-# Define force A2
+# Define force B6
 goo.make_force("force_B18", "cell_B18", "B_Cells", strength, falloff)
 goo.add_motion('cell_B18', motion)
-
-# Define force A1
+# Define force B7
 goo.make_force("force_B19", "cell_B19", "B_Cells", strength, falloff)
 goo.add_motion('cell_B19', motion)
-# Define force A2
+# Define force B8
 goo.make_force("force_B20", "cell_B20", "B_Cells", strength, falloff)
 goo.add_motion('cell_B20', motion)
-# Define force A1
+# Define force B9
 goo.make_force("force_B21", "cell_B21", "B_Cells", strength, falloff)
 goo.add_motion('cell_B21', motion)
-# Define force A2
+# Define force B10
 goo.make_force("force_B22", "cell_B22", "B_Cells", strength, falloff)
 goo.add_motion('cell_B22', motion)
-# Define force A1
+# Define force B11
 goo.make_force("force_B23", "cell_B23", "B_Cells", strength, falloff)
 goo.add_motion('cell_B23', motion)
-# Define force A2
+# Define force B12
 goo.make_force("force_B24", "cell_B24", "B_Cells", strength, falloff)
 goo.add_motion('cell_B24', motion)
-# Define force A2
+# Define force B13
 goo.make_force("force_B25", "cell_B25", "B_Cells", strength, falloff)
 goo.add_motion('cell_B25', motion)
-# Define force A2
+# Define force B14
 goo.make_force("force_B26", "cell_B26", "B_Cells", strength, falloff)
 goo.add_motion('cell_B26', motion)
 
 
-#================== Simulation setup ==================
+# Simulation setup 
 handlers = goo.handler_class()
-handlers.launch_simulation(start = 1, # default, 1
-                           end = 500, # default, 250
-                           filepath = "C:\\tmp\\adhesion-based-sorting\\data1", 
-                           adhesion = True, # default, True
-                           data = True, # default, False
-                           growth = True,
-                           motility = True,
+handlers.launch_simulation(start=1,  # default, 1
+                           end=500,  # default, 250
+                           filepath="C:\\tmp\\adhesion-based-sorting\\data1", 
+                           adhesion=True,  # default, True
+                           data=True,  # default, False
+                           growth=True,
+                           motility=True,
                            )

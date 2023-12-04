@@ -1,76 +1,67 @@
-# doublet.py - simulates 2 cells adhering to each other
-# with different balances of cortical tension and cell adhesion
-
 from goo import goo
-import bpy
 from importlib import reload
 reload(goo)
 goo.setup_world()
 
   
-#================== Cell A Collection ==================
-# Create a type for cell A
-#goo.make_type("A_Cells", type = 'cell')
+# Cells A
 # Define cell A1
-goo.make_cell("cell_A1", loc = (0.1,0,0), type = "A_Cells")
+goo.make_cell("cell_A1", loc=(0.1, 0, 0), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A2", loc = (2,0,0), type = "A_Cells")
+goo.make_cell("cell_A2", loc=(2, 0, 0), type="A_Cells")
 # Define cell A3
-goo.make_cell("cell_A3", loc = (0,1,1.83), type = "A_Cells")
+goo.make_cell("cell_A3", loc=(0, 1, 1.83), type="A_Cells")
 # Define cell A4
-goo.make_cell("cell_A4", loc = (0.74,2.85,-0.57), type = "A_Cells")
+goo.make_cell("cell_A4", loc=(0.74, 2.85, -0.57), type="A_Cells")
 # Define cell A3
-goo.make_cell("cell_A5", loc = (0,-2,0), type = "A_Cells")
+goo.make_cell("cell_A5", loc=(0, -2, 0), type="A_Cells")
 # Define cell A4
-goo.make_cell("cell_A6", loc = (-2,0,0), type = "A_Cells")
+goo.make_cell("cell_A6", loc=(-2, 0, 0), type="A_Cells")
 # Define cell A1
-goo.make_cell("cell_A7", loc = (3.39,0.25,0.76), type = "A_Cells")
+goo.make_cell("cell_A7", loc=(3.39, 0.25, 0.76), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A8", loc = (2,-2.03,0), type = "A_Cells")
+goo.make_cell("cell_A8", loc=(2, -2.03, 0), type="A_Cells")
+# Define cell A3 
+goo.make_cell("cell_A9", loc=(0.098, -2.59, 1.79), type="A_Cells")
+# Define cell A4
+goo.make_cell("cell_A10", loc=(1.67, 0.73, 2.9), type="A_Cells")
 # Define cell A3
-goo.make_cell("cell_A9", loc = (0.098,-2.59,1.79), type = "A_Cells")
+goo.make_cell("cell_A11", loc=(1.11, -2.04, -1.77), type="A_Cells")
 # Define cell A4
-goo.make_cell("cell_A10", loc = (1.67,0.73,2.9), type = "A_Cells")
-# Define cell A3
-goo.make_cell("cell_A11", loc = (1.11,-2.04,-1.77), type = "A_Cells")
-# Define cell A4
-goo.make_cell("cell_A12", loc = (-1.15,1,-1.93), type = "A_Cells")
+goo.make_cell("cell_A12", loc=(-1.15, 1, -1.93), type="A_Cells")
 
 # Define cell A1
-goo.make_cell("cell_A13", loc = (2,2,1.4), type = "A_Cells")
+goo.make_cell("cell_A13", loc=(2, 2, 1.4), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A14", loc = (-0.98,1.95,0), type = "A_Cells")
+goo.make_cell("cell_A14", loc=(-0.98, 1.95, 0), type="A_Cells")
 # Define cell A1
-goo.make_cell("cell_A15", loc = (0.97,-0.59,1.63), type = "A_Cells")
+goo.make_cell("cell_A15", loc=(0.97, -0.59, 1.63), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A16", loc = (2.66,2,-0.57), type = "A_Cells")
+goo.make_cell("cell_A16", loc=(2.66, 2, -0.57), type="A_Cells")
 # Define cell A1
-goo.make_cell("cell_A17", loc = (0.92,1.16,-1.47), type = "A_Cells")
+goo.make_cell("cell_A17", loc=(0.92, 1.16, -1.47), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A18", loc = (-1.16,-1,-1.22), type = "A_Cells")
+goo.make_cell("cell_A18", loc=(-1.16, -1, -1.22), type="A_Cells")
 
 # Define cell A1
-goo.make_cell("cell_A19", loc = (-1.07,-0.76,1.58), type = "A_Cells")
+goo.make_cell("cell_A19", loc=(-1.07, -0.76, 1.58), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A20", loc = (0.1,2.9,1.38), type = "A_Cells")
+goo.make_cell("cell_A20", loc=(0.1, 2.9, 1.38), type="A_Cells")
 # Define cell A1
-goo.make_cell("cell_A21", loc = (1.9,-2.45,1.9), type = "A_Cells")
+goo.make_cell("cell_A21", loc=(1.9, -2.45, 1.9), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A22", loc = (-.19,-.39,3.32), type = "A_Cells")
+goo.make_cell("cell_A22", loc=(-.19, -.39, 3.32), type="A_Cells")
 # Define cell A1
-goo.make_cell("cell_A23", loc = (2.74,-0.34,-1.8), type = "A_Cells")
+goo.make_cell("cell_A23", loc=(2.74, -0.34, -1.8), type="A_Cells")
 # Define cell A2
-goo.make_cell("cell_A24", loc = (-2.1,0.9,1.81), type = "A_Cells")
+goo.make_cell("cell_A24", loc=(-2.1, 0.9, 1.81), type="A_Cells")
 
 
-
-#================== Force A Collection ==================
+# Forces A
 
 strength = -3000
 falloff = 0
 
-# Create a type for force A
-#goo.make_type("A_Cells", type = 'force')
 # Define force A1
 goo.make_force("force_A1", "cell_A1", "A_Cells", strength, falloff)
 goo.add_motion('cell_A1', -1000)
@@ -148,13 +139,13 @@ goo.make_force("force_A24", "cell_A24", "A_Cells", strength, falloff)
 goo.add_motion('cell_A24', -1000)
 
 
-#================== Simulation setup ==================
+# Simulation setup
 handlers = goo.handler_class()
-handlers.launch_simulation(start = 1, # default, 1
-                           end = 500, # default, 250
-                           filepath = "C:\\Users\\anr9744\\Projects\\Goo\\data\\16clump", 
-                           adhesion = True, # default, True
-                           data = False, # default, False
-                           growth = True, 
-                           motility = True
+handlers.launch_simulation(start=1,  # default, 1
+                           end=500,  # default, 250
+                           filepath="C:\\Users\\anr9744\\Projects\\Goo\\data\\16clump", 
+                           adhesion=True,  # default, True
+                           data=False,  # default, False
+                           growth=True, 
+                           motility=True
                            )

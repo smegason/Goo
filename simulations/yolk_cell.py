@@ -1,4 +1,5 @@
-#script to simulate yolk-cell interface
+# script to simulate yolk-cell interface
+# not up to date!!
 import sys
 from goo import goo
 import bpy

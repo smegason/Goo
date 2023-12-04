@@ -1,6 +1,4 @@
-import bpy
 import sys
-import os
 
 # Set the path to the directory containing the goo module
 directory_path = "/home/runner/work/Goo/Goo/scripts/modules"
@@ -11,12 +9,15 @@ if directory_path not in sys.path:
 
 # Import the goo module and access its functions
 try:
-    from goo import goo  # Replace 'goo_function' with the actual function name you want to use
+    import bpy
+    from goo import goo 
 except ImportError:
     print("Error: Unable to import 'goo' module")
 
 # Test using the imported function
 try:
     goo.setup_world()  # Replace 'goo_function' with the actual function you want to use
+    bpy.context
+    
 except Exception as e:
     print("Error:", e)

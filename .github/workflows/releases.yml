@@ -73,7 +73,6 @@ jobs:
       - name: Test goo function
         run: pytest -svv --blender-executable /home/runner/.local/bin/blender tests/
 
-
       - name: flake8 linter
         run: flake8 . --exclude blender*,addon/,simulations/,blend/,test.py,.github/,docs/ --max-line-length 88
 

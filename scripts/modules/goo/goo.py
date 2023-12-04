@@ -58,7 +58,7 @@ def calculate_volume(obj):
     # Calculate volume
     volume = bm.calc_volume()
     # Output the result
-    print(f"Volume of {obj.name}: {abs(volume)}")
+    # print(f"Volume of {obj.name}: {abs(volume)}")
     # Free the bmesh
     bm.free()
 
@@ -1624,7 +1624,7 @@ def add_motion(effector_name,
                persistence=0,
                randomness=1,
                distribution='uniform',
-               size=0.1):
+               size=0.5):
     if (isinstance(effector_name, str)
             and isinstance(strength, (int, float))
             and isinstance(persistence, (int, float))
@@ -1834,9 +1834,9 @@ def make_force(force_name,
     elif motion:
 
         rand_coord = tuple(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
-        force_rand_coord = zip(get_centerofmass(bpy.data.objects[cell]), rand_coord)
-        print(f"Random displacement new coord: "
-              f"{tuple(map(sum, force_rand_coord))}")
+        # force_rand_coord = zip(get_centerofmass(bpy.data.objects[cell]), rand_coord)
+        '''print(f"Random displacement new coord: "
+              f"{tuple(map(sum, force_rand_coord))}")'''
         cell_com = get_centerofmass(bpy.data.objects[cell])
         bpy.ops.object.effector_add(type='FORCE',
                                     enter_editmode=False,
@@ -2070,79 +2070,6 @@ def calculate_com(cell):
     z = vert_coords[:, 2]
     COM = (np.mean(x), np.mean(y), np.mean(z))
     return COM
-
-
-# not used
-def get_contact_area_raycast():
-
-    # Get the mesh objects
-    obj1 = bpy.context.scene.objects["cell_A1"]
-    obj2 = bpy.context.scene.objects["cell_A2"]
-
-    # Get the mesh data for each object
-    mesh_data1 = obj1.to_mesh()
-    mesh_data2 = obj2.to_mesh()
-
-    # Create BMesh objects for each mesh
-    bm1 = bmesh.new()
-    bm1.from_mesh(mesh_data1)
-
-    bm2 = bmesh.new()
-    bm2.from_mesh(mesh_data2)
-
-    # Initialize lists to hold the contact vertices for each mesh
-    contact_vertices1 = []
-    contact_vertices2 = []
-
-    # Loop over the vertices of the first mesh
-    for v1 in bm1.verts:
-        # Cast a ray from the vertex and check for intersection with the second mesh
-        hit, loc, norm, face_index = obj2.ray_cast(
-            obj1.matrix_world @ v1.co, 
-            -obj1.matrix_world @ v1.normal
-        )
-
-        # If there is a hit and the distance is within a certain threshold, add the 
-        # vertex to the contact list
-        if hit and (loc - obj1.matrix_world @ v1.co).length < 0.1:
-            contact_vertices1.append(v1.co)
-
-    # Loop over the vertices of the second mesh
-    for v2 in bm2.verts:
-        # Cast a ray from the vertex and check for intersection with the first mesh
-        hit, loc, norm, face_index = obj1.ray_cast(
-            obj2.matrix_world @ v2.co, 
-            -obj2.matrix_world @ v2.normal
-        )
-
-        # If there is a hit and the distance is within a certain threshold, add the 
-        # vertex to the contact list
-        if hit and (loc - obj2.matrix_world @ v2.co).length < 0.1:
-            contact_vertices2.append(v2.co)
-
-    # Compute the contact area and ratio
-    contact_area1 = len(set(contact_vertices1))
-    contact_area2 = len(set(contact_vertices1))
-    total_area1 = len(bm1.faces)
-    total_area2 = len(bm2.faces)
-    contact_ratio1 = contact_area1 / total_area1
-    contact_ratio2 = contact_area2 / total_area2
-
-    # Print the results
-    print("Contact area 1: ", contact_area1)
-    print("Contact area 2: ", contact_area2)
-    print("Object 1 total area: ", total_area1)
-    print("Object 2 total area: ", total_area2)
-    print("Object 1 contact ratio: ", contact_ratio1)
-    print("Object 2 contact ratio: ", contact_ratio2)
-
-    # Free the BMesh objects and mesh data
-    bm1.free()
-    bm2.free()
-    bpy.data.meshes.remove(mesh_data1)
-    bpy.data.meshes.remove(mesh_data2) 
-    
-    return 
 
 
 '''def get_contact_area():
@@ -3549,7 +3476,7 @@ class handler_class:
 
                     # TODO allow for multiple growth rate, with different functions
                     volume_deviation = (volume - target_volume) / target_volume
-                    print(f"Current volume deviation: {volume_deviation}")
+                    # (f"Current volume deviation: {volume_deviation}")
                     # shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
                     shrink_adjustment = 0.001 * (math.exp(volume_deviation) - 1)
                     # shrink_adjustment = 0.01 * volume_deviation
@@ -3652,15 +3579,15 @@ class handler_class:
             obj for obj in bpy.data.objects 
             if "object" in obj.keys() and obj["object"] == "cell"
             ]
-        print(cells)
+        # print(cells)
         msd = dict()        
         
         for collection in bpy.data.collections: 
             forces = bpy.data.collections.get(collection.name_full).all_objects
-            print(forces)
+            # print(forces)
             for force in forces: 
                 if (force.get('motion') is not None and force.get('motion')): 
-                    print('Entering force loop')
+                    # print('Entering force loop')
                     # self.force_path[f'{force.name}_force_tracks'].append(tuple(force.location))
                     cell = bpy.data.objects[force.get('cell')]
                     com = get_centerofmass(cell)
@@ -3686,14 +3613,14 @@ class handler_class:
                     force['MSD'] = msd
 
                     if force.get('distribution') == 'uniform': 
-                        print('Distribution is uniform')
+                        # print('Distribution is uniform')
                         rand_coord = Vector(np.random.uniform(
                             low=-force['distribution size'],
                             high=force['distribution size'], 
                             size=(3,)
                         ))
                         new_loc = Vector(com) + rand_coord
-                        print(new_loc)
+                        # print(new_loc)
                     elif force.get('distribution') == 'gaussian': 
                         rand_coord = Vector(np.random.normal(
                             loc=0, 
@@ -3708,28 +3635,28 @@ class handler_class:
                     
                     force.location = new_loc
 
-                    '''# constraint force field within the box
+                    # constraint force field within the box
 
                     # Define the box's dimensions and center
                     # Define the box's length (half of the actual length)
-                    box_length = 4.5  
+                    box_length = {"x": 6, "y": 6, "z": 4}
                     box_center = Vector((-1.5, 0, 0))  # Define the center of the box
 
                     # Calculate the boundaries of the box
-                    x_min = box_center.x - box_length
-                    x_max = box_center.x + box_length
-                    y_min = box_center.y - box_length
-                    y_max = box_center.y + box_length
-                    z_min = box_center.z - box_length
-                    z_max = box_center.z + box_length
+                    x_min = box_center.x - box_length['x']
+                    x_max = box_center.x + box_length['x']
+                    y_min = box_center.y - box_length['y']
+                    y_max = box_center.y + box_length['y']
+                    z_min = box_center.z - box_length['z']
+                    z_max = box_center.z + box_length['z']
 
                     constrained_force_location = force.location
                     # Constrain the x-coordinate within the box
-                    #force.location.x = max(x_min, min(x_max, force.location.x))
+                    # force.location.x = max(x_min, min(x_max, force.location.x))
                     # Constrain the y-coordinate within the box
-                    #force.location.y = max(y_min, min(y_max, force.location.y))
+                    # force.location.y = max(y_min, min(y_max, force.location.y))
                     # Constrain the z-coordinate within the box
-                    #force.location.z = max(z_min, min(z_max, force.location.z))
+                    # force.location.z = max(z_min, min(z_max, force.location.z))
 
                     # Reflect x-coordinate if it's outside the box boundaries
                     if constrained_force_location.x < x_min:
@@ -3755,7 +3682,7 @@ class handler_class:
                         constrained_force_location.z = \
                             2 * z_max - constrained_force_location.z
 
-                    force.location = constrained_force_location'''
+                    force.location = constrained_force_location
 
                     '''# cell tracks 
                     # Define the name of the curve object and the new point coordinates
@@ -3908,8 +3835,8 @@ class handler_class:
                 cell['sorting score'] = (
                     sorting_scores[collection.get('type')][cell.name]
                 )
-                print(neighbors)
-                print(neighbors_same_type)
+                # print(neighbors)
+                # print(neighbors_same_type)
             
             # avg sorting score over cells among the same type
             for cell_type, cell_dict in sorting_scores.items():
@@ -3925,7 +3852,7 @@ class handler_class:
                     if coll['type'] == cell_type
                 ]:
                     coll['sorting score'] = score
-                print(f"Cell Type: {cell}, Sorting Score: {score}")
+                # print(f"Cell Type: {cell}, Sorting Score: {score}")
             self.sorting_scores.update({scene.frame_current: sorting_scores_same_type})
 
     def set_scale(self, scale, cell_type):
@@ -3972,7 +3899,7 @@ class handler_class:
                     # append the value to the existing list
                     self.contact_areas[key].append(value)
             
-                print(self.contact_areas)
+                # print(self.contact_areas)
 
     def adhesion_handler(self, scene, depsgraph):
 
@@ -4070,7 +3997,7 @@ class handler_class:
                     ratio / max_ratio if max_ratio != 0 else 0 
                     for ratio in stretching_ratios
                 ]
-                print(normalized_ratios)
+                # print(normalized_ratios)
 
                 # Create a new vertex color layer if it doesn't exist
                 color_layer = obj.data.vertex_colors.get("StretchingRatio")
