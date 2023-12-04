@@ -48,9 +48,9 @@ jobs:
       - name: Mkdir
         run: mkdir {/home/runner/.local/bin,/home/runner/blender} -p
 
-      - name: Get goo.py from GitHub
+      - name: Get Files from GitHub
         run: |
-          mkdir -p /home/runner/work/Goo/Goo/scripts/
+          mkdir -p /home/runner/blender/3.0/scripts/modules/goo/
           curl -o /home/runner/work/Goo/Goo/scripts/goo.py https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/goo.py
           curl -o /home/runner/blender/3.0/scripts/modules/goo/missile_launch_facility_01_4k.hdr https://raw.githubusercontent.com/smegason/Goo/main/scripts/modules/goo/missile_launch_facility_01_4k.hdr
           python .github/check_hdr_file.py
