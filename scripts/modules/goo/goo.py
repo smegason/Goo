@@ -11,7 +11,6 @@ from datetime import datetime
 import json
 import subprocess
 import bmesh
-import addon_utils
 
 
 """
