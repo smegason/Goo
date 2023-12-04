@@ -11,6 +11,7 @@ from datetime import datetime
 import json
 import subprocess
 import bmesh
+import addon_utils
 
 
 """
@@ -497,8 +498,8 @@ def get_line_angles(cell, p1, p2):
 
     return x_angle, y_angle, z_angle
 
-
-def divide_boolean(obj): 
+ 
+def divide_cell(obj): 
 
     # Get COM
     p1 = get_centerofmass(obj)
@@ -521,18 +522,6 @@ def divide_boolean(obj):
     for modifier_value in modifier_values:
         print(modifier_value)
 
-    # Create a dictionary to store the modifier data
-    '''modifier_data = {}
-    # Loop through each modifier and store its properties in the dictionary
-    for mod in modifiers:
-        mod_data = {}
-        for prop in dir(mod):
-            if not prop.startswith("__") and not callable(getattr(mod, prop)):
-                mod_data[prop] = getattr(mod, prop)
-        modifier_data[mod.name] = mod_data'''
-
-    # Center the long axis on the COM, and normalize vector
-    # line = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
     # Get the angles representing the orientation of the division plane
     x, y, z = get_line_angles(obj, p1, p2)
     # Get name of dividing cell
@@ -603,61 +592,11 @@ def divide_boolean(obj):
     d2 = bpy.context.scene.objects[mother_name]
     d2.name = f"{mother_name}.002"  # mother cell
 
-    '''bpy.context.view_layer.objects.active = d1
-    bpy.ops.mesh.primitive_round_cube_add(
-        change=True, 
-        radius=1, 
-        size=(1, 1, 1), 
-        arc_div=4, 
-        lin_div=0, 
-        div_type='CORNERS', 
-        odd_axis_align=False, 
-        no_limit=False
-    )
-
-
-    # edit to object update
-    bpy.ops.object.mode_set(mode = 'EDIT')  
-    bpy.ops.mesh.select_mode(type="VERT")
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.context.view_layer.update()
-    
-    bpy.context.view_layer.objects.active = d2
-    bpy.ops.mesh.primitive_round_cube_add(
-        change=True,
-        radius=1,
-        size=(1, 1, 1),
-        arc_div=4,
-        lin_div=0,
-        div_type='CORNERS',
-        odd_axis_align=False,
-        no_limit=False
-    )
-    bpy.context.object.scale = (1,1,1)
-
-    # edit to object update
-    bpy.ops.object.mode_set(mode = 'EDIT')  
-    bpy.ops.mesh.select_mode(type="VERT")
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.mesh.reveal()
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.context.view_layer.update()'''
-
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.objects.active = d1
     d1.select_set(True)
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
-
-    '''# Loop through each modifier in the modifier data dictionary 
-    # and add it to the first empty object
-    for mod_name, mod_data in modifier_data.items():
-        mod = d1.modifiers.new(name=mod_name, type=mod_data['type'])
-        for prop, value in mod_data.items():
-            if hasattr(mod, prop):
-                setattr(mod, prop, value)'''
 
     bpy.ops.object.select_all(action='DESELECT')
     d2.select_set(True)
@@ -667,7 +606,117 @@ def divide_boolean(obj):
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
-    # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+    return d1, d2, strength, force_collection, falloff, modifier_values
+
+
+def divide_boolean(obj): 
+
+    # Get COM
+    p1 = get_centerofmass(obj)
+    # Get the long axis in global coordinate from the origin
+    p2 = get_long_axis_global(obj)    
+
+    # Get mother modifiers and their values
+    mother_modifiers = obj.modifiers
+
+    # Get the values of the modifiers
+    modifier_values = []
+    for modifier in mother_modifiers:
+        modifier_data = {}
+        for attr in dir(modifier):
+            if not attr.startswith("__") and not callable(getattr(modifier, attr)):
+                modifier_data[attr] = getattr(modifier, attr)
+        modifier_values.append(modifier_data)
+
+    # Print the values of the modifiers
+    for modifier_value in modifier_values:
+        print(modifier_value)
+
+    # Get the angles representing the orientation of the division plane
+    x, y, z = get_line_angles(obj, p1, p2)
+    # Get name of dividing cell
+    mother_name = obj.name
+    # Create division plane
+    plane = bpy.ops.mesh.primitive_plane_add(enter_editmode=False, 
+                                             size=100, 
+                                             align='WORLD', 
+                                             location=p1, 
+                                             scale=(1, 1, 1), 
+                                             rotation=(x, y, z))
+    # Set plane as active object
+    plane = bpy.context.active_object
+    # Rename plane with specific cell name
+    plane_name = f"{mother_name}_division plane"
+    plane.name = plane_name
+
+    # Add solidify modifier to the plane, add tickness to the plane
+    bpy.ops.object.modifier_add(type='SOLIDIFY')
+    solid_mod = plane.modifiers[-1]
+    solid_mod.offset = 0
+    solid_mod.thickness = 0.01
+    bpy.ops.object.modifier_apply(modifier=solid_mod.name)
+
+    Force.force_list = [
+        force for force in Force.force_list if force.name != obj['adhesion force']
+    ]
+    strength = bpy.data.objects[obj['adhesion force']].field.strength
+    falloff = bpy.data.objects[obj['adhesion force']].field.falloff_power
+    force_collection = bpy.data.objects[obj['adhesion force']].users_collection[0].name
+    if obj['adhesion force'] in bpy.data.objects:
+        bpy.data.objects.remove(bpy.data.objects[obj['adhesion force']], do_unlink=True)
+
+    # Add boolean modifier to the original object
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_add(type='BOOLEAN')
+    bool_mod = obj.modifiers[-1]
+    bool_mod.operand_type = 'OBJECT'
+    bool_mod.object = bpy.data.objects[plane_name]
+    bool_mod.operation = 'DIFFERENCE'
+    bool_mod.solver = 'EXACT'
+    bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+    # Hide the plane
+    bpy.data.objects[plane_name].hide_set(True)
+
+    # Deselect all vertices in edit mode
+    bpy.ops.object.mode_set(mode='EDIT')  
+    bpy.ops.mesh.select_mode(type="VERT")
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    # Select a vertex in object mode
+    mesh = obj.data
+    vertex = mesh.vertices[0]
+    vertex.select = True
+
+    # select all vertices linked to the selected vertex
+    bpy.ops.object.mode_set(mode='EDIT') 
+    bpy.ops.mesh.select_linked(delimit={'NORMAL'})
+    # Separate the outer and inner parts of the mesh
+    bpy.ops.mesh.separate(type='SELECTED')
+    bpy.ops.object.mode_set(mode='OBJECT')  
+
+    d1 = bpy.context.selected_objects[0]  # selects cell_003, to be renamed
+    d1.name = f"{mother_name}.001"  # new cell
+
+    d2 = bpy.context.scene.objects[mother_name]
+    d2.name = f"{mother_name}.002"  # mother cell
+
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = d1
+    d1.select_set(True)
+    bpy.ops.object.convert(target='MESH')
+    bpy.context.view_layer.update()
+
+    bpy.ops.object.select_all(action='DESELECT')
+    d2.select_set(True)
+    bpy.context.view_layer.objects.active = d2
+    bpy.ops.object.convert(target='MESH')
+    bpy.context.view_layer.update()
+
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.update()
 
     return d1, d2, strength, force_collection, falloff, modifier_values
 
@@ -1892,9 +1941,15 @@ def setup_world(seed=None):
     :type seed: int or None
     :returns: None
     """
-    # Set the random seed for reproducibility
-    if seed is None:
-        seed = int(datetime.now().timestamp())
+
+    # Add required add-ons
+    addon_name = "add_mesh_extra_objects"
+    # Check if the addon is not already enabled
+    if addon_name not in bpy.context.preferences.addons:
+        bpy.ops.preferences.addon_enable(module=addon_name)
+        print(f"Addon '{addon_name}' has been enabled.")
+    else:
+        print(f"Addon '{addon_name}' is already enabled.")
 
     np.random.seed(seed)
     bpy.context.scene['seed'] = seed
