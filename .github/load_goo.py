@@ -16,8 +16,13 @@ except ImportError:
 
 # Test using the imported function
 try:
-    goo.setup_world()  # Replace 'goo_function' with the actual function you want to use
-    bpy.context
+    goo.make_cell(
+        name='cell_A1',
+        loc=(0, 0, 0), 
+        type='cellsA'        
+    )
+    
+    print(bpy.data.objects['cellA1'].users_collection[0])
     
 except Exception as e:
     print("Error:", e)
