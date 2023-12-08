@@ -9,5 +9,5 @@ title: "Goo: A Python-based Blender Extension to Simulate Multicellular Systems 
 version: 0.0.1
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.1234
+    value: 10.5281/zenodo.10296203
 date-released: 2023-07-12
