@@ -1,0 +1,11 @@
+cff-version: 0.0.1
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Ruzette
+    given-names: Antoine Alexis
+title: "Goo: A Python-based Blender Extension to Simulate Multicellular Systems in 3D"
+version: 2.0.4
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.1234
+date-released: 2021-08-11

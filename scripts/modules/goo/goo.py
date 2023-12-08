@@ -717,7 +717,42 @@ def divide_boolean(obj):
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
 
+    # Disable internal springs for relaxation
+    # daughter_cells = [bpy.data.objects[d1.name], bpy.data.objects[d2.name]]
+    # disable_internal_springs(daughter_cells)
+
+    # d1.modifiers["Cloth"].settings.use_internal_springs = False
+    # d2.modifiers["Cloth"].settings.use_internal_springs = False
+
+    '''# Delete the plane if it exists
+    if plane_name in bpy.data.objects:
+        # Get the object reference
+        obj = bpy.data.objects[plane_name]
+        # Remove the object
+        bpy.data.objects.remove(obj, do_unlink=True)
+    else:
+        print(f"Division plane: '{plane_name}' not found.")'''
+
     return d1, d2, strength, force_collection, falloff, modifier_values
+
+
+def disable_internal_springs(objects):
+    # Disable internal springs for each object in the list
+    for obj in objects:
+        if obj is None:
+            continue
+        
+        # Disable internal springs for daughter cells
+        for daughter_cell in objects:
+            if daughter_cell:
+                modifiers = daughter_cell.modifiers
+                
+                # Check if a Cloth modifier exists and disable internal springs
+                cloth_modifier = modifiers.get("Cloth")
+                if cloth_modifier:
+                    cloth_modifier.settings.use_internal_springs = False
+
+    return
 
 
 def apply_physics(obj, modifiers): 
@@ -3319,20 +3354,13 @@ class handler_class:
             self.frame_interval[1],
             self.division_rate
             )[1:]
-        '''sphere_frames = [
-            num for start in div_frames 
-            for num in range(start+5, start+len(rates))
-            ]'''
         div_frames_physics = range(
             self.frame_interval[0] + 0, 
             self.frame_interval[1], 
             self.division_rate
             )[1:]
-        '''div_frames_sphere = range(
-            self.frame_interval[0] + 5, 
-            self.frame_interval[1], 
-            self.division_rate
-            )[1:]'''
+        # div_frames = [100]
+        # div_frames_physics = [101]
             
         if scene.frame_current in div_frames: 
             self.daugthers.clear()
@@ -3375,7 +3403,7 @@ class handler_class:
                 print([mod for mod in mother_modifiers])
 
                 self.daugthers.append(d1)     
-                self.daugthers.append(d2)      
+                self.daugthers.append(d2)
 
                 # bpy.context.scene.frame_set(1)
 
@@ -3398,8 +3426,14 @@ class handler_class:
                 self.frame_interval[0]   
             self.daugthers[1].modifiers["Cloth"].point_cache.frame_end = \
                 self.frame_interval[1]  
+            
+            self.daugthers[0].modifiers['Cloth'].settings.use_internal_springs = False
+            self.daugthers[1].modifiers['Cloth'].settings.use_internal_springs = False
+            
+            add_homo_adhesion(self.daugthers[0].name, -0)
+            add_homo_adhesion(self.daugthers[1].name, -0)
 
-            apply_daugther_force(
+            '''apply_daugther_force(
                 self.daugthers[0], 
                 self.strength, 
                 self.force_collection, 
@@ -3408,7 +3442,7 @@ class handler_class:
                 self.daugthers[1], 
                 self.strength, 
                 self.force_collection, 
-                self.falloff)
+                self.falloff)'''
 
         # if scene.frame_current in div_frames_sphere: 
             
@@ -3532,7 +3566,7 @@ class handler_class:
                     volume_deviation = (volume - target_volume) / target_volume
                     # (f"Current volume deviation: {volume_deviation}")
                     # shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
-                    shrink_adjustment = 0.001 * (math.exp(volume_deviation) - 1)
+                    shrink_adjustment = 0.005 * (math.exp(volume_deviation) - 1)
                     # shrink_adjustment = 0.01 * volume_deviation
                     cell.modifiers["Cloth"].settings.shrink_min += shrink_adjustment
 
