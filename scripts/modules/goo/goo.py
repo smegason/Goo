@@ -498,7 +498,7 @@ def get_line_angles(cell, p1, p2):
     return x_angle, y_angle, z_angle
 
  
-def divide_cell(obj): 
+'''def divide_cell(obj): 
 
     # Get COM
     p1 = get_centerofmass(obj)
@@ -606,11 +606,33 @@ def divide_cell(obj):
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
 
-    return d1, d2, strength, force_collection, falloff, modifier_values
+    return d1, d2, strength, force_collection, falloff, modifier_values'''
 
 
+def apply_modifiers(obj, which='all'): 
+    if which == 'all': 
+        modifiers_to_apply = obj.modifiers
+
+        for modifier in modifiers_to_apply:
+            bpy.context.view_layer.objects.active = obj
+            bpy.ops.object.modifier_apply(modifier=modifier.name)
+    else:
+        # Check if the specified modifier exists in the object's modifiers
+        if which in obj.modifiers:
+            bpy.context.view_layer.objects.active = obj
+            bpy.ops.object.modifier_apply(modifier=which)
+        else:
+            print(f"Modifier '{which}' not found in object '{obj.name}'")
+    
+    
 def divide_boolean(obj): 
 
+    # Initialize variables
+    strength = 0  # Default value
+    falloff = 0  # Default value
+    force_collection = ""  # Default value
+    mother_force = False  # Default value
+
     # Get COM
     p1 = get_centerofmass(obj)
     # Get the long axis in global coordinate from the origin
@@ -638,7 +660,7 @@ def divide_boolean(obj):
     mother_name = obj.name
     # Create division plane
     plane = bpy.ops.mesh.primitive_plane_add(enter_editmode=False, 
-                                             size=100, 
+                                             size=5, 
                                              align='WORLD', 
                                              location=p1, 
                                              scale=(1, 1, 1), 
@@ -653,17 +675,25 @@ def divide_boolean(obj):
     bpy.ops.object.modifier_add(type='SOLIDIFY')
     solid_mod = plane.modifiers[-1]
     solid_mod.offset = 0
-    solid_mod.thickness = 0.01
+    solid_mod.thickness = 0.03
     bpy.ops.object.modifier_apply(modifier=solid_mod.name)
 
     Force.force_list = [
         force for force in Force.force_list if force.name != obj['adhesion force']
     ]
-    strength = bpy.data.objects[obj['adhesion force']].field.strength
-    falloff = bpy.data.objects[obj['adhesion force']].field.falloff_power
-    force_collection = bpy.data.objects[obj['adhesion force']].users_collection[0].name
-    if obj['adhesion force'] in bpy.data.objects:
-        bpy.data.objects.remove(bpy.data.objects[obj['adhesion force']], do_unlink=True)
+    
+    if 'adhesion force' in obj: 
+        # ... (existing code)
+        obj_force = bpy.data.objects[obj['adhesion force']]
+        strength = obj_force.field.strength
+        falloff = obj_force.field.falloff_power
+        force_collection = obj_force.users_collection[0].name
+        mother_force = True
+        if obj['adhesion force'] in bpy.data.objects:
+            bpy.data.objects.remove(
+                bpy.data.objects[obj['adhesion force']], 
+                do_unlink=True
+            )
 
     # Add boolean modifier to the original object
     bpy.context.view_layer.objects.active = obj
@@ -673,6 +703,8 @@ def divide_boolean(obj):
     bool_mod.object = bpy.data.objects[plane_name]
     bool_mod.operation = 'DIFFERENCE'
     bool_mod.solver = 'EXACT'
+
+    # bpy.ops.object.modifier_apply(modifier="Cloth")
     bpy.ops.object.modifier_apply(modifier=bool_mod.name)
 
     # Hide the plane
@@ -694,7 +726,7 @@ def divide_boolean(obj):
     bpy.ops.mesh.select_linked(delimit={'NORMAL'})
     # Separate the outer and inner parts of the mesh
     bpy.ops.mesh.separate(type='SELECTED')
-    bpy.ops.object.mode_set(mode='OBJECT')  
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     d1 = bpy.context.selected_objects[0]  # selects cell_003, to be renamed
     d1.name = f"{mother_name}.001"  # new cell
@@ -707,22 +739,34 @@ def divide_boolean(obj):
     d1.select_set(True)
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
+    # Adding a Remesh modifier to the converted mesh
+    remesh_modifier = d1.modifiers.new(name='Remesh', type='REMESH')
+    remesh_modifier.mode = 'SMOOTH'
+    remesh_modifier.octree_depth = 4
+    remesh_modifier.scale = 0.65
+    remesh_modifier.use_remove_disconnected = True
+    remesh_modifier.use_smooth_shade = True
+    bpy.context.view_layer.update()
+    bpy.ops.object.modifier_apply(modifier="Remesh")
+    bpy.context.view_layer.update()
 
     bpy.ops.object.select_all(action='DESELECT')
     d2.select_set(True)
     bpy.context.view_layer.objects.active = d2
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
+    remesh_modifier = d2.modifiers.new(name='Remesh', type='REMESH')
+    remesh_modifier.mode = 'SMOOTH'
+    remesh_modifier.octree_depth = 4
+    remesh_modifier.scale = 0.65
+    remesh_modifier.use_remove_disconnected = True
+    remesh_modifier.use_smooth_shade = True
+    bpy.context.view_layer.update()
+    bpy.ops.object.modifier_apply(modifier="Remesh")
+    bpy.context.view_layer.update()
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
-
-    # Disable internal springs for relaxation
-    # daughter_cells = [bpy.data.objects[d1.name], bpy.data.objects[d2.name]]
-    # disable_internal_springs(daughter_cells)
-
-    # d1.modifiers["Cloth"].settings.use_internal_springs = False
-    # d2.modifiers["Cloth"].settings.use_internal_springs = False
 
     '''# Delete the plane if it exists
     if plane_name in bpy.data.objects:
@@ -733,7 +777,7 @@ def divide_boolean(obj):
     else:
         print(f"Division plane: '{plane_name}' not found.")'''
 
-    return d1, d2, strength, force_collection, falloff, modifier_values
+    return d1, d2, strength, force_collection, falloff, mother_force, modifier_values
 
 
 def disable_internal_springs(objects):
@@ -755,32 +799,31 @@ def disable_internal_springs(objects):
     return
 
 
-def apply_physics(obj, modifiers): 
+def apply_physics(obj, stiffness): 
 
     print('Starting modifiers declaration')
-
-    bpy.ops.object.select_all(action='DESELECT')
+    
+    # Select object and make it active
+    bpy.ops.object.select_all(action='DESELECT')    
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
 
     # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = 1
-    # subdiv_mod = obj.modifiers[-1]
-    # bpy.ops.object.modifier_apply(modifier=subdiv_mod.name)
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
-    bpy.context.object.modifiers['Cloth'].settings.quality = 3
+    bpy.context.object.modifiers['Cloth'].settings.quality = 4
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
-    bpy.context.object.modifiers["Cloth"].settings.mass = 3
+    bpy.context.object.modifiers["Cloth"].settings.mass = 1
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
 
     # Cloth > Stiffness 
-    bpy.context.object.modifiers['Cloth'].settings.tension_stiffness = 1
-    bpy.context.object.modifiers['Cloth'].settings.compression_stiffness = 1
-    bpy.context.object.modifiers['Cloth'].settings.shear_stiffness = 1
+    bpy.context.object.modifiers['Cloth'].settings.tension_stiffness = stiffness
+    bpy.context.object.modifiers['Cloth'].settings.compression_stiffness = stiffness
+    bpy.context.object.modifiers['Cloth'].settings.shear_stiffness = stiffness
     bpy.context.object.modifiers['Cloth'].settings.bending_stiffness = 1
     # Cloth > Damping
     bpy.context.object.modifiers['Cloth'].settings.tension_damping = 50
@@ -788,11 +831,11 @@ def apply_physics(obj, modifiers):
     bpy.context.object.modifiers['Cloth'].settings.shear_damping = 50
     bpy.context.object.modifiers['Cloth'].settings.bending_damping = 0.5
     # Cloth > Internal Springs
-    bpy.context.object.modifiers['Cloth'].settings.use_internal_springs = True
+    bpy.context.object.modifiers['Cloth'].settings.use_internal_springs = False
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_length = 1
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion = \
         0.785398
-    bpy.context.object.modifiers['Cloth'].settings.internal_spring_normal_check = True
+    bpy.context.object.modifiers['Cloth'].settings.internal_spring_normal_check = False
     bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness = 10
     bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness = 10
     bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness_max = \
@@ -812,8 +855,8 @@ def apply_physics(obj, modifiers):
     bpy.context.object.modifiers['Cloth'].collision_settings.use_self_collision = True
     bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 50
     bpy.context.object.modifiers['Cloth'].collision_settings.friction = 80
-    bpy.context.object.modifiers['Cloth'].collision_settings.self_distance_min = 0.001
-    bpy.context.object.modifiers['Cloth'].collision_settings.distance_min = 0.001
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_distance_min = 0.002
+    bpy.context.object.modifiers['Cloth'].collision_settings.distance_min = 0.002
     bpy.context.object.modifiers['Cloth'].collision_settings.self_impulse_clamp = 0
 
     # Collision
@@ -829,23 +872,22 @@ def apply_physics(obj, modifiers):
     obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
     remesh_mod.mode = 'SMOOTH'
     remesh_mod.octree_depth = 4
-    remesh_mod.scale = 0.8
+    remesh_mod.scale = 0.75
     remesh_mod.use_remove_disconnected = True
     remesh_mod.use_smooth_shade = False
     remesh_mod.show_in_editmode = True
-    bpy.ops.object.modifier_move_to_index(modifier=f"Remesh1_{obj.name}", index=3)
-
-    # Volume conservation
-    '''bpy.ops.object.constraint_add(type='MAINTAIN_VOLUME')
-    bpy.context.object.constraints["Maintain Volume"].volume = 1
-    bpy.context.object.constraints["Maintain Volume"].owner_space = 'WORLD'
-    bpy.context.object.constraints["Maintain Volume"].free_axis = 'SAMEVOL_Z'''
+    # bpy.ops.object.modifier_move_to_index(modifier=f"Remesh1_{obj.name}", index=3)
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
 
+    # Enable the cache of the daughter cloth simulations to match 
+    # the simulation start and end frames
+    obj.modifiers["Cloth"].point_cache.frame_start = bpy.context.scene.frame_start
+    obj.modifiers["Cloth"].point_cache.frame_end = bpy.context.scene.frame_end
 
-def apply_daugther_force(obj, strength, collection, falloff): 
+
+'''def apply_daugther_force(obj, strength, collection, falloff): 
 
     # strength = bpy.data.objects[d2['force']].field.strength
     # force_collection = bpy.data.objects[d2['force']].users_collection[0].name
@@ -859,7 +901,7 @@ def apply_daugther_force(obj, strength, collection, falloff):
     # update the force name for its cell
     bpy.data.objects[obj.name]['force'] = f"{obj.name}_force"
 
-    return 
+    return '''
 
 
 def to_sphere(obj, rate): 
@@ -983,7 +1025,7 @@ def remesh(obj):
     return 
 
 
-def divide_new(obj, indices, line):
+'''def divide_new(obj, indices, line):
 
     com = get_centerofmass(obj)
     # Get the cell as it is evaluated in Blender
@@ -1051,11 +1093,11 @@ def divide_new(obj, indices, line):
     print(f"New centers of mass: 1/ {com1}, 2/ {com2}")
 
     # Create forces for daughter cells
-    '''make_force(f"{d1.name}_force", f"{d1.name}", -1000, 1, collection_name)
-    make_force(f"{d2.name}_force", f"{d2.name}", -1000, 1, collection_name)'''
+    # make_force(f"{d1.name}_force", f"{d1.name}", -1000, 1, collection_name)
+    # make_force(f"{d2.name}_force", f"{d2.name}", -1000, 1, collection_name)'''
 
             
-def divide(obj): 
+'''def divide(obj): 
     """Core function: divides a mother Blender mesh into two daughter Blender meshes. 
     
     The division plane is orthogonal to the major axis of the parent mesh. 
@@ -1069,7 +1111,7 @@ def divide(obj):
         - daughter2 (bpy.data.objects['daughter2_name']) - The Blender mesh of 
             the other daughter cell. 
     """
-    '''# Select mother cell
+    # Select mother cell
     obj.select_set(True)
     # Split mother's Blender mesh in two
     m_name, d_name, COM, major_axis = seperate_cell(obj)
@@ -1105,7 +1147,7 @@ def divide(obj):
     return daughter1, daughter2'''
 
 
-def turn_off_physics():
+'''def turn_off_physics():
     """Core function: turns physics off for the currently selected Blender object.
 
     The cloth physics for cells are turned off before division to avoid 
@@ -1114,40 +1156,7 @@ def turn_off_physics():
     :param: None
     :returns: None
     """
-    bpy.ops.object.modifier_remove(modifier="Cloth")
-
-
-def turn_on_physics():
-    """Core function: turns physics on for the currently selected Blender object.
-    
-    Physics are turned back on after cell division occurs to avoid irregular mesh 
-    behavior post-division.
-
-    :param: None
-    :returns: None
-    """
-    # Set all parameter values
-    bpy.ops.object.modifier_add(type='CLOTH')
-    bpy.context.object.modifiers["Cloth"].settings.bending_model = 'LINEAR'
-    bpy.context.object.modifiers["Cloth"].settings.quality = 3
-    bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
-    bpy.context.object.modifiers["Cloth"].settings.mass = 0.3
-    bpy.context.object.modifiers["Cloth"].settings.air_damping = 10
-    bpy.context.object.modifiers["Cloth"].settings.tension_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.compression_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.shear_stiffness = 5
-    bpy.context.object.modifiers["Cloth"].settings.bending_stiffness = 15
-    bpy.context.object.modifiers["Cloth"].settings.tension_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.compression_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.shear_damping = 5
-    bpy.context.object.modifiers["Cloth"].settings.bending_damping = 0.5
-    bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers["Cloth"].settings.uniform_pressure_force = 2.8
-    bpy.context.object.modifiers["Cloth"].settings.pressure_factor = 1
-    bpy.context.object.modifiers["Cloth"].settings.fluid_density = 1
-    bpy.context.object.modifiers["Cloth"].collision_settings.use_collision = True
-    bpy.context.object.modifiers["Cloth"].collision_settings.distance_min = 0.015
-    bpy.context.object.modifiers["Cloth"].collision_settings.impulse_clamp = 0
+    bpy.ops.object.modifier_remove(modifier="Cloth")'''
 
 
 def make_collection(name, type): 
@@ -1159,48 +1168,7 @@ def make_collection(name, type):
     # link the collection to the scene for visualization 
     bpy.context.scene.collection.children.link(collection)
 
-    '''if type == 'force': 
-        # check if global collection is already created 
-        if any(c.name == "Global force collection" for c in bpy.data.collections):
-            print(f'Global force collection already created')
-            global_force_collection = bpy.data.collections["Global force collection"]
-            global_force_collection['type'] = 'global'
-        else: 
-            print(f'Global force collection created')
-            global_force_collection = bpy.data.collections.new("Global force \
-                collection")
-            global_force_collection['type'] = 'global'
-            bpy.context.scene.collection.children.link(global_force_collection)
-            bpy.context.scene.collection.children.unlink(collection)
-            global_force_collection.children.link(collection)
-            return collection, global_force_collection
-    else: '''
-
     return collection
-    # else:
-    #    print(f"Only the following types are allowed: {allowed_type}")
-
-    '''if type == 'force' or type == 'motion':
-        # check if global collection is already created
-        if any(c.name == "Global force collection" for c in bpy.data.collections):
-            print(f'Global force collection already created')
-            global_force_collection = bpy.data.collections["Global force collection"]
-            global_force_collection['type'] = 'global'
-        else: 
-            print(f'Global force collection created')
-            global_force_collection = bpy.data.collections.new("Global force \
-                collection")
-            global_force_collection['type'] = 'global'
-            bpy.context.scene.collection.children.link(global_force_collection)
-            bpy.context.scene.collection.children.unlink(collection)
-            global_force_collection.children.link(collection)
-            return collection, global_force_collection
-    else:
-        return collection
-
-else:
-    print(f"{type} is not a valid collection type, should be in {allowed_type}")
-    return'''
 
 
 def make_cell(
@@ -1276,7 +1244,7 @@ def make_cell(
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
-    bpy.context.object.modifiers['Cloth'].settings.quality = 3
+    bpy.context.object.modifiers['Cloth'].settings.quality = 4
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 0
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = 1
@@ -1330,34 +1298,17 @@ def make_cell(
     bpy.context.object.modifiers['Collision'].settings.thickness_inner = 0.2
     bpy.context.object.modifiers['Collision'].settings.cloth_friction = 80
 
-    '''bpy.ops.object.constraint_add(type='MAINTAIN_VOLUME')
-    bpy.context.object.constraints["Maintain Volume"].volume = 1
-    bpy.context.object.constraints["Maintain Volume"].owner_space = 'WORLD'
-    bpy.context.object.constraints["Maintain Volume"].free_axis = 'SAMEVOL_Z'''
-
     if remeshing: 
-        '''bpy.ops.object.modifier_add(type='REMESH')
-        bpy.context.object.modifiers["Remesh"].mode = 'SMOOTH'
-        bpy.context.object.modifiers["Remesh"].octree_depth = 3
-        bpy.context.object.modifiers["Remesh"].scale = 0.99
-        bpy.context.object.modifiers["Remesh"].use_remove_disconnected = True
-        bpy.context.object.modifiers["Remesh"].use_smooth_shade = False'''
-        # bpy.ops.object.modifier_move_to_index(modifier="Remesh", index=1)
 
         remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
         obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
         remesh_mod.mode = 'SMOOTH'
         remesh_mod.octree_depth = 4
-        remesh_mod.scale = 0.85
+        remesh_mod.scale = 0.75
         remesh_mod.use_remove_disconnected = True
         remesh_mod.use_smooth_shade = True
         remesh_mod.show_in_editmode = True
         bpy.ops.object.modifier_move_to_index(modifier=f"Remesh1_{obj.name}", index=3)
-
-        '''bpy.ops.object.modifier_add(type='REMESH')
-        bpy.context.object.modifiers["Remesh"].mode = 'VOXEL'
-        bpy.context.object.modifiers["Remesh"].voxel_size = 0.3
-        bpy.context.object.modifiers["Remesh"].use_smooth_shade = True'''
 
     # add material, default is purple bubble
     bpy.context.view_layer.objects.active = bpy.data.objects[name]
@@ -3148,13 +3099,13 @@ class handler_class:
     def launch_simulation(
             self,
             filepath,
-            division_rate=100,
+            target_volume=4.12,
+            division_rate=50,
             start=1,
             end=250,
             motion_strength=-500,
             adhesion=True,
             growth=False,
-            target=1,
             division=False,
             data=False,
             motility=False,
@@ -3196,7 +3147,7 @@ class handler_class:
                 lambda scene,
                 depsgraph: self.growth_handler(scene,
                                                depsgraph,
-                                               target)
+                                               target_volume=((4/3)*np.pi*(1)**3))
                                                )
         if division:
             bpy.app.handlers.frame_change_post.append(self.division_handler)
@@ -3348,64 +3299,96 @@ class handler_class:
 
     def division_handler(self, scene, despgraph):
 
-        # rates = np.arange(0, 1, 0.05, dtype=np.float)
         div_frames = range(
             self.frame_interval[0],
             self.frame_interval[1],
             self.division_rate
             )[1:]
         div_frames_physics = range(
-            self.frame_interval[0] + 0, 
+            self.frame_interval[0] + 1, 
             self.frame_interval[1], 
             self.division_rate
             )[1:]
-        # div_frames = [100]
-        # div_frames_physics = [101]
-            
+        div_frames_forces = range(
+            self.frame_interval[0] + 5, 
+            self.frame_interval[1], 
+            self.division_rate
+            )[1:]
+                    
         if scene.frame_current in div_frames: 
             self.daugthers.clear()
             self.strength = None
             self.force_collection = None
             self.falloff = None
+            self.mother_force = None
+            self.mother_stiffness = None
 
             for collection in bpy.data.collections: 
-                # Exclude the objects in the force collections
-                # if collection['type'] == 'cell':
-                # Loop through the objects existed in the collection 
-                print(f"Collection under division: {collection.name_full}")
+                # Loop through only the cell objects in collections
+                # print(f"Collection under division: {collection.name_full}")
                 cells = [
                     obj for obj 
                     in bpy.data.collections.get(collection.name_full).all_objects 
                     if obj.get('object') == 'cell'
                     ]
-                '''for cell in cells: 
-                    print(cell.get('object'))
-                    if cell.get('object') and cell['object'] == 'cell': 
-                        #cells.append(None)'''
-                print(f"Cells under division: {[obj.name for obj in cells]}")
 
-                # randomly choose a cell to divide
-                self.cell_under_div = random.choice(cells)
+                # print(f"Cells under division: {[obj.name for obj in cells]}")
+
+                volumes = [cell['volume'] for cell in cells if 'volume' in cell]
+
+                if len(volumes) == len(cells):
+                    largest_volume = np.max(volumes)
+                    largest_cell = cells[volumes.index(largest_volume)]
+                    self.cell_under_div = largest_cell
+                else:
+                    self.cell_under_div = random.choice(cells)
+
+                '''# Divide the largest in volume cell
+                volumes = [cell['volume'] for cell in cells if 'volume' in cell]
+
+                if len(volumes) != len(cells):
+                    raise ValueError("Not all cell objects have a 'volume' property \
+                                     in the collection")
+
+                if len(volumes) == len(cells):
+                    largest_volume = np.max(volumes)
+                    largest_cell = cells[volumes.index(largest_volume)]
+                    self.cell_under_div = largest_cell
+
+                # Divide randomly
+                self.cell_under_div = random.choice(cells)'''
 
             if self.cell_under_div is not None: 
-                # for obj in cells:   
+                # Get name of cell under division
                 cell_name = self.cell_under_div.name
-                print(f"-- Starting division of {cell_name} "
-                      f"at frame {scene.frame_current}")
-                d1, d2, tmp_strength, tmp_collection, tmp_falloff, mother_modifiers = \
-                    divide_boolean(self.cell_under_div) 
-                print(f"{tmp_strength}; {tmp_collection}; {tmp_falloff}")
+                # Get the object by name
+                obj = bpy.data.objects.get(cell_name)
+                # If cell object exists
+                if obj:
+                    # Get cloth modifier and check if it exists
+                    cloth_modifier = obj.modifiers.get('Cloth')
+                    if cloth_modifier:
+                        mother_stiffness = cloth_modifier.settings.tension_stiffness
+                    else:
+                        raise ValueError(f"No Cloth modifier found on {cell_name}")
+                else:
+                    raise ValueError(f"Object '{cell_name}' not found")
+                
+                apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
 
+                d1, d2, tmp_strength, tmp_collection, \
+                    tmp_falloff, mother_force, mother_modifiers = \
+                    divide_boolean(self.cell_under_div)
+
+                # Pass on force info to daugther cells  
                 self.strength = tmp_strength
                 self.force_collection = tmp_collection
                 self.falloff = tmp_falloff
-                self.modifiers = mother_modifiers
-                print([mod for mod in mother_modifiers])
+                self.mother_force = mother_force
+                self.mother_stiffness = mother_stiffness
 
                 self.daugthers.append(d1)     
                 self.daugthers.append(d2)
-
-                # bpy.context.scene.frame_set(1)
 
                 print(f"-- Finishing division of {cell_name} "
                       f"at frame {scene.frame_current}")
@@ -3415,9 +3398,21 @@ class handler_class:
 
         if scene.frame_current in div_frames_physics: 
 
-            apply_physics(self.daugthers[0], self.modifiers)
-            apply_physics(self.daugthers[1], self.modifiers)
+            # Toggle back on physics after mesh separation
+            apply_physics(self.daugthers[0], stiffness=self.mother_stiffness)
+            apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
 
+        if scene.frame_current in div_frames_forces: 
+
+            # Add adhesion forces to daugther cells
+            if self.mother_force: 
+                add_homo_adhesion(self.daugthers[0].name, self.strength)
+                add_homo_adhesion(self.daugthers[1].name, self.strength)
+
+            # bpy.context.scene.frame_set(1)
+
+            '''# Enable the cache of the daughter cloth simulations to match 
+            # the simulation start and end frames
             self.daugthers[0].modifiers["Cloth"].point_cache.frame_start = \
                 self.frame_interval[0]   
             self.daugthers[0].modifiers["Cloth"].point_cache.frame_end = \
@@ -3425,35 +3420,29 @@ class handler_class:
             self.daugthers[1].modifiers["Cloth"].point_cache.frame_start = \
                 self.frame_interval[0]   
             self.daugthers[1].modifiers["Cloth"].point_cache.frame_end = \
-                self.frame_interval[1]  
-            
-            self.daugthers[0].modifiers['Cloth'].settings.use_internal_springs = False
-            self.daugthers[1].modifiers['Cloth'].settings.use_internal_springs = False
-            
-            add_homo_adhesion(self.daugthers[0].name, -0)
-            add_homo_adhesion(self.daugthers[1].name, -0)
-
-            '''apply_daugther_force(
-                self.daugthers[0], 
-                self.strength, 
-                self.force_collection, 
-                self.falloff)
-            apply_daugther_force(
-                self.daugthers[1], 
-                self.strength, 
-                self.force_collection, 
-                self.falloff)'''
-
-        # if scene.frame_current in div_frames_sphere: 
-            
-        #    bpy.context.view_layer.objects.active = self.daugthers[0]
-        #    to_sphere(self.daugthers[0], 1)
-
-        #    bpy.context.view_layer.objects.active = self.daugthers[1]
-        #    to_sphere(self.daugthers[1], 1)
-
-            # remesh(self.daugthers[0])
-            # remesh(self.daugthers[1])
+                self.frame_interval[1]'''
+        
+        '''if scene.frame_current in div_frames_cloth: 
+            if self.daugthers[0].modifiers:
+                remesh_mod_name = f'Remesh_{self.daugthers[0].name}'
+                cloth_mod_name = 'Cloth'
+                bpy.ops.object.modifier_apply(modifier=cloth_mod_name)
+                bpy.ops.object.modifier_apply(modifier=remesh_mod_name)
+                self.daugthers[0].modifiers.clear()
+                # Apply the modifier
+                # bpy.context.view_layer.objects.active = self.daugthers[0]
+                apply_physics(self.daugthers[0], self.modifiers)
+                # bpy.ops.object.modifier_apply(modifier=f'Remesh_{self.daugthers[0].name}')
+            if self.daugthers[1].modifiers:
+                remesh_mod_name = f'Remesh_{self.daugthers[1].name}'
+                cloth_mod_name = 'Cloth'
+                bpy.ops.object.modifier_apply(modifier=cloth_mod_name)
+                bpy.ops.object.modifier_apply(modifier=remesh_mod_name)
+                self.daugthers[1].modifiers.clear()
+                # Apply the modifier
+                # bpy.context.view_layer.objects.active = self.daugthers[1]
+                apply_physics(self.daugthers[1], self.modifiers)
+                # bpy.ops.object.modifier_apply(modifier=f'Remesh_{self.daugthers[1].name}')'''
 
         # CODE FOR TO SPHERE IMPLEMENTATION
         '''div_frames_sphere = range(
@@ -3544,29 +3533,27 @@ class handler_class:
     # Member function to handle cell growth
     def growth_handler(self, scene, depsgraph, target):
         for collection in bpy.data.collections: 
-            # Exclude the objects in the force collections
-            # if collection['type'] == 'cell':
-            # Loop through the objects existed in the collection 
+            # Loop through the cell objects in collections, excluding forces
             cells = bpy.data.collections.get(collection.name_full).all_objects
             for cell in cells: 
                 if (
-                    cell.get('adhesion force') is not None or
-                    cell.get('motion force') is not None or
-                    (cell.get('adhesion force') is not None and 
-                     cell.get('motion force') is not None)
+                    # cell.get('adhesion force') is not None or
+                    # cell.get('motion force') is not None or
+                    cell.modifiers.get('Cloth')
                 ):
 
                     volume = calculate_volume(cell)
-                    target_volume = ((4/3)*np.pi*(1)**3)
-                    cell['target volume'] = target_volume
+                    self.target_volume = target
+                    # target_volume = ((4/3)*np.pi*(1)**3)
+                    cell['target volume'] = target
                     cell['volume'] = volume
                     self.volumes[f"{cell.name}"].append(volume)
 
                     # TODO allow for multiple growth rate, with different functions
-                    volume_deviation = (volume - target_volume) / target_volume
+                    volume_deviation = (volume - target) / target
                     # (f"Current volume deviation: {volume_deviation}")
                     # shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
-                    shrink_adjustment = 0.005 * (math.exp(volume_deviation) - 1)
+                    shrink_adjustment = 0.01 * (math.exp(volume_deviation) - 1)
                     # shrink_adjustment = 0.01 * volume_deviation
                     cell.modifiers["Cloth"].settings.shrink_min += shrink_adjustment
 
