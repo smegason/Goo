@@ -629,7 +629,7 @@ def divide_boolean(obj):
     # Initialize variables
     strength = 0  # Default value
     falloff = 0  # Default value
-    force_collection = ""  # Default value
+    # force_collection = None  # Default value
     mother_force = False  # Default value
 
     # Get COM
@@ -681,12 +681,12 @@ def divide_boolean(obj):
         force for force in Force.force_list if force.name != obj['adhesion force']
     ]
     
+    # Remove mother force from cell
     if 'adhesion force' in obj: 
-        # ... (existing code)
         obj_force = bpy.data.objects[obj['adhesion force']]
         strength = obj_force.field.strength
         falloff = obj_force.field.falloff_power
-        force_collection = obj_force.users_collection[0].name
+        # force_collection = obj_force.users_collection[0].name
         mother_force = True
         if obj['adhesion force'] in bpy.data.objects:
             bpy.data.objects.remove(
@@ -733,8 +733,32 @@ def divide_boolean(obj):
     d2 = bpy.context.scene.objects[mother_name]
     d2.name = f"{mother_name}.002"  # mother cell
 
+    # Declare collections to contain daughter cells
+    mother_collection = obj.users_collection[0]
+    mother_type = mother_collection.get('type')
+    d1_collection = make_collection(f'{d1.name}_collection', type=mother_type)
+    d2_collection = make_collection(f'{d2.name}_collection', type=mother_type)
+
+    '''homo_collections = [
+        coll for coll in bpy.data.collections
+        if coll.get('type') 
+        in bpy.data.objects[d1.name].users_collection[0].get("type")
+    ]'''
+
     bpy.ops.object.select_all(action='DESELECT')
+
     bpy.context.view_layer.objects.active = d1
+    # remove duplicate objects outside of the collection
+    bpy.ops.collection.objects_remove_all()
+    # Add the active cell to our specific collection 
+    bpy.data.collections[d1_collection.name].objects.link(d1)
+    '''for coll in homo_collections: 
+        if (
+            obj.get('object') == 'force'
+        ):
+            coll.objects.link(d1)'''
+    # Pass on the mother force
+
     d1.select_set(True)
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
@@ -750,8 +774,18 @@ def divide_boolean(obj):
     bpy.context.view_layer.update()
 
     bpy.ops.object.select_all(action='DESELECT')
-    d2.select_set(True)
     bpy.context.view_layer.objects.active = d2
+    # remove duplicate objects outside of the collection
+    bpy.ops.collection.objects_remove_all()
+    # Add the active cell to our specific collection 
+    bpy.data.collections[d2_collection.name].objects.link(d2)
+    '''for coll in homo_collections: 
+        if (
+            obj.get('object') == 'force'
+        ):
+            coll.objects.link(d2)'''
+
+    d2.select_set(True)
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
     remesh_modifier = d2.modifiers.new(name='Remesh', type='REMESH')
@@ -767,6 +801,21 @@ def divide_boolean(obj):
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
 
+    # Retrieve the collection by name
+
+    if mother_collection:
+        # Get all the objects in the collection
+        # objects_to_delete = [obj for obj in mother_collection.objects]
+
+        # Unlink all objects from the collection
+        # for obj in objects_to_delete:
+        #    bpy.data.objects.remove(obj, do_unlink=True)
+
+        # Remove the collection
+        bpy.data.collections.remove(mother_collection)
+    else:
+        raise ValueError(f"Collection '{mother_collection}' not found")
+
     '''# Delete the plane if it exists
     if plane_name in bpy.data.objects:
         # Get the object reference
@@ -776,7 +825,7 @@ def divide_boolean(obj):
     else:
         print(f"Division plane: '{plane_name}' not found.")'''
 
-    return d1, d2, strength, force_collection, falloff, mother_force, modifier_values
+    return d1, d2, strength, falloff, mother_force, modifier_values
 
 
 def disable_internal_springs(objects):
@@ -1159,7 +1208,6 @@ def remesh(obj):
 
 
 def make_collection(name, type): 
-    # allowed_type = ['cell', 'force', 'motion', 'global']
     # if type in allowed_type: 
     collection = bpy.data.collections.new(name)
     collection['type'] = type
@@ -1180,10 +1228,10 @@ def make_cell(
     stiffness=1,
     material=("bubble", 0.007, 0.021, 0.3), 
     arcdiv=8,
-    subdiv=1
+    subdiv=1, 
+    mesh='roundcube'
 ):
-    # Function implementation
-    # add mesh type as an cell argument? 
+
     """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell`
     object.
 
@@ -1193,27 +1241,30 @@ def make_cell(
 
     collection = make_collection(f'{name}_collection', type=type)
 
-    # Initialize Cell python object
-    # cell = Cell(name, loc, material, scale)
-
-    '''bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,
-                                          radius=cell.data['radius'],
-                                          calc_uvs=True,
-                                          enter_editmode=False,
-                                          align='WORLD',
-                                          location=loc,
-                                          scale=(1, 1, 1))'''
-    
-    # Create mesh
-    bpy.ops.mesh.primitive_round_cube_add(change=False,
-                                          radius=radius,
-                                          size=scale,
-                                          arc_div=arcdiv,
-                                          lin_div=0,
-                                          div_type='CORNERS',
-                                          odd_axis_align=False,
-                                          no_limit=False,
-                                          location=loc)
+    if mesh == 'roundcube': 
+        # Create mesh
+        bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                              radius=radius,
+                                              size=scale,
+                                              arc_div=arcdiv,
+                                              lin_div=0,
+                                              div_type='CORNERS',
+                                              odd_axis_align=False,
+                                              no_limit=False,
+                                              location=loc
+                                              )
+        
+    elif mesh == 'icosphere': 
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,
+                                              radius=radius,
+                                              calc_uvs=True,
+                                              align='WORLD',
+                                              location=loc,
+                                              scale=scale
+                                              )
+    else:
+        raise ValueError("Invalid mesh type. Goo currently supports \
+                         'roundcube' and 'icosphere'")
 
     # Give the Blender object the cell's name
     obj = bpy.context.object
@@ -1228,9 +1279,6 @@ def make_cell(
     bpy.context.object['current position'] = obj.location
     bpy.context.object['displacement'] = 0 
 
-    # bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
-    # bpy.context.view_layers.active = bpy.data.objects[cell.data['name']]
-
     # Smooth the mesh
     bpy.ops.object.select = True
     bpy.ops.object.shade_smooth()
@@ -1238,8 +1286,6 @@ def make_cell(
     # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].levels = subdiv
-    # subdiv_mod = obj.modifiers[-1]
-    # bpy.ops.object.modifier_apply(modifier=subdiv_mod.name)
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
@@ -1322,8 +1368,6 @@ def make_cell(
     bpy.ops.collection.objects_remove_all()
     # Add the active cell to our specific collection 
     bpy.data.collections[collection.name].objects.link(bpy.data.objects[name])
-
-    # handler = handler_class()
 
 
 """# Defines the Cell class
@@ -1820,6 +1864,7 @@ def add_homo_adhesion(cell_name, strength):
         if coll.get('type') 
         in bpy.data.objects[cell_name].users_collection[0].get("type")
     ]
+    print(f"Homotypic collections: {homo_collections}")
 
     cell_type = f"{bpy.data.objects[cell_name].users_collection[0]['type']}"
     force = make_force(force_name=f'homotypic_{cell_name}',
@@ -1831,6 +1876,17 @@ def add_homo_adhesion(cell_name, strength):
     
     for coll in homo_collections:
         coll.objects.link(bpy.data.objects[force.name])
+
+    '''for coll in homo_collections: 
+        # Link all objects of the same type in the homo collection to all collections
+        for obj in coll.objects:
+            print(f"Objects from homo collections: {obj}")
+            if (
+                obj.get('object') == 'force' and
+                obj != bpy.data.objects[force.name] 
+            ):
+                print(f"Force objects from homo collections: {obj}")
+                coll.objects.link(obj)'''
 
 
 def make_force(force_name,
@@ -1908,9 +1964,9 @@ def make_force(force_name,
     bpy.context.object.field.distance_min = min_dist
     bpy.context.object.name = force.name
     bpy.context.object.field.falloff_power = force.falloff_power
-
     bpy.context.object['cell'] = cell_name
- 
+    bpy.context.object['object'] = 'force'
+
     scene_collection = bpy.context.scene.collection
     scene_collection.objects.unlink(bpy.data.objects[force.name])
 
@@ -2077,7 +2133,7 @@ def render(file_path, start, end):
 
 
 # collections are currently manually created in Blender - not used
-def make_force_collections(master_collection, cell_types):
+'''def make_force_collections(master_collection, cell_types):
     """Auxilliary function: makes collections for forces to be stored in.
 
     :param bpy.context.view_layer.active_layer_collection master_collection: The 
@@ -2089,6 +2145,7 @@ def make_force_collections(master_collection, cell_types):
     for type in cell_types:
         collection = bpy.context.blend_data.collections.new(name=type+"_forces")
         bpy.context.collection.children.link(collection)
+'''
 
 
 def calculate_com(cell): 
@@ -3318,7 +3375,7 @@ class handler_class:
         if scene.frame_current in div_frames: 
             self.daugthers.clear()
             self.strength = None
-            self.force_collection = None
+            # self.force_collection = None
             self.falloff = None
             self.mother_force = None
             self.mother_stiffness = None
@@ -3332,7 +3389,7 @@ class handler_class:
                     if obj.get('object') == 'cell'
                     ]
 
-                # print(f"Cells under division: {[obj.name for obj in cells]}")
+                print(f"Cells under division: {[obj.name for obj in cells]}")
 
                 # Filter cells with volume around 5% of the target volume
                 target_volume = self.unit_volume * self.volume_scale
@@ -3396,13 +3453,12 @@ class handler_class:
                 
                 apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
 
-                d1, d2, tmp_strength, tmp_collection, \
-                    tmp_falloff, mother_force, mother_modifiers = \
+                d1, d2, tmp_strength, tmp_falloff, mother_force, mother_modifiers = \
                     divide_boolean(self.cell_under_div)
 
                 # Pass on force info to daugther cells  
                 self.strength = tmp_strength
-                self.force_collection = tmp_collection
+                # self.force_collection = tmp_collection
                 self.falloff = tmp_falloff
                 self.mother_force = mother_force
                 self.mother_stiffness = mother_stiffness
@@ -3494,7 +3550,7 @@ class handler_class:
 
         self.daugthers.clear()
         self.strength = None
-        self.force_collection = None
+        # self.force_collection = None
         self.falloff = None
         self.mother_force = None
         self.mother_stiffness = None
@@ -3506,6 +3562,12 @@ class handler_class:
                 in bpy.data.collections.get(collection.name_full).all_objects 
                 if obj.get('object') == 'cell'
                 ]
+            
+            '''forces = [
+                obj for obj 
+                in bpy.data.collections.get(collection.name_full).all_objects 
+                if obj.get('object') == 'force'
+                ]'''
 
             # Filter cells with volume around 5% of the target volume
             target_volume = self.unit_volume * self.volume_scale
@@ -3527,6 +3589,9 @@ class handler_class:
                 self.cell_under_div = None 
 
         if self.cell_under_div is not None: 
+
+            print(f"Cell under division: {self.cell_under_div.name}")
+
             # Get name of cell under division
             cell_name = self.cell_under_div.name
             # Get the object by name
@@ -3544,13 +3609,15 @@ class handler_class:
             
             apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
 
-            d1, d2, tmp_strength, tmp_collection, \
-                tmp_falloff, mother_force, mother_modifiers = \
+            d1, d2, tmp_strength, tmp_falloff, mother_force, mother_modifiers = \
                 divide_boolean(self.cell_under_div)
+            
+            print(d1.users_collection[0].name)
+            print(d2.users_collection[0].name)
 
             # Pass on force info to daugther cells  
             self.strength = tmp_strength
-            self.force_collection = tmp_collection
+            # self.force_collection = tmp_collection
             self.falloff = tmp_falloff
             self.mother_force = mother_force
             self.mother_stiffness = mother_stiffness
@@ -3566,7 +3633,7 @@ class handler_class:
             if self.mother_force: 
                 add_homo_adhesion(self.daugthers[0].name, self.strength)
                 add_homo_adhesion(self.daugthers[1].name, self.strength)
-        
+
             print(f"-- Finishing division of {cell_name} "
                   f"at frame {scene.frame_current}")
 
