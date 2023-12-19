@@ -4,7 +4,6 @@ import mathutils
 from mathutils import Vector, Matrix
 import numpy as np
 import sys
-import random
 import os 
 import math
 from datetime import datetime
@@ -3099,11 +3098,12 @@ class handler_class:
     def launch_simulation(
             self,
             filepath,
-            target_volume=4.12,
+            volume_scale=1,
             division_rate=50,
             start=1,
             end=250,
             motion_strength=-500,
+            division_trigger='volume',
             adhesion=True,
             growth=False,
             division=False,
@@ -3123,6 +3123,9 @@ class handler_class:
         self.division_rate = division_rate
         self.motion_strength = motion_strength
         self.data_flag = data  # used to decide if data are computed
+        self.division_trigger = division_trigger
+        self.volume_scale = volume_scale
+        self.unit_volume = ((4/3)*np.pi*(1)**3)
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after 250 frames
@@ -3143,14 +3146,11 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.data_export)
             bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
         if growth:
-            bpy.app.handlers.frame_change_post.append(
-                lambda scene,
-                depsgraph: self.growth_handler(scene,
-                                               depsgraph,
-                                               target_volume=((4/3)*np.pi*(1)**3))
-                                               )
-        if division:
-            bpy.app.handlers.frame_change_post.append(self.division_handler)
+            bpy.app.handlers.frame_change_post.append(self.growth_handler)
+        if (division and division_trigger == 'random'):
+            bpy.app.handlers.frame_change_post.append(self.division_handler_random)
+        if (division and division_trigger == 'volume'):
+            bpy.app.handlers.frame_change_post.append(self.division_handler_volume)
         if motility:
             bpy.app.handlers.frame_change_post.append(self.motion_handler)
         if boundary:
@@ -3297,7 +3297,7 @@ class handler_class:
                         bpy.ops.mesh.reveal()
                         bpy.ops.object.mode_set(mode='OBJECT')
 
-    def division_handler(self, scene, despgraph):
+    def division_handler_random(self, scene, despgraph):
 
         div_frames = range(
             self.frame_interval[0],
@@ -3334,14 +3334,34 @@ class handler_class:
 
                 # print(f"Cells under division: {[obj.name for obj in cells]}")
 
-                volumes = [cell['volume'] for cell in cells if 'volume' in cell]
+                # Filter cells with volume around 5% of the target volume
+                target_volume = self.unit_volume * self.volume_scale
+                threshold_volume = target_volume * 0.05
+                candidate_cells = [
+                    cell for cell in cells 
+                    if 'volume' in cell and (abs(cell['volume'] - target_volume) 
+                                             <= threshold_volume)
+                ]
+
+                if candidate_cells:
+                    # Select the largest cell among 5% error from target volume
+                    volumes = [cell['volume'] for cell in candidate_cells]
+                    largest_volume = np.max(volumes)
+                    largest_cell = candidate_cells[volumes.index(largest_volume)]
+                    # Replace with cell to divide    
+                    self.cell_under_div = largest_cell
+                else:
+                    self.cell_under_div = None 
+
+                '''volumes = [cell['volume'] for cell in cells if 'volume' in cell]
 
                 if len(volumes) == len(cells):
                     largest_volume = np.max(volumes)
+                    # within cell target volume: self.target_volume
                     largest_cell = cells[volumes.index(largest_volume)]
                     self.cell_under_div = largest_cell
                 else:
-                    self.cell_under_div = random.choice(cells)
+                    self.cell_under_div = random.choice(cells)'''
 
                 '''# Divide the largest in volume cell
                 volumes = [cell['volume'] for cell in cells if 'volume' in cell]
@@ -3396,21 +3416,24 @@ class handler_class:
             else: 
                 print('No cells under division')
 
-        if scene.frame_current in div_frames_physics: 
+        if self.cell_under_div is not None: 
 
-            # Toggle back on physics after mesh separation
-            apply_physics(self.daugthers[0], stiffness=self.mother_stiffness)
-            apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
+            if scene.frame_current in div_frames_physics: 
 
-        if scene.frame_current in div_frames_forces: 
+                # Toggle back on physics after mesh separation
+                apply_physics(self.daugthers[0], stiffness=self.mother_stiffness)
+                apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
 
-            # Add adhesion forces to daugther cells
-            if self.mother_force: 
-                add_homo_adhesion(self.daugthers[0].name, self.strength)
-                add_homo_adhesion(self.daugthers[1].name, self.strength)
+            if scene.frame_current in div_frames_forces: 
 
-            # bpy.context.scene.frame_set(1)
+                # Add adhesion forces to daugther cells
+                if self.mother_force: 
+                    add_homo_adhesion(self.daugthers[0].name, self.strength)
+                    add_homo_adhesion(self.daugthers[1].name, self.strength)
 
+                # bpy.context.scene.frame_set(1)
+
+            # Moved to apply_physics()    
             '''# Enable the cache of the daughter cloth simulations to match 
             # the simulation start and end frames
             self.daugthers[0].modifiers["Cloth"].point_cache.frame_start = \
@@ -3466,6 +3489,86 @@ class handler_class:
                 self.daugthers[1], 
                 rates[sphere_frames.index(scene.frame_current)]
                 )'''
+        
+    def division_handler_volume(self, scene, despgraph):
+
+        self.daugthers.clear()
+        self.strength = None
+        self.force_collection = None
+        self.falloff = None
+        self.mother_force = None
+        self.mother_stiffness = None
+
+        for collection in bpy.data.collections: 
+            # Loop through only the cell objects in collections
+            cells = [
+                obj for obj 
+                in bpy.data.collections.get(collection.name_full).all_objects 
+                if obj.get('object') == 'cell'
+                ]
+
+            # Filter cells with volume around 5% of the target volume
+            target_volume = self.unit_volume * self.volume_scale
+            threshold_volume = self.volume_scale * self.unit_volume * 0.05
+            candidate_cells = [
+                cell for cell in cells 
+                if 'volume' in cell and (abs(cell['volume'] - target_volume) 
+                                         <= threshold_volume)
+            ]
+
+            if candidate_cells:
+                # Select the largest cell among 5% error from target volume
+                volumes = [cell['volume'] for cell in candidate_cells]
+                largest_volume = np.max(volumes)
+                largest_cell = candidate_cells[volumes.index(largest_volume)]
+                # Replace with cell to divide    
+                self.cell_under_div = largest_cell
+            else:
+                self.cell_under_div = None 
+
+        if self.cell_under_div is not None: 
+            # Get name of cell under division
+            cell_name = self.cell_under_div.name
+            # Get the object by name
+            obj = bpy.data.objects.get(cell_name)
+            # If cell object exists
+            if obj:
+                # Get cloth modifier and check if it exists
+                cloth_modifier = obj.modifiers.get('Cloth')
+                if cloth_modifier:
+                    mother_stiffness = cloth_modifier.settings.tension_stiffness
+                else:
+                    raise ValueError(f"No Cloth modifier found on {cell_name}")
+            else:
+                raise ValueError(f"Object '{cell_name}' not found")
+            
+            apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
+
+            d1, d2, tmp_strength, tmp_collection, \
+                tmp_falloff, mother_force, mother_modifiers = \
+                divide_boolean(self.cell_under_div)
+
+            # Pass on force info to daugther cells  
+            self.strength = tmp_strength
+            self.force_collection = tmp_collection
+            self.falloff = tmp_falloff
+            self.mother_force = mother_force
+            self.mother_stiffness = mother_stiffness
+
+            self.daugthers.append(d1)     
+            self.daugthers.append(d2)
+
+            # Toggle back on physics after mesh separation
+            apply_physics(self.daugthers[0], stiffness=self.mother_stiffness)
+            apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
+
+            # Add adhesion forces to daugther cells
+            if self.mother_force: 
+                add_homo_adhesion(self.daugthers[0].name, self.strength)
+                add_homo_adhesion(self.daugthers[1].name, self.strength)
+        
+            print(f"-- Finishing division of {cell_name} "
+                  f"at frame {scene.frame_current}")
 
     def get_division_vertices(self, scene, depsgraph): 
 
@@ -3531,7 +3634,7 @@ class handler_class:
         return shrink_adjustment                                                                             
 
     # Member function to handle cell growth
-    def growth_handler(self, scene, depsgraph, target):
+    def growth_handler(self, scene, depsgraph):
         for collection in bpy.data.collections: 
             # Loop through the cell objects in collections, excluding forces
             cells = bpy.data.collections.get(collection.name_full).all_objects
@@ -3543,14 +3646,14 @@ class handler_class:
                 ):
 
                     volume = calculate_volume(cell)
-                    self.target_volume = target
                     # target_volume = ((4/3)*np.pi*(1)**3)
-                    cell['target volume'] = target
+                    target_volume = self.volume_scale * self.unit_volume
+                    cell['target volume'] = target_volume
                     cell['volume'] = volume
                     self.volumes[f"{cell.name}"].append(volume)
 
                     # TODO allow for multiple growth rate, with different functions
-                    volume_deviation = (volume - target) / target
+                    volume_deviation = ((volume - target_volume) / target_volume)
                     # (f"Current volume deviation: {volume_deviation}")
                     # shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
                     shrink_adjustment = 0.01 * (math.exp(volume_deviation) - 1)
