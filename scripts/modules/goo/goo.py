@@ -622,8 +622,87 @@ def apply_modifiers(obj, which='all'):
             bpy.ops.object.modifier_apply(modifier=which)
         else:
             print(f"Modifier '{which}' not found in object '{obj.name}'")
-    
-    
+
+
+def get_forces_in_collection(obj):
+
+    forces = []
+
+    for object in obj.users_collection[0].all_objects:
+        if (
+            object.get('object') == 'force'
+        ): 
+            forces.append(object)
+
+    return forces
+
+
+def get_cells_same_type(obj): 
+
+    cells_same_type = []
+
+    for coll in bpy.data.collections: 
+        for cell in coll.all_objects: 
+            if (
+                cell.get('object') == 'cell' and 
+                cell.users_collection[0].get('type') 
+                == obj.users_collection[0].get('type') and 
+                cell != obj
+            ): 
+                # Split the names into root and subsequent divisions
+                # Naming by convention here
+                cell_root = cell.name.split('.')[0:-1]
+                obj_root = obj.name.split('.')[0:-1]
+
+                # Compare roots to exclude cells with similar 
+                # roots but different subsequent divisions
+                if cell_root != obj_root:
+                    cells_same_type.append(cell)
+
+    return cells_same_type
+
+
+def get_forces_same_type(obj): 
+
+    cells_same_type = []
+
+    for coll in bpy.data.collections: 
+        for force in coll.all_objects: 
+            if (
+                force.get('object') == 'force' and 
+                force.users_collection[0].get('type') 
+                == obj.users_collection[0].get('type') and 
+                force != obj
+            ): 
+                # Split the names into root and subsequent divisions
+                # Naming by convention here
+                cell_root = force.name.split('.')[0:-1]
+                obj_root = obj.name.split('.')[0:-1]
+
+                # Compare roots to exclude cells with similar 
+                # roots but different subsequent divisions
+                if cell_root != obj_root:
+                    cells_same_type.append(force)
+
+    return cells_same_type
+
+
+def get_missing_forces(obj1, obj2):
+    forces_obj1 = {
+        obj for obj in obj1.users_collection[0].all_objects
+        if obj.get('object') == 'force'
+    }
+
+    forces_obj2 = {
+        obj for obj in obj2.users_collection[0].all_objects
+        if obj.get('object') == 'force'
+    }
+
+    missing_forces = list(forces_obj1.symmetric_difference(forces_obj2))
+
+    return missing_forces
+
+
 def divide_boolean(obj): 
 
     # Initialize variables
@@ -3380,35 +3459,30 @@ class handler_class:
             self.mother_force = None
             self.mother_stiffness = None
 
-            for collection in bpy.data.collections: 
-                # Loop through only the cell objects in collections
-                # print(f"Collection under division: {collection.name_full}")
-                cells = [
-                    obj for obj 
-                    in bpy.data.collections.get(collection.name_full).all_objects 
-                    if obj.get('object') == 'cell'
-                    ]
+            # Get cells that are candidates for division
+            target_volume = self.unit_volume * self.volume_scale
+            threshold_volume = self.volume_scale * self.unit_volume * 0.05
 
-                print(f"Cells under division: {[obj.name for obj in cells]}")
+            candidate_cells = [
+                obj for obj in bpy.context.scene.objects
+                if (
+                    obj.get('object') == 'cell' and 
+                    obj.get('volume') is not None and 
+                    abs(obj.get('volume') - target_volume) <= threshold_volume
+                )
+            ]
 
-                # Filter cells with volume around 5% of the target volume
-                target_volume = self.unit_volume * self.volume_scale
-                threshold_volume = target_volume * 0.05
-                candidate_cells = [
-                    cell for cell in cells 
-                    if 'volume' in cell and (abs(cell['volume'] - target_volume) 
-                                             <= threshold_volume)
-                ]
+            print(f"Candidate cells: {candidate_cells}")
 
-                if candidate_cells:
-                    # Select the largest cell among 5% error from target volume
-                    volumes = [cell['volume'] for cell in candidate_cells]
-                    largest_volume = np.max(volumes)
-                    largest_cell = candidate_cells[volumes.index(largest_volume)]
-                    # Replace with cell to divide    
-                    self.cell_under_div = largest_cell
-                else:
-                    self.cell_under_div = None 
+            if candidate_cells:
+                # Select the largest cell among 5% error from target volume
+                volumes = [cell['volume'] for cell in candidate_cells]
+                largest_volume = np.max(volumes)
+                largest_cell = candidate_cells[volumes.index(largest_volume)]
+                # Replace with cell to divide    
+                self.cell_under_div = largest_cell
+            else:
+                self.cell_under_div = None 
 
                 '''volumes = [cell['volume'] for cell in cells if 'volume' in cell]
 
@@ -3480,6 +3554,13 @@ class handler_class:
                 apply_physics(self.daugthers[0], stiffness=self.mother_stiffness)
                 apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
 
+                for cell in self.daugthers:
+                    cells_same_type = get_cells_same_type(cell)
+                    for cell_same_type in cells_same_type:
+                        missing_forces = get_missing_forces(cell_same_type, cell)
+                        for force in missing_forces:
+                            cell.users_collection[0].objects.link(force)
+
             if scene.frame_current in div_frames_forces: 
 
                 # Add adhesion forces to daugther cells
@@ -3546,6 +3627,38 @@ class handler_class:
                 rates[sphere_frames.index(scene.frame_current)]
                 )'''
         
+        '''for collection in bpy.data.collections:
+
+            target_volume = self.unit_volume * self.volume_scale
+            threshold_volume = self.volume_scale * self.unit_volume * 0.05
+
+            candidate_cell = [
+                obj for obj
+                in collection.all_objects
+                if (
+                    obj.get('object') == 'cell' and 
+                    'volume' in obj and (abs(obj.get('volume') - target_volume) 
+                                         <= threshold_volume)
+                )
+            ]
+        
+            # Loop through only the cell objects in collections
+            cells = [
+                obj for obj 
+                in bpy.data.collections.get(collection.name_full).all_objects 
+                if obj.get('object') == 'cell'
+            ]
+            print(f"All cells: {cells}")
+
+            # Filter cells with volume around 5% of the target volume
+            target_volume = self.unit_volume * self.volume_scale
+            threshold_volume = self.volume_scale * self.unit_volume * 0.05
+            candidate_cell = [
+                cell for cell in cells 
+                if 'volume' in cell and (abs(cell['volume'] - target_volume) 
+                                         <= threshold_volume)
+            ]'''
+
     def division_handler_volume(self, scene, despgraph):
 
         self.daugthers.clear()
@@ -3554,39 +3667,35 @@ class handler_class:
         self.falloff = None
         self.mother_force = None
         self.mother_stiffness = None
+        candidate_cells = []
 
-        for collection in bpy.data.collections: 
-            # Loop through only the cell objects in collections
-            cells = [
-                obj for obj 
-                in bpy.data.collections.get(collection.name_full).all_objects 
-                if obj.get('object') == 'cell'
-                ]
+        # Get cells that are candidates for division
+        target_volume = self.unit_volume * self.volume_scale
+        threshold_volume = self.volume_scale * self.unit_volume * 0.05
+
+        candidate_cells = [
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'cell' and 
+                obj.get('volume') is not None and 
+                abs(obj.get('volume') - target_volume) <= threshold_volume
+            )
+        ]
+
+        print(f"Candidate cells: {candidate_cells}")
+
+        if candidate_cells:
+            # print(f"Candidate cells: {candidate_cells}")
+            # Select the largest cell among 5% error from target volume
+            volumes = [cell['volume'] for cell in candidate_cells]
+            largest_volume = np.max(volumes)
+            largest_cell = candidate_cells[volumes.index(largest_volume)]
+            print(f"Largest cell: {largest_cell}")
+            # Replace with cell to divide    
+            self.cell_under_div = largest_cell
             
-            '''forces = [
-                obj for obj 
-                in bpy.data.collections.get(collection.name_full).all_objects 
-                if obj.get('object') == 'force'
-                ]'''
-
-            # Filter cells with volume around 5% of the target volume
-            target_volume = self.unit_volume * self.volume_scale
-            threshold_volume = self.volume_scale * self.unit_volume * 0.05
-            candidate_cells = [
-                cell for cell in cells 
-                if 'volume' in cell and (abs(cell['volume'] - target_volume) 
-                                         <= threshold_volume)
-            ]
-
-            if candidate_cells:
-                # Select the largest cell among 5% error from target volume
-                volumes = [cell['volume'] for cell in candidate_cells]
-                largest_volume = np.max(volumes)
-                largest_cell = candidate_cells[volumes.index(largest_volume)]
-                # Replace with cell to divide    
-                self.cell_under_div = largest_cell
-            else:
-                self.cell_under_div = None 
+        else:
+            self.cell_under_div = None 
 
         if self.cell_under_div is not None: 
 
@@ -3631,12 +3740,21 @@ class handler_class:
 
             # Add adhesion forces to daugther cells
             if self.mother_force: 
+                print('Mother force detected, passing it on')
                 add_homo_adhesion(self.daugthers[0].name, self.strength)
                 add_homo_adhesion(self.daugthers[1].name, self.strength)
+
+                for cell in self.daugthers:
+                    cells_same_type = get_cells_same_type(cell)
+                    for cell_same_type in cells_same_type:
+                        missing_forces = get_missing_forces(cell_same_type, cell)
+                        for force in missing_forces:
+                            cell.users_collection[0].objects.link(force)
 
             print(f"-- Finishing division of {cell_name} "
                   f"at frame {scene.frame_current}")
 
+    # not used in cell division
     def get_division_vertices(self, scene, depsgraph): 
 
         cell = bpy.data.objects['cell_A1']

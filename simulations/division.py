@@ -7,7 +7,7 @@ goo.setup_world(seed=1)
 goo.make_cell("cell_A1", loc=(0, 0, 0), type="cellsA")
  
 # Force A
-homoA = 2000
+homoA = 0
 motion = 500
 size = 1
 goo.add_homo_adhesion('cell_A1', -homoA)
@@ -22,6 +22,7 @@ handlers.launch_simulation(start=1,  # default, 1
                            data=True,  # default, False
                            growth=True, 
                            motility=False, 
-                           division=True
+                           division=True, 
+                           volume_scale=2
                            )
 
