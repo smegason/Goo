@@ -11,7 +11,7 @@ homoA = 0
 motion = 500
 size = 1
 goo.add_homo_adhesion('cell_A1', -homoA)
-
+goo.add_motion('cell_A1', -motion)
 
 # Simulation setup
 handlers = goo.handler_class()
@@ -21,8 +21,7 @@ handlers.launch_simulation(start=1,  # default, 1
                            adhesion=True,  # default, True
                            data=True,  # default, False
                            growth=True, 
-                           motility=False, 
+                           motility=True, 
                            division=True, 
-                           volume_scale=2
+                           volume_scale=1.5
                            )
-

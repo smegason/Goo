@@ -420,9 +420,9 @@ def separate_cell(obj):
     # The mother cell name is the name of the cell currently being divided
     mother_name = obj.name
     # By Blender convention, duplicates of existing objects are given
-    # the same name as the original object, but with ".001" added to the end
+    # the same name as the original object, but with ".01" added to the end
     # We use the naming convention to tentatively set the name of one daughter cell
-    daughter_name = f"{mother_name}.001"
+    daughter_name = f"{mother_name}.01"
     # Get the cell's center of mass
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     COM = obj.location
@@ -664,7 +664,7 @@ def get_cells_same_type(obj):
 
 def get_forces_same_type(obj): 
 
-    cells_same_type = []
+    forces_same_type = []
 
     for coll in bpy.data.collections: 
         for force in coll.all_objects: 
@@ -682,25 +682,32 @@ def get_forces_same_type(obj):
                 # Compare roots to exclude cells with similar 
                 # roots but different subsequent divisions
                 if cell_root != obj_root:
-                    cells_same_type.append(force)
+                    forces_same_type.append(force)
 
-    return cells_same_type
+    return forces_same_type
 
 
-def get_missing_forces(obj1, obj2):
+def get_missing_adhesion_forces(obj1, obj2):
+        
     forces_obj1 = {
         obj for obj in obj1.users_collection[0].all_objects
-        if obj.get('object') == 'force'
+        if (
+            obj.get('object') == 'force' and 
+            obj.get('motion') == 0
+        )
     }
 
     forces_obj2 = {
         obj for obj in obj2.users_collection[0].all_objects
-        if obj.get('object') == 'force'
+        if (
+            obj.get('object') == 'force' and 
+            obj.get('motion') == 0
+        )
     }
 
-    missing_forces = list(forces_obj1.symmetric_difference(forces_obj2))
+    missing_adhesion_forces = list(forces_obj1.symmetric_difference(forces_obj2))
 
-    return missing_forces
+    return missing_adhesion_forces
 
 
 def divide_boolean(obj): 
@@ -709,7 +716,8 @@ def divide_boolean(obj):
     strength = 0  # Default value
     falloff = 0  # Default value
     # force_collection = None  # Default value
-    mother_force = False  # Default value
+    mother_adhesion = False  # Default value
+    mother_motion = False  # Default value
 
     # Get COM
     p1 = get_centerofmass(obj)
@@ -760,16 +768,26 @@ def divide_boolean(obj):
         force for force in Force.force_list if force.name != obj['adhesion force']
     ]
     
-    # Remove mother force from cell
+    # Remove mother adhesion force
     if 'adhesion force' in obj: 
         obj_force = bpy.data.objects[obj['adhesion force']]
         strength = obj_force.field.strength
         falloff = obj_force.field.falloff_power
         # force_collection = obj_force.users_collection[0].name
-        mother_force = True
+        mother_adhesion = True
         if obj['adhesion force'] in bpy.data.objects:
             bpy.data.objects.remove(
                 bpy.data.objects[obj['adhesion force']], 
+                do_unlink=True
+            )
+
+    # Remove mother motion force
+    if 'motion force' in obj: 
+        mother_motion = True
+
+        if obj['motion force'] in bpy.data.objects:
+            bpy.data.objects.remove(
+                bpy.data.objects[obj['motion force']], 
                 do_unlink=True
             )
 
@@ -806,11 +824,11 @@ def divide_boolean(obj):
     bpy.ops.mesh.separate(type='SELECTED')
     bpy.ops.object.mode_set(mode='OBJECT')
 
-    d1 = bpy.context.selected_objects[0]  # selects cell_003, to be renamed
-    d1.name = f"{mother_name}.001"  # new cell
+    d1 = bpy.context.selected_objects[0]  # to be renamed
+    d1.name = f"{mother_name}.01"  # new cell
 
     d2 = bpy.context.scene.objects[mother_name]
-    d2.name = f"{mother_name}.002"  # mother cell
+    d2.name = f"{mother_name}.02"  # mother cell
 
     # Declare collections to contain daughter cells
     mother_collection = obj.users_collection[0]
@@ -904,7 +922,7 @@ def divide_boolean(obj):
     else:
         print(f"Division plane: '{plane_name}' not found.")'''
 
-    return d1, d2, strength, falloff, mother_force, modifier_values
+    return d1, d2, strength, falloff, mother_adhesion, mother_motion, modifier_values
 
 
 def disable_internal_springs(objects):
@@ -3456,7 +3474,7 @@ class handler_class:
             self.strength = None
             # self.force_collection = None
             self.falloff = None
-            self.mother_force = None
+            self.mother_adhesion = None
             self.mother_stiffness = None
 
             # Get cells that are candidates for division
@@ -3527,14 +3545,14 @@ class handler_class:
                 
                 apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
 
-                d1, d2, tmp_strength, tmp_falloff, mother_force, mother_modifiers = \
+                d1, d2, tmp_strength, tmp_falloff, mother_adhesion, mother_modifiers = \
                     divide_boolean(self.cell_under_div)
 
                 # Pass on force info to daugther cells  
                 self.strength = tmp_strength
                 # self.force_collection = tmp_collection
                 self.falloff = tmp_falloff
-                self.mother_force = mother_force
+                self.mother_adhesion = mother_adhesion
                 self.mother_stiffness = mother_stiffness
 
                 self.daugthers.append(d1)     
@@ -3557,14 +3575,15 @@ class handler_class:
                 for cell in self.daugthers:
                     cells_same_type = get_cells_same_type(cell)
                     for cell_same_type in cells_same_type:
-                        missing_forces = get_missing_forces(cell_same_type, cell)
+                        missing_forces = get_missing_adhesion_forces(cell_same_type, 
+                                                                     cell)
                         for force in missing_forces:
                             cell.users_collection[0].objects.link(force)
 
             if scene.frame_current in div_frames_forces: 
 
                 # Add adhesion forces to daugther cells
-                if self.mother_force: 
+                if self.mother_adhesion: 
                     add_homo_adhesion(self.daugthers[0].name, self.strength)
                     add_homo_adhesion(self.daugthers[1].name, self.strength)
 
@@ -3665,7 +3684,8 @@ class handler_class:
         self.strength = None
         # self.force_collection = None
         self.falloff = None
-        self.mother_force = None
+        self.mother_adhesion = None
+        self.mother_motion = None
         self.mother_stiffness = None
         candidate_cells = []
 
@@ -3718,7 +3738,8 @@ class handler_class:
             
             apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
 
-            d1, d2, tmp_strength, tmp_falloff, mother_force, mother_modifiers = \
+            d1, d2, tmp_strength, tmp_falloff, mother_adhesion, \
+                mother_motion, mother_modifiers = \
                 divide_boolean(self.cell_under_div)
             
             print(d1.users_collection[0].name)
@@ -3728,7 +3749,8 @@ class handler_class:
             self.strength = tmp_strength
             # self.force_collection = tmp_collection
             self.falloff = tmp_falloff
-            self.mother_force = mother_force
+            self.mother_adhesion = mother_adhesion
+            self.mother_motion = mother_motion
             self.mother_stiffness = mother_stiffness
 
             self.daugthers.append(d1)     
@@ -3739,17 +3761,24 @@ class handler_class:
             apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
 
             # Add adhesion forces to daugther cells
-            if self.mother_force: 
-                print('Mother force detected, passing it on')
+            if self.mother_adhesion: 
+                print('Mother adhesion detected, passing it on')
                 add_homo_adhesion(self.daugthers[0].name, self.strength)
                 add_homo_adhesion(self.daugthers[1].name, self.strength)
 
                 for cell in self.daugthers:
                     cells_same_type = get_cells_same_type(cell)
                     for cell_same_type in cells_same_type:
-                        missing_forces = get_missing_forces(cell_same_type, cell)
+                        missing_forces = get_missing_adhesion_forces(cell_same_type, 
+                                                                     cell)
+                        print(f"Missing adhesion forces: {missing_forces}")
                         for force in missing_forces:
                             cell.users_collection[0].objects.link(force)
+
+            if self.mother_motion: 
+                print('Mother motion detected, passing it on')
+                add_motion(self.daugthers[0].name, self.strength)
+                add_motion(self.daugthers[1].name, self.strength)
 
             print(f"-- Finishing division of {cell_name} "
                   f"at frame {scene.frame_current}")
@@ -4000,7 +4029,7 @@ class handler_class:
 
                     # constraint force field within the box
 
-                    # Define the box's dimensions and center
+                    '''# Define the box's dimensions and center
                     # Define the box's length (half of the actual length)
                     box_length = {"x": 6, "y": 6, "z": 4}
                     box_center = Vector((-1.5, 0, 0))  # Define the center of the box
@@ -4045,7 +4074,7 @@ class handler_class:
                         constrained_force_location.z = \
                             2 * z_max - constrained_force_location.z
 
-                    force.location = constrained_force_location
+                    force.location = constrained_force_location'''
 
                     '''# cell tracks 
                     # Define the name of the curve object and the new point coordinates
