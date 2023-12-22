@@ -713,7 +713,8 @@ def get_missing_adhesion_forces(obj1, obj2):
 def divide_boolean(obj): 
 
     # Initialize variables
-    strength = 0  # Default value
+    adhesion_strength = 0  # Default value
+    motion_strength = 0  # Default value
     falloff = 0  # Default value
     # force_collection = None  # Default value
     mother_adhesion = False  # Default value
@@ -770,11 +771,10 @@ def divide_boolean(obj):
     
     # Remove mother adhesion force
     if 'adhesion force' in obj: 
-        obj_force = bpy.data.objects[obj['adhesion force']]
-        strength = obj_force.field.strength
-        falloff = obj_force.field.falloff_power
-        # force_collection = obj_force.users_collection[0].name
         mother_adhesion = True
+        adhesion_force = bpy.data.objects[obj['adhesion force']]
+        adhesion_strength = adhesion_force.field.strength
+        falloff = adhesion_force.field.falloff_power
         if obj['adhesion force'] in bpy.data.objects:
             bpy.data.objects.remove(
                 bpy.data.objects[obj['adhesion force']], 
@@ -784,6 +784,8 @@ def divide_boolean(obj):
     # Remove mother motion force
     if 'motion force' in obj: 
         mother_motion = True
+        motion_force = bpy.data.objects[obj['motion force']]
+        motion_strength = motion_force.field.strength
 
         if obj['motion force'] in bpy.data.objects:
             bpy.data.objects.remove(
@@ -922,7 +924,8 @@ def divide_boolean(obj):
     else:
         print(f"Division plane: '{plane_name}' not found.")'''
 
-    return d1, d2, strength, falloff, mother_adhesion, mother_motion, modifier_values
+    return d1, d2, adhesion_strength, motion_strength, \
+        falloff, mother_adhesion, mother_motion, modifier_values
 
 
 def disable_internal_springs(objects):
@@ -3189,7 +3192,7 @@ class handler_class:
         self.times = defaultdict()
         self.absolute_time = [0]
         self.frame_interval = [None, None]
-        self.strength = None
+        self.mother_adhesion_strength = None
         self.falloff = None
         self.master_dict = None
         self.data_dict = {
@@ -3471,7 +3474,7 @@ class handler_class:
                     
         if scene.frame_current in div_frames: 
             self.daugthers.clear()
-            self.strength = None
+            mother_adhesion_strength = None
             # self.force_collection = None
             self.falloff = None
             self.mother_adhesion = None
@@ -3501,32 +3504,7 @@ class handler_class:
                 self.cell_under_div = largest_cell
             else:
                 self.cell_under_div = None 
-
-                '''volumes = [cell['volume'] for cell in cells if 'volume' in cell]
-
-                if len(volumes) == len(cells):
-                    largest_volume = np.max(volumes)
-                    # within cell target volume: self.target_volume
-                    largest_cell = cells[volumes.index(largest_volume)]
-                    self.cell_under_div = largest_cell
-                else:
-                    self.cell_under_div = random.choice(cells)'''
-
-                '''# Divide the largest in volume cell
-                volumes = [cell['volume'] for cell in cells if 'volume' in cell]
-
-                if len(volumes) != len(cells):
-                    raise ValueError("Not all cell objects have a 'volume' property \
-                                     in the collection")
-
-                if len(volumes) == len(cells):
-                    largest_volume = np.max(volumes)
-                    largest_cell = cells[volumes.index(largest_volume)]
-                    self.cell_under_div = largest_cell
-
-                # Divide randomly
-                self.cell_under_div = random.choice(cells)'''
-
+                
             if self.cell_under_div is not None: 
                 # Get name of cell under division
                 cell_name = self.cell_under_div.name
@@ -3543,13 +3521,16 @@ class handler_class:
                 else:
                     raise ValueError(f"Object '{cell_name}' not found")
                 
-                apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
+                apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], 
+                                which='all')
 
-                d1, d2, tmp_strength, tmp_falloff, mother_adhesion, mother_modifiers = \
+                d1, d2, mother_adhesion_strength, mother_motion_strength, \
+                    tmp_falloff, mother_adhesion, mother_modifiers = \
                     divide_boolean(self.cell_under_div)
 
                 # Pass on force info to daugther cells  
-                self.strength = tmp_strength
+                self.mother_adhesion_strength = mother_adhesion_strength
+                self.mother_motion_strength = mother_motion_strength
                 # self.force_collection = tmp_collection
                 self.falloff = tmp_falloff
                 self.mother_adhesion = mother_adhesion
@@ -3569,8 +3550,10 @@ class handler_class:
             if scene.frame_current in div_frames_physics: 
 
                 # Toggle back on physics after mesh separation
-                apply_physics(self.daugthers[0], stiffness=self.mother_stiffness)
-                apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
+                apply_physics(obj=self.daugthers[0], 
+                              stiffness=self.mother_stiffness)
+                apply_physics(obj=self.daugthers[1], 
+                              stiffness=self.mother_stiffness)
 
                 for cell in self.daugthers:
                     cells_same_type = get_cells_same_type(cell)
@@ -3584,8 +3567,10 @@ class handler_class:
 
                 # Add adhesion forces to daugther cells
                 if self.mother_adhesion: 
-                    add_homo_adhesion(self.daugthers[0].name, self.strength)
-                    add_homo_adhesion(self.daugthers[1].name, self.strength)
+                    add_homo_adhesion(cell_name=self.daugthers[0].name, 
+                                      strength=self.mother_adhesion_strength)
+                    add_homo_adhesion(cell_name=self.daugthers[1].name, 
+                                      strength=self.mother_adhesion_strength)
 
                 # bpy.context.scene.frame_set(1)
 
@@ -3681,7 +3666,7 @@ class handler_class:
     def division_handler_volume(self, scene, despgraph):
 
         self.daugthers.clear()
-        self.strength = None
+        self.mother_adhesion_strength = None
         # self.force_collection = None
         self.falloff = None
         self.mother_adhesion = None
@@ -3736,18 +3721,18 @@ class handler_class:
             else:
                 raise ValueError(f"Object '{cell_name}' not found")
             
-            apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], which='all')
+            # Apply the whole modifer stack in sequential order    
+            apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], 
+                            which='all')
 
-            d1, d2, tmp_strength, tmp_falloff, mother_adhesion, \
-                mother_motion, mother_modifiers = \
+            # Separation of mother in two distinct daughter cells
+            d1, d2, mother_adhesion_strength, mother_motion_strength, \
+                tmp_falloff, mother_adhesion, mother_motion, mother_modifiers = \
                 divide_boolean(self.cell_under_div)
-            
-            print(d1.users_collection[0].name)
-            print(d2.users_collection[0].name)
 
-            # Pass on force info to daugther cells  
-            self.strength = tmp_strength
-            # self.force_collection = tmp_collection
+            # Pass on force parameters to daugther cells  
+            self.mother_adhesion_strength = mother_adhesion_strength
+            self.mother_motion_strength = mother_motion_strength
             self.falloff = tmp_falloff
             self.mother_adhesion = mother_adhesion
             self.mother_motion = mother_motion
@@ -3757,14 +3742,18 @@ class handler_class:
             self.daugthers.append(d2)
 
             # Toggle back on physics after mesh separation
-            apply_physics(self.daugthers[0], stiffness=self.mother_stiffness)
-            apply_physics(self.daugthers[1], stiffness=self.mother_stiffness)
+            apply_physics(obj=self.daugthers[0], 
+                          stiffness=self.mother_stiffness)
+            apply_physics(obj=self.daugthers[1], 
+                          stiffness=self.mother_stiffness)
 
             # Add adhesion forces to daugther cells
             if self.mother_adhesion: 
                 print('Mother adhesion detected, passing it on')
-                add_homo_adhesion(self.daugthers[0].name, self.strength)
-                add_homo_adhesion(self.daugthers[1].name, self.strength)
+                add_homo_adhesion(cell_name=self.daugthers[0].name, 
+                                  strength=self.mother_adhesion_strength)
+                add_homo_adhesion(cell_name=self.daugthers[1].name, 
+                                  strength=self.mother_adhesion_strength)
 
                 for cell in self.daugthers:
                     cells_same_type = get_cells_same_type(cell)
@@ -3777,8 +3766,10 @@ class handler_class:
 
             if self.mother_motion: 
                 print('Mother motion detected, passing it on')
-                add_motion(self.daugthers[0].name, self.strength)
-                add_motion(self.daugthers[1].name, self.strength)
+                add_motion(effector_name=self.daugthers[0].name, 
+                           strength=self.mother_motion_strength)
+                add_motion(effector_name=self.daugthers[1].name, 
+                           strength=self.mother_motion_strength)
 
             print(f"-- Finishing division of {cell_name} "
                   f"at frame {scene.frame_current}")
