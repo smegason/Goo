@@ -947,6 +947,69 @@ def disable_internal_springs(objects):
     return
 
 
+def save_modifiers_stack(obj):
+    if (
+        obj is None 
+        and obj.get('object') == 'cell' 
+        and obj.type != 'MESH'
+    ):
+        print("Invalid object or not a mesh.")
+        return None
+    
+    modifiers_data = []
+    
+    # Iterate through modifiers of the object and store their data
+    for modifier in obj.modifiers:
+        modifier_data = {
+            'type': modifier.type,
+            'name': modifier.name,
+            'show_viewport': modifier.show_viewport,
+            'show_render': modifier.show_render,
+            'show_in_editmode': modifier.show_in_editmode
+            # Add more properties as needed for each specific modifier type
+        }
+        
+        # Store specific properties for certain modifier types
+        if modifier.type == 'ARRAY':
+            modifier_data['count'] = modifier.count
+            modifier_data['use_merge_vertices'] = modifier.use_merge_vertices
+            # Add more properties specific to the ARRAY modifier
+        
+        # Append the modifier data to the list
+        modifiers_data.append(modifier_data)
+    
+    return modifiers_data
+
+
+def declare_mother_modifiers(obj, mother_modifiers):
+    if (
+        obj is None 
+        and obj.get('object') == 'cell' 
+        and obj.type != 'MESH'
+    ):
+        print("Invalid object or not a mesh.")
+        return 
+    
+    # Clear existing modifiers from the object
+    for modifier in obj.modifiers:
+        obj.modifiers.remove(modifier)
+    
+    # Declare saved modifiers on the object without applying them
+    for modifier_data in mother_modifiers:
+        modifier = obj.modifiers.new(name=modifier_data['name'], 
+                                     type=modifier_data['type'])
+        
+        # Restore properties for each modifier
+        modifier.show_viewport = modifier_data['show_viewport']
+        modifier.show_render = modifier_data['show_render']
+        modifier.show_in_editmode = modifier_data['show_in_editmode']
+        
+        if modifier_data['type'] == 'ARRAY':
+            modifier.count = modifier_data['count']
+            modifier.use_merge_vertices = modifier_data['use_merge_vertices']
+            # Restore more properties for the ARRAY modifier
+
+
 def apply_physics(obj, stiffness): 
 
     print('Starting modifiers declaration')
@@ -1052,17 +1115,46 @@ def apply_physics(obj, stiffness):
     return '''
 
 
-def to_sphere(obj, rate): 
+def cast_to_sphere(obj, factor=0.5):
+    # Select the object to round up
+    bpy.context.view_layer.objects.active = obj
+
+    if obj is None:
+        print(f"Object named '{obj}' not found.")
+        return
+    
+    # Apply a "Cast" modifier to the duplicated object
+    cast_modifier = obj.modifiers.new(name="Cast", type='CAST')
+    cast_modifier.factor = factor  # Adjust the factor for the level of rounding
+    
+    # Apply the modifier to generate the rounded shape
+    # bpy.ops.object.modifier_apply(modifier="Cast")
+
+
+def tosphere(obj, value=1):
+    if obj is None:
+        print(f"Object named '{obj.name}' not found.")
+        return
+    
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    obj.select_set(True)
+    
+    bpy.ops.transform.tosphere(value=value)
+
+
+def to_sphere(obj): 
     print(f'{obj.name} under to_sphere')
 
     obj = bpy.context.active_object
 
     # hemi_key = obj.shape_key_add(name=f"{obj.name}_hemisphere", from_mix=False)
-    bpy.context.object.active_shape_key_index = 0
+    # bpy.context.object.active_shape_key_index = 0
 
-    sphere_key = obj.shape_key_add(name=f"{obj.name}_sphere", from_mix=False)
-    bpy.context.object.active_shape_key_index = 1
-    bpy.context.view_layer.update()
+    # sphere_key = obj.shape_key_add(name=f"{obj.name}_sphere", from_mix=False)
+    # bpy.context.object.active_shape_key_index = 1
+    # bpy.context.view_layer.update()
 
     # Update the object and the shape key
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
@@ -1130,11 +1222,11 @@ def to_sphere(obj, rate):
     bpy.ops.object.mode_set(mode = 'OBJECT')'''
     bpy.context.view_layer.update()
 
-    sphere_key.slider_max = 1
-    sphere_key.value = 1
+    # sphere_key.slider_max = 1
+    # sphere_key.value = 1
 
     # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-    bpy.ops.object.shape_key_remove(all=True, apply_mix=True)
+    # bpy.ops.object.shape_key_remove(all=True, apply_mix=True)
 
     '''obj = bpy.context.active_object
     remesh_mod = obj.modifiers[-1]
@@ -1950,7 +2042,7 @@ def add_hetero_adhesion(cell_name, other_type_name, strength):
                        cell_name=cell_name,
                        type=type,
                        strength=strength,
-                       falloff=0,
+                       falloff=0.5,
                        motion=False)
     
     for coll in hetero_collections:
@@ -1971,7 +2063,7 @@ def add_homo_adhesion(cell_name, strength):
                        cell_name=cell_name,
                        type=cell_type,
                        strength=strength,
-                       falloff=0,
+                       falloff=0.5,
                        motion=False)
     
     for coll in homo_collections:
@@ -1993,10 +2085,10 @@ def make_force(force_name,
                cell_name,
                type,
                strength,
-               falloff,
+               falloff=0.5,
                motion=False,
-               min_dist=0.5,
-               max_dist=1.5):
+               min_dist=0.2,
+               max_dist=1.2):
     """Core function: creates a Blender force from a Goo :class:`Force` object.
 
     :param :class:`Force` force: The Goo force object.
@@ -2017,6 +2109,7 @@ def make_force(force_name,
             scale=(1, 1, 1)
         )
         bpy.context.object['motion'] = False
+        bpy.context.object.name = force_name
         bpy.context.object.name = force_name
         bpy.data.objects.get(cell_name)["adhesion force"] = force_name
 
@@ -3190,6 +3283,7 @@ class handler_class:
         self.data_file_path = ''
         self.time = None
         self.times = defaultdict()
+        self.frame_cells = defaultdict()
         self.absolute_time = [0]
         self.frame_interval = [None, None]
         self.mother_adhesion_strength = None
@@ -3285,7 +3379,7 @@ class handler_class:
         self.unit_volume = ((4/3)*np.pi*(1)**3)
 
         # Set the end frame for all cloth simulation caches in the scene
-        # To keep simulations running after 250 frames
+        # To keep simulations running after the default 250 frames
         if bpy.context.scene.frame_current == start: 
             for collection in bpy.data.collections:
                 # Loop through the objects existed in the collection 
@@ -3294,29 +3388,33 @@ class handler_class:
                         obj.modifiers["Cloth"].point_cache.frame_start = start   
                         obj.modifiers["Cloth"].point_cache.frame_end = end   
 
-        bpy.app.handlers.frame_change_pre.append(self.timing_init_handler)
+        # bpy.app.handlers.frame_change_pre.clear()
+        # bpy.app.handlers.frame_change_pre.append(self.timing_init_handler)
+        # bpy.app.handlers.frame_change_pre.clear()    
         bpy.app.handlers.frame_change_post.clear()
+        bpy.app.handlers.frame_change_post.append(self.timing_init_handler)
 
         if adhesion:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
         if data:
-            bpy.app.handlers.frame_change_post.append(self.data_export)
+            bpy.app.handlers.frame_change_post.append(self.data_export_handler)
             bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
         if growth:
             bpy.app.handlers.frame_change_post.append(self.growth_handler)
         if (division and division_trigger == 'random'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_random)
         if (division and division_trigger == 'volume'):
-            bpy.app.handlers.frame_change_post.append(self.division_handler_volume)
+            bpy.app.handlers.frame_change_post.append(self.division_handler_volume)            
+        #    bpy.app.handlers.frame_change_post.append(self.cast_modifier)            
         if motility:
             bpy.app.handlers.frame_change_post.append(self.motion_handler)
         if boundary:
             bpy.app.handlers.frame_change_post.append(self.boundary_handler)
-        if remeshing:
-            bpy.app.handlers.frame_change_post.append(self.remeshing_handler)
-            # bpy.app.handlers.frame_change_post.append(self.select_dividing_cell)
-        if visualize:
-            bpy.app.handlers.frame_change_post.append(self.visualize_stretching)
+        # if remeshing:
+        #    bpy.app.handlers.frame_change_post.append(self.remeshing_handler)
+        #    bpy.app.handlers.frame_change_post.append(self.select_dividing_cell)
+        # if visualize:
+        #    bpy.app.handlers.frame_change_post.append(self.visualize_stretching)
 
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
@@ -3539,6 +3637,9 @@ class handler_class:
                 self.daugthers.append(d1)     
                 self.daugthers.append(d2)
 
+                # to_sphere(self.daugthers[0])
+                # to_sphere(self.daugthers[1])
+
                 print(f"-- Finishing division of {cell_name} "
                       f"at frame {scene.frame_current}")
 
@@ -3571,42 +3672,6 @@ class handler_class:
                                       strength=self.mother_adhesion_strength)
                     add_homo_adhesion(cell_name=self.daugthers[1].name, 
                                       strength=self.mother_adhesion_strength)
-
-                # bpy.context.scene.frame_set(1)
-
-            # Moved to apply_physics()    
-            '''# Enable the cache of the daughter cloth simulations to match 
-            # the simulation start and end frames
-            self.daugthers[0].modifiers["Cloth"].point_cache.frame_start = \
-                self.frame_interval[0]   
-            self.daugthers[0].modifiers["Cloth"].point_cache.frame_end = \
-                self.frame_interval[1]  
-            self.daugthers[1].modifiers["Cloth"].point_cache.frame_start = \
-                self.frame_interval[0]   
-            self.daugthers[1].modifiers["Cloth"].point_cache.frame_end = \
-                self.frame_interval[1]'''
-        
-        '''if scene.frame_current in div_frames_cloth: 
-            if self.daugthers[0].modifiers:
-                remesh_mod_name = f'Remesh_{self.daugthers[0].name}'
-                cloth_mod_name = 'Cloth'
-                bpy.ops.object.modifier_apply(modifier=cloth_mod_name)
-                bpy.ops.object.modifier_apply(modifier=remesh_mod_name)
-                self.daugthers[0].modifiers.clear()
-                # Apply the modifier
-                # bpy.context.view_layer.objects.active = self.daugthers[0]
-                apply_physics(self.daugthers[0], self.modifiers)
-                # bpy.ops.object.modifier_apply(modifier=f'Remesh_{self.daugthers[0].name}')
-            if self.daugthers[1].modifiers:
-                remesh_mod_name = f'Remesh_{self.daugthers[1].name}'
-                cloth_mod_name = 'Cloth'
-                bpy.ops.object.modifier_apply(modifier=cloth_mod_name)
-                bpy.ops.object.modifier_apply(modifier=remesh_mod_name)
-                self.daugthers[1].modifiers.clear()
-                # Apply the modifier
-                # bpy.context.view_layer.objects.active = self.daugthers[1]
-                apply_physics(self.daugthers[1], self.modifiers)
-                # bpy.ops.object.modifier_apply(modifier=f'Remesh_{self.daugthers[1].name}')'''
 
         # CODE FOR TO SPHERE IMPLEMENTATION
         '''div_frames_sphere = range(
@@ -3662,6 +3727,29 @@ class handler_class:
                 if 'volume' in cell and (abs(cell['volume'] - target_volume) 
                                          <= threshold_volume)
             ]'''
+        
+    def cast_modifier(self, scene, despgraph):
+        # Iterate through all objects in the scene
+        for obj in bpy.context.scene.objects:
+            # Check if the object is a cell object (customize the condition as needed)
+            if obj.get('object') == 'cell':  # Example condition for cell objects
+                modifier_exists = False
+                
+                # Check if a Cast modifier already exists, if yes, update its factor
+                for modifier in obj.modifiers:
+                    if modifier.type == 'CAST':
+                        modifier_exists = True
+                        if modifier.factor < -0.5:
+                            continue
+                        else:
+                            # Decrease factor by 0.1 (adjust as needed)
+                            modifier.factor -= 0.001
+                            break
+                
+                # If no Cast modifier exists, create a new one
+                if not modifier_exists:
+                    cast_modifier = obj.modifiers.new(name="Cast", type='CAST')
+                    cast_modifier.factor = 0.0  # Start factor from 0
 
     def division_handler_volume(self, scene, despgraph):
 
@@ -3746,6 +3834,11 @@ class handler_class:
                           stiffness=self.mother_stiffness)
             apply_physics(obj=self.daugthers[1], 
                           stiffness=self.mother_stiffness)
+            # Cast to sphere
+            cast_to_sphere(obj=self.daugthers[0], 
+                           factor=-0.1)
+            cast_to_sphere(obj=self.daugthers[1], 
+                           factor=-0.1)
 
             # Add adhesion forces to daugther cells
             if self.mother_adhesion: 
@@ -4255,10 +4348,6 @@ class handler_class:
     def contact_area_handler(self, scene, depsgraph): 
 
         if self.data_flag: 
-            '''if (
-                scene.frame_current 
-                in range(self.frame_interval[0], self.frame_interval[1], 1)
-            ):'''
             contact_ratio_dict, contact_areas_dict = get_contact_area()
             # Merge the dictionaries
             for key, value in contact_ratio_dict.items():
@@ -4287,7 +4376,6 @@ class handler_class:
     def adhesion_handler(self, scene, depsgraph):
 
         force_list = Force.force_list
-        # print([force.name for force in force_list])
 
         for force in force_list:
             if not bpy.data.objects[force.name]['motion']: 
@@ -4303,25 +4391,18 @@ class handler_class:
                 cloth_settings = cloth_modifier.settings
                 cloth_collection = bpy.data.objects[assoc_cell].users_collection[0]
                 cloth_settings.effector_weights.collection = cloth_collection
-
-                # bpy.data.objects[assoc_cell].modifiers["Cloth"].settings.effector_weights.
-                # collection = bpy.data.objects[assoc_cell].users_collection[0]
-
-    def set_random_motion_speed(self, motion_speed: float):
-
-        self.random_motion_speed = motion_speed
         
-    def data_export(self, scene, depsgraph): 
+    def data_export_handler(self, scene, depsgraph): 
 
         self.seed = bpy.context.scene.get("seed")
-        # var_to_export = ["sorting_scores", "times", "msd", "contact_ratios"]
         # Write the list at the end of the simulation
         if scene.frame_current == self.frame_interval[1]:
             with open(f"{self.data_file_path}_times.json", 'w') as write_file:
                 write_file.write(json.dumps(self.times))
+            with open(f"{self.data_file_path}_frame_cells.json", 'w') as write_file:
+                write_file.write(json.dumps(self.frame_cells))
             with open(f"{self.data_file_path}_contact_ratios.json", 'w') as write_file:
                 write_file.write(json.dumps(self.contact_ratios))
-        # else: # data over simulation time
             with open(f"{self.data_file_path}_msd.json", 'w') as write_file:
                 write_file.write(json.dumps(self.msd))
             with open(f"{self.data_file_path}_sorting_scores.json", 'w') as write_file:
@@ -4334,7 +4415,6 @@ class handler_class:
                 write_file.write(json.dumps(self.contact_areas))
             with open(f"{self.data_file_path}_volumes.json", 'w') as write_file:
                 write_file.write(json.dumps(self.volumes))
-
             if self.seed is not None: 
                 with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
                     write_file.write(json.dumps(self.seed))
@@ -4345,6 +4425,7 @@ class handler_class:
                 f"{self.data_file_path}"
             ])'''
 
+    # not used
     def visualize_stretching(self, scene, depsgraph):
         cells = [
             obj 
@@ -4473,15 +4554,6 @@ class handler_class:
                     # initialize the key for the cell name if the class dictionary 
                     com_list.append(COM)
 
-                    # measure cell deformability between two frames
-                    # idea: store coord of cell's COM, store coord of each vertex 
-                    # of each cell's mesh at each frame
-                    # at the end of the simulation, substract the COM's coord from each 
-                    # vertex coord to isolate displacement caused by deformability
-                    # at each frame, sum the 3D distance (displacement) between vertices 
-                    # of current frame to previous frame 
-                    # sum the overall displacement over the number of frame 
-
                 for i in range(len(com_list)):
                     for j in range(len(com_list)):
                         # Calculate the Euclidean distance between the two coordinates
@@ -4546,10 +4618,30 @@ class handler_class:
             elapsed_time_secs = elpased_time.seconds + elpased_time.microseconds/1000000
             self.times.update({frame_written: elapsed_time_secs})
             print('________________________________________________________')
-            print(f"Render Started at:{self.time}")  
+            # print(f"Render Started at:{self.time}")  
             print(f"Current frame: {frame_written}")
             print(f"Elapsed in seconds/microseconds:{elapsed_time_secs:.3f};"
                   f" {elapsed_time_secs:.1f}")
+            
+        cells = [
+            obj 
+            for obj in bpy.data.objects 
+            if "object" in obj.keys() and obj["object"] == "cell"
+            ]
+        
+        for cell in cells: 
+            if cell.name not in self.ls:
+                if frame_written in [1, 2]:
+                    self.frame_cells[cell.name] = [1]  # Initialize list if not present
+                else:
+                    self.frame_cells[cell.name] = []  # Initialize list if not present
+            self.frame_cells[cell.name].append(frame_written)
+
+            if frame_written == self.frame_interval[1] - 1:
+                break 
+                # remove for each cell the last frame which is self.frame_interval[1]
+                # if cell.name in self.frame_cells:
+                #    self.frame_cells[cell.name] = self.frame_cells[cell.name][:-1]
 
     def stop_animation(self, scene, depsgraph):
 
