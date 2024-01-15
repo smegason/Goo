@@ -134,11 +134,16 @@ def get_long_axis_global(obj):
     # The major axis is the first eigenvector
     major_axis = eigenvectors[:, 0]
 
-    # Convert the major axis to global coordinates, no need for this line
+    # Convert the major axis to global coordinates
     major_axis_global = np.array(evaluated_object.matrix_world) @ np.append(major_axis, 
                                                                             1)
 
-    return tuple(major_axis_global)[:3]
+    # Find extreme points along the major axis
+    min_point = np.min(vertex_coords.dot(major_axis))
+    max_point = np.max(vertex_coords.dot(major_axis))
+    length_long_axis = max_point - min_point
+
+    return tuple(major_axis_global)[:3], length_long_axis
 
 
 def get_long_axis(obj):
@@ -710,6 +715,197 @@ def get_missing_adhesion_forces(obj1, obj2):
     return missing_adhesion_forces
 
 
+def gather_modifier_info(obj):
+    modifiers_info = []
+    for modifier in obj.modifiers:
+        modifier_data = {'type': modifier.type, 'name': modifier.name}
+        # Store modifier parameters
+        for prop in modifier.bl_rna.properties:
+            if prop.identifier != 'rna_type' and not prop.is_readonly:
+                # Handling nested properties for collision_settings
+                if prop.identifier == 'collision_settings': 
+                    collision_settings = {}
+                    for collision_prop in prop.type.bl_rna.properties:
+                        if (collision_prop.identifier != 'rna_type' 
+                                and not collision_prop.is_readonly):
+                            collision_settings[collision_prop.identifier] = \
+                                getattr(getattr(modifier, prop.identifier),
+                                        collision_prop.identifier)
+                    modifier_data[prop.identifier] = collision_settings
+                # Handling cloth modifier settings
+                elif prop.identifier == 'settings' and modifier.type == 'CLOTH':
+                    cloth_settings = {}
+                    for cloth_prop in prop.type.bl_rna.properties:
+                        if (cloth_prop.identifier != 'rna_type' 
+                                and not cloth_prop.is_readonly):
+                            cloth_settings[cloth_prop.identifier] = \
+                                getattr(getattr(modifier, prop.identifier), 
+                                        cloth_prop.identifier)
+                    modifier_data[prop.identifier] = cloth_settings
+                else:
+                    modifier_data[prop.identifier] = getattr(modifier, prop.identifier)
+        modifiers_info.append(modifier_data)
+    return modifiers_info
+
+
+def store_subsurf_settings(obj):
+    subsurf_settings = {}
+    for modifier in obj.modifiers:
+        if modifier.type == 'SUBSURF':
+            subsurf_settings[modifier.name] = {}
+            if 'subdivision_type' in dir(modifier):
+                subsurf_settings[modifier.name]['subdivision_type'] = \
+                    modifier.subdivision_type
+            if 'levels' in dir(modifier):
+                subsurf_settings[modifier.name]['levels'] = modifier.levels
+            if 'quality' in dir(modifier):
+                subsurf_settings[modifier.name]['quality'] = modifier.quality
+    return subsurf_settings
+
+
+def declare_subsurf_settings(obj, subsurf_settings):
+    for modifier_name, settings in subsurf_settings.items():
+        new_modifier = obj.modifiers.new(name=modifier_name, type='SUBSURF')
+        if 'subdivision_type' in settings:
+            new_modifier.subdivision_type = settings['subdivision_type']
+        if 'levels' in settings:
+            new_modifier.levels = settings['levels']
+        if 'quality' in settings:
+            new_modifier.quality = settings['quality']
+
+
+def store_cloth_settings(obj):
+    cloth_settings = {}
+    for modifier in obj.modifiers:
+        if modifier.type == 'CLOTH':
+            cloth_settings[modifier.name] = {}
+            settings = modifier.settings
+            cloth_cell_settings = cloth_settings[modifier.name]
+            
+            # Using cloth_cell_settings for clarity
+            cloth_cell_settings['quality'] = settings.quality
+            cloth_cell_settings['air_damping'] = settings.air_damping
+            cloth_cell_settings['bending_model'] = settings.bending_model
+            cloth_cell_settings['mass'] = settings.mass
+            cloth_cell_settings['time_scale'] = settings.time_scale
+            cloth_cell_settings['tension_stiffness'] = settings.tension_stiffness
+            cloth_cell_settings['compression_stiffness'] = \
+                settings.compression_stiffness
+            cloth_cell_settings['shear_stiffness'] = settings.shear_stiffness
+            cloth_cell_settings['bending_stiffness'] = settings.bending_stiffness
+            cloth_cell_settings['tension_damping'] = settings.tension_damping
+            cloth_cell_settings['compression_damping'] = settings.compression_damping
+            cloth_cell_settings['shear_damping'] = settings.shear_damping
+            cloth_cell_settings['bending_damping'] = settings.bending_damping
+            cloth_cell_settings['use_internal_springs'] = False
+            cloth_cell_settings['internal_spring_max_length'] = \
+                settings.internal_spring_max_length
+            cloth_cell_settings['internal_spring_max_diversion'] = \
+                settings.internal_spring_max_diversion
+            cloth_cell_settings['internal_spring_normal_check'] = \
+                settings.internal_spring_normal_check
+            cloth_cell_settings['internal_tension_stiffness'] = \
+                settings.internal_tension_stiffness
+            cloth_cell_settings['internal_compression_stiffness'] = \
+                settings.internal_compression_stiffness
+            cloth_cell_settings['internal_tension_stiffness_max'] = \
+                settings.internal_tension_stiffness_max
+            cloth_cell_settings['internal_compression_stiffness_max'] = \
+                settings.internal_compression_stiffness_max
+            cloth_cell_settings['use_pressure'] = settings.use_pressure
+            cloth_cell_settings['uniform_pressure_force'] = \
+                settings.uniform_pressure_force
+            cloth_cell_settings['use_pressure_volume'] = settings.use_pressure_volume
+            cloth_cell_settings['target_volume'] = settings.target_volume
+            cloth_cell_settings['pressure_factor'] = settings.pressure_factor
+            cloth_cell_settings['fluid_density'] = settings.fluid_density
+
+            cloth_cell_settings['collision_settings'] = {}
+            collision_settings = modifier.collision_settings
+            cloth_cell_settings['collision_settings']['collision_quality'] = \
+                collision_settings.collision_quality
+            cloth_cell_settings['collision_settings']['use_collision'] = \
+                collision_settings.use_collision
+            cloth_cell_settings['collision_settings']['use_self_collision'] = \
+                collision_settings.use_self_collision
+            cloth_cell_settings['collision_settings']['self_friction'] = \
+                collision_settings.self_friction
+            cloth_cell_settings['collision_settings']['friction'] = \
+                collision_settings.friction
+            cloth_cell_settings['collision_settings']['self_distance_min'] = \
+                collision_settings.self_distance_min
+            cloth_cell_settings['collision_settings']['distance_min'] = \
+                collision_settings.distance_min
+            cloth_cell_settings['collision_settings']['self_impulse_clamp'] = \
+                collision_settings.self_impulse_clamp
+    
+    return cloth_settings
+
+
+def declare_cloth_settings(obj, cloth_settings):
+    for modifier_name, settings in cloth_settings.items():
+        new_modifier = obj.modifiers.new(name=modifier_name, type='CLOTH')
+        new_settings = new_modifier.settings
+        for setting_name, value in settings.items():
+            if setting_name != 'collision_settings':
+                setattr(new_settings, setting_name, value)
+            else:
+                collision_settings = settings['collision_settings']
+                new_collision_settings = new_modifier.collision_settings
+                for coll_sett_name, coll_sett_value in collision_settings.items():
+                    setattr(new_collision_settings, 
+                            coll_sett_name, 
+                            coll_sett_value)
+
+
+def store_collision_settings(obj):
+    collision_settings = {}
+    for modifier in obj.modifiers:
+        if modifier.type == 'COLLISION':
+            collision_settings[modifier.name] = {}
+            settings = modifier.settings
+            collision_cell_settings = collision_settings[modifier.name]
+            collision_cell_settings['use_culling'] = settings.use_culling
+            collision_cell_settings['damping'] = settings.damping
+            collision_cell_settings['thickness_outer'] = settings.thickness_outer
+            collision_cell_settings['thickness_inner'] = settings.thickness_inner
+            collision_cell_settings['cloth_friction'] = settings.cloth_friction
+            # ... (other Collision settings)
+    return collision_settings
+
+
+def declare_collision_settings(obj, collision_settings):
+    for modifier_name, settings in collision_settings.items():
+        new_modifier = obj.modifiers.new(name=modifier_name, type='COLLISION')
+        new_settings = new_modifier.settings
+        for setting_name, value in settings.items():
+            setattr(new_settings, setting_name, value)
+
+
+def store_remesh_settings(obj):
+    remesh_settings = {}
+    for modifier in obj.modifiers:
+        if modifier.type == 'REMESH':
+            remesh_settings[modifier.name] = {}
+            remesh_cell_settings = remesh_settings[modifier.name]
+            remesh_cell_settings['mode'] = modifier.mode
+            remesh_cell_settings['voxel_size'] = modifier.voxel_size
+            remesh_cell_settings['adaptivity'] = modifier.adaptivity
+            remesh_cell_settings['use_remove_disconnected'] = \
+                modifier.use_remove_disconnected
+            remesh_cell_settings['use_smooth_shade'] = modifier.use_smooth_shade
+            remesh_cell_settings['show_in_editmode'] = modifier.show_in_editmode
+            # ... (other Remesh settings)
+    return remesh_settings
+
+
+def declare_remesh_settings(obj, remesh_settings):
+    for modifier_name, settings in remesh_settings.items():
+        new_modifier = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
+        for setting_name, value in settings.items():
+            setattr(new_modifier, setting_name, value)
+
+
 def divide_boolean(obj): 
 
     # Initialize variables
@@ -723,7 +919,7 @@ def divide_boolean(obj):
     # Get COM
     p1 = get_centerofmass(obj)
     # Get the long axis in global coordinate from the origin
-    p2 = get_long_axis_global(obj)    
+    p2, _ = get_long_axis_global(obj)    
 
     # Get mother modifiers and their values
     mother_modifiers = obj.modifiers
@@ -739,7 +935,7 @@ def divide_boolean(obj):
 
     # Print the values of the modifiers
     for modifier_value in modifier_values:
-        print(modifier_value)
+        print(f"Mother modifiers: {modifier_value}")
 
     # Get the angles representing the orientation of the division plane
     x, y, z = get_line_angles(obj, p1, p2)
@@ -863,9 +1059,11 @@ def divide_boolean(obj):
     bpy.context.view_layer.update()
     # Adding a Remesh modifier to the converted mesh
     remesh_modifier = d1.modifiers.new(name='Remesh', type='REMESH')
-    remesh_modifier.mode = 'SMOOTH'
-    remesh_modifier.octree_depth = 4
-    remesh_modifier.scale = 0.65
+    remesh_modifier.mode = 'VOXEL'
+    remesh_modifier.voxel_size = 0.2  # microns
+    remesh_modifier.adaptivity = 0
+    # remesh_modifier.octree_depth = 4
+    # remesh_modifier.scale = 0.65
     remesh_modifier.use_remove_disconnected = True
     remesh_modifier.use_smooth_shade = True
     bpy.context.view_layer.update()
@@ -888,9 +1086,12 @@ def divide_boolean(obj):
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
     remesh_modifier = d2.modifiers.new(name='Remesh', type='REMESH')
-    remesh_modifier.mode = 'SMOOTH'
-    remesh_modifier.octree_depth = 4
-    remesh_modifier.scale = 0.65
+    remesh_modifier.mode = 'VOXEL'
+    remesh_modifier.voxel_size = 0.2  # microns
+    remesh_modifier.adaptivity = 0
+    # remesh_modifier.mode = 'SMOOTH'
+    # remesh_modifier.octree_depth = 4
+    # remesh_modifier.scale = 0.65
     remesh_modifier.use_remove_disconnected = True
     remesh_modifier.use_smooth_shade = True
     bpy.context.view_layer.update()
@@ -947,6 +1148,7 @@ def disable_internal_springs(objects):
     return
 
 
+# not used
 def save_modifiers_stack(obj):
     if (
         obj is None 
@@ -981,6 +1183,7 @@ def save_modifiers_stack(obj):
     return modifiers_data
 
 
+# not used
 def declare_mother_modifiers(obj, mother_modifiers):
     if (
         obj is None 
@@ -1021,7 +1224,9 @@ def apply_physics(obj, stiffness):
 
     # Add subsurface modifier to make smoother
     bpy.ops.object.modifier_add(type='SUBSURF')
+    bpy.context.object.modifiers["Subdivision"].subdivision_type = 'CATMULL_CLARK'
     bpy.context.object.modifiers["Subdivision"].levels = 1
+    bpy.context.object.modifiers["Subdivision"].quality = 3
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
@@ -1056,6 +1261,8 @@ def apply_physics(obj, stiffness):
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5
+    bpy.context.object['previous pressure'] = \
+        bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
     bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
     bpy.context.object.modifiers['Cloth'].settings.target_volume = 0
     bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 1
@@ -1081,9 +1288,12 @@ def apply_physics(obj, stiffness):
     # Remesh
     remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
     obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
-    remesh_mod.mode = 'SMOOTH'
-    remesh_mod.octree_depth = 4
-    remesh_mod.scale = 0.75
+    remesh_mod.mode = 'VOXEL'
+    remesh_mod.voxel_size = 0.2  # microns
+    remesh_mod.adaptivity = 0
+    # remesh_mod.mode = 'SMOOTH'
+    # remesh_mod.octree_depth = 4
+    # remesh_mod.scale = 0.75
     remesh_mod.use_remove_disconnected = True
     remesh_mod.use_smooth_shade = False
     remesh_mod.show_in_editmode = True
@@ -1256,9 +1466,14 @@ def remesh(obj):
         bpy.ops.object.modifier_apply(modifier=remesh_mod.name)
 
         bpy.ops.object.modifier_add(type='REMESH')
-        bpy.context.object.modifiers["Remesh"].mode = 'SMOOTH'
-        bpy.context.object.modifiers["Remesh"].octree_depth = 3
-        bpy.context.object.modifiers["Remesh"].scale = 0.99
+        
+        # bpy.context.object.modifiers["Remesh"].mode = 'SMOOTH'
+        # bpy.context.object.modifiers["Remesh"].octree_depth = 3
+        # bpy.context.object.modifiers["Remesh"].scale = 0.99
+        
+        bpy.context.object.modifiers["Remesh"].mode = 'VOXEL'
+        bpy.context.object.modifiers["Remesh"].voxel_size = 0.2  # microns
+        bpy.context.object.modifiers["Remesh"].adaptivity = 0
         bpy.context.object.modifiers["Remesh"].use_remove_disconnected = True
         bpy.context.object.modifiers["Remesh"].use_smooth_shade = True
         
@@ -1419,9 +1634,9 @@ def make_cell(
     scale=(1, 1, 1),
     stiffness=1,
     material=("bubble", 0.007, 0.021, 0.3), 
-    arcdiv=8,
-    subdiv=1, 
-    mesh='roundcube'
+    arcdiv=5,
+    subdiv=3, 
+    mesh='icosphere'
 ):
 
     """Core function: creates a Blender mesh corresponding to a Goo :class:`Cell`
@@ -1513,6 +1728,8 @@ def make_cell(
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5
+    bpy.context.object['previous pressure'] = \
+        bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
     bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
     bpy.context.object.modifiers['Cloth'].settings.target_volume = 1
     bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 1
@@ -1539,9 +1756,12 @@ def make_cell(
 
         remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
         obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
-        remesh_mod.mode = 'SMOOTH'
-        remesh_mod.octree_depth = 4
-        remesh_mod.scale = 0.75
+        remesh_mod.mode = 'VOXEL'
+        remesh_mod.voxel_size = 0.2  # microns
+        remesh_mod.adaptivity = 0
+        # remesh_mod.mode = 'SMOOTH'
+        # remesh_mod.octree_depth = 4
+        # remesh_mod.scale = 0.75
         remesh_mod.use_remove_disconnected = True
         remesh_mod.use_smooth_shade = True
         remesh_mod.show_in_editmode = True
@@ -2087,7 +2307,7 @@ def make_force(force_name,
                strength,
                falloff=0.5,
                motion=False,
-               min_dist=0.2,
+               min_dist=0,
                max_dist=1.2):
     """Core function: creates a Blender force from a Goo :class:`Force` object.
 
@@ -2552,6 +2772,7 @@ def get_contact_area():
     return contact_ratio_dict, contact_areas_dict
 
 
+# not used
 def separate_mesh(obj): 
     
     # Define the two tuple coordinates that define the line
@@ -3332,6 +3553,7 @@ class handler_class:
 
         # For cell growth 
         self.volumes = defaultdict(list)
+        self.pressures = defaultdict(list)
 
         # For random motion
         self.seed = int()
@@ -3400,7 +3622,8 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.data_export_handler)
             bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
         if growth:
-            bpy.app.handlers.frame_change_post.append(self.growth_handler)
+            # bpy.app.handlers.frame_change_post.append(self.growth_handler)
+            bpy.app.handlers.frame_change_post.append(self.growth_pressure_handler)
         if (division and division_trigger == 'random'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_random)
         if (division and division_trigger == 'volume'):
@@ -3530,9 +3753,12 @@ class handler_class:
                             type='REMESH'
                             )
                         remesh_mod = cell.modifiers.get(f"Remesh_tmp_{cell.name}")
-                        remesh_mod.mode = 'SMOOTH'
-                        remesh_mod.octree_depth = 3
-                        remesh_mod.scale = 0.8
+                        remesh_mod.mode = 'VOXEL'
+                        remesh_mod.voxel_size = 0.2  # microns
+                        remesh_mod.adaptivity = 0 
+                        # remesh_mod.mode = 'SMOOTH'
+                        # remesh_mod.octree_depth = 3
+                        # remesh_mod.scale = 0.8
                         remesh_mod.use_remove_disconnected = True
                         remesh_mod.use_smooth_shade = False
                         remesh_mod.show_in_editmode = True
@@ -3605,10 +3831,11 @@ class handler_class:
                 
             if self.cell_under_div is not None: 
                 # Get name of cell under division
-                cell_name = self.cell_under_div.name
+                # cell_name = self.cell_under_div.name
                 # Get the object by name
-                obj = bpy.data.objects.get(cell_name)
-                # If cell object exists
+                dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
+
+                '''# If cell object exists
                 if obj:
                     # Get cloth modifier and check if it exists
                     cloth_modifier = obj.modifiers.get('Cloth')
@@ -3617,22 +3844,22 @@ class handler_class:
                     else:
                         raise ValueError(f"No Cloth modifier found on {cell_name}")
                 else:
-                    raise ValueError(f"Object '{cell_name}' not found")
+                    raise ValueError(f"Object '{cell_name}' not found")'''
                 
-                apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], 
-                                which='all')
+                # mother_modifiers = gather_modifier_info(dividing_cell)
+                apply_modifiers(obj=dividing_cell, which='all')
 
                 d1, d2, mother_adhesion_strength, mother_motion_strength, \
                     tmp_falloff, mother_adhesion, mother_modifiers = \
                     divide_boolean(self.cell_under_div)
 
                 # Pass on force info to daugther cells  
-                self.mother_adhesion_strength = mother_adhesion_strength
-                self.mother_motion_strength = mother_motion_strength
+                # self.mother_adhesion_strength = mother_adhesion_strength
+                # self.mother_motion_strength = mother_motion_strength
                 # self.force_collection = tmp_collection
-                self.falloff = tmp_falloff
+                # self.falloff = tmp_falloff
                 self.mother_adhesion = mother_adhesion
-                self.mother_stiffness = mother_stiffness
+                # self.mother_stiffness = mother_stiffness
 
                 self.daugthers.append(d1)     
                 self.daugthers.append(d2)
@@ -3640,7 +3867,7 @@ class handler_class:
                 # to_sphere(self.daugthers[0])
                 # to_sphere(self.daugthers[1])
 
-                print(f"-- Finishing division of {cell_name} "
+                print(f"-- Finishing division of {dividing_cell.name} "
                       f"at frame {scene.frame_current}")
 
             else: 
@@ -3728,6 +3955,7 @@ class handler_class:
                                          <= threshold_volume)
             ]'''
         
+    # poor results because creates overlapping meshes    
     def cast_modifier(self, scene, despgraph):
         # Iterate through all objects in the scene
         for obj in bpy.context.scene.objects:
@@ -3752,10 +3980,9 @@ class handler_class:
                     cast_modifier.factor = 0.0  # Start factor from 0
 
     def division_handler_volume(self, scene, despgraph):
-
+        
         self.daugthers.clear()
         self.mother_adhesion_strength = None
-        # self.force_collection = None
         self.falloff = None
         self.mother_adhesion = None
         self.mother_motion = None
@@ -3764,14 +3991,14 @@ class handler_class:
 
         # Get cells that are candidates for division
         target_volume = self.unit_volume * self.volume_scale
-        threshold_volume = self.volume_scale * self.unit_volume * 0.05
+        # threshold_volume = self.volume_scale * self.unit_volume * 0.05
 
         candidate_cells = [
             obj for obj in bpy.context.scene.objects
             if (
                 obj.get('object') == 'cell' and 
                 obj.get('volume') is not None and 
-                abs(obj.get('volume') - target_volume) <= threshold_volume
+                obj.get('volume') >= target_volume
             )
         ]
 
@@ -3795,29 +4022,42 @@ class handler_class:
             print(f"Cell under division: {self.cell_under_div.name}")
 
             # Get name of cell under division
-            cell_name = self.cell_under_div.name
+            # cell_name = self.cell_under_div.name
             # Get the object by name
-            obj = bpy.data.objects.get(cell_name)
+            dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
+
             # If cell object exists
-            if obj:
+            if dividing_cell:
                 # Get cloth modifier and check if it exists
-                cloth_modifier = obj.modifiers.get('Cloth')
+                cloth_modifier = dividing_cell.modifiers.get('Cloth')
                 if cloth_modifier:
                     mother_stiffness = cloth_modifier.settings.tension_stiffness
                 else:
-                    raise ValueError(f"No Cloth modifier found on {cell_name}")
+                    raise ValueError(f"No Cloth modifier found on {dividing_cell.name}")
             else:
-                raise ValueError(f"Object '{cell_name}' not found")
+                raise ValueError(f"Object '{dividing_cell.name}' not found")
             
+            # Get mother modifiers info
+            # mother_modifiers = gather_modifier_info(dividing_cell)
+            # print(f"Mother modifiers: {mother_modifiers}")
+
+            mother_subsurf = store_subsurf_settings(dividing_cell)
+            mother_cloth = store_cloth_settings(dividing_cell)
+            mother_collision = store_collision_settings(dividing_cell)
+            mother_remesher = store_remesh_settings(dividing_cell)
+            print(f" -- Mother subsurf: {mother_subsurf}")
+            print(f" -- Mother Cloth: {mother_cloth}")
+            print(f" -- Mother collision: {mother_collision}")
+            print(f" -- Mother remesher: {mother_remesher}")
+
             # Apply the whole modifer stack in sequential order    
-            apply_modifiers(obj=bpy.data.objects[f'{cell_name}'], 
-                            which='all')
+            apply_modifiers(obj=dividing_cell, which='all')
 
             # Separation of mother in two distinct daughter cells
             d1, d2, mother_adhesion_strength, mother_motion_strength, \
-                tmp_falloff, mother_adhesion, mother_motion, mother_modifiers = \
-                divide_boolean(self.cell_under_div)
-
+                tmp_falloff, mother_adhesion, mother_motion, _ = \
+                divide_boolean(dividing_cell)
+            
             # Pass on force parameters to daugther cells  
             self.mother_adhesion_strength = mother_adhesion_strength
             self.mother_motion_strength = mother_motion_strength
@@ -3829,16 +4069,30 @@ class handler_class:
             self.daugthers.append(d1)     
             self.daugthers.append(d2)
 
+            # declare modifiers mother -> daughter
+            '''declare_subsurf_settings(self.daugthers[1], mother_subsurf)
+            declare_subsurf_settings(self.daugthers[0], mother_subsurf)
+
+            declare_cloth_settings(self.daugthers[1], mother_cloth)
+            declare_cloth_settings(self.daugthers[0], mother_cloth)            
+
+            declare_collision_settings(self.daugthers[1], mother_collision)
+            declare_collision_settings(self.daugthers[0], mother_collision)            
+
+            declare_remesh_settings(self.daugthers[1], mother_remesher)
+            declare_remesh_settings(self.daugthers[0], mother_remesher)'''         
+
             # Toggle back on physics after mesh separation
             apply_physics(obj=self.daugthers[0], 
                           stiffness=self.mother_stiffness)
             apply_physics(obj=self.daugthers[1], 
                           stiffness=self.mother_stiffness)
-            # Cast to sphere
+            
+            '''# Cast to sphere
             cast_to_sphere(obj=self.daugthers[0], 
                            factor=-0.1)
             cast_to_sphere(obj=self.daugthers[1], 
-                           factor=-0.1)
+                           factor=-0.1)'''
 
             # Add adhesion forces to daugther cells
             if self.mother_adhesion: 
@@ -3863,8 +4117,8 @@ class handler_class:
                            strength=self.mother_motion_strength)
                 add_motion(effector_name=self.daugthers[1].name, 
                            strength=self.mother_motion_strength)
-
-            print(f"-- Finishing division of {cell_name} "
+                
+            print(f"-- Finishing division of {dividing_cell.name} "
                   f"at frame {scene.frame_current}")
 
     # not used in cell division
@@ -3929,7 +4183,39 @@ class handler_class:
     def adjust_shrink_min(volume, target_volume):
         volume_deviation = (volume - target_volume) / target_volume
         shrink_adjustment = 0.01 * math.tanh(5 * volume_deviation)
-        return shrink_adjustment                                                                             
+        return shrink_adjustment
+    
+    def growth_pressure_handler(self, scene, depsgraph):
+        for collection in bpy.data.collections: 
+            cells = bpy.data.collections.get(collection.name_full).all_objects
+            for cell in cells: 
+                if cell.modifiers.get('Cloth'):
+                    volume = calculate_volume(cell)
+                    target_volume = self.volume_scale * self.unit_volume
+                    cell['target volume'] = target_volume
+                    cell['volume'] = volume
+                    self.volumes[f"{cell.name}"].append(volume)
+                    self.pressures[f"{cell.name}"].append(
+                        cell.modifiers["Cloth"].settings.uniform_pressure_force
+                    )
+                    volume_deviation = (target_volume - volume) / target_volume
+                    print(
+                        f"Volume deviation: {volume_deviation}; "
+                        f"Target volume: {target_volume}; "
+                        f"Volume: {volume}"
+                    )
+                    # Define the pressure-volume relationship 
+                    previous_pressure = cell.get('previous pressure')
+                    # Modify pressure based on volume deviation
+                    # delta_pressure = 0.001 * (math.exp(volume_deviation) - 1)
+                    # print(f"Delta pressure: {delta_pressure}")
+                    new_pressure = previous_pressure + (volume_deviation
+                                                        * previous_pressure*0.03)
+                    print(f"New pressure: {new_pressure}")
+                    # Update the cloth pressure settings
+                    cell.modifiers["Cloth"].settings.uniform_pressure_force = \
+                        new_pressure
+                    cell['previous pressure'] = new_pressure                                                    
 
     # Member function to handle cell growth
     def growth_handler(self, scene, depsgraph):
@@ -3957,6 +4243,8 @@ class handler_class:
                     shrink_adjustment = 0.01 * (math.exp(volume_deviation) - 1)
                     # shrink_adjustment = 0.01 * volume_deviation
                     cell.modifiers["Cloth"].settings.shrink_min += shrink_adjustment
+
+                    # print(gather_modifier_info(cell))
 
                     # volume control
                     '''if volume < (target_volume - target_volume * 0.2): 
@@ -4379,19 +4667,26 @@ class handler_class:
 
         for force in force_list:
             if not bpy.data.objects[force.name]['motion']: 
+                # Retrieve objects of interest
                 assoc_cell = force.associated_cell
-                bpy.context.view_layer.objects.active = bpy.data.objects[assoc_cell]
-                # retrieve center of mass
-                COM = get_centerofmass(bpy.data.objects[assoc_cell])
-                # update the force location to its corresponding cell's center of mass
-                bpy.data.objects[force.name].location = COM
+                cell_obj = bpy.data.objects[assoc_cell]
+                force_obj = bpy.data.objects.get(force.name)
+                bpy.context.view_layer.objects.active = cell_obj
+
+                # Update the force location to its corresponding cell's center of mass
+                COM = get_centerofmass(cell_obj)
+                force_obj.location = COM
+                # Adapt the radius of the force field to match with cell size
+                _, len_long_axis = get_long_axis_global(cell_obj)                
+                force_obj.field.distance_max = (len_long_axis / 2) + 0.2
+
                 # cell type: 
                 # cells will only adhere with cells from the same collection
                 cloth_modifier = bpy.data.objects[assoc_cell].modifiers["Cloth"]
                 cloth_settings = cloth_modifier.settings
                 cloth_collection = bpy.data.objects[assoc_cell].users_collection[0]
                 cloth_settings.effector_weights.collection = cloth_collection
-        
+
     def data_export_handler(self, scene, depsgraph): 
 
         self.seed = bpy.context.scene.get("seed")
@@ -4415,6 +4710,8 @@ class handler_class:
                 write_file.write(json.dumps(self.contact_areas))
             with open(f"{self.data_file_path}_volumes.json", 'w') as write_file:
                 write_file.write(json.dumps(self.volumes))
+            with open(f"{self.data_file_path}_pressures.json", 'w') as write_file:
+                write_file.write(json.dumps(self.pressures))
             if self.seed is not None: 
                 with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
                     write_file.write(json.dumps(self.seed))
@@ -4630,7 +4927,7 @@ class handler_class:
             ]
         
         for cell in cells: 
-            if cell.name not in self.ls:
+            if cell.name not in self.frame_cells:
                 if frame_written in [1, 2]:
                     self.frame_cells[cell.name] = [1]  # Initialize list if not present
                 else:
