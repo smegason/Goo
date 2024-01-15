@@ -117,10 +117,15 @@
 <li class="toctree-l2"><a class="reference internal" href="goo.html#goo.goo.to_sphere"><code class="docutils literal notranslate"><span class="pre">to_sphere()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cleaving-cells">Cleaving cells</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#homotypically-adhering-doublets">Homotypically adhering doublets</a></li>
+</ul>
+</li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credits/credits_and_citation.html#citing-goo">Citing goo</a></li>
 </ul>
 
         </div>
@@ -149,6 +154,73 @@
              
   <section id="examples">
 <span id="id1"></span><h1>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h1>
+<p>We provide a couple script examples to start simulating cells, tissues and early embryos and their properties including cell stiffness,
+pressure, adhesion strength (homotypic and heterotypic), motion speed (random walk), growth rate, target volume triggering division and type.</p>
+<section id="cleaving-cells">
+<h2>Cleaving cells<a class="headerlink" href="#cleaving-cells" title="Permalink to this heading"></a></h2>
+<p>Simulating growing and dividing cells takes little over 20 lines of code with Goo. This examples shows a single cell dividing and growing until reaching about 100 cells after 250 time steps. Tested on MacBook Pro M2 Max and NVIDIA RTX4090.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">goo</span> <span class="kn">import</span> <span class="n">goo</span>
+<span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
+<span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
+
+<span class="c1"># Cell A</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="s2">&quot;cell_A1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cellsA&quot;</span><span class="p">)</span>
+
+<span class="c1"># Simulation setup</span>
+<span class="n">handlers</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">handler_class</span><span class="p">()</span>
+<span class="n">handlers</span><span class="o">.</span><span class="n">launch_simulation</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># default, 1</span>
+                        <span class="n">end</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>  <span class="c1"># default, 250</span>
+                        <span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;&lt;your_file_path_including_format_extension&gt;&quot;</span><span class="p">,</span>
+                        <span class="n">adhesion</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># default, True</span>
+                        <span class="n">growth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">motility</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">division</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">volume_scale</span><span class="o">=</span><span class="mi">2</span>
+                        <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="homotypically-adhering-doublets">
+<h2>Homotypically adhering doublets<a class="headerlink" href="#homotypically-adhering-doublets" title="Permalink to this heading"></a></h2>
+<p>This example highlights cell-cell adhesion in Goo. Doublets are declared, then their homotypic forces are declared at different strengths. Homotypic interactions are declared by the <cite>type</cite> argument in <cite>make_cell()</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">goo</span> <span class="kn">import</span> <span class="n">goo</span>
+<span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
+<span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
+
+<span class="c1"># Cells A</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="s2">&quot;cell_A1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cellsA&quot;</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="s2">&quot;cell_A2&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cellsA&quot;</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="s2">&quot;cell_B3&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">material</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cellsB&quot;</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="s2">&quot;cell_B4&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">material</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cellsB&quot;</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="s2">&quot;cell_C5&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mf">4.4</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">material</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="mf">.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cellsC&quot;</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">make_cell</span><span class="p">(</span><span class="s2">&quot;cell_C6&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">4.4</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">material</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="mf">.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;cellsC&quot;</span><span class="p">)</span>
+
+<span class="c1"># Forces A</span>
+<span class="n">homoA</span> <span class="o">=</span> <span class="mi">750</span>
+<span class="n">homoB</span> <span class="o">=</span> <span class="mi">1500</span>
+<span class="n">homoC</span> <span class="o">=</span> <span class="mi">3000</span>
+
+<span class="n">goo</span><span class="o">.</span><span class="n">add_homo_adhesion</span><span class="p">(</span><span class="s1">&#39;cell_A1&#39;</span><span class="p">,</span> <span class="o">-</span><span class="n">homoA</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">add_homo_adhesion</span><span class="p">(</span><span class="s1">&#39;cell_A2&#39;</span><span class="p">,</span> <span class="o">-</span><span class="n">homoA</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">add_homo_adhesion</span><span class="p">(</span><span class="s1">&#39;cell_B3&#39;</span><span class="p">,</span> <span class="o">-</span><span class="n">homoB</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">add_homo_adhesion</span><span class="p">(</span><span class="s1">&#39;cell_B4&#39;</span><span class="p">,</span> <span class="o">-</span><span class="n">homoB</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">add_homo_adhesion</span><span class="p">(</span><span class="s1">&#39;cell_C5&#39;</span><span class="p">,</span> <span class="o">-</span><span class="n">homoC</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">add_homo_adhesion</span><span class="p">(</span><span class="s1">&#39;cell_C6&#39;</span><span class="p">,</span> <span class="o">-</span><span class="n">homoC</span><span class="p">)</span>
+
+<span class="c1"># Simulation setup</span>
+<span class="n">handlers</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">handler_class</span><span class="p">()</span>
+<span class="n">handlers</span><span class="o">.</span><span class="n">launch_simulation</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                           <span class="n">end</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+                           <span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;&lt;your_file_path_including_format_extension&gt;&quot;</span><span class="p">,</span>
+                           <span class="n">adhesion</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                           <span class="n">data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                           <span class="n">growth</span><span class="o">=</span><span class="kc">True</span>
+                           <span class="p">)</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
