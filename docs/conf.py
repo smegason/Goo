@@ -20,6 +20,7 @@ project = 'Goo'
 copyright = '2024, Antoine Ruzette, Sean Megason'
 author = 'Antoine Ruzette, Sean Megason'
 release = '1.0.0'
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
