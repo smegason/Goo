@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../scripts/modules'))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Goo'
-copyright = '2024, Antoine Ruzette, Sean Megason'
+copyright = '2024, Antoine Ruzette and Sean Megason'
 author = 'Antoine Ruzette, Sean Megason'
 release = '1.0.0'
 master_doc = 'index'
