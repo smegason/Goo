@@ -1028,30 +1028,30 @@ def apply_physics(obj, stiffness):
         = 10000
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5
+    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 0.01
     bpy.context.object['previous pressure'] = \
         bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
-    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
-    bpy.context.object.modifiers['Cloth'].settings.target_volume = 0
-    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 1
+    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = False
+    bpy.context.object.modifiers['Cloth'].settings.target_volume = 2
+    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 50
     bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.05
     # Cloth > Collisions
     bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 3
     bpy.context.object.modifiers['Cloth'].collision_settings.use_collision = True
     bpy.context.object.modifiers['Cloth'].collision_settings.use_self_collision = True
-    bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 50
-    bpy.context.object.modifiers['Cloth'].collision_settings.friction = 80
-    bpy.context.object.modifiers['Cloth'].collision_settings.self_distance_min = 0.002
-    bpy.context.object.modifiers['Cloth'].collision_settings.distance_min = 0.002
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 0
+    bpy.context.object.modifiers['Cloth'].collision_settings.friction = 0
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_distance_min = 0.005
+    bpy.context.object.modifiers['Cloth'].collision_settings.distance_min = 0.005
     bpy.context.object.modifiers['Cloth'].collision_settings.self_impulse_clamp = 0
 
     # Collision
     bpy.ops.object.modifier_add(type='COLLISION')
     bpy.context.object.modifiers['Collision'].settings.use_culling = True
     bpy.context.object.modifiers['Collision'].settings.damping = 1
-    bpy.context.object.modifiers['Collision'].settings.thickness_outer = 0.02
-    bpy.context.object.modifiers['Collision'].settings.thickness_inner = 0.2
-    bpy.context.object.modifiers['Collision'].settings.cloth_friction = 80
+    bpy.context.object.modifiers['Collision'].settings.thickness_outer = 0.025
+    bpy.context.object.modifiers['Collision'].settings.thickness_inner = 0.25
+    bpy.context.object.modifiers['Collision'].settings.cloth_friction = 0
 
     # Remesh
     remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
@@ -1063,7 +1063,7 @@ def apply_physics(obj, stiffness):
     # remesh_mod.octree_depth = 4
     # remesh_mod.scale = 0.75
     remesh_mod.use_remove_disconnected = True
-    remesh_mod.use_smooth_shade = False
+    remesh_mod.use_smooth_shade = True
     remesh_mod.show_in_editmode = True
     # bpy.ops.object.modifier_move_to_index(modifier=f"Remesh1_{obj.name}", index=3)
 
@@ -1278,30 +1278,30 @@ def make_cell(
         = 10000
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5
+    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 0.01
     bpy.context.object['previous pressure'] = \
         bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
-    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
-    bpy.context.object.modifiers['Cloth'].settings.target_volume = 1
-    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 1
+    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = False
+    bpy.context.object.modifiers['Cloth'].settings.target_volume = 2
+    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 50
     bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.05
     # Cloth > Collisions
     bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 3
     bpy.context.object.modifiers['Cloth'].collision_settings.use_collision = True
     bpy.context.object.modifiers['Cloth'].collision_settings.use_self_collision = True
-    bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 50
-    bpy.context.object.modifiers['Cloth'].collision_settings.friction = 80
-    bpy.context.object.modifiers['Cloth'].collision_settings.self_distance_min = 0.001
-    bpy.context.object.modifiers['Cloth'].collision_settings.distance_min = 0.001
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 0
+    bpy.context.object.modifiers['Cloth'].collision_settings.friction = 0
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_distance_min = 0.005
+    bpy.context.object.modifiers['Cloth'].collision_settings.distance_min = 0.005
     bpy.context.object.modifiers['Cloth'].collision_settings.self_impulse_clamp = 0
 
     # Collision
     bpy.ops.object.modifier_add(type='COLLISION')
     bpy.context.object.modifiers['Collision'].settings.use_culling = True
     bpy.context.object.modifiers['Collision'].settings.damping = 1
-    bpy.context.object.modifiers['Collision'].settings.thickness_outer = 0.02
-    bpy.context.object.modifiers['Collision'].settings.thickness_inner = 0.2
-    bpy.context.object.modifiers['Collision'].settings.cloth_friction = 80
+    bpy.context.object.modifiers['Collision'].settings.thickness_outer = 0.025
+    bpy.context.object.modifiers['Collision'].settings.thickness_inner = 0.25
+    bpy.context.object.modifiers['Collision'].settings.cloth_friction = 0
 
     if remeshing: 
 
@@ -2333,6 +2333,15 @@ class handler_class:
         # Data handler: flag in launch simulation
         self.data_flag = None
 
+        # PID controller parameters for growth
+        self.cell_PIDs = {}
+        self.growth_factor = 1
+        self.kp = 0.2  # Proportional gain
+        self.ki = 0.0001  # Integral gain
+        self.kd = 0.5  # Derivative gain
+        self.prev_error = 0  # Previous error for derivative term
+        self.integral = 0  # Integral term
+
         return
 
     def launch_simulation(
@@ -2411,7 +2420,8 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
         if growth:
             # bpy.app.handlers.frame_change_post.append(self.growth_handler)
-            bpy.app.handlers.frame_change_post.append(self.growth_pressure_handler)
+            # bpy.app.handlers.frame_change_post.append(self.growth_pressure_handler)
+            bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
         if (division and division_trigger == 'random'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_random)
         if (division and division_trigger == 'volume'):
@@ -2461,7 +2471,7 @@ class handler_class:
                         remesh_mod.voxel_size = 0.2  # microns
                         remesh_mod.adaptivity = 0 
                         remesh_mod.use_remove_disconnected = True
-                        remesh_mod.use_smooth_shade = False
+                        remesh_mod.use_smooth_shade = True
                         remesh_mod.show_in_editmode = True
                         remesh_mod.show_in_editmode = True
                         bpy.ops.object.modifier_move_to_index(
@@ -2701,14 +2711,14 @@ class handler_class:
 
         # Get cells that are candidates for division
         target_volume = self.unit_volume * self.volume_scale
-        # threshold_volume = self.volume_scale * self.unit_volume * 0.05
+        threshold_volume = target_volume * 0.01
 
         candidate_cells = [
             obj for obj in bpy.context.scene.objects
             if (
                 obj.get('object') == 'cell' and 
                 obj.get('volume') is not None and 
-                obj.get('volume') >= target_volume
+                obj.get('volume') >= target_volume - threshold_volume
             )
         ]
 
@@ -2820,7 +2830,70 @@ class handler_class:
                 
             print(f"-- Finishing division of {dividing_cell.name} "
                   f"at frame {scene.frame_current}")
-    
+            
+    def initialize_cell_PID(self, cell):
+        # Initialize PID-related properties for each cell
+        cell_name = cell.name
+        if cell_name not in self.cell_PIDs:
+            self.cell_PIDs[cell_name] = {
+                'integral': 0,
+                'previous_error': 0,
+                'previous_pressure': 0,
+                'kp': 0.2,
+                'ki': 0.0001,
+                'kd': 0.5
+            }
+            
+    def growth_PID_handler(self, scene, depsgraph):
+        for collection in bpy.data.collections: 
+            cells = bpy.data.collections.get(collection.name_full).all_objects
+            for cell in cells: 
+                if cell.modifiers.get('Cloth'):
+                    # Check if PID-related properties are initialized for the cell
+                    self.initialize_cell_PID(cell)
+
+                    # Calculate current volume
+                    volume = calculate_volume(cell)
+                    target_volume = self.volume_scale * self.unit_volume
+                    cell['target volume'] = target_volume
+                    cell['volume'] = volume
+                    self.volumes[f"{cell.name}"].append(volume)
+                    self.pressures[f"{cell.name}"].append(
+                        cell.modifiers["Cloth"].settings.uniform_pressure_force
+                    )
+                    volume_deviation = (target_volume - volume) / target_volume
+                    print(
+                        f"Volume deviation: {volume_deviation}; "
+                        f"Target volume: {target_volume}; "
+                        f"Volume: {volume}"
+                    )
+
+                    # Retrieve PID-related properties from the dictionary
+                    properties = self.cell_PIDs[cell.name]
+                    error = volume_deviation
+                    properties['integral'] += error
+                    derivative = error - properties['previous_error']
+
+                    pid_output = (
+                        properties['kp'] * error +
+                        properties['ki'] * properties['integral'] +
+                        properties['kd'] * derivative
+                    )
+
+                    # Update pressure based on PID output
+                    new_pressure = properties['previous_pressure'] + (pid_output * 0.5)
+                    growth_adjusted_pressure = new_pressure
+
+                    print(f"New pressure for {cell.name}: {growth_adjusted_pressure}")
+
+                    # Update the cloth pressure settings
+                    cell.modifiers["Cloth"].settings.uniform_pressure_force = \
+                        growth_adjusted_pressure
+
+                    # Update previous error and pressure for the next iteration
+                    properties['previous_error'] = error
+                    properties['previous_pressure'] = growth_adjusted_pressure
+
     def growth_pressure_handler(self, scene, depsgraph):
         """
         Handler responsible for cell growth based on cell's pressure.
@@ -2858,7 +2931,8 @@ class handler_class:
                     # delta_pressure = 0.001 * (math.exp(volume_deviation) - 1)
                     # print(f"Delta pressure: {delta_pressure}")
                     new_pressure = previous_pressure + (volume_deviation
-                                                        * previous_pressure*0.03)
+                                                        * previous_pressure) * 0.1 
+                    # * 0.02
                     print(f"New pressure: {new_pressure}")
                     # Update the cloth pressure settings
                     cell.modifiers["Cloth"].settings.uniform_pressure_force = \
