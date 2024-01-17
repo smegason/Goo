@@ -840,9 +840,6 @@ def divide_boolean(obj):
     # bpy.ops.object.modifier_apply(modifier="Cloth")
     bpy.ops.object.modifier_apply(modifier=bool_mod.name)
 
-    # Hide the plane
-    bpy.data.objects[plane_name].hide_set(True)
-
     # Deselect all vertices in edit mode
     bpy.ops.object.mode_set(mode='EDIT')  
     bpy.ops.mesh.select_mode(type="VERT")
@@ -866,6 +863,9 @@ def divide_boolean(obj):
 
     d2 = bpy.context.scene.objects[mother_name]
     d2.name = f"{mother_name}.02"  # mother cell
+
+    # Hide the plane
+    bpy.data.objects[plane_name].hide_set(True)
 
     # Declare collections to contain daughter cells
     mother_collection = obj.users_collection[0]
@@ -1774,8 +1774,8 @@ def make_force(force_name,
                strength,
                falloff=0.5,
                motion=False,
-               min_dist=0,
-               max_dist=1.2):
+               min_dist=0.6,
+               max_dist=1.4):
     """
     Creates a Blender force from a Goo :class:`Force` object.
 
@@ -2262,6 +2262,46 @@ def get_division_angles(cell, alpha):
     curve_object = bpy.data.objects.new(name='MyCurveObject', object_data=curve_data)
     # Add the object to the scene
     bpy.context.scene.collection.objects.link(curve_object)  
+
+
+def fill_mesh(obj, 
+              num_levels: int) -> None: 
+
+    current_mode = bpy.context.object.mode
+
+    if current_mode == "EDIT":
+        bpy.ops.mesh.select_mode(type="VERT")
+        selected_verts = [v for v in obj.data.vertices if v.select]
+        if len(selected_verts) == 0:
+            bpy.ops.mesh.select_all(action='SELECT')
+    elif current_mode == "OBJECT":
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="VERT")
+        bpy.ops.mesh.select_all(action='SELECT')
+
+    for level in range(num_levels, 1, -1):
+        bpy.ops.mesh.extrude_edges_indiv()
+        scale = (level-1)/level
+        bpy.ops.transform.resize(value=(scale, scale, scale))
+        
+        # if level == num_levels:
+        # First level - store it as we need it to be able to remove faces
+        # firstlevel_verts = [v for v in obj.data.vertices if v.select]
+        
+    bpy.ops.mesh.extrude_edges_indiv()    
+    bpy.ops.mesh.merge(type='CENTER')
+
+    # Find the new geometry :
+    # Centre vertex should already be selected from above 'merge' operation
+    for level in range(num_levels, 1, -1):
+        bpy.ops.mesh.select_more()
+    # All 'internal' geometry should now be selected
+
+    # Create a vertex group containing internal geometry
+    selected_verts = [v for v in obj.data.vertices if v.select]
+    vertexgroup = bpy.context.object.vertex_groups.new()
+    vertexgroup.name = ("InternalGeometry")
+    bpy.ops.object.vertex_group_assign()
 
 
 class handler_class:
@@ -3369,7 +3409,7 @@ class handler_class:
                 force_obj.location = COM
                 # Adapt the radius of the force field to match with cell size
                 _, len_long_axis = get_long_axis_global(cell_obj)                
-                force_obj.field.distance_max = (len_long_axis / 2) + 0.2
+                force_obj.field.distance_max = (len_long_axis / 2) + 0.4
 
                 # cell type: 
                 # cells will only adhere with cells from the same collection
