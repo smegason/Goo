@@ -78,35 +78,54 @@ def get_centerofmass(obj):
     return tuple(COM)
 
 
-def get_long_axis_np(obj):
-    """Calculates the long axis of a mesh.
+def get_minor_axis(obj):
+    """
+    Calculates the minor axis and its length of a 3D cell object in global coordinates.
 
-    This function calculates the first eigenvector of the vertices in the mesh,
-    which corresponds to the long axis.
+    This function computes the minor axis, that is axis perpendicular to the long axis
+    by determining the second eigenvectors of its vertices' positions 
+    in global coordinates.
 
-    :param bpy.data.objects['name'] obj: The Blender mesh.
-    :returns: The coordinates of the long axis of the mesh as a tuple(x, y, z)
-              which gives direction from the origin (0, 0, 0).
+    :param bpy.data.objects['name'] obj: The Blender object for which to calculate
+                                         the long axis, its perpendicular axis, \
+                                            and their lengths.
+    :returns: A tuple representing the coordinates of the long axis \
+        and its perpendicular axis, the length of the long axis, and the \
+            length of the perpendicular axis \
+                in global space as ((x_long, y_long, z_long), (x_perp, y_perp, z_perp),\
+                    length_long_axis, length_minor_axis).
     :rtype: tuple
     """
+
     # Get the evaluated object and its vertices
     dg = bpy.context.evaluated_depsgraph_get()
     evaluated_object = obj.evaluated_get(dg)
+
     vertices = evaluated_object.data.vertices
     vertex_coords = np.array([evaluated_object.matrix_world @ v.co for v in vertices])
 
-    # Subtract the mean from each dimension
-    vertex_coords -= np.mean(vertex_coords, axis=0)
+    # Calculate the covariance matrix of the vertices
+    covariance_matrix = np.cov(vertex_coords, rowvar=False)
 
-    # Calculate the covariance matrix and its eigenvectors
-    cov_matrix = np.cov(vertex_coords, rowvar=False)
-    eigenvals, eigenvecs = np.linalg.eigh(cov_matrix)
-    sort_indices = np.argsort(eigenvals)
+    # Calculate the eigenvectors and eigenvalues of the covariance matrix
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
 
-    # Get the eigenvector corresponding to the largest eigenvalue
-    long_axis = eigenvecs[:, sort_indices[-1]]
+    # Sort the eigenvectors by descending eigenvalues
+    eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
 
-    return tuple(long_axis)[:3]
+    # The minor axis (perpendicular to the major axis) is the second eigenvector
+    minor_axis = eigenvectors[:, 1]
+
+    # Convert the axes to global coordinates
+    minor_axis_global = np.array(evaluated_object.matrix_world) @ np.append(minor_axis, 
+                                                                            1)
+
+    # Find extreme points along the minor axis
+    min_point_minor = np.min(vertex_coords.dot(minor_axis))
+    max_point_minor = np.max(vertex_coords.dot(minor_axis))
+    length_minor_axis = max_point_minor - min_point_minor
+
+    return tuple(minor_axis_global)[:3], length_minor_axis
 
 
 def get_long_axis_global(obj):
@@ -308,6 +327,7 @@ def apply_modifiers(obj, which='all'):
     :param str which: Specifies which modifier(s) to apply. Default is 'all'.
                      If 'all', all modifiers are applied; otherwise, specify the
                      name of the specific modifier to apply.
+    :return: obj
     """
     if which == 'all': 
         modifiers_to_apply = obj.modifiers
@@ -323,7 +343,7 @@ def apply_modifiers(obj, which='all'):
         else:
             print(f"Modifier '{which}' not found in object '{obj.name}'")
 
-    return
+    return obj
 
 
 def get_forces_in_collection(obj):
@@ -940,6 +960,234 @@ def divide_boolean(obj):
         falloff, mother_adhesion, mother_motion, modifier_values
 
 
+def divide_boolean_dg(obj): 
+    """
+    Divide a cell object along its division plane using boolean operations.
+
+    This function performs boolean division on a Blender cell object, creating two
+    daughter cells. It also handles the declaration of daughter forces, 
+    inheritance of properties, and separation of the mesh. 
+    Note that the input Blender cell object is fixed, 
+    meaning that all its modifiers have been applied.
+
+    :param bpy.data.objects['name'] obj: The Blender object to be divided.
+
+    :return: 
+             - bpy.data.objects['name']: First daughter cell.
+             - bpy.data.objects['name']: Second daughter cell.
+             - float: Adhesion strength.
+             - float: Motion strength.
+             - float: Falloff.
+             - bool: Flag indicating if there was a mother adhesion force.
+             - bool: Flag indicating if there was a mother motion force.
+             - list: List of dictionaries containing values of the modifiers applied \
+                    to the original object before division.   
+
+    """
+    # Initialize variables
+    adhesion_strength = 0  # Default value
+    motion_strength = 0  # Default value
+    falloff = 0  # Default value
+    mother_adhesion = False  # Default value
+    mother_motion = False  # Default value
+
+    # Get COM
+    p1 = get_centerofmass(obj)
+    # Get the long axis in global coordinate from the origin
+    p2, _ = get_long_axis_global(obj)    
+
+    # Get mother modifiers and their values
+    # mother_modifiers = obj.modifiers
+
+    '''# Get the values of the modifiers
+    modifier_values = []
+    for modifier in mother_modifiers:
+        modifier_data = {}
+        for attr in dir(modifier):
+            if not attr.startswith("__") and not callable(getattr(modifier, attr)):
+                modifier_data[attr] = getattr(modifier, attr)
+        modifier_values.append(modifier_data)'''
+
+    # Get the angles representing the orientation of the division plane
+    x, y, z = get_line_angles(obj, p1, p2)
+    # Get name of dividing cell
+    mother_name = obj.name
+    # Create division plane
+    plane = bpy.ops.mesh.primitive_plane_add(enter_editmode=False, 
+                                             size=5, 
+                                             align='WORLD', 
+                                             location=p1, 
+                                             scale=(1, 1, 1), 
+                                             rotation=(x, y, z))
+    # Set plane as active object
+    plane = bpy.context.active_object
+    # Rename plane with specific cell name
+    plane_name = f"{mother_name}_division plane"
+    plane.name = plane_name
+
+    # Add solidify modifier to the plane, add tickness to the plane
+    bpy.ops.object.modifier_add(type='SOLIDIFY')
+    solid_mod = plane.modifiers[-1]
+    solid_mod.offset = 0
+    solid_mod.thickness = 0.03
+    bpy.ops.object.modifier_apply(modifier=solid_mod.name)
+
+    Force.force_list = [
+        force for force in Force.force_list if force.name != obj['adhesion force']
+    ]
+    
+    # Remove mother adhesion force
+    if 'adhesion force' in obj: 
+        mother_adhesion = True
+        adhesion_force = bpy.data.objects[obj['adhesion force']]
+        adhesion_strength = adhesion_force.field.strength
+        falloff = adhesion_force.field.falloff_power
+        if obj['adhesion force'] in bpy.data.objects:
+            bpy.data.objects.remove(
+                bpy.data.objects[obj['adhesion force']], 
+                do_unlink=True
+            )
+
+    # Remove mother motion force
+    if 'motion force' in obj: 
+        mother_motion = True
+        motion_force = bpy.data.objects[obj['motion force']]
+        motion_strength = motion_force.field.strength
+
+        if obj['motion force'] in bpy.data.objects:
+            bpy.data.objects.remove(
+                bpy.data.objects[obj['motion force']], 
+                do_unlink=True
+            )
+    
+    bpy.context.view_layer.objects.active = obj
+    cell_eval = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+
+    # Get the vertices of the original and evaluated objects
+    vertices_original = np.array([v.co for v in obj.data.vertices])
+    vertices_evaluated = np.array([v.co for v in cell_eval.data.vertices])
+
+    # Calculate the total distance between vertices
+    total_distance = np.sum(np.linalg.norm(vertices_evaluated - vertices_original, 
+                                           axis=1))
+
+    print("Total Distance:", total_distance)
+
+    # Add boolean modifier to the original object
+    # bpy.context.view_layer.objects.active = cell_eval
+    bpy.ops.object.modifier_add(type='BOOLEAN')
+    bool_mod = cell_eval.modifiers[-1]
+    bool_mod.operand_type = 'OBJECT'
+    bool_mod.object = bpy.data.objects[plane_name]
+    bool_mod.operation = 'DIFFERENCE'
+    bool_mod.solver = 'EXACT'
+
+    # Apply the boolean modifier to the evaluated object
+    bpy.ops.object.modifier_apply({"object": cell_eval}, modifier=bool_mod.name)
+
+    # bpy.ops.object.modifier_apply(modifier="Cloth")
+    # bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+    # Deselect all vertices in edit mode
+    bpy.ops.object.mode_set(mode='EDIT')  
+    bpy.ops.mesh.select_mode(type="VERT")
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    # Select a vertex in object mode
+    mesh = cell_eval.data
+    vertex = mesh.vertices[0]
+    vertex.select = True
+
+    # select all vertices linked to the selected vertex
+    bpy.ops.object.mode_set(mode='EDIT') 
+    bpy.ops.mesh.select_linked(delimit={'NORMAL'})
+    # Separate the outer and inner parts of the mesh
+    bpy.ops.mesh.separate(type='SELECTED')
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    d1 = bpy.context.selected_objects[0]  # to be renamed
+    d1.name = f"{mother_name}.01"  # new cell
+
+    d2 = bpy.context.scene.objects[mother_name]
+    d2.name = f"{mother_name}.02"  # mother cell
+
+    # Hide the plane
+    bpy.data.objects[plane_name].hide_set(True)
+
+    # Declare collections to contain daughter cells
+    mother_collection = obj.users_collection[0]
+    mother_type = mother_collection.get('type')
+    d1_collection = make_collection(f'{d1.name}_collection', type=mother_type)
+    d2_collection = make_collection(f'{d2.name}_collection', type=mother_type)
+
+    bpy.ops.object.select_all(action='DESELECT')
+
+    bpy.context.view_layer.objects.active = d1
+    # remove duplicate objects outside of the collection
+    bpy.ops.collection.objects_remove_all()
+    # Add the active cell to our specific collection 
+    bpy.data.collections[d1_collection.name].objects.link(d1)
+ 
+    # Pass on the mother force
+    d1.select_set(True)
+    bpy.ops.object.convert(target='MESH')
+    bpy.context.view_layer.update()
+    # Adding a Remesh modifier to the converted mesh
+    remesh_modifier = d1.modifiers.new(name='Remesh', type='REMESH')
+    remesh_modifier.mode = 'VOXEL'
+    remesh_modifier.voxel_size = 0.2  # microns
+    remesh_modifier.adaptivity = 0
+    remesh_modifier.use_remove_disconnected = True
+    remesh_modifier.use_smooth_shade = True
+    bpy.context.view_layer.update()
+    bpy.ops.object.modifier_apply(modifier="Remesh")
+    bpy.context.view_layer.update()
+
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = d2
+    # remove duplicate objects outside of the collection
+    bpy.ops.collection.objects_remove_all()
+    # Add the active cell to our specific collection 
+    bpy.data.collections[d2_collection.name].objects.link(d2)
+
+    d2.select_set(True)
+    bpy.ops.object.convert(target='MESH')
+    bpy.context.view_layer.update()
+    remesh_modifier = d2.modifiers.new(name='Remesh', type='REMESH')
+    remesh_modifier.mode = 'VOXEL'
+    remesh_modifier.voxel_size = 0.2  # microns
+    remesh_modifier.adaptivity = 0
+    remesh_modifier.use_remove_disconnected = True
+    remesh_modifier.use_smooth_shade = True
+    bpy.context.view_layer.update()
+    bpy.ops.object.modifier_apply(modifier="Remesh")
+    bpy.context.view_layer.update()
+
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.update()
+
+    # Retrieve the collection by name
+
+    if mother_collection:
+        # Remove the collection
+        bpy.data.collections.remove(mother_collection)
+    else:
+        raise ValueError(f"Collection '{mother_collection}' not found")
+
+    # Delete the plane if it exists
+    if plane_name in bpy.data.objects:
+        # Get the object reference
+        obj = bpy.data.objects[plane_name]
+        # Remove the object
+        bpy.data.objects.remove(obj, do_unlink=True)
+    else:
+        print(f"Division plane: '{plane_name}' not found.")
+
+    return d1, d2, adhesion_strength, motion_strength, \
+        falloff, mother_adhesion, mother_motion
+
+
 def disable_internal_springs(objects):
     """
     Disable internal springs for Cloth modifiers in a list of Blender cell objects.
@@ -970,7 +1218,9 @@ def disable_internal_springs(objects):
     return
 
 
-def apply_physics(obj, stiffness): 
+def apply_physics(obj, 
+                  stiffness: float, 
+                  pressure: float = 0.01) -> None: 
     """
     Apply cloth physics and related modifiers to a Blender cell object.
 
@@ -1028,12 +1278,12 @@ def apply_physics(obj, stiffness):
         = 10000
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 0.01
-    bpy.context.object['previous pressure'] = \
+    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = pressure
+    bpy.context.object['previous_pressure'] = \
         bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
-    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = False
-    bpy.context.object.modifiers['Cloth'].settings.target_volume = 2
-    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 50
+    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
+    bpy.context.object.modifiers['Cloth'].settings.target_volume = 1
+    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 2
     bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.05
     # Cloth > Collisions
     bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 3
@@ -1236,6 +1486,7 @@ def make_cell(
     bpy.context.object['past position'] = obj.location
     bpy.context.object['current position'] = obj.location
     bpy.context.object['displacement'] = 0 
+    bpy.context.object['vertex velocities'] = [v.co for v in obj.data.vertices]
 
     # Smooth the mesh
     bpy.ops.object.select = True
@@ -1248,7 +1499,7 @@ def make_cell(
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
     bpy.context.object.modifiers['Cloth'].settings.quality = 4
-    bpy.context.object.modifiers['Cloth'].settings.air_damping = 0
+    bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = 1
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
@@ -1279,11 +1530,11 @@ def make_cell(
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
     bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 0.01
-    bpy.context.object['previous pressure'] = \
+    bpy.context.object['previous_pressure'] = \
         bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
-    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = False
-    bpy.context.object.modifiers['Cloth'].settings.target_volume = 2
-    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 50
+    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
+    bpy.context.object.modifiers['Cloth'].settings.target_volume = 1
+    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 2
     bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.05
     # Cloth > Collisions
     bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 3
@@ -1902,6 +2153,10 @@ def setup_world(seed=None):
                     space.shading.type = 'WIREFRAME'
                     space.overlay.show_overlays = False
 
+    # Set up rendering output settings
+    bpy.context.scene.render.image_settings.file_format = 'FFMPEG'
+    bpy.context.scene.render.ffmpeg.format = 'MPEG4'
+
 
 def add_world_HDRI():
     """Sets up Blender World properties for use in rendering.
@@ -2018,6 +2273,21 @@ def calculate_com(cell):
     COM = (np.mean(x), np.mean(y), np.mean(z))
 
     return COM
+
+
+def compute_vertex_velocities(obj):
+    # Get the current and previous vertex positions
+    current_positions = [v.co for v in obj.data.vertices]
+    previous_positions = obj.get('vertex velocities')
+
+    # Calculate velocity vectors based on the displacement
+    velocities = [current - previous 
+                  for current, previous 
+                  in zip(current_positions, previous_positions)]
+    
+    obj['vertex velocities'] = current_positions
+
+    return velocities
 
 
 def get_contact_area():
@@ -2264,8 +2534,8 @@ def get_division_angles(cell, alpha):
     bpy.context.scene.collection.objects.link(curve_object)  
 
 
-def fill_mesh(obj, 
-              num_levels: int) -> None: 
+def scaffold_mesh(obj, 
+                  num_levels: int) -> None: 
 
     current_mode = bpy.context.object.mode
 
@@ -2300,8 +2570,10 @@ def fill_mesh(obj,
     # Create a vertex group containing internal geometry
     selected_verts = [v for v in obj.data.vertices if v.select]
     vertexgroup = bpy.context.object.vertex_groups.new()
-    vertexgroup.name = ("InternalGeometry")
+    vertexgroup.name = ("InternalScaffold")
     bpy.ops.object.vertex_group_assign()
+
+    return None
 
 
 class handler_class:
@@ -2375,34 +2647,34 @@ class handler_class:
 
         # PID controller parameters for growth
         self.cell_PIDs = {}
-        self.growth_factor = 1
-        self.kp = 0.2  # Proportional gain
-        self.ki = 0.0001  # Integral gain
-        self.kd = 0.5  # Derivative gain
-        self.prev_error = 0  # Previous error for derivative term
-        self.integral = 0  # Integral term
+        self.KP = 0.1
+        self.KI = 0.000001
+        self.KD = 0.5
+        self.growth_type = 'linear'
 
         return
 
     def launch_simulation(
             self,
             filepath,
-            volume_scale=1,
+            target_volume=5,
             division_rate=50,
             start=1,
             end=250,
             motion_strength=-500,
             division_trigger='volume',
+            growth_type='linear',
+            growth_rate=1,
             adhesion=True,
             growth=False,
             division=False,
             data=False,
             motility=False,
-            # remeshing=False,
-            # visualize=False,
             boundary=False):
+        
         """
-        Launches the simulation with specified parameters.
+        Launches the simulation with specified parameters. 
+        Acts as the entry point of the simulation.
 
         This method initializes and launches the simulation based on the provided 
         parameters. It sets up event handlers for various simulation aspects, 
@@ -2437,8 +2709,10 @@ class handler_class:
         self.motion_strength = motion_strength
         self.data_flag = data  # used to decide if data are computed
         self.division_trigger = division_trigger
-        self.volume_scale = volume_scale
-        self.unit_volume = ((4/3)*np.pi*(1)**3)
+        self.target_volume = target_volume
+        self.growth_type = growth_type
+        self.growth_rate = growth_rate
+        # self.unit_volume = ((4/3)*np.pi*(1)**3)
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after the default 250 frames
@@ -2459,8 +2733,6 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.data_export_handler)
             bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
         if growth:
-            # bpy.app.handlers.frame_change_post.append(self.growth_handler)
-            # bpy.app.handlers.frame_change_post.append(self.growth_pressure_handler)
             bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
         if (division and division_trigger == 'random'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_random)
@@ -2472,7 +2744,7 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.boundary_handler)
         # if visualize:
         #    bpy.app.handlers.frame_change_post.append(self.visualize_stretching)
-
+            
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
 
@@ -2726,6 +2998,62 @@ class handler_class:
                     cast_modifier = obj.modifiers.new(name="Cast", type='CAST')
                     cast_modifier.factor = 0.0  # Start factor from 0'''
 
+    def update_mesh_modifiers(self, scene, despgraph): 
+
+        # if scene.frame_current > 3: 
+
+        # Get all objects in the scene that are identified as 'cell'
+        cells = [
+            obj for obj in scene.objects
+            if obj.get('object') == 'cell'
+        ]
+
+        for cell in cells:
+            bpy.context.view_layer.objects.active = cell
+            cloth_modifier = cell.modifiers.get('Cloth')
+            cell_stiffness = cloth_modifier.settings.tension_stiffness
+            cell_pressure = cloth_modifier.settings.uniform_pressure_force
+            print(f"Cell stiffness: {cell_stiffness}")
+            print(f"Cell pressure: {cell_pressure}")
+            
+            apply_modifiers(cell, 
+                            which='all')
+            apply_physics(cell,
+                          stiffness=cell_stiffness, 
+                          pressure=cell_pressure)
+
+    def update_mesh(self, scene, despgraph):
+
+        # Get all objects in the scene that are identified as 'cell'
+        cells = [
+            obj for obj in scene.objects
+            if obj.get('object') == 'cell'
+        ]
+
+        for cell in cells:
+            # Set the current cell as the active object
+            bpy.context.view_layer.objects.active = cell
+
+            # Evaluate the cell object
+            dg = bpy.context.evaluated_depsgraph_get()
+            cell_eval = cell.evaluated_get(dg)
+
+            # Get the vertices of the original and evaluated objects
+            vertices_original = np.array([v.co for v in cell.data.vertices])
+            vertices_evaluated = np.array([v.co for v in cell_eval.data.vertices])
+
+            # Calculate the total distance between vertices
+            total_distance = np.sum(
+                np.linalg.norm(vertices_evaluated - vertices_original, axis=1)
+            )
+
+            print(f"Total Distance for {cell.name}: {total_distance}")
+
+            # Trigger something if the distance is above the threshold
+            if total_distance > 0.5:
+                print(f"Distance above threshold for {cell.name}.")
+                # Add your logic here to trigger something
+
     def division_handler_volume(self, scene, despgraph):
         """
         Handler responsible for cell division based on volume criteria.
@@ -2750,7 +3078,7 @@ class handler_class:
         candidate_cells = []
 
         # Get cells that are candidates for division
-        target_volume = self.unit_volume * self.volume_scale
+        target_volume = self.target_volume
         threshold_volume = target_volume * 0.01
 
         candidate_cells = [
@@ -2797,17 +3125,17 @@ class handler_class:
             else:
                 raise ValueError(f"Object '{dividing_cell.name}' not found")
             
-            mother_subsurf = store_subsurf_settings(dividing_cell)
+            '''mother_subsurf = store_subsurf_settings(dividing_cell)
             mother_cloth = store_cloth_settings(dividing_cell)
             mother_collision = store_collision_settings(dividing_cell)
             mother_remesher = store_remesh_settings(dividing_cell)
             print(f" -- Mother subsurf: {mother_subsurf}")
             print(f" -- Mother Cloth: {mother_cloth}")
             print(f" -- Mother collision: {mother_collision}")
-            print(f" -- Mother remesher: {mother_remesher}")
+            print(f" -- Mother remesher: {mother_remesher}")'''
 
             # Apply the whole modifer stack in sequential order    
-            apply_modifiers(obj=dividing_cell, which='all')
+            dividing_cell = apply_modifiers(obj=dividing_cell, which='all')
 
             # Separation of mother in two distinct daughter cells
             d1, d2, mother_adhesion_strength, mother_motion_strength, \
@@ -2872,68 +3200,96 @@ class handler_class:
                   f"at frame {scene.frame_current}")
             
     def initialize_cell_PID(self, cell):
-        # Initialize PID-related properties for each cell
         cell_name = cell.name
         if cell_name not in self.cell_PIDs:
-            self.cell_PIDs[cell_name] = {
-                'integral': 0,
-                'previous_error': 0,
-                'previous_pressure': 0,
-                'kp': 0.2,
-                'ki': 0.0001,
-                'kd': 0.5
-            }
+            cloth_modifier = cell.modifiers.get('Cloth')
+            if cloth_modifier:
+                initial_pressure = cloth_modifier.settings.uniform_pressure_force
+                initial_volume = calculate_volume(cell)
+
+                self.cell_PIDs[cell_name] = {
+                    'integral': 0,
+                    'previous_error': 0,
+                    'previous_pressure': initial_pressure,
+                    'kp': self.KP,
+                    'ki': self.KI,
+                    'kd': self.KD,
+                    'growth_rate': self.growth_rate,  # in cubic microns per frame
+                    'next_volume': initial_volume
+                }
             
     def growth_PID_handler(self, scene, depsgraph):
-        for collection in bpy.data.collections: 
-            cells = bpy.data.collections.get(collection.name_full).all_objects
-            for cell in cells: 
-                if cell.modifiers.get('Cloth'):
-                    # Check if PID-related properties are initialized for the cell
-                    self.initialize_cell_PID(cell)
+        for cell in bpy.context.scene.objects:
+            if cell.get('object') == 'cell' and cell.modifiers.get('Cloth'):
+                # Check if PID-related properties are initialized for the cell
+                self.initialize_cell_PID(cell)
+                properties = self.cell_PIDs[cell.name]
 
-                    # Calculate current volume
-                    volume = calculate_volume(cell)
-                    target_volume = self.volume_scale * self.unit_volume
-                    cell['target volume'] = target_volume
-                    cell['volume'] = volume
-                    self.volumes[f"{cell.name}"].append(volume)
-                    self.pressures[f"{cell.name}"].append(
-                        cell.modifiers["Cloth"].settings.uniform_pressure_force
-                    )
-                    volume_deviation = (target_volume - volume) / target_volume
-                    print(
-                        f"Volume deviation: {volume_deviation}; "
-                        f"Target volume: {target_volume}; "
-                        f"Volume: {volume}"
-                    )
+                # Calculate current volume
+                volume = calculate_volume(cell)
+                target_volume = self.target_volume
+                cell['target_volume'] = target_volume
+                cell['volume'] = volume
 
-                    # Retrieve PID-related properties from the dictionary
-                    properties = self.cell_PIDs[cell.name]
-                    error = volume_deviation
-                    properties['integral'] += error
-                    derivative = error - properties['previous_error']
+                # Supports linear and exponential growth
+                if properties['next_volume'] < target_volume:
+                    if self.growth_type == 'linear': 
+                        properties['next_volume'] += properties['growth_rate']
+                    elif self.growth_type == 'exp': 
+                        properties['next_volume'] *= properties['growth_rate']
+                    else:
+                        print("Goo supports linear and exponential growth." 
+                              f"{self.growth_type} is not.")
+            
+                # Clip next_volume to target_volume
+                properties['next_volume'] = min(properties['next_volume'], 
+                                                target_volume)
+                
+                cell_name = cell.name
 
-                    pid_output = (
-                        properties['kp'] * error +
-                        properties['ki'] * properties['integral'] +
-                        properties['kd'] * derivative
-                    )
+                # Batch updates for volumes and pressures
+                self.volumes[cell_name].append(volume)
+                self.pressures[cell_name].append(
+                    cell.modifiers["Cloth"].settings.uniform_pressure_force
+                )
+                # volume_deviation = (target_volume - volume) / target_volume
+                volume_deviation = ((properties['next_volume'] - volume) 
+                                    / properties['next_volume'])
 
-                    # Update pressure based on PID output
-                    new_pressure = properties['previous_pressure'] + (pid_output * 0.5)
-                    growth_adjusted_pressure = new_pressure
+                print(
+                    f"Volume deviation: {volume_deviation}; "
+                    f"Target volume: {target_volume}; "
+                    f"Next volume: {properties['next_volume']}; "
+                    f"Volume: {volume}"
+                )
 
-                    print(f"New pressure for {cell.name}: {growth_adjusted_pressure}")
+                # Retrieve PID-related properties from the dictionary
+                error = volume_deviation
+                properties['integral'] += error
+                derivative = error - properties['previous_error']
 
-                    # Update the cloth pressure settings
-                    cell.modifiers["Cloth"].settings.uniform_pressure_force = \
-                        growth_adjusted_pressure
+                pid_output = (
+                    properties['kp'] * error +
+                    properties['ki'] * properties['integral'] +
+                    properties['kd'] * derivative
+                )
 
-                    # Update previous error and pressure for the next iteration
-                    properties['previous_error'] = error
-                    properties['previous_pressure'] = growth_adjusted_pressure
+                # Update pressure based on PID output
+                new_pressure = properties['previous_pressure'] + (pid_output * 60)
+                growth_adjusted_pressure = new_pressure
 
+                # Update the cloth pressure settings
+                cloth_settings = cell.modifiers["Cloth"].settings
+                cloth_settings.uniform_pressure_force = growth_adjusted_pressure
+
+                # Update previous error and pressure for the next iteration
+                properties['previous_error'] = error
+                properties['previous_pressure'] = growth_adjusted_pressure
+                cell['previous_pressure'] = growth_adjusted_pressure
+
+                print(f"New pressure for {cell_name}: {growth_adjusted_pressure}")
+
+    # not used
     def growth_pressure_handler(self, scene, depsgraph):
         """
         Handler responsible for cell growth based on cell's pressure.
@@ -2952,8 +3308,8 @@ class handler_class:
             for cell in cells: 
                 if cell.modifiers.get('Cloth'):
                     volume = calculate_volume(cell)
-                    target_volume = self.volume_scale * self.unit_volume
-                    cell['target volume'] = target_volume
+                    target_volume = self.target_volume
+                    cell['target_volume'] = target_volume
                     cell['volume'] = volume
                     self.volumes[f"{cell.name}"].append(volume)
                     self.pressures[f"{cell.name}"].append(
@@ -2966,12 +3322,12 @@ class handler_class:
                         f"Volume: {volume}"
                     )
                     # Define the pressure-volume relationship 
-                    previous_pressure = cell.get('previous pressure')
+                    previous_pressure = cell.get('previous_pressure')
                     # Modify pressure based on volume deviation
                     # delta_pressure = 0.001 * (math.exp(volume_deviation) - 1)
                     # print(f"Delta pressure: {delta_pressure}")
                     new_pressure = previous_pressure + (volume_deviation
-                                                        * previous_pressure) * 0.1 
+                                                        * previous_pressure) * 1 
                     # * 0.02
                     print(f"New pressure: {new_pressure}")
                     # Update the cloth pressure settings
@@ -2979,6 +3335,7 @@ class handler_class:
                         new_pressure
                     cell['previous pressure'] = new_pressure                                                    
 
+    # not used
     # Member function to handle cell growth
     def growth_handler(self, scene, depsgraph):
         """
@@ -3005,9 +3362,8 @@ class handler_class:
                 ):
 
                     volume = calculate_volume(cell)
-                    # target_volume = ((4/3)*np.pi*(1)**3)
-                    target_volume = self.volume_scale * self.unit_volume
-                    cell['target volume'] = target_volume
+                    target_volume = self.target_volume
+                    cell['target_volume'] = target_volume
                     cell['volume'] = volume
                     self.volumes[f"{cell.name}"].append(volume)
 
