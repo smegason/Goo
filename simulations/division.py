@@ -23,5 +23,7 @@ handlers.launch_simulation(start=1,  # default, 1
                            growth=True, 
                            motility=False, 
                            division=True, 
-                           volume_scale=1.3
+                           target_volume=50,
+                           growth_rate=1, 
+                           growth_type='linear'
                            )
