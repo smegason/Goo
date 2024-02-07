@@ -1245,10 +1245,10 @@ def apply_physics(obj,
     bpy.context.object.modifiers["Subdivision"].subdivision_type = 'CATMULL_CLARK'
     bpy.context.object.modifiers["Subdivision"].levels = 1
     bpy.context.object.modifiers["Subdivision"].quality = 3
-
+    
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
-    bpy.context.object.modifiers['Cloth'].settings.quality = 4
+    bpy.context.object.modifiers['Cloth'].settings.quality = 5
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = 1
@@ -1286,7 +1286,7 @@ def apply_physics(obj,
     bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 2
     bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.05
     # Cloth > Collisions
-    bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 3
+    bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 5
     bpy.context.object.modifiers['Cloth'].collision_settings.use_collision = True
     bpy.context.object.modifiers['Cloth'].collision_settings.use_self_collision = True
     bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 0
@@ -1498,7 +1498,7 @@ def make_cell(
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
-    bpy.context.object.modifiers['Cloth'].settings.quality = 4
+    bpy.context.object.modifiers['Cloth'].settings.quality = 5
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = 1
@@ -1515,7 +1515,7 @@ def make_cell(
     bpy.context.object.modifiers['Cloth'].settings.shear_damping = 50
     bpy.context.object.modifiers['Cloth'].settings.bending_damping = 0.5
     # Cloth > Internal Springs
-    bpy.context.object.modifiers['Cloth'].settings.use_internal_springs = True
+    bpy.context.object.modifiers['Cloth'].settings.use_internal_springs = False
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_length = 1
     bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion \
         = 0.785398
@@ -1537,7 +1537,7 @@ def make_cell(
     bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 2
     bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.05
     # Cloth > Collisions
-    bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 3
+    bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 5
     bpy.context.object.modifiers['Cloth'].collision_settings.use_collision = True
     bpy.context.object.modifiers['Cloth'].collision_settings.use_self_collision = True
     bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 0
@@ -1829,7 +1829,7 @@ class Force():
         """
         obj = bpy.data.objects[self.name]
         return obj
-
+    
 
 def add_boundaries(loc, size, shape='BOX', type='REFLECTIVE', name='box'):
     """
@@ -1893,11 +1893,90 @@ def add_boundaries(loc, size, shape='BOX', type='REFLECTIVE', name='box'):
                                              align='WORLD',
                                              location=loc)
         bpy.context.object.name = name
-        bpy.context.object.scale[0] = -size[0]
-        bpy.context.object.scale[1] = -size[0]
-        bpy.context.object.scale[2] = -size[0]
+        bpy.context.object.scale[0] = -1
+        bpy.context.object.scale[1] = -1
+        bpy.context.object.scale[2] = -1
         bpy.ops.object.modifier_add(type='COLLISION')
         bpy.ops.object.modifier_add(type='WIREFRAME')
+
+
+def add_sphere_boundaries(loc, radius, type='REFLECTIVE', name='sphere_boundaries'):
+    """
+    Adds reflective boundaries to the scene.
+
+    The boundaries can be of the shape of sphere or boxes. 
+
+    :param tuple loc: A tuple containing X, Y, and Z coordinates of the center of \
+        the boundary.
+    :param tuple size: A tuple containing dimensions in X, Y, and Z \
+        for the boundary.
+    :param str shape: The shape of the boundary. Supported values are \
+        'BOX' and 'SPHERE'.
+    :param str type: The type of boundary. (Unused parameter in the provided code)
+    :param str name: The name to be assigned to the boundary object.
+
+    :return: None
+    """
+    if not isinstance(loc, tuple) or len(loc) != 3:
+        raise ValueError(
+            "Invalid 'loc' argument. It should be a tuple containing X, Y, and Z \
+                coordinates."
+            )
+
+    if not all(isinstance(coord, (int, float)) for coord in loc):
+        raise ValueError(
+            "Invalid 'loc' coordinates. Coordinates should be integers or floats."
+            )
+
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius,
+                                         enter_editmode=False,
+                                         align='WORLD',
+                                         location=loc)
+    bpy.context.object.name = name
+    bpy.context.object.scale[0] = -1
+    bpy.context.object.scale[1] = -1
+    bpy.context.object.scale[2] = -1
+    bpy.ops.object.modifier_add(type='COLLISION')
+    bpy.ops.object.modifier_add(type='WIREFRAME')
+
+
+def add_turbulence_motion(strength=-30000): 
+    
+    candidate_cells = [
+        obj for obj in bpy.context.scene.objects
+        if (
+            obj.get('object') == 'cell'  
+        )
+    ]        
+
+    seeds = range(len(candidate_cells))
+
+    for idx, cell in enumerate(candidate_cells): 
+
+        bpy.ops.object.effector_add(type='TURBULENCE',
+                                    enter_editmode=False, 
+                                    align='WORLD',
+                                    location=(0, 0, 0),
+                                    scale=(1, 1, 1))
+        
+        turbulence = bpy.context.object
+        name = f'{cell.name}_random_motion'
+        turbulence.name = name
+        turbulence.field.shape = 'POINT'
+        turbulence.field.strength = strength
+        turbulence.field.size = 7
+        turbulence.field.noise = 0
+        turbulence.field.seed = seeds[idx] + 1
+        turbulence.field.apply_to_location = True
+        turbulence.field.apply_to_rotation = True
+        turbulence.field.use_min_distance = True
+        turbulence.field.distance_min = 0
+        turbulence.field.use_max_distance = True
+        turbulence.field.distance_max = 10
+        turbulence.field.flow = 0
+        turbulence.field.wind_factor = 0
+
+        cell.users_collection[0].objects.link(turbulence)
 
 
 def add_motion(effector_name,
@@ -2647,10 +2726,17 @@ class handler_class:
 
         # PID controller parameters for growth
         self.cell_PIDs = {}
-        self.KP = 0.1
+        self.KP = 0.05
         self.KI = 0.000001
         self.KD = 0.5
         self.growth_type = 'linear'
+
+        # Distance between walls
+        self.distance_between_walls = []
+
+        # Time scales
+        self.dt_physics = float()  # in minutes
+        self.dt_biocircuits = float()  # in minutes
 
         return
 
@@ -2662,9 +2748,11 @@ class handler_class:
             start=1,
             end=250,
             motion_strength=-500,
-            division_trigger='volume',
+            division_type='volume',
             growth_type='linear',
             growth_rate=1,
+            dt_physics=1,
+            dt_biorcircuits=1,
             adhesion=True,
             growth=False,
             division=False,
@@ -2687,7 +2775,7 @@ class handler_class:
         :param int start: The starting frame of the simulation.
         :param int end: The ending frame of the simulation.
         :param int motion_strength: Strength of motion applied to cells.
-        :param str division_trigger: The trigger for cell division ('volume' or \
+        :param str division_type: The trigger for cell division ('volume' or \
               'random').
         :param bool adhesion: Enable/disable adhesion in the simulation.
         :param bool growth: Enable/disable cell growth in the simulation.
@@ -2705,14 +2793,18 @@ class handler_class:
 
         self.data_file_path = filepath
         bpy.context.scene.render.filepath = filepath
-        self.division_rate = division_rate
+        
         self.motion_strength = motion_strength
         self.data_flag = data  # used to decide if data are computed
-        self.division_trigger = division_trigger
+
+        self.division_type = division_type
+        self.division_rate = division_rate  # division per minutes
         self.target_volume = target_volume
+
         self.growth_type = growth_type
         self.growth_rate = growth_rate
-        # self.unit_volume = ((4/3)*np.pi*(1)**3)
+        self.dt_physics = dt_physics
+        self.dt_biocircuits = dt_biorcircuits
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after the default 250 frames
@@ -2727,28 +2819,69 @@ class handler_class:
         bpy.app.handlers.frame_change_post.clear()
         bpy.app.handlers.frame_change_post.append(self.timing_init_handler)
 
+        if motility:
+            bpy.app.handlers.frame_change_post.append(self.motion_handler)
         if adhesion:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
+        if growth:
+            bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
+        if (division and division_type == 'random'):
+            bpy.app.handlers.frame_change_post.append(self.division_handler_random)
+        if (division and division_type == 'time'):
+            bpy.app.handlers.frame_change_post.append(self.division_handler_time)
+        if (division and division_type == 'volume'):
+            bpy.app.handlers.frame_change_post.append(self.division_handler_volume)            
+        if boundary:
+            bpy.app.handlers.frame_change_post.append(self.boundary_handler)
         if data:
             bpy.app.handlers.frame_change_post.append(self.data_export_handler)
             bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
-        if growth:
-            bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
-        if (division and division_trigger == 'random'):
-            bpy.app.handlers.frame_change_post.append(self.division_handler_random)
-        if (division and division_trigger == 'volume'):
-            bpy.app.handlers.frame_change_post.append(self.division_handler_volume)            
-        if motility:
-            bpy.app.handlers.frame_change_post.append(self.motion_handler)
-        if boundary:
-            bpy.app.handlers.frame_change_post.append(self.boundary_handler)
-        # if visualize:
-        #    bpy.app.handlers.frame_change_post.append(self.visualize_stretching)
             
+        # bpy.app.handlers.frame_change_post.append(self.wall_compression_handler)
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
 
         # bpy.ops.screen.animation_play()
+
+        return 
+
+    def wall_compression_handler(self, scene, depsgraph): 
+
+        if scene.frame_current == 2: 
+
+            # scene_collection = bpy.context.scene.collection
+
+            bpy.ops.mesh.primitive_cube_add(size=10, 
+                                            location=(-4, 0, 0), 
+                                            scale=(0.05, 1, 1))
+            wall1 = bpy.context.active_object
+            wall1.name = 'wall1'
+            # scene_collection.objects.link(wall1)
+
+            bpy.ops.mesh.primitive_cube_add(size=10, 
+                                            location=(4, 0, 0), 
+                                            scale=(0.05, 1, 1))
+            wall2 = bpy.context.active_object
+            wall2.name = 'wall2'
+            # scene_collection.objects.link(wall2)
+
+            # Add Collision modifier to walls
+            for wall in [wall1, wall2]:
+                bpy.context.view_layer.objects.active = wall
+                bpy.ops.object.modifier_add(type='COLLISION')
+
+        # Define the speed at which walls move
+        speed = 0.01
+        
+        wall1 = bpy.data.objects.get('wall1')
+        wall2 = bpy.data.objects.get('wall2')
+        # Update the position of the walls
+        wall1.location.x += speed
+        wall2.location.x -= speed
+
+        distance_between_wall = abs(wall1.location.x - wall2.location.x)
+
+        self.distance_between_walls.append(distance_between_wall)
 
         return 
 
@@ -2828,15 +2961,14 @@ class handler_class:
             self.mother_stiffness = None
 
             # Get cells that are candidates for division
-            target_volume = self.unit_volume * self.volume_scale
-            threshold_volume = self.volume_scale * self.unit_volume * 0.05
+            threshold_volume = self.target_volume * 0.05
 
             candidate_cells = [
                 obj for obj in bpy.context.scene.objects
                 if (
                     obj.get('object') == 'cell' and 
                     obj.get('volume') is not None and 
-                    abs(obj.get('volume') - target_volume) <= threshold_volume
+                    abs(obj.get('volume') - self.target_volume) <= threshold_volume
                 )
             ]
 
@@ -3079,7 +3211,7 @@ class handler_class:
 
         # Get cells that are candidates for division
         target_volume = self.target_volume
-        threshold_volume = target_volume * 0.01
+        threshold_volume = target_volume * 0.05
 
         candidate_cells = [
             obj for obj in bpy.context.scene.objects
@@ -3198,7 +3330,117 @@ class handler_class:
                 
             print(f"-- Finishing division of {dividing_cell.name} "
                   f"at frame {scene.frame_current}")
-            
+
+    def division_handler_time(self, scene, despgraph):
+        """
+        Handler responsible for cell division based on a time rat (synchronous).
+
+        This method is responsible for cell division based on volume criteria 
+        during the simulation. It loop over all cells, identifies candidate 
+        cells for division, selects the largest one, and then divides 
+        into two daughter cells.
+
+        :param scene: The Blender scene object.
+        :param despgraph: The dependency graph object.
+
+        :return: None
+        """
+        sum_dt = scene.frame_current * self.dt_physics
+        print(f'time in minutes: {sum_dt}')
+
+        # self.daugthers.clear()
+        self.mother_adhesion_strength = None
+        self.falloff = None
+        self.mother_adhesion = None
+        self.mother_motion = None
+        self.mother_stiffness = None
+        candidate_cells = []
+
+        candidate_cells = [
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'cell' and 
+                obj.get('volume') is not None 
+            )
+        ]
+
+        print(f"Candidate cells: {candidate_cells}")
+
+        if sum_dt % (1 / self.division_rate) == 0: 
+
+            for cell_under_div in candidate_cells:
+
+                self.daugthers.clear()
+                self.cell_under_div = cell_under_div
+
+                print(f"Cell under division: {self.cell_under_div.name}")
+
+                # Get the object by name
+                dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
+
+                # If cell object exists
+                if dividing_cell:
+                    # Get cloth modifier and check if it exists
+                    cloth_modifier = dividing_cell.modifiers.get('Cloth')
+                    if cloth_modifier:
+                        mother_stiffness = cloth_modifier.settings.tension_stiffness
+                    else:
+                        raise ValueError(f"No Cloth modifier on {dividing_cell.name}")
+                else:
+                    raise ValueError(f"Object '{dividing_cell.name}' not found")
+
+                # Apply the whole modifer stack in sequential order    
+                dividing_cell = apply_modifiers(obj=dividing_cell, which='all')
+
+                # Separation of mother in two distinct daughter cells
+                d1, d2, mother_adhesion_strength, mother_motion_strength, \
+                    tmp_falloff, mother_adhesion, mother_motion, _ = \
+                    divide_boolean(dividing_cell)
+                
+                # Pass on force parameters to daugther cells  
+                self.mother_adhesion_strength = mother_adhesion_strength
+                self.mother_motion_strength = mother_motion_strength
+                self.falloff = tmp_falloff
+                self.mother_adhesion = mother_adhesion
+                self.mother_motion = mother_motion
+                self.mother_stiffness = mother_stiffness
+
+                self.daugthers.append(d1)     
+                self.daugthers.append(d2)     
+
+                # Toggle back on physics after mesh separation
+                apply_physics(obj=self.daugthers[0], 
+                              stiffness=self.mother_stiffness)
+                apply_physics(obj=self.daugthers[1],
+                              stiffness=self.mother_stiffness)
+
+                # Add adhesion forces to daugther cells
+                if self.mother_adhesion: 
+                    print('Mother adhesion detected, passing it on')
+                    add_homo_adhesion(cell_name=self.daugthers[0].name, 
+                                      strength=self.mother_adhesion_strength)
+                    add_homo_adhesion(cell_name=self.daugthers[1].name, 
+                                      strength=self.mother_adhesion_strength)
+
+                    for cell in self.daugthers:
+                        cells_same_type = get_cells_same_type(cell)
+                        for cell_same_type in cells_same_type:
+                            missing_forces = get_missing_adhesion_forces(cell_same_type, 
+                                                                         cell)
+                            print(f"Missing adhesion forces: {missing_forces}")
+                            for force in missing_forces:
+                                cell.users_collection[0].objects.link(force)
+
+                if self.mother_motion: 
+                    print('Mother motion detected, passing it on')
+                    add_motion(effector_name=self.daugthers[0].name, 
+                               strength=self.mother_motion_strength)
+                    add_motion(effector_name=self.daugthers[1].name, 
+                               strength=self.mother_motion_strength)
+                    
+                print(f"-- Finishing division of {dividing_cell.name} "
+                      f"at frame {scene.frame_current}")
+                
     def initialize_cell_PID(self, cell):
         cell_name = cell.name
         if cell_name not in self.cell_PIDs:
@@ -3206,6 +3448,17 @@ class handler_class:
             if cloth_modifier:
                 initial_pressure = cloth_modifier.settings.uniform_pressure_force
                 initial_volume = calculate_volume(cell)
+                pid_scale = 60
+
+                if self.growth_type in ['linear', 'exp', 'logistic']:
+                    self.KP = 0.05
+                    self.KI = 0.000001
+                    self.KD = 0.5
+                else:                  
+                    raise ValueError(
+                        f"Goo supports linear, exponential, and logistic growth. \n"
+                        f"{self.growth_type} is not."
+                    )
 
                 self.cell_PIDs[cell_name] = {
                     'integral': 0,
@@ -3215,7 +3468,9 @@ class handler_class:
                     'ki': self.KI,
                     'kd': self.KD,
                     'growth_rate': self.growth_rate,  # in cubic microns per frame
-                    'next_volume': initial_volume
+                    'next_volume': initial_volume, 
+                    'pid_scale': pid_scale, 
+                    'initial_volume': initial_volume
                 }
             
     def growth_PID_handler(self, scene, depsgraph):
@@ -3230,21 +3485,45 @@ class handler_class:
                 target_volume = self.target_volume
                 cell['target_volume'] = target_volume
                 cell['volume'] = volume
-
+                
                 # Supports linear and exponential growth
                 if properties['next_volume'] < target_volume:
                     if self.growth_type == 'linear': 
-                        properties['next_volume'] += properties['growth_rate']
+                        print("Selected linear volume growth and control!")
+                        properties['next_volume'] \
+                            += (properties['growth_rate'] * self.dt_physics)
+                        # Clip next_volume to target_volume
+                        properties['next_volume'] = min(properties['next_volume'], 
+                                                        target_volume)
+                        
                     elif self.growth_type == 'exp': 
-                        properties['next_volume'] *= properties['growth_rate']
+                        print("Selected exponential volume growth and control!")
+                        properties['next_volume'] \
+                            *= ((1 + properties['growth_rate'] * self.dt_physics))
+                        # Clip next_volume to target_volume
+                        properties['next_volume'] = min(properties['next_volume'], 
+                                                        target_volume)
+                        
+                    elif self.growth_type == 'logistic':
+                        print("Selected logistic volume growth and control!")
+                        # Adjust these parameters according to your scenario
+                        # initial_volume = properties['initial_volume']
+                        # amplitude = target_volume
+                        growth_rate = properties['growth_rate']
+                        print(growth_rate)
+                        time_step = self.dt_physics
+                        properties['next_volume'] = (
+                            1 + growth_rate * 
+                            (1 - properties['next_volume'] / target_volume) * 
+                            time_step
+                        ) * properties['next_volume']
+
                     else:
-                        print("Goo supports linear and exponential growth." 
-                              f"{self.growth_type} is not.")
-            
-                # Clip next_volume to target_volume
-                properties['next_volume'] = min(properties['next_volume'], 
-                                                target_volume)
-                
+                        raise ValueError(
+                            f"Goo supports linear, exponential, and logistic growth. "
+                            f"{self.growth_type} is not."
+                        )
+
                 cell_name = cell.name
 
                 # Batch updates for volumes and pressures
@@ -3275,7 +3554,11 @@ class handler_class:
                 )
 
                 # Update pressure based on PID output
-                new_pressure = properties['previous_pressure'] + (pid_output * 60)
+                new_pressure = (
+                    properties['previous_pressure'] + 
+                    (pid_output * properties['pid_scale'])
+                )
+                # exp growth: + (pid_output * 60)
                 growth_adjusted_pressure = new_pressure
 
                 # Update the cloth pressure settings
@@ -3327,7 +3610,7 @@ class handler_class:
                     # delta_pressure = 0.001 * (math.exp(volume_deviation) - 1)
                     # print(f"Delta pressure: {delta_pressure}")
                     new_pressure = previous_pressure + (volume_deviation
-                                                        * previous_pressure) * 1 
+                                                        * previous_pressure)
                     # * 0.02
                     print(f"New pressure: {new_pressure}")
                     # Update the cloth pressure settings
@@ -3809,6 +4092,8 @@ class handler_class:
                 write_file.write(json.dumps(self.volumes))
             with open(f"{self.data_file_path}_pressures.json", 'w') as write_file:
                 write_file.write(json.dumps(self.pressures))
+            with open(f"{self.data_file_path}_distance_walls.json", 'w') as write_file:
+                write_file.write(json.dumps(self.distance_between_walls))
             if self.seed is not None: 
                 with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
                     write_file.write(json.dumps(self.seed))
