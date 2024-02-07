@@ -5,16 +5,18 @@ reload(goo)
 goo.setup_world(seed=1)
 
 # Cell A
-goo.make_cell("cell_A1", loc=(0, 0, 0), type="cellsA")
-goo.make_cell("cell_A2", loc=(0, 3, -2), type="cellsA")
-goo.make_cell("cell_A3", loc=(-1, 5, 0), type="cellsA")
-goo.make_cell("cell_A4", loc=(-1, 5, -5), type="cellsA")
-goo.make_cell("cell_A5", loc=(-1, 5, -3), type="cellsA")
-goo.make_cell("cell_A6", loc=(-5, 0, 0), type="cellsA")
-goo.make_cell("cell_A7", loc=(2, 4, 0), type="cellsA")
-goo.make_cell("cell_A8", loc=(4, 0, 2), type="cellsA")
-goo.make_cell("cell_A9", loc=(-1, -5, 0), type="cellsA")
-goo.make_cell("cell_A10", loc=(1, -2, 3), type="cellsA")
+goo.make_cell("cell_A1", loc=(-5, -3, -3), type="cellsA")
+goo.make_cell("cell_A2", loc=(0, -3, -3), type="cellsA")
+goo.make_cell("cell_A3", loc=(5, -3, -3), type="cellsA")
+goo.make_cell("cell_A4", loc=(-5, -3, 3), type="cellsA")
+goo.make_cell("cell_A5", loc=(0, -3, 3), type="cellsA")
+goo.make_cell("cell_A6", loc=(5, -3, 3), type="cellsA")
+goo.make_cell("cell_A7", loc=(-5, 3, -3), type="cellsA")
+goo.make_cell("cell_A8", loc=(0, 3, -3), type="cellsA")
+goo.make_cell("cell_A9", loc=(5, 3, -3), type="cellsA")
+goo.make_cell("cell_A10", loc=(-5, 3, 3), type="cellsA")
+goo.make_cell("cell_A11", loc=(0, 3, 3), type="cellsA")
+goo.make_cell("cell_A12", loc=(5, 3, 3), type="cellsA")
 
 # Force A
 homoA = 2000
@@ -28,6 +30,8 @@ goo.add_homo_adhesion('cell_A7', -homoA)
 goo.add_homo_adhesion('cell_A8', -homoA)
 goo.add_homo_adhesion('cell_A9', -homoA)
 goo.add_homo_adhesion('cell_A10', -homoA)
+goo.add_homo_adhesion('cell_A11', -homoA)
+goo.add_homo_adhesion('cell_A12', -homoA)
 
 goo.add_turbulence_motion()
 
