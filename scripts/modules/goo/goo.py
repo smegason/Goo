@@ -296,79 +296,8 @@ def get_division_plane(obj, long_axis, com, length):
     plane.hide_set(True)
 
     return plane
-
-
-# not used
-def get_longaxis_angles(axis):
-    """Retrieves the 2 angles associated with the long axis of a cell. 
-
-    :param tuple axis: Coordinates of the long axis to the division plane 
-                        as retrived by ``get_major_axis(obj)``.
-    :returns: 
-        - phi (:py:class:`tuple`) - Phi is the angle between the division axis \
-            and the z-axis in spherical coordinates. 
-        - theta (:py:class:`tuple`) - Theta is the angle projected on the xy plane \
-            in cartesian 3D coordinates. 
-    """
-
-    # We define the unit vector of z-axis
-    z_axis = np.array((0, 0, 1))
-    # We find the unit vector of the division axis
-    division_axis = axis/np.linalg.norm(axis)
-    # We calculate the dot product of the normalized
-    # z and division axes
-    dot_product = np.dot(z_axis, division_axis)
-    # The inverse cosine of the dot product is phi
-    phi = np.arccos(dot_product)
-
-    # The first step to find theta is to find the projection
-    # of the division axis on the z axis
-    proj_axis_on_z = dot_product*z_axis
-    # This projection is subtracted from the division axis
-    # To find the projection on the xy-plane
-    proj_xy_axis = division_axis - proj_axis_on_z
-    # We normalize this projection
-    proj_xy_axis = proj_xy_axis/np.linalg.norm(proj_xy_axis)
-    # We take the dot product of the x-axis and the normalized projection
-    dot_product = np.dot((1, 0, 0), proj_xy_axis)
-    # The inverse cosin of this dot product is theta.
-    theta = np.arccos(dot_product)
-
-    print(f'Division angles:(phi={phi}; theta={theta})')
-    return phi, theta
-
-
-# not used
-def get_line_angles(cell, p1, p2):
-    """
-    Calculate the angles between a line and the global axes.
-
-    This function calculates the angles between a line defined by two points
-    (p1 and p2) and each of the global axes (x, y, z) of the given Blender cell.
-
-    :param bpy.data.objects['name'] cell: The Blender object representing the cell.
-    :param tuple p1: The coordinates of the first point of the line.
-    :param tuple p2: The coordinates of the second point of the line.
-    :returns: Angles between the line and each global axis in radians.
-    :rtype: tuple
-    """
-    # Calculate the direction vectors of the global axes
-    x_dir = (Vector((1, 0, 0)) @ cell.matrix_world).normalized()
-    y_dir = (Vector((0, 1, 0)) @ cell.matrix_world).normalized()
-    z_dir = (Vector((0, 0, 1)) @ cell.matrix_world).normalized()
-
-    # Get the vector representing the line
-    line_vector = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
-
-    # Calculate the angles between the line and each axis
-    # 90 is added to get the orthogonal
-    x_angle = math.radians(math.degrees(math.acos(line_vector.dot(x_dir))) + 90)
-    y_angle = math.radians(math.degrees(math.acos(line_vector.dot(y_dir))) + 90)
-    z_angle = math.radians(math.degrees(math.acos(line_vector.dot(z_dir))))
-
-    return x_angle, y_angle, z_angle
-
  
+
 def apply_modifiers(obj, which='all'): 
     """
     Apply modifiers to a Blender object.
@@ -2650,8 +2579,14 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
         if (division and division_type == 'random'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_random)
+            bpy.app.handlers.frame_change_post.append(self.delay_physics_after_division)  
+            bpy.app.handlers.frame_change_post.append(self.delay_adhesion_after_division)  
+            bpy.app.handlers.frame_change_post.append(self.delay_motion_after_division)  
         if (division and division_type == 'time'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_time)
+            bpy.app.handlers.frame_change_post.append(self.delay_physics_after_division)  
+            bpy.app.handlers.frame_change_post.append(self.delay_adhesion_after_division)  
+            bpy.app.handlers.frame_change_post.append(self.delay_motion_after_division)  
         if (division and division_type == 'volume'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_volume)  
             bpy.app.handlers.frame_change_post.append(self.delay_physics_after_division)  
@@ -2782,202 +2717,6 @@ class handler_class:
                         bpy.ops.mesh.select_mode(type="VERT")
                         bpy.ops.mesh.reveal()
                         bpy.ops.object.mode_set(mode='OBJECT')
-
-    def division_handler_random(self, scene, despgraph):
-
-        div_frames = range(
-            self.frame_interval[0],
-            self.frame_interval[1],
-            self.division_rate
-            )[1:]
-        div_frames_physics = range(
-            self.frame_interval[0] + 1, 
-            self.frame_interval[1], 
-            self.division_rate
-            )[1:]
-        div_frames_forces = range(
-            self.frame_interval[0] + 5, 
-            self.frame_interval[1], 
-            self.division_rate
-            )[1:]
-                    
-        if scene.frame_current in div_frames: 
-            self.daugthers.clear()
-            mother_adhesion_strength = None
-            # self.force_collection = None
-            self.falloff = None
-            self.mother_adhesion = None
-            self.mother_stiffness = None
-
-            # Get cells that are candidates for division
-            threshold_volume = self.target_volume * 0.05
-
-            candidate_cells = [
-                obj for obj in bpy.context.scene.objects
-                if (
-                    obj.get('object') == 'cell' and 
-                    obj.get('volume') is not None and 
-                    abs(obj.get('volume') - self.target_volume) <= threshold_volume
-                )
-            ]
-
-            print(f"Candidate cells: {candidate_cells}")
-
-            if candidate_cells:
-                # Select the largest cell among 5% error from target volume
-                volumes = [cell['volume'] for cell in candidate_cells]
-                largest_volume = np.max(volumes)
-                largest_cell = candidate_cells[volumes.index(largest_volume)]
-                # Replace with cell to divide    
-                self.cell_under_div = largest_cell
-            else:
-                self.cell_under_div = None 
-                
-            if self.cell_under_div is not None: 
-                # Get name of cell under division
-                # cell_name = self.cell_under_div.name
-                # Get the object by name
-                dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
-
-                '''# If cell object exists
-                if obj:
-                    # Get cloth modifier and check if it exists
-                    cloth_modifier = obj.modifiers.get('Cloth')
-                    if cloth_modifier:
-                        mother_stiffness = cloth_modifier.settings.tension_stiffness
-                    else:
-                        raise ValueError(f"No Cloth modifier found on {cell_name}")
-                else:
-                    raise ValueError(f"Object '{cell_name}' not found")'''
-                
-                apply_modifiers(obj=dividing_cell, which='all')
-
-                d1, d2, mother_adhesion_strength, mother_motion_strength, \
-                    tmp_falloff, mother_adhesion, mother_modifiers = \
-                    divide_boolean(self.cell_under_div)
-
-                # Pass on force info to daugther cells  
-                # self.mother_adhesion_strength = mother_adhesion_strength
-                # self.mother_motion_strength = mother_motion_strength
-                # self.force_collection = tmp_collection
-                # self.falloff = tmp_falloff
-                self.mother_adhesion = mother_adhesion
-                # self.mother_stiffness = mother_stiffness
-
-                self.daugthers.append(d1)     
-                self.daugthers.append(d2)
-
-                print(f"-- Finishing division of {dividing_cell.name} "
-                      f"at frame {scene.frame_current}")
-
-            else: 
-                print('No cells under division')
-
-        if self.cell_under_div is not None: 
-
-            if scene.frame_current in div_frames_physics: 
-
-                # Toggle back on physics after mesh separation
-                apply_physics(obj=self.daugthers[0], 
-                              stiffness=self.mother_stiffness)
-                apply_physics(obj=self.daugthers[1], 
-                              stiffness=self.mother_stiffness)
-
-                for cell in self.daugthers:
-                    cells_same_type = get_cells_same_type(cell)
-                    for cell_same_type in cells_same_type:
-                        missing_forces = get_missing_adhesion_forces(cell_same_type, 
-                                                                     cell)
-                        for force in missing_forces:
-                            cell.users_collection[0].objects.link(force)
-
-            if scene.frame_current in div_frames_forces: 
-
-                # Add adhesion forces to daugther cells
-                if self.mother_adhesion: 
-                    add_homo_adhesion(cell_name=self.daugthers[0].name, 
-                                      strength=self.mother_adhesion_strength)
-                    add_homo_adhesion(cell_name=self.daugthers[1].name, 
-                                      strength=self.mother_adhesion_strength)
-
-        # CODE FOR TO SPHERE IMPLEMENTATION
-        '''div_frames_sphere = range(
-            self.frame_interval[0] + 2, 
-            self.frame_interval[1], 
-            self.division_rate
-            [1:]
-        frames = range(div_frames[0], div_frames[0] + len(rates), 1)
-
-        if scene.frame_current in sphere_frames: 
-
-            bpy.context.view_layer.objects.active = self.daugthers[0]
-            to_sphere(
-                self.daugthers[0], 
-                rates[sphere_frames.index(scene.frame_current)]
-                )
-            #bpy.context.view_layer.objects.active = None
-
-            bpy.context.view_layer.objects.active = self.daugthers[1]
-            to_sphere(
-                self.daugthers[1], 
-                rates[sphere_frames.index(scene.frame_current)]
-                )'''
-        
-        '''for collection in bpy.data.collections:
-
-            target_volume = self.unit_volume * self.volume_scale
-            threshold_volume = self.volume_scale * self.unit_volume * 0.05
-
-            candidate_cell = [
-                obj for obj
-                in collection.all_objects
-                if (
-                    obj.get('object') == 'cell' and 
-                    'volume' in obj and (abs(obj.get('volume') - target_volume) 
-                                         <= threshold_volume)
-                )
-            ]
-        
-            # Loop through only the cell objects in collections
-            cells = [
-                obj for obj 
-                in bpy.data.collections.get(collection.name_full).all_objects 
-                if obj.get('object') == 'cell'
-            ]
-            print(f"All cells: {cells}")
-
-            # Filter cells with volume around 5% of the target volume
-            target_volume = self.unit_volume * self.volume_scale
-            threshold_volume = self.volume_scale * self.unit_volume * 0.05
-            candidate_cell = [
-                cell for cell in cells 
-                if 'volume' in cell and (abs(cell['volume'] - target_volume) 
-                                         <= threshold_volume)
-            ]'''
-        
-    '''# poor results because creates overlapping meshes    
-    def cast_modifier(self, scene, despgraph):
-        # Iterate through all objects in the scene
-        for obj in bpy.context.scene.objects:
-            # Check if the object is a cell object (customize the condition as needed)
-            if obj.get('object') == 'cell':  # Example condition for cell objects
-                modifier_exists = False
-                
-                # Check if a Cast modifier already exists, if yes, update its factor
-                for modifier in obj.modifiers:
-                    if modifier.type == 'CAST':
-                        modifier_exists = True
-                        if modifier.factor < -0.5:
-                            continue
-                        else:
-                            # Decrease factor by 0.1 (adjust as needed)
-                            modifier.factor -= 0.001
-                            break
-                
-                # If no Cast modifier exists, create a new one
-                if not modifier_exists:
-                    cast_modifier = obj.modifiers.new(name="Cast", type='CAST')
-                    cast_modifier.factor = 0.0  # Start factor from 0'''
 
     def update_mesh_modifiers(self, scene, despgraph): 
 
@@ -3120,12 +2859,8 @@ class handler_class:
         """
     
         self.daugthers.clear()
-        # self.mother_adhesion_strength = None
-        # self.falloff = None
         self.mother_adhesion = None
         self.mother_motion = None
-        # self.mother_stiffness = None
-        candidate_cells = []
 
         # Get cells that are candidates for division
         target_volume = self.target_volume
@@ -3227,6 +2962,144 @@ class handler_class:
                 
             print(f"-- Finishing division of {mother_name} "
                   f"at frame {scene.frame_current}")
+        
+    def calculate_division_probability(self, mu, variance, x):
+        """
+        Calculate the probability of cell division based on volume 
+        and a normal distribution.
+
+        :param mu: The mean of the normal distribution.
+        :param variance: The variance (as a percentage of mu).
+        :param volume: The volume of the cell.
+
+        :return: The probability of cell division.
+        """
+        # Calculate standard deviation based on variance percentage
+        sigma = variance * mu
+        # Calculate the z-score (standard score) for the given volume
+        z_score = (x - mu) / sigma
+        # Calculate the cumulative distribution function (CDF) using NumPy's erf function
+        q = math.erf(z_score / np.sqrt(2))
+        cdf = 0.5 * (1 + q)
+
+        return cdf
+    
+    def division_handler_random(self, scene, despgraph):
+        """
+        Handler responsible for cell division based on volume criteria.
+
+        This method is responsible for cell division based on volume criteria 
+        during the simulation. It loop over all cells, identifies candidate 
+        cells for division, selects the largest one, and then divides 
+        into two daughter cells.
+
+        :param scene: The Blender scene object.
+        :param despgraph: The dependency graph object.
+
+        :return: None
+        """
+    
+        self.daugthers.clear()
+        self.mother_adhesion = None
+        self.mother_motion = None
+        candidate_cells = []
+
+        # Get cells that are candidates for division
+        mu = self.target_volume
+        variance = mu * 0.001
+
+        cells = [
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'cell' and 
+                obj.get('volume') is not None 
+            )
+        ]
+
+        # Loop over all cells and calculate division probability
+        for cell in cells:
+            volume = cell.get('volume')
+            if volume is not None:
+                # Calculate the division probability for this cell
+                division_prob = self.calculate_division_probability(mu=mu, 
+                                                                    variance=variance,
+                                                                    x=volume)
+                print(f"Division probability of {cell.name}: {division_prob}")
+                # Sample from the distribution to determine whether the cell divides
+                if np.random.rand() < division_prob:
+                    candidate_cells.append(cell)
+                
+        for cell_under_div in candidate_cells:
+            self.daugthers.clear()
+            self.cell_under_div = cell_under_div
+            mother_name = self.cell_under_div.name
+
+            print(f"Cell under division: {self.cell_under_div.name}")
+
+            # Get the object by name
+            dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
+
+            # If cell object exists
+            if dividing_cell:
+                # Get cloth modifier and check if it exists
+                cloth_modifier = dividing_cell.modifiers.get('Cloth')
+                if cloth_modifier:
+                    mother_stiffness = cloth_modifier.settings.tension_stiffness
+                else:
+                    raise ValueError(f"No Cloth modifier on {dividing_cell.name}")
+            else:
+                raise ValueError(f"Object '{dividing_cell.name}' not found")
+
+            # Apply the whole modifer stack in sequential order    
+            dividing_cell = apply_modifiers(obj=dividing_cell, which='all')
+
+            # Separation of mother in two distinct daughter cells
+            d1, d2, mother_adhesion_strength, mother_motion_strength, \
+                mother_adhesion_falloff, mother_adhesion, mother_motion, _ = \
+                divide_boolean(dividing_cell)
+            
+            self.cells_division_frame[mother_name] = scene.frame_current
+            self.daugthers_division_frame[d1.name] = scene.frame_current
+            self.daugthers_division_frame[d2.name] = scene.frame_current
+
+            self.mother_adhesion = mother_adhesion
+            self.mother_motion = mother_motion
+            self.mother_stiffness[d1.name] = mother_stiffness
+            self.mother_stiffness[d2.name] = mother_stiffness
+
+            self.daugthers.append(d1)
+            self.daugthers.append(d2)
+
+            self.cells_turnon_physics.append(d1)
+            self.cells_turnon_physics.append(d2)
+
+            if self.mother_adhesion: 
+                self.cells_turnon_adhesion.append(d1)
+                self.cells_turnon_adhesion.append(d2)
+                self.mother_adhesion_strength[d1.name] = mother_adhesion_strength
+                self.mother_adhesion_strength[d2.name] = mother_adhesion_strength
+                self.mother_adhesion_falloff[d1.name] = mother_adhesion_falloff
+                self.mother_adhesion_falloff[d2.name] = mother_adhesion_falloff
+            else: 
+                str = 'adhesion force'
+                for obj in [d1, d2]:
+                    if str in obj:
+                        del obj[str]
+
+            if self.mother_motion: 
+                self.cells_turnon_motion.append(d1)
+                self.cells_turnon_motion.append(d2)
+                self.mother_motion_strength[d1.name] = mother_motion_strength
+                self.mother_motion_strength[d2.name] = mother_motion_strength
+                print(f'Motion strength: {self.mother_motion_strength}')
+            else: 
+                str = 'motion force'
+                for obj in [d1, d2]:
+                    if str in obj:
+                        del obj[str]
+                
+            print(f"-- Finishing division of {dividing_cell.name} "
+                  f"at frame {scene.frame_current}")
 
     def division_handler_time(self, scene, despgraph):
         """
@@ -3242,18 +3115,20 @@ class handler_class:
 
         :return: None
         """
-        sum_dt = scene.frame_current * self.dt_physics
+        dt = self.dt_physics
+        sum_dt = scene.frame_current * dt
         print(f'time in minutes: {sum_dt}')
 
-        # self.daugthers.clear()
-        self.mother_adhesion_strength = None
-        self.falloff = None
+        self.daugthers.clear()
         self.mother_adhesion = None
         self.mother_motion = None
-        self.mother_stiffness = None
         candidate_cells = []
 
-        candidate_cells = [
+        # Get cells that are candidates for division
+        mu = 1 / self.division_rate
+        variance = mu * 0.005
+
+        cells = [
             obj for obj in bpy.context.scene.objects
             if (
                 obj.get('object') == 'cell' and 
@@ -3261,83 +3136,102 @@ class handler_class:
             )
         ]
 
-        print(f"Candidate cells: {candidate_cells}")
+        # Loop over all cells and calculate division probability
+        for cell in cells:
+            volume = cell.get('volume')
+            if volume is not None:
+                # Get time since division in minutes
+                current_time = sum_dt
+                if self.daugthers_division_frame.get(cell.name): 
+                    last_div_time = dt * self.daugthers_division_frame.get(cell.name)
+                else: 
+                    last_div_time = 0
 
-        if sum_dt % (1 / self.division_rate) == 0: 
+                time_since_division = current_time - last_div_time
+                print(f"Time since division: {time_since_division}")
 
-            for cell_under_div in candidate_cells:
+                # Calculate the division probability for this cell
+                division_prob = self.calculate_division_probability(mu=mu, 
+                                                                    variance=variance,
+                                                                    x=time_since_division)
+                print(f"Division probability of {cell.name}: {division_prob}")
+                # Sample from the distribution to determine whether the cell divides
+                if np.random.rand() < division_prob:
+                    candidate_cells.append(cell)
 
-                self.daugthers.clear()
-                self.cell_under_div = cell_under_div
+        for cell_under_div in candidate_cells:
 
-                print(f"Cell under division: {self.cell_under_div.name}")
+            self.daugthers.clear()
+            self.cell_under_div = cell_under_div
+            mother_name = self.cell_under_div.name
 
-                # Get the object by name
-                dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
+            print(f"Cell under division: {self.cell_under_div.name}")
 
-                # If cell object exists
-                if dividing_cell:
-                    # Get cloth modifier and check if it exists
-                    cloth_modifier = dividing_cell.modifiers.get('Cloth')
-                    if cloth_modifier:
-                        mother_stiffness = cloth_modifier.settings.tension_stiffness
-                    else:
-                        raise ValueError(f"No Cloth modifier on {dividing_cell.name}")
+            # Get the object by name
+            dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
+
+            # If cell object exists
+            if dividing_cell:
+                # Get cloth modifier and check if it exists
+                cloth_modifier = dividing_cell.modifiers.get('Cloth')
+                if cloth_modifier:
+                    mother_stiffness = cloth_modifier.settings.tension_stiffness
                 else:
-                    raise ValueError(f"Object '{dividing_cell.name}' not found")
+                    raise ValueError(f"No Cloth modifier on {dividing_cell.name}")
+            else:
+                raise ValueError(f"Object '{dividing_cell.name}' not found")
 
-                # Apply the whole modifer stack in sequential order    
-                dividing_cell = apply_modifiers(obj=dividing_cell, which='all')
+            # Apply the whole modifer stack in sequential order    
+            dividing_cell = apply_modifiers(obj=dividing_cell, which='all')
 
-                # Separation of mother in two distinct daughter cells
-                d1, d2, mother_adhesion_strength, mother_motion_strength, \
-                    tmp_falloff, mother_adhesion, mother_motion, _ = \
-                    divide_boolean(dividing_cell)
+            # Separation of mother in two distinct daughter cells
+            d1, d2, mother_adhesion_strength, mother_motion_strength, \
+                mother_adhesion_falloff, mother_adhesion, mother_motion, _ = \
+                divide_boolean(dividing_cell)
+            
+            self.cells_division_frame[mother_name] = scene.frame_current
+            self.daugthers_division_frame[d1.name] = scene.frame_current
+            self.daugthers_division_frame[d2.name] = scene.frame_current
+
+            self.mother_adhesion = mother_adhesion
+            self.mother_motion = mother_motion
+            self.mother_stiffness[d1.name] = mother_stiffness
+            self.mother_stiffness[d2.name] = mother_stiffness
+
+            self.daugthers.append(d1)
+            self.daugthers.append(d2)
+
+            self.cells_turnon_physics.append(d1)
+            self.cells_turnon_physics.append(d2)
+
+            if self.mother_adhesion: 
+                self.cells_turnon_adhesion.append(d1)
+                self.cells_turnon_adhesion.append(d2)
+                self.mother_adhesion_strength[d1.name] = mother_adhesion_strength
+                self.mother_adhesion_strength[d2.name] = mother_adhesion_strength
+                self.mother_adhesion_falloff[d1.name] = mother_adhesion_falloff
+                self.mother_adhesion_falloff[d2.name] = mother_adhesion_falloff
+            else: 
+                str = 'adhesion force'
+                for obj in [d1, d2]:
+                    if str in obj:
+                        del obj[str]
+
+            if self.mother_motion: 
+                self.cells_turnon_motion.append(d1)
+                self.cells_turnon_motion.append(d2)
+                self.mother_motion_strength[d1.name] = mother_motion_strength
+                self.mother_motion_strength[d2.name] = mother_motion_strength
+                print(f'Motion strength: {self.mother_motion_strength}')
+            else: 
+                str = 'motion force'
+                for obj in [d1, d2]:
+                    if str in obj:
+                        del obj[str]
                 
-                # Pass on force parameters to daugther cells  
-                self.mother_adhesion_strength = mother_adhesion_strength
-                self.mother_motion_strength = mother_motion_strength
-                self.falloff = tmp_falloff
-                self.mother_adhesion = mother_adhesion
-                self.mother_motion = mother_motion
-                self.mother_stiffness = mother_stiffness
-
-                self.daugthers.append(d1)     
-                self.daugthers.append(d2)     
-
-                # Toggle back on physics after mesh separation
-                apply_physics(obj=self.daugthers[0], 
-                              stiffness=self.mother_stiffness)
-                apply_physics(obj=self.daugthers[1],
-                              stiffness=self.mother_stiffness)
-
-                # Add adhesion forces to daugther cells
-                if self.mother_adhesion: 
-                    print('Mother adhesion detected, passing it on')
-                    add_homo_adhesion(cell_name=self.daugthers[0].name, 
-                                      strength=self.mother_adhesion_strength)
-                    add_homo_adhesion(cell_name=self.daugthers[1].name, 
-                                      strength=self.mother_adhesion_strength)
-
-                    for cell in self.daugthers:
-                        cells_same_type = get_cells_same_type(cell)
-                        for cell_same_type in cells_same_type:
-                            missing_forces = get_missing_adhesion_forces(cell_same_type, 
-                                                                         cell)
-                            print(f"Missing adhesion forces: {missing_forces}")
-                            for force in missing_forces:
-                                cell.users_collection[0].objects.link(force)
-
-                if self.mother_motion: 
-                    print('Mother motion detected, passing it on')
-                    add_motion(effector_name=self.daugthers[0].name, 
-                               strength=self.mother_motion_strength)
-                    add_motion(effector_name=self.daugthers[1].name, 
-                               strength=self.mother_motion_strength)
-                    
-                print(f"-- Finishing division of {dividing_cell.name} "
-                      f"at frame {scene.frame_current}")
-                
+            print(f"-- Finishing division of {dividing_cell.name} "
+                  f"at frame {scene.frame_current}")
+            
     def initialize_cell_PID(self, cell):
         cell_name = cell.name
         if cell_name not in self.cell_PIDs:
