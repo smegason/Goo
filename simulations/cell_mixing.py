@@ -33,7 +33,7 @@ goo.add_homo_adhesion('cell_A10', -homoA)
 goo.add_homo_adhesion('cell_A11', -homoA)
 goo.add_homo_adhesion('cell_A12', -homoA)
 
-goo.add_turbulence_motion()
+goo.add_turbulence_motion(strength=-20000)
 
 goo.add_sphere_boundaries(loc=(0, 0, 0), radius=10)
 
