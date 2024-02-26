@@ -128,6 +128,7 @@ def get_minor_axis(obj):
     return tuple(minor_axis_global)[:3], length_minor_axis
 
 
+# not used
 def get_long_axis_global(obj):
     """
     Calculates the long axis of a 3D object in global coordinates.
@@ -162,8 +163,10 @@ def get_long_axis_global(obj):
                                                                             1)
 
     # Find extreme points along the major axis
-    min_point = np.min(vertex_coords.dot(major_axis))
-    max_point = np.max(vertex_coords.dot(major_axis))
+    min_point = np.min(vertex_coords.dot((major_axis_global)[:3]))
+    print(f"Min point: {min_point}")
+    max_point = np.max(vertex_coords.dot((major_axis_global)[:3]))
+    print(f"Max point: {max_point}")
     length_long_axis = max_point - min_point
 
     return tuple(major_axis_global)[:3], length_long_axis
@@ -215,21 +218,11 @@ def get_long_axis(obj):
     # is the major axis.
     sort_indices = np.argsort(eigenvals)
     major_x, major_y, major_z = eigenvecs[:, sort_indices[-1]]
+    minor_x, minor_y, minor_z = eigenvecs[:, sort_indices[0]]
     long_axis = (major_x, major_y, major_z)
 
-    # We project each vertex onto the major axis and calculate
-    # the distance between the vertex and the closest and farthest
-    # projections. The difference between these distances is the
-    # length of the axis contained within the mesh.
-    # Calculate the principal components of the mesh
-    covariance_matrix = np.cov(vertex_coords, rowvar=False)
-    eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
-    principal_axis = eigenvectors[:, np.argmax(eigenvalues)]
-    principal_axis = np.abs(principal_axis)
-    long_axis_normalized = tuple(principal_axis / np.linalg.norm(principal_axis))
-
     # Find the two vertices farthest apart along the principal axis
-    vertex_distances = vertex_coords.dot(principal_axis)
+    vertex_distances = vertex_coords.dot(long_axis)
     vertex_indices = np.argsort(vertex_distances)
     first_vertex = vertices[vertex_indices[0]]
     last_vertex = vertices[vertex_indices[-1]]
@@ -241,11 +234,71 @@ def get_long_axis(obj):
     )
 
     # Compute end points of the long axis
-    endpoints = [first_vertex.co, last_vertex.co]
+    endpoints_major = [first_vertex.co, last_vertex.co]
 
-    return long_axis, long_axis_normalized, long_axis_length, endpoints
+    '''# Repeat for the minor axis
+    minor_axis = (minor_x, minor_y, minor_z)
+
+    # Find the two vertices farthest apart along the principal axis
+    vertex_distances = vertex_coords.dot(minor_axis)
+    vertex_indices = np.argsort(vertex_distances)
+    first_vertex = vertices[vertex_indices[0]]
+    last_vertex = vertices[vertex_indices[-1]]
+
+    # Calculate the length of the long axis contained in the mesh
+    minor_axis_length = np.linalg.norm(
+        (evaluated_object.matrix_world @ last_vertex.co) -
+        (evaluated_object.matrix_world @ first_vertex.co)
+    )
+
+    # Compute end points of the long axis
+    endpoints_minor = [first_vertex.co, last_vertex.co]'''
+
+    # long_axis_normalized
+    return long_axis, long_axis_length, endpoints_major
 
 
+def get_division_plane(obj, long_axis, com, length): 
+    """
+    Creates a plane orthogonal to the long axis vector 
+    and passing through the cell's center of mass.
+
+    :param long_axis: The long axis vector.
+    :type long_axis: numpy.ndarray
+    :param com: The center of mass of the mesh.
+    :type com: numpy.ndarray
+    """
+    # Define a new plane object
+    bpy.ops.mesh.primitive_plane_add(size=length, 
+                                     enter_editmode=False, 
+                                     align='WORLD', 
+                                     location=com)
+    plane = bpy.context.active_object
+
+    plane.name = f"{obj.name}_division_plane"
+
+    # Align the plane with the long axis
+    rot_quat = long_axis.to_track_quat('Z', 'Y')
+    plane.rotation_mode = 'QUATERNION'
+    plane.rotation_quaternion = rot_quat
+
+    # Translate the plane to pass through the center of mass
+    plane.location = com
+
+    # Add solidify modifier to the plane, add tickness to the plane
+    bpy.ops.object.modifier_add(type='SOLIDIFY')
+    solid_mod = plane.modifiers[-1]
+    solid_mod.offset = 0
+    solid_mod.thickness = 0.03
+    bpy.ops.object.modifier_apply(modifier=solid_mod.name)
+
+    # Hide the plane
+    plane.hide_set(True)
+
+    return plane
+
+
+# not used
 def get_longaxis_angles(axis):
     """Retrieves the 2 angles associated with the long axis of a cell. 
 
@@ -285,6 +338,7 @@ def get_longaxis_angles(axis):
     return phi, theta
 
 
+# not used
 def get_line_angles(cell, p1, p2):
     """
     Calculate the angles between a line and the global axes.
@@ -780,9 +834,9 @@ def divide_boolean(obj):
     mother_motion = False  # Default value
 
     # Get COM
-    p1 = get_centerofmass(obj)
+    com = get_centerofmass(obj)
     # Get the long axis in global coordinate from the origin
-    p2, _ = get_long_axis_global(obj)    
+    long_axis, length, _ = get_long_axis(obj)    
 
     # Get mother modifiers and their values
     mother_modifiers = obj.modifiers
@@ -796,33 +850,13 @@ def divide_boolean(obj):
                 modifier_data[attr] = getattr(modifier, attr)
         modifier_values.append(modifier_data)
 
-    # Get the angles representing the orientation of the division plane
-    x, y, z = get_line_angles(obj, p1, p2)
     # Get name of dividing cell
     mother_name = obj.name
     # Create division plane
-    plane = bpy.ops.mesh.primitive_plane_add(enter_editmode=False, 
-                                             size=5, 
-                                             align='WORLD', 
-                                             location=p1, 
-                                             scale=(1, 1, 1), 
-                                             rotation=(x, y, z))
-    # Set plane as active object
-    plane = bpy.context.active_object
-    # Rename plane with specific cell name
-    plane_name = f"{mother_name}_division plane"
-    plane.name = plane_name
-
-    # Add solidify modifier to the plane, add tickness to the plane
-    bpy.ops.object.modifier_add(type='SOLIDIFY')
-    solid_mod = plane.modifiers[-1]
-    solid_mod.offset = 0
-    solid_mod.thickness = 0.03
-    bpy.ops.object.modifier_apply(modifier=solid_mod.name)
-
-    Force.force_list = [
-        force for force in Force.force_list if force.name != obj['adhesion force']
-    ]
+    plane = get_division_plane(obj=obj, 
+                               long_axis=Vector(long_axis), 
+                               com=com,
+                               length=length)
     
     # Remove mother adhesion force
     if 'adhesion force' in obj: 
@@ -841,6 +875,7 @@ def divide_boolean(obj):
         mother_motion = True
         motion_force = bpy.data.objects[obj['motion force']]
         motion_strength = motion_force.field.strength
+        print(f'Motion strength divide_boolean: {motion_strength}')
 
         if obj['motion force'] in bpy.data.objects:
             bpy.data.objects.remove(
@@ -853,7 +888,7 @@ def divide_boolean(obj):
     bpy.ops.object.modifier_add(type='BOOLEAN')
     bool_mod = obj.modifiers[-1]
     bool_mod.operand_type = 'OBJECT'
-    bool_mod.object = bpy.data.objects[plane_name]
+    bool_mod.object = bpy.data.objects[plane.name]
     bool_mod.operation = 'DIFFERENCE'
     bool_mod.solver = 'EXACT'
 
@@ -884,9 +919,6 @@ def divide_boolean(obj):
     d2 = bpy.context.scene.objects[mother_name]
     d2.name = f"{mother_name}.02"  # mother cell
 
-    # Hide the plane
-    bpy.data.objects[plane_name].hide_set(True)
-
     # Declare collections to contain daughter cells
     mother_collection = obj.users_collection[0]
     mother_type = mother_collection.get('type')
@@ -901,18 +933,16 @@ def divide_boolean(obj):
     # Add the active cell to our specific collection 
     bpy.data.collections[d1_collection.name].objects.link(d1)
  
-    # Pass on the mother force
     d1.select_set(True)
     bpy.ops.object.convert(target='MESH')
     bpy.context.view_layer.update()
     # Adding a Remesh modifier to the converted mesh
     remesh_modifier = d1.modifiers.new(name='Remesh', type='REMESH')
     remesh_modifier.mode = 'VOXEL'
-    remesh_modifier.voxel_size = 0.2  # microns
+    remesh_modifier.voxel_size = 0.25  # microns
     remesh_modifier.adaptivity = 0
     remesh_modifier.use_remove_disconnected = True
     remesh_modifier.use_smooth_shade = True
-    bpy.context.view_layer.update()
     bpy.ops.object.modifier_apply(modifier="Remesh")
     bpy.context.view_layer.update()
 
@@ -928,19 +958,25 @@ def divide_boolean(obj):
     bpy.context.view_layer.update()
     remesh_modifier = d2.modifiers.new(name='Remesh', type='REMESH')
     remesh_modifier.mode = 'VOXEL'
-    remesh_modifier.voxel_size = 0.2  # microns
+    remesh_modifier.voxel_size = 0.25  # microns
     remesh_modifier.adaptivity = 0
     remesh_modifier.use_remove_disconnected = True
     remesh_modifier.use_smooth_shade = True
-    bpy.context.view_layer.update()
     bpy.ops.object.modifier_apply(modifier="Remesh")
     bpy.context.view_layer.update()
 
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.update()
 
-    # Retrieve the collection by name
+    d1['volume'] = calculate_volume(d1)
+    d2['volume'] = calculate_volume(d2)
+    d1['previous_pressure'] = 1
+    d2['previous_pressure'] = 1
 
+    bpy.ops.object.mode_set(mode='EDIT') 
+    bpy.ops.object.mode_set(mode='OBJECT') 
+
+    # Retrieve the collection by name
     if mother_collection:
         # Remove the collection
         bpy.data.collections.remove(mother_collection)
@@ -948,246 +984,19 @@ def divide_boolean(obj):
         raise ValueError(f"Collection '{mother_collection}' not found")
 
     # Delete the plane if it exists
-    if plane_name in bpy.data.objects:
+    '''if plane.name in bpy.data.objects:
         # Get the object reference
-        obj = bpy.data.objects[plane_name]
+        obj = bpy.data.objects[plane.name]
         # Remove the object
         bpy.data.objects.remove(obj, do_unlink=True)
     else:
-        print(f"Division plane: '{plane_name}' not found.")
+        print(f"Division plane: '{plane.name}' not found.")'''
 
     return d1, d2, adhesion_strength, motion_strength, \
         falloff, mother_adhesion, mother_motion, modifier_values
 
 
-def divide_boolean_dg(obj): 
-    """
-    Divide a cell object along its division plane using boolean operations.
-
-    This function performs boolean division on a Blender cell object, creating two
-    daughter cells. It also handles the declaration of daughter forces, 
-    inheritance of properties, and separation of the mesh. 
-    Note that the input Blender cell object is fixed, 
-    meaning that all its modifiers have been applied.
-
-    :param bpy.data.objects['name'] obj: The Blender object to be divided.
-
-    :return: 
-             - bpy.data.objects['name']: First daughter cell.
-             - bpy.data.objects['name']: Second daughter cell.
-             - float: Adhesion strength.
-             - float: Motion strength.
-             - float: Falloff.
-             - bool: Flag indicating if there was a mother adhesion force.
-             - bool: Flag indicating if there was a mother motion force.
-             - list: List of dictionaries containing values of the modifiers applied \
-                    to the original object before division.   
-
-    """
-    # Initialize variables
-    adhesion_strength = 0  # Default value
-    motion_strength = 0  # Default value
-    falloff = 0  # Default value
-    mother_adhesion = False  # Default value
-    mother_motion = False  # Default value
-
-    # Get COM
-    p1 = get_centerofmass(obj)
-    # Get the long axis in global coordinate from the origin
-    p2, _ = get_long_axis_global(obj)    
-
-    # Get mother modifiers and their values
-    # mother_modifiers = obj.modifiers
-
-    '''# Get the values of the modifiers
-    modifier_values = []
-    for modifier in mother_modifiers:
-        modifier_data = {}
-        for attr in dir(modifier):
-            if not attr.startswith("__") and not callable(getattr(modifier, attr)):
-                modifier_data[attr] = getattr(modifier, attr)
-        modifier_values.append(modifier_data)'''
-
-    # Get the angles representing the orientation of the division plane
-    x, y, z = get_line_angles(obj, p1, p2)
-    # Get name of dividing cell
-    mother_name = obj.name
-    # Create division plane
-    plane = bpy.ops.mesh.primitive_plane_add(enter_editmode=False, 
-                                             size=5, 
-                                             align='WORLD', 
-                                             location=p1, 
-                                             scale=(1, 1, 1), 
-                                             rotation=(x, y, z))
-    # Set plane as active object
-    plane = bpy.context.active_object
-    # Rename plane with specific cell name
-    plane_name = f"{mother_name}_division plane"
-    plane.name = plane_name
-
-    # Add solidify modifier to the plane, add tickness to the plane
-    bpy.ops.object.modifier_add(type='SOLIDIFY')
-    solid_mod = plane.modifiers[-1]
-    solid_mod.offset = 0
-    solid_mod.thickness = 0.03
-    bpy.ops.object.modifier_apply(modifier=solid_mod.name)
-
-    Force.force_list = [
-        force for force in Force.force_list if force.name != obj['adhesion force']
-    ]
-    
-    # Remove mother adhesion force
-    if 'adhesion force' in obj: 
-        mother_adhesion = True
-        adhesion_force = bpy.data.objects[obj['adhesion force']]
-        adhesion_strength = adhesion_force.field.strength
-        falloff = adhesion_force.field.falloff_power
-        if obj['adhesion force'] in bpy.data.objects:
-            bpy.data.objects.remove(
-                bpy.data.objects[obj['adhesion force']], 
-                do_unlink=True
-            )
-
-    # Remove mother motion force
-    if 'motion force' in obj: 
-        mother_motion = True
-        motion_force = bpy.data.objects[obj['motion force']]
-        motion_strength = motion_force.field.strength
-
-        if obj['motion force'] in bpy.data.objects:
-            bpy.data.objects.remove(
-                bpy.data.objects[obj['motion force']], 
-                do_unlink=True
-            )
-    
-    bpy.context.view_layer.objects.active = obj
-    cell_eval = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
-
-    # Get the vertices of the original and evaluated objects
-    vertices_original = np.array([v.co for v in obj.data.vertices])
-    vertices_evaluated = np.array([v.co for v in cell_eval.data.vertices])
-
-    # Calculate the total distance between vertices
-    total_distance = np.sum(np.linalg.norm(vertices_evaluated - vertices_original, 
-                                           axis=1))
-
-    print("Total Distance:", total_distance)
-
-    # Add boolean modifier to the original object
-    # bpy.context.view_layer.objects.active = cell_eval
-    bpy.ops.object.modifier_add(type='BOOLEAN')
-    bool_mod = cell_eval.modifiers[-1]
-    bool_mod.operand_type = 'OBJECT'
-    bool_mod.object = bpy.data.objects[plane_name]
-    bool_mod.operation = 'DIFFERENCE'
-    bool_mod.solver = 'EXACT'
-
-    # Apply the boolean modifier to the evaluated object
-    bpy.ops.object.modifier_apply({"object": cell_eval}, modifier=bool_mod.name)
-
-    # bpy.ops.object.modifier_apply(modifier="Cloth")
-    # bpy.ops.object.modifier_apply(modifier=bool_mod.name)
-
-    # Deselect all vertices in edit mode
-    bpy.ops.object.mode_set(mode='EDIT')  
-    bpy.ops.mesh.select_mode(type="VERT")
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode='OBJECT')
-
-    # Select a vertex in object mode
-    mesh = cell_eval.data
-    vertex = mesh.vertices[0]
-    vertex.select = True
-
-    # select all vertices linked to the selected vertex
-    bpy.ops.object.mode_set(mode='EDIT') 
-    bpy.ops.mesh.select_linked(delimit={'NORMAL'})
-    # Separate the outer and inner parts of the mesh
-    bpy.ops.mesh.separate(type='SELECTED')
-    bpy.ops.object.mode_set(mode='OBJECT')
-
-    d1 = bpy.context.selected_objects[0]  # to be renamed
-    d1.name = f"{mother_name}.01"  # new cell
-
-    d2 = bpy.context.scene.objects[mother_name]
-    d2.name = f"{mother_name}.02"  # mother cell
-
-    # Hide the plane
-    bpy.data.objects[plane_name].hide_set(True)
-
-    # Declare collections to contain daughter cells
-    mother_collection = obj.users_collection[0]
-    mother_type = mother_collection.get('type')
-    d1_collection = make_collection(f'{d1.name}_collection', type=mother_type)
-    d2_collection = make_collection(f'{d2.name}_collection', type=mother_type)
-
-    bpy.ops.object.select_all(action='DESELECT')
-
-    bpy.context.view_layer.objects.active = d1
-    # remove duplicate objects outside of the collection
-    bpy.ops.collection.objects_remove_all()
-    # Add the active cell to our specific collection 
-    bpy.data.collections[d1_collection.name].objects.link(d1)
- 
-    # Pass on the mother force
-    d1.select_set(True)
-    bpy.ops.object.convert(target='MESH')
-    bpy.context.view_layer.update()
-    # Adding a Remesh modifier to the converted mesh
-    remesh_modifier = d1.modifiers.new(name='Remesh', type='REMESH')
-    remesh_modifier.mode = 'VOXEL'
-    remesh_modifier.voxel_size = 0.2  # microns
-    remesh_modifier.adaptivity = 0
-    remesh_modifier.use_remove_disconnected = True
-    remesh_modifier.use_smooth_shade = True
-    bpy.context.view_layer.update()
-    bpy.ops.object.modifier_apply(modifier="Remesh")
-    bpy.context.view_layer.update()
-
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.context.view_layer.objects.active = d2
-    # remove duplicate objects outside of the collection
-    bpy.ops.collection.objects_remove_all()
-    # Add the active cell to our specific collection 
-    bpy.data.collections[d2_collection.name].objects.link(d2)
-
-    d2.select_set(True)
-    bpy.ops.object.convert(target='MESH')
-    bpy.context.view_layer.update()
-    remesh_modifier = d2.modifiers.new(name='Remesh', type='REMESH')
-    remesh_modifier.mode = 'VOXEL'
-    remesh_modifier.voxel_size = 0.2  # microns
-    remesh_modifier.adaptivity = 0
-    remesh_modifier.use_remove_disconnected = True
-    remesh_modifier.use_smooth_shade = True
-    bpy.context.view_layer.update()
-    bpy.ops.object.modifier_apply(modifier="Remesh")
-    bpy.context.view_layer.update()
-
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.context.view_layer.update()
-
-    # Retrieve the collection by name
-
-    if mother_collection:
-        # Remove the collection
-        bpy.data.collections.remove(mother_collection)
-    else:
-        raise ValueError(f"Collection '{mother_collection}' not found")
-
-    # Delete the plane if it exists
-    if plane_name in bpy.data.objects:
-        # Get the object reference
-        obj = bpy.data.objects[plane_name]
-        # Remove the object
-        bpy.data.objects.remove(obj, do_unlink=True)
-    else:
-        print(f"Division plane: '{plane_name}' not found.")
-
-    return d1, d2, adhesion_strength, motion_strength, \
-        falloff, mother_adhesion, mother_motion
-
-
+# not used
 def disable_internal_springs(objects):
     """
     Disable internal springs for Cloth modifiers in a list of Blender cell objects.
@@ -1244,11 +1053,11 @@ def apply_physics(obj,
     bpy.ops.object.modifier_add(type='SUBSURF')
     bpy.context.object.modifiers["Subdivision"].subdivision_type = 'CATMULL_CLARK'
     bpy.context.object.modifiers["Subdivision"].levels = 1
-    bpy.context.object.modifiers["Subdivision"].quality = 3
+    bpy.context.object.modifiers["Subdivision"].quality = 5
     
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
-    bpy.context.object.modifiers['Cloth'].settings.quality = 5
+    bpy.context.object.modifiers['Cloth'].settings.quality = 10
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = 1
@@ -1307,7 +1116,7 @@ def apply_physics(obj,
     remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
     obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
     remesh_mod.mode = 'VOXEL'
-    remesh_mod.voxel_size = 0.2  # microns
+    remesh_mod.voxel_size = 0.25  # microns
     remesh_mod.adaptivity = 0
     # remesh_mod.mode = 'SMOOTH'
     # remesh_mod.octree_depth = 4
@@ -1419,6 +1228,7 @@ def make_cell(
     radius=1,
     remeshing=True,
     scale=(1, 1, 1),
+    rotation=(0, 0, 0), 
     stiffness=1,
     material=("bubble", 0.007, 0.021, 0.3), 
     arcdiv=5,
@@ -1459,7 +1269,9 @@ def make_cell(
                                               div_type='CORNERS',
                                               odd_axis_align=False,
                                               no_limit=False,
-                                              location=loc
+                                              location=loc, 
+                                              rotation=rotation, 
+                                              scale=scale
                                               )
         
     elif mesh == 'icosphere': 
@@ -1468,6 +1280,7 @@ def make_cell(
                                               calc_uvs=True,
                                               align='WORLD',
                                               location=loc,
+                                              rotation=rotation, 
                                               scale=scale
                                               )
     else:
@@ -1477,9 +1290,9 @@ def make_cell(
     # Give the Blender object the cell's name
     obj = bpy.context.object
 
-    bpy.context.object.scale[0] = scale[0]
+    '''bpy.context.object.scale[0] = scale[0]
     bpy.context.object.scale[1] = scale[1]
-    bpy.context.object.scale[2] = scale[2]
+    bpy.context.object.scale[2] = scale[2]'''
 
     bpy.context.object.name = name
     bpy.context.object['object'] = 'cell'
@@ -1498,7 +1311,7 @@ def make_cell(
 
     # Add cloth settings 
     bpy.ops.object.modifier_add(type='CLOTH')
-    bpy.context.object.modifiers['Cloth'].settings.quality = 5
+    bpy.context.object.modifiers['Cloth'].settings.quality = 10
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
     bpy.context.object.modifiers["Cloth"].settings.mass = 1
@@ -1529,7 +1342,7 @@ def make_cell(
         = 10000
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 0.01
+    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 1
     bpy.context.object['previous_pressure'] = \
         bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
     bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
@@ -1559,7 +1372,7 @@ def make_cell(
         remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
         obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
         remesh_mod.mode = 'VOXEL'
-        remesh_mod.voxel_size = 0.2  # microns
+        remesh_mod.voxel_size = 0.25  # microns
         remesh_mod.adaptivity = 0
         remesh_mod.use_remove_disconnected = True
         remesh_mod.use_smooth_shade = True
@@ -1580,7 +1393,7 @@ def make_cell(
     # Add the active cell to our specific collection 
     bpy.data.collections[collection.name].objects.link(bpy.data.objects[name])
 
-    return
+    return obj
 
 
 def add_material(mat_name, r, g, b):
@@ -2501,7 +2314,7 @@ def constrict(obj, indices):
     """
     # Define the two tuple coordinates that define the line
     p1 = get_centerofmass(obj)
-    p2 = get_long_axis_global(obj)
+    p2, _, _ = get_long_axis(obj)
     print(f'COM: {p1}, long axis: {p2}')
 
     # Set the active object and get the evaluated mesh
@@ -2537,7 +2350,7 @@ def get_division_angles(cell, alpha):
 
     # Define the two tuple coordinates that define the line
     p1 = get_centerofmass(cell)
-    p2 = get_long_axis_global(cell)
+    p2, _, _ = get_long_axis(cell)
 
     # Get the vector representing the line
     line_vector = Vector((p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2])).normalized()
@@ -2708,6 +2521,15 @@ class handler_class:
         self.division_rate = 0.0
         self.cell_under_div = None
         self.daugthers = []
+        self.cells_division_frame = defaultdict()
+        self.daugthers_division_frame = defaultdict()
+        self.cells_turnon_physics = []
+        self.cells_turnon_adhesion = []
+        self.cells_turnon_motion = []
+        self.mother_stiffness = defaultdict()
+        self.mother_adhesion_strength = defaultdict()
+        self.mother_adhesion_falloff = defaultdict()
+        self.mother_motion_strength = defaultdict()
 
         # For cell growth 
         self.volumes = defaultdict(list)
@@ -2743,8 +2565,8 @@ class handler_class:
     def launch_simulation(
             self,
             filepath,
-            target_volume=5,
-            division_rate=50,
+            target_volume=20,
+            division_rate=1/50,
             start=1,
             end=250,
             motion_strength=-500,
@@ -2758,7 +2580,8 @@ class handler_class:
             division=False,
             data=False,
             motility=False,
-            boundary=False):
+            boundary=False, 
+            test=False):
         
         """
         Launches the simulation with specified parameters. 
@@ -2830,13 +2653,18 @@ class handler_class:
         if (division and division_type == 'time'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_time)
         if (division and division_type == 'volume'):
-            bpy.app.handlers.frame_change_post.append(self.division_handler_volume)            
+            bpy.app.handlers.frame_change_post.append(self.division_handler_volume)  
+            bpy.app.handlers.frame_change_post.append(self.delay_physics_after_division)  
+            bpy.app.handlers.frame_change_post.append(self.delay_adhesion_after_division)  
+            bpy.app.handlers.frame_change_post.append(self.delay_motion_after_division)  
         if boundary:
             bpy.app.handlers.frame_change_post.append(self.boundary_handler)
         if data:
             bpy.app.handlers.frame_change_post.append(self.data_export_handler)
-            bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
-            
+            # bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
+        if test: 
+            bpy.app.handlers.frame_change_post.append(self.test_long_axis)
+
         # bpy.app.handlers.frame_change_post.append(self.wall_compression_handler)
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_animation)
@@ -2844,6 +2672,27 @@ class handler_class:
         # bpy.ops.screen.animation_play()
 
         return 
+
+    def test_long_axis(self, scene, depsgraph): 
+        # Get all objects in the scene that are identified as 'cell'
+        cells = [
+            obj for obj in scene.objects
+            if obj.get('object') == 'cell'
+        ]
+
+        for cell in cells:
+            # Set the current cell as the active object
+            bpy.context.view_layer.objects.active = cell
+            long_axis_global, length_global = get_long_axis_global(cell)
+            long_axis, length, endpoints = get_long_axis(cell)
+            com = get_centerofmass(cell)
+
+            get_division_plane(cell, Vector(long_axis), com, length)
+
+            print(f"Cell under test: {cell.name}")
+            print(f"Long axis global: {long_axis_global} with length of {length_global}")
+            print(f"Long axis norm: {long_axis} with length of {length}")
+            print(f"Endpoints: {endpoints}")
 
     def wall_compression_handler(self, scene, depsgraph): 
 
@@ -2913,7 +2762,7 @@ class handler_class:
                             )
                         remesh_mod = cell.modifiers.get(f"Remesh_tmp_{cell.name}")
                         remesh_mod.mode = 'VOXEL'
-                        remesh_mod.voxel_size = 0.2  # microns
+                        remesh_mod.voxel_size = 0.25  # microns
                         remesh_mod.adaptivity = 0 
                         remesh_mod.use_remove_disconnected = True
                         remesh_mod.use_smooth_shade = True
@@ -3186,6 +3035,75 @@ class handler_class:
                 print(f"Distance above threshold for {cell.name}.")
                 # Add your logic here to trigger something
 
+    def delay_physics_after_division(self, scene, depsgraph): 
+        cells_to_remove = []
+
+        for cell in self.cells_turnon_physics: 
+            division_frame = self.daugthers_division_frame.get(cell.name)
+            current_frame = scene.frame_current
+            delta_frame = current_frame - division_frame
+            
+            if delta_frame == 1: 
+                # Toggle back on physics after mesh separation
+                apply_physics(obj=cell, 
+                              stiffness=self.mother_stiffness.get(cell.name))
+                # Add cell to the list for removal
+                cells_to_remove.append(cell)
+
+        # Remove cells from self.cells_turnon_physics
+        for cell in cells_to_remove:
+            self.cells_turnon_physics.remove(cell)
+                
+    def delay_adhesion_after_division(self, scene, depsgraph): 
+        cells_to_remove = []
+
+        for cell1 in self.cells_turnon_adhesion: 
+            division_frame = self.daugthers_division_frame.get(cell1.name)
+            current_frame = scene.frame_current
+            delta_frame = current_frame - division_frame
+
+            if delta_frame == 2: 
+                print('Mother adhesion detected, passing it on')
+                add_homo_adhesion(cell_name=cell1.name, 
+                                  strength=self.mother_adhesion_strength.get(cell1.name))
+                
+                for cell2 in self.cells_turnon_adhesion:
+                    cells_same_type = get_cells_same_type(cell2)
+                    for cell_same_type in cells_same_type:
+                        missing_forces = get_missing_adhesion_forces(cell_same_type,
+                                                                     cell2)
+                        print(f"Missing adhesion forces: {missing_forces}")
+                        for force in missing_forces:
+                            cell2.users_collection[0].objects.link(force)
+
+                cells_to_remove.append(cell1)
+
+        # Remove cells after adhesion has been added
+        for cell in cells_to_remove:
+            self.cells_turnon_adhesion.remove(cell)
+
+    def delay_motion_after_division(self, scene, depsgraph): 
+        cells_to_remove = []
+
+        for cell in self.cells_turnon_motion: 
+            print(cell.name)
+            division_frame = self.daugthers_division_frame.get(cell.name)
+            current_frame = scene.frame_current
+            delta_frame = current_frame - division_frame
+
+            if delta_frame == 3: 
+                print('Mother motion detected, passing it on')
+                print(f'Cell name: {cell.name}')
+                print(f'Cell strength: {self.mother_motion_strength}')
+                add_motion(effector_name=cell.name, 
+                           strength=self.mother_motion_strength.get(cell.name))
+                
+                cells_to_remove.append(cell)
+
+        # Remove cells after motion has been declared
+        for cell in cells_to_remove:
+            self.cells_turnon_motion.remove(cell)
+
     def division_handler_volume(self, scene, despgraph):
         """
         Handler responsible for cell division based on volume criteria.
@@ -3202,11 +3120,11 @@ class handler_class:
         """
     
         self.daugthers.clear()
-        self.mother_adhesion_strength = None
-        self.falloff = None
+        # self.mother_adhesion_strength = None
+        # self.falloff = None
         self.mother_adhesion = None
         self.mother_motion = None
-        self.mother_stiffness = None
+        # self.mother_stiffness = None
         candidate_cells = []
 
         # Get cells that are candidates for division
@@ -3239,12 +3157,11 @@ class handler_class:
 
         if self.cell_under_div is not None: 
 
-            print(f"Cell under division: {self.cell_under_div.name}")
-
-            # Get name of cell under division
-            # cell_name = self.cell_under_div.name
+            # Get the mother name
+            mother_name = self.cell_under_div.name
             # Get the object by name
-            dividing_cell = bpy.data.objects.get(self.cell_under_div.name)
+            dividing_cell = bpy.data.objects.get(mother_name)
+            print(f"Cell under division: {mother_name}")
 
             # If cell object exists
             if dividing_cell:
@@ -3253,82 +3170,62 @@ class handler_class:
                 if cloth_modifier:
                     mother_stiffness = cloth_modifier.settings.tension_stiffness
                 else:
+                    # Rescue cell cloth
+                    '''apply_physics(obj=dividing_cell, 
+                                  stiffness=1.0)'''
                     raise ValueError(f"No Cloth modifier found on {dividing_cell.name}")
             else:
                 raise ValueError(f"Object '{dividing_cell.name}' not found")
-            
-            '''mother_subsurf = store_subsurf_settings(dividing_cell)
-            mother_cloth = store_cloth_settings(dividing_cell)
-            mother_collision = store_collision_settings(dividing_cell)
-            mother_remesher = store_remesh_settings(dividing_cell)
-            print(f" -- Mother subsurf: {mother_subsurf}")
-            print(f" -- Mother Cloth: {mother_cloth}")
-            print(f" -- Mother collision: {mother_collision}")
-            print(f" -- Mother remesher: {mother_remesher}")'''
 
             # Apply the whole modifer stack in sequential order    
             dividing_cell = apply_modifiers(obj=dividing_cell, which='all')
 
             # Separation of mother in two distinct daughter cells
             d1, d2, mother_adhesion_strength, mother_motion_strength, \
-                tmp_falloff, mother_adhesion, mother_motion, _ = \
+                mother_adhesion_falloff, mother_adhesion, mother_motion, _ = \
                 divide_boolean(dividing_cell)
             
-            # Pass on force parameters to daugther cells  
-            self.mother_adhesion_strength = mother_adhesion_strength
-            self.mother_motion_strength = mother_motion_strength
-            self.falloff = tmp_falloff
+            self.cells_division_frame[mother_name] = scene.frame_current
+            self.daugthers_division_frame[d1.name] = scene.frame_current
+            self.daugthers_division_frame[d2.name] = scene.frame_current
+
             self.mother_adhesion = mother_adhesion
             self.mother_motion = mother_motion
-            self.mother_stiffness = mother_stiffness
+            self.mother_stiffness[d1.name] = mother_stiffness
+            self.mother_stiffness[d2.name] = mother_stiffness
 
-            self.daugthers.append(d1)     
+            self.daugthers.append(d1)
             self.daugthers.append(d2)
 
-            # declare modifiers mother -> daughter
-            '''declare_subsurf_settings(self.daugthers[1], mother_subsurf)
-            declare_subsurf_settings(self.daugthers[0], mother_subsurf)
+            self.cells_turnon_physics.append(d1)
+            self.cells_turnon_physics.append(d2)
 
-            declare_cloth_settings(self.daugthers[1], mother_cloth)
-            declare_cloth_settings(self.daugthers[0], mother_cloth)            
-
-            declare_collision_settings(self.daugthers[1], mother_collision)
-            declare_collision_settings(self.daugthers[0], mother_collision)            
-
-            declare_remesh_settings(self.daugthers[1], mother_remesher)
-            declare_remesh_settings(self.daugthers[0], mother_remesher)'''         
-
-            # Toggle back on physics after mesh separation
-            apply_physics(obj=self.daugthers[0], 
-                          stiffness=self.mother_stiffness)
-            apply_physics(obj=self.daugthers[1], 
-                          stiffness=self.mother_stiffness)
-
-            # Add adhesion forces to daugther cells
             if self.mother_adhesion: 
-                print('Mother adhesion detected, passing it on')
-                add_homo_adhesion(cell_name=self.daugthers[0].name, 
-                                  strength=self.mother_adhesion_strength)
-                add_homo_adhesion(cell_name=self.daugthers[1].name, 
-                                  strength=self.mother_adhesion_strength)
-
-                for cell in self.daugthers:
-                    cells_same_type = get_cells_same_type(cell)
-                    for cell_same_type in cells_same_type:
-                        missing_forces = get_missing_adhesion_forces(cell_same_type, 
-                                                                     cell)
-                        print(f"Missing adhesion forces: {missing_forces}")
-                        for force in missing_forces:
-                            cell.users_collection[0].objects.link(force)
+                self.cells_turnon_adhesion.append(d1)
+                self.cells_turnon_adhesion.append(d2)
+                self.mother_adhesion_strength[d1.name] = mother_adhesion_strength
+                self.mother_adhesion_strength[d2.name] = mother_adhesion_strength
+                self.mother_adhesion_falloff[d1.name] = mother_adhesion_falloff
+                self.mother_adhesion_falloff[d2.name] = mother_adhesion_falloff
+            else: 
+                str = 'adhesion force'
+                for obj in [d1, d2]:
+                    if str in obj:
+                        del obj[str]
 
             if self.mother_motion: 
-                print('Mother motion detected, passing it on')
-                add_motion(effector_name=self.daugthers[0].name, 
-                           strength=self.mother_motion_strength)
-                add_motion(effector_name=self.daugthers[1].name, 
-                           strength=self.mother_motion_strength)
+                self.cells_turnon_motion.append(d1)
+                self.cells_turnon_motion.append(d2)
+                self.mother_motion_strength[d1.name] = mother_motion_strength
+                self.mother_motion_strength[d2.name] = mother_motion_strength
+                print(f'Motion strength: {self.mother_motion_strength}')
+            else: 
+                str = 'motion force'
+                for obj in [d1, d2]:
+                    if str in obj:
+                        del obj[str]
                 
-            print(f"-- Finishing division of {dividing_cell.name} "
+            print(f"-- Finishing division of {mother_name} "
                   f"at frame {scene.frame_current}")
 
     def division_handler_time(self, scene, despgraph):
@@ -4047,7 +3944,7 @@ class handler_class:
                 COM = get_centerofmass(cell_obj)
                 force_obj.location = COM
                 # Adapt the radius of the force field to match with cell size
-                _, len_long_axis = get_long_axis_global(cell_obj)                
+                _, len_long_axis, _ = get_long_axis(cell_obj)                
                 force_obj.field.distance_max = (len_long_axis / 2) + 0.4
 
                 # cell type: 
