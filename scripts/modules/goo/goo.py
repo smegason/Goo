@@ -289,7 +289,7 @@ def get_division_plane(obj, long_axis, com, length):
     bpy.ops.object.modifier_add(type='SOLIDIFY')
     solid_mod = plane.modifiers[-1]
     solid_mod.offset = 0
-    solid_mod.thickness = 0.03
+    solid_mod.thickness = 0.02
     bpy.ops.object.modifier_apply(modifier=solid_mod.name)
 
     # Hide the plane
@@ -2782,7 +2782,7 @@ class handler_class:
             current_frame = scene.frame_current
             delta_frame = current_frame - division_frame
             
-            if delta_frame == 1: 
+            if delta_frame == 0: 
                 # Toggle back on physics after mesh separation
                 apply_physics(obj=cell, 
                               stiffness=self.mother_stiffness.get(cell.name))
@@ -2801,7 +2801,7 @@ class handler_class:
             current_frame = scene.frame_current
             delta_frame = current_frame - division_frame
 
-            if delta_frame == 2: 
+            if delta_frame == 1: 
                 print('Mother adhesion detected, passing it on')
                 add_homo_adhesion(cell_name=cell1.name, 
                                   strength=self.mother_adhesion_strength.get(cell1.name))
@@ -2864,7 +2864,7 @@ class handler_class:
 
         # Get cells that are candidates for division
         target_volume = self.target_volume
-        threshold_volume = target_volume * 0.05
+        threshold_volume = target_volume * 0.0
 
         candidate_cells = [
             obj for obj in bpy.context.scene.objects
@@ -3073,6 +3073,12 @@ class handler_class:
             self.cells_turnon_physics.append(d1)
             self.cells_turnon_physics.append(d2)
 
+            d1_growth_properties = self.cell_PIDs[d1.name]
+            d2_growth_properties = self.cell_PIDs[d2.name]
+
+            d1_growth_properties['next_volume'] = self.target_volume/2
+            d2_growth_properties['next_volume'] = self.target_volume/2
+
             if self.mother_adhesion: 
                 self.cells_turnon_adhesion.append(d1)
                 self.cells_turnon_adhesion.append(d2)
@@ -3276,38 +3282,67 @@ class handler_class:
                 target_volume = self.target_volume
                 cell['target_volume'] = target_volume
                 cell['volume'] = volume
+                dt = self.dt_physics
+                division_frame = self.daugthers_division_frame.get(cell.name)
+                current_time = scene.frame_current * dt
                 
                 # Supports linear and exponential growth
                 if properties['next_volume'] < target_volume:
+                    print("Selected linear volume growth and control!")
+
                     if self.growth_type == 'linear': 
-                        print("Selected linear volume growth and control!")
-                        properties['next_volume'] \
-                            += (properties['growth_rate'] * self.dt_physics)
-                        # Clip next_volume to target_volume
-                        properties['next_volume'] = min(properties['next_volume'], 
-                                                        target_volume)
+                        if (
+                            self.daugthers_division_frame.get(cell.name)
+                            # +1 depends on the delay imposed on physics after division 
+                            and (division_frame + 1) * dt == current_time
+                        ): 
+                            properties['next_volume'] = target_volume / 2
+
+                        else: 
+                            # Update volume with growth rate
+                            properties['next_volume'] \
+                                += (properties['growth_rate'] * self.dt_physics)
+                            # Clip next_volume to target_volume
+                            properties['next_volume'] = min(properties['next_volume'], 
+                                                            target_volume)
                         
                     elif self.growth_type == 'exp': 
                         print("Selected exponential volume growth and control!")
-                        properties['next_volume'] \
-                            *= ((1 + properties['growth_rate'] * self.dt_physics))
-                        # Clip next_volume to target_volume
-                        properties['next_volume'] = min(properties['next_volume'], 
-                                                        target_volume)
+
+                        if (
+                            self.daugthers_division_frame.get(cell.name)
+                            # +1 depends on the delay imposed on physics after division 
+                            and (division_frame + 1) * dt == current_time
+                        ): 
+                            properties['next_volume'] = target_volume / 2
+
+                        else: 
+                            # Update volume with growth rate
+                            properties['next_volume'] \
+                                *= ((1 + properties['growth_rate'] * self.dt_physics))
+                            # Clip next_volume to target_volume
+                            properties['next_volume'] = min(properties['next_volume'], 
+                                                            target_volume)
                         
                     elif self.growth_type == 'logistic':
                         print("Selected logistic volume growth and control!")
-                        # Adjust these parameters according to your scenario
-                        # initial_volume = properties['initial_volume']
-                        # amplitude = target_volume
-                        growth_rate = properties['growth_rate']
-                        print(growth_rate)
-                        time_step = self.dt_physics
-                        properties['next_volume'] = (
-                            1 + growth_rate * 
-                            (1 - properties['next_volume'] / target_volume) * 
-                            time_step
-                        ) * properties['next_volume']
+                        if (
+                            # Get the cell's last division time
+                            self.daugthers_division_frame.get(cell.name)
+                            # +1 depends on the delay imposed on physics after division 
+                            and (division_frame + 1) * dt == current_time
+                        ): 
+                            properties['next_volume'] = target_volume / 2
+
+                        else: 
+                            growth_rate = properties['growth_rate']
+                            time_step = self.dt_physics
+                            # Update volume with growth rate
+                            properties['next_volume'] = (
+                                1 + growth_rate * 
+                                (1 - properties['next_volume'] / target_volume) * 
+                                time_step
+                            ) * properties['next_volume']
 
                     else:
                         raise ValueError(
@@ -3322,7 +3357,6 @@ class handler_class:
                 self.pressures[cell_name].append(
                     cell.modifiers["Cloth"].settings.uniform_pressure_force
                 )
-                # volume_deviation = (target_volume - volume) / target_volume
                 volume_deviation = ((properties['next_volume'] - volume) 
                                     / properties['next_volume'])
 
@@ -3349,7 +3383,6 @@ class handler_class:
                     properties['previous_pressure'] + 
                     (pid_output * properties['pid_scale'])
                 )
-                # exp growth: + (pid_output * 60)
                 growth_adjusted_pressure = new_pressure
 
                 # Update the cloth pressure settings
@@ -3362,122 +3395,6 @@ class handler_class:
                 cell['previous_pressure'] = growth_adjusted_pressure
 
                 print(f"New pressure for {cell_name}: {growth_adjusted_pressure}")
-
-    # not used
-    def growth_pressure_handler(self, scene, depsgraph):
-        """
-        Handler responsible for cell growth based on cell's pressure.
-
-        This method calculates the volume and target volume of each cell, 
-        adjusts the uniform pressure force based on the deviation from the 
-        target volume, and updates the pressure settings accordingly.
-
-        :param scene: The Blender scene object.
-        :param depsgraph: The dependency graph object.
-
-        :return: None
-        """
-        for collection in bpy.data.collections: 
-            cells = bpy.data.collections.get(collection.name_full).all_objects
-            for cell in cells: 
-                if cell.modifiers.get('Cloth'):
-                    volume = calculate_volume(cell)
-                    target_volume = self.target_volume
-                    cell['target_volume'] = target_volume
-                    cell['volume'] = volume
-                    self.volumes[f"{cell.name}"].append(volume)
-                    self.pressures[f"{cell.name}"].append(
-                        cell.modifiers["Cloth"].settings.uniform_pressure_force
-                    )
-                    volume_deviation = (target_volume - volume) / target_volume
-                    print(
-                        f"Volume deviation: {volume_deviation}; "
-                        f"Target volume: {target_volume}; "
-                        f"Volume: {volume}"
-                    )
-                    # Define the pressure-volume relationship 
-                    previous_pressure = cell.get('previous_pressure')
-                    # Modify pressure based on volume deviation
-                    # delta_pressure = 0.001 * (math.exp(volume_deviation) - 1)
-                    # print(f"Delta pressure: {delta_pressure}")
-                    new_pressure = previous_pressure + (volume_deviation
-                                                        * previous_pressure)
-                    # * 0.02
-                    print(f"New pressure: {new_pressure}")
-                    # Update the cloth pressure settings
-                    cell.modifiers["Cloth"].settings.uniform_pressure_force = \
-                        new_pressure
-                    cell['previous pressure'] = new_pressure                                                    
-
-    # not used
-    # Member function to handle cell growth
-    def growth_handler(self, scene, depsgraph):
-        """
-        Handler responsible for cell growth based on mesh scaling.
-
-        This method calculates the volume and target volume of each cell, 
-        adjusts the shrink_min parameter of the Cloth modifier based on 
-        the deviation from the target volume, resulting in mesh scaling 
-        and mimicking cell growth.
-
-        :param scene: The Blender scene object.
-        :param depsgraph: The dependency graph object.
-
-        :return: None
-        """
-        for collection in bpy.data.collections: 
-            # Loop through the cell objects in collections, excluding forces
-            cells = bpy.data.collections.get(collection.name_full).all_objects
-            for cell in cells: 
-                if (
-                    # cell.get('adhesion force') is not None or
-                    # cell.get('motion force') is not None or
-                    cell.modifiers.get('Cloth')
-                ):
-
-                    volume = calculate_volume(cell)
-                    target_volume = self.target_volume
-                    cell['target_volume'] = target_volume
-                    cell['volume'] = volume
-                    self.volumes[f"{cell.name}"].append(volume)
-
-                    # TODO allow for multiple growth rate, with different functions
-                    volume_deviation = ((volume - target_volume) / target_volume)
-                    # (f"Current volume deviation: {volume_deviation}")
-                    # shrink_adjustment = 0.001 * math.tanh(50 * volume_deviation)
-                    shrink_adjustment = 0.01 * (math.exp(volume_deviation) - 1)
-                    # shrink_adjustment = 0.01 * volume_deviation
-                    cell.modifiers["Cloth"].settings.shrink_min += shrink_adjustment
-
-                    # volume control
-                    '''if volume < (target_volume - target_volume * 0.2): 
-                        print(f"Current volume: {volume} is lower"
-                              f"than target {target_volume} - 20%")
-                        cell.modifiers["Cloth"].settings.shrink_min -= 0.01
-                    elif volume < (target_volume - target_volume * 0.05): 
-                        print(f"Current volume: {volume} is lower"
-                              f"than target {target_volume} - 5%")
-                        cell.modifiers["Cloth"].settings.shrink_min -= 0.001
-                    elif volume < (target_volume - target_volume * 0.01): 
-                        print(f"Current volume: {volume} is lower"
-                              f"than target {target_volume} - 1%")
-                        cell.modifiers["Cloth"].settings.shrink_min -= 0.0005
-                    # shrink
-                    elif volume > (target_volume + target_volume * 0.2): 
-                        print(f"Current volume: {volume} is higher"
-                              f"than target {target_volume} - 20%")
-                        cell.modifiers["Cloth"].settings.shrink_min += 0.01
-                    elif volume > (target_volume + target_volume * 0.05): 
-                        print(f"Current volume: {volume} is higher"
-                              f"than target {target_volume} - 5%")
-                        cell.modifiers["Cloth"].settings.shrink_min += 0.001
-                    elif volume < (target_volume + target_volume * 0.01): 
-                        print(f"Current volume: {volume} is higher"
-                              f"than target {target_volume} - 1%")
-                        cell.modifiers["Cloth"].settings.shrink_min += 0.0005
-                    else: 
-                        print(f"Current volume: {volume} is within"
-                              f"target {target_volume}")'''
 
     def boundary_handler(self, scene, depsgraph):
         """
