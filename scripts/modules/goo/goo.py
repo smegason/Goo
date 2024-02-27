@@ -269,7 +269,7 @@ def get_division_plane(obj, long_axis, com, length):
     :type com: numpy.ndarray
     """
     # Define a new plane object
-    bpy.ops.mesh.primitive_plane_add(size=length, 
+    bpy.ops.mesh.primitive_plane_add(size=length + 1, 
                                      enter_editmode=False, 
                                      align='WORLD', 
                                      location=com)
@@ -289,7 +289,7 @@ def get_division_plane(obj, long_axis, com, length):
     bpy.ops.object.modifier_add(type='SOLIDIFY')
     solid_mod = plane.modifiers[-1]
     solid_mod.offset = 0
-    solid_mod.thickness = 0.02
+    solid_mod.thickness = 0.025
     bpy.ops.object.modifier_apply(modifier=solid_mod.name)
 
     # Hide the plane
@@ -2447,7 +2447,7 @@ class handler_class:
         self.contact_areas = defaultdict(list)
 
         # For cell division
-        self.division_rate = 0.0
+        self.cell_cycle_time = 0.0
         self.cell_under_div = None
         self.daugthers = []
         self.cells_division_frame = defaultdict()
@@ -2494,12 +2494,12 @@ class handler_class:
     def launch_simulation(
             self,
             filepath,
-            target_volume=20,
-            division_rate=1/50,
+            target_volume=30,
+            cell_cycle_time=50,
             start=1,
             end=250,
             motion_strength=-500,
-            division_type='volume',
+            division_type='time',
             growth_type='linear',
             growth_rate=1,
             dt_physics=1,
@@ -2550,7 +2550,7 @@ class handler_class:
         self.data_flag = data  # used to decide if data are computed
 
         self.division_type = division_type
-        self.division_rate = division_rate  # division per minutes
+        self.cell_cycle_time = cell_cycle_time  # division per minutes
         self.target_volume = target_volume
 
         self.growth_type = growth_type
@@ -2577,8 +2577,9 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
         if growth:
             bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
-        if (division and division_type == 'random'):
-            bpy.app.handlers.frame_change_post.append(self.division_handler_random)
+            # bpy.app.handlers.frame_change_post.append(self.motion_PID_handler)
+        if (division and division_type == 'random_volume'):
+            bpy.app.handlers.frame_change_post.append(self.division_handler_random_volume)
             bpy.app.handlers.frame_change_post.append(self.delay_physics_after_division)  
             bpy.app.handlers.frame_change_post.append(self.delay_adhesion_after_division)  
             bpy.app.handlers.frame_change_post.append(self.delay_motion_after_division)  
@@ -2843,6 +2844,7 @@ class handler_class:
         for cell in cells_to_remove:
             self.cells_turnon_motion.remove(cell)
 
+    # Will be depreciated and replaced by division_handler_random_volume
     def division_handler_volume(self, scene, despgraph):
         """
         Handler responsible for cell division based on volume criteria.
@@ -2975,7 +2977,7 @@ class handler_class:
         :return: The probability of cell division.
         """
         # Calculate standard deviation based on variance percentage
-        sigma = variance * mu
+        sigma = math.sqrt(variance) * mu
         # Calculate the z-score (standard score) for the given volume
         z_score = (x - mu) / sigma
         # Calculate the cumulative distribution function (CDF) using NumPy's erf function
@@ -2984,7 +2986,7 @@ class handler_class:
 
         return cdf
     
-    def division_handler_random(self, scene, despgraph):
+    def division_handler_random_volume(self, scene, despgraph):
         """
         Handler responsible for cell division based on volume criteria.
 
@@ -3073,12 +3075,6 @@ class handler_class:
             self.cells_turnon_physics.append(d1)
             self.cells_turnon_physics.append(d2)
 
-            d1_growth_properties = self.cell_PIDs[d1.name]
-            d2_growth_properties = self.cell_PIDs[d2.name]
-
-            d1_growth_properties['next_volume'] = self.target_volume/2
-            d2_growth_properties['next_volume'] = self.target_volume/2
-
             if self.mother_adhesion: 
                 self.cells_turnon_adhesion.append(d1)
                 self.cells_turnon_adhesion.append(d2)
@@ -3122,8 +3118,8 @@ class handler_class:
         :return: None
         """
         dt = self.dt_physics
-        sum_dt = scene.frame_current * dt
-        print(f'time in minutes: {sum_dt}')
+        current_time = scene.frame_current * dt
+        print(f'time in minutes: {current_time}')
 
         self.daugthers.clear()
         self.mother_adhesion = None
@@ -3131,39 +3127,32 @@ class handler_class:
         candidate_cells = []
 
         # Get cells that are candidates for division
-        mu = 1 / self.division_rate
-        variance = mu * 0.005
+        mu = self.cell_cycle_time
+        variance = mu * 0.001
 
         cells = [
             obj for obj in bpy.context.scene.objects
-            if (
-                obj.get('object') == 'cell' and 
-                obj.get('volume') is not None 
-            )
+            if obj.get('object') == 'cell'
         ]
 
         # Loop over all cells and calculate division probability
         for cell in cells:
-            volume = cell.get('volume')
-            if volume is not None:
-                # Get time since division in minutes
-                current_time = sum_dt
-                if self.daugthers_division_frame.get(cell.name): 
-                    last_div_time = dt * self.daugthers_division_frame.get(cell.name)
-                else: 
-                    last_div_time = 0
+            if self.daugthers_division_frame.get(cell.name): 
+                last_div_time = dt * self.daugthers_division_frame.get(cell.name)
+            else: 
+                last_div_time = 0
 
-                time_since_division = current_time - last_div_time
-                print(f"Time since division: {time_since_division}")
+            time_since_division = current_time - last_div_time
+            print(f"Time since division: {time_since_division}")
 
-                # Calculate the division probability for this cell
-                division_prob = self.calculate_division_probability(mu=mu, 
-                                                                    variance=variance,
-                                                                    x=time_since_division)
-                print(f"Division probability of {cell.name}: {division_prob}")
-                # Sample from the distribution to determine whether the cell divides
-                if np.random.rand() < division_prob:
-                    candidate_cells.append(cell)
+            # Calculate the division probability for this cell
+            division_prob = self.calculate_division_probability(mu=mu, 
+                                                                variance=variance,
+                                                                x=time_since_division)
+            print(f"Division probability of {cell.name}: {division_prob}")
+            # Sample from the distribution to determine whether the cell divides
+            if np.random.rand() < division_prob:
+                candidate_cells.append(cell)
 
         for cell_under_div in candidate_cells:
 

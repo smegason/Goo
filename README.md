@@ -16,12 +16,13 @@ Our grand Driving Biological Problem is to simulate the first <a href= "https://
 
 ### User-interface
 
-Goo uses the Blender interface and its script editors to visualize simulations on-the-fly.
+The library uses the Blender interface to launch simulations and visualize them in real-time.
 ![Goo UI](img/goo-GUI.png)
 
 ### Examples
 
-![Division example](img/20240226_division_targetvolume500001-0200.gif)
+Simulation of a growing and cleaving clump of cells, for 150 minutes at a time step of 1 minute.
+![Division example](img/20240227_division_frame150_targetvolume300001-0150.gif)
 
 
 ### Contributors (in order of appearance)
