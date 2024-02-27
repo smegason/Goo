@@ -11,6 +11,9 @@ Goo was started by the <a href="http://www.digitalfish.org">Megason lab at Harva
 
 Our grand Driving Biological Problem is to simulate the first <a href= "https://www.youtube.com/watch?v=RQ6vkDr_Dec">24 hours of zebrafish development</a>. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding morphogenesis, embryonic development, growth of organoids, tissue engineering, and artificial life.
 
+## Documentation
+  Full documentation available on <a href="https://antoineruzette.github.io/goo_gallery/">Goo's website</a>. 
+
 ### User-interface
 
 Goo uses the Blender interface and its script editors to visualize simulations on-the-fly.
@@ -18,7 +21,7 @@ Goo uses the Blender interface and its script editors to visualize simulations o
 
 ### Examples
 
-![Division example](img/20240226_division_targetvolume500001-0200.mp4)
+![Division example](img/20240226_division_targetvolume500001-0200.gif)
 
 
 ### Contributors (in order of appearance)
@@ -35,6 +38,3 @@ ___
 <li>Nenghan Lin, KU Leuven
 <li>Jiangli Gui, KU Leuven
 <li>Rifa Gowani, Texas Academy of Mathematics and Science (TAMS) at the University of North Texas (UNT)
-
-## Documentation
-  Full documentation available on <a href="https://antoineruzette.github.io/goo_gallery/">Goo's website</a>. 
