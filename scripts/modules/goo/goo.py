@@ -2447,7 +2447,6 @@ class handler_class:
         self.contact_areas = defaultdict(list)
 
         # For cell division
-        self.cell_cycle_time = 0.0
         self.cell_under_div = None
         self.daugthers = []
         self.cells_division_frame = defaultdict()
@@ -2831,7 +2830,7 @@ class handler_class:
             current_frame = scene.frame_current
             delta_frame = current_frame - division_frame
 
-            if delta_frame == 3: 
+            if delta_frame == 1: 
                 print('Mother motion detected, passing it on')
                 print(f'Cell name: {cell.name}')
                 print(f'Cell strength: {self.mother_motion_strength}')
@@ -2964,7 +2963,7 @@ class handler_class:
                 
             print(f"-- Finishing division of {mother_name} "
                   f"at frame {scene.frame_current}")
-        
+
     def calculate_division_probability(self, mu, variance, x):
         """
         Calculate the probability of cell division based on volume 
@@ -2976,13 +2975,19 @@ class handler_class:
 
         :return: The probability of cell division.
         """
-        # Calculate standard deviation based on variance percentage
-        sigma = math.sqrt(variance) * mu
-        # Calculate the z-score (standard score) for the given volume
-        z_score = (x - mu) / sigma
-        # Calculate the cumulative distribution function (CDF) using NumPy's erf function
-        q = math.erf(z_score / np.sqrt(2))
-        cdf = 0.5 * (1 + q)
+        if variance == 0: 
+            if abs(x - mu) <= 0.05 * mu:
+                return 1.0
+            else: 
+                return 0.0
+        else: 
+            # Calculate standard deviation based on variance percentage
+            sigma = math.sqrt(variance) * mu
+            # Calculate the z-score (standard score) for the given volume
+            z_score = (x - mu) / sigma
+            # Calculate the cumulative distribution function (CDF) using math erf function
+            q = math.erf(z_score / np.sqrt(2))
+            cdf = 0.5 * (1 + q)
 
         return cdf
     
@@ -3128,7 +3133,7 @@ class handler_class:
 
         # Get cells that are candidates for division
         mu = self.cell_cycle_time
-        variance = mu * 0.001
+        variance = mu * 0
 
         cells = [
             obj for obj in bpy.context.scene.objects
@@ -3458,13 +3463,13 @@ class handler_class:
                                 "Force location is outside the box boundaries."
                                 )
 
-    def motion_handler(self, scene, depsgraph): 
+    def motion_handler_with_msd(self, scene, depsgraph): 
         
         cells = [
             obj for obj in bpy.data.objects 
             if "object" in obj.keys() and obj["object"] == "cell"
             ]
-        # print(cells)
+
         msd = dict()        
         
         for collection in bpy.data.collections: 
@@ -3688,6 +3693,72 @@ class handler_class:
                 # print(f"Cell Type: {cell}, Sorting Score: {score}")
             self.sorting_scores.update({scene.frame_current: sorting_scores_same_type})
 
+    def motion_handler(self, scene, depsgraph): 
+        
+        motion_forces = [
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'force'
+                and obj.get('motion') == 1
+            )
+        ]
+
+        if not motion_forces: 
+            print('No motion forces detected')
+        
+        for force in motion_forces: 
+            cell_obj = bpy.data.objects[force.get('cell')]
+            com = get_centerofmass(cell_obj)
+            cell_obj['current position'] = com
+            disp = (Vector(cell_obj.get('current position')) - 
+                    Vector(cell_obj.get('past position'))).length
+            # cell['speed'] = disp
+            self.motion_path[f'{cell_obj.name}'].append(tuple(com)[:3])
+            self.motion_path[f'{force.name}'].append(tuple(force.location)[:3])
+            self.speed[f'{cell_obj.name}'].append(disp)
+            # Mean Squared Displacement for single particle
+            sq_displacement_cell = (
+                Vector(self.motion_path.get(cell_obj.name)[-1]) - 
+                Vector(self.motion_path.get(cell_obj.name)[0])
+                ).length_squared
+            sq_displacement_force = (
+                Vector(self.motion_path.get(force.name)[-1]) - 
+                Vector(self.motion_path.get(force.name)[0])
+                ).length_squared
+            self.msd[f'{cell_obj.name}'].append(sq_displacement_cell)
+            self.msd[f'{force.name}'].append(sq_displacement_force)
+            # cell['MSD'] = msd
+            # force['MSD'] = msd
+
+            if force.get('distribution') == 'uniform': 
+                # print('Distribution is uniform')
+                rand_coord = Vector(np.random.uniform(
+                    low=-force['distribution size'],
+                    high=force['distribution size'], 
+                    size=(3,)
+                ))
+                new_loc = Vector(com) + rand_coord
+            elif force.get('distribution') == 'gaussian': 
+                rand_coord = Vector(np.random.normal(
+                    loc=0, 
+                    scale=force['distribution size'], 
+                    size=(3,)
+                ))
+                new_loc = Vector(com) + rand_coord
+            else: 
+                print(f'{force.get("distribution")} '
+                      f'is not a supported distribution')
+                continue
+            
+            force.location = new_loc
+            # cells will only adhere with other cells 
+            # that are in the same collection
+            cloth_modifier = cell_obj.modifiers["Cloth"]
+            collection = cell_obj.users_collection[0]
+            cloth_modifier.settings.effector_weights.collection = collection
+            # update position of cell
+            cell_obj['past position'] = com
+
     def contact_area_handler(self, scene, depsgraph): 
 
         if self.data_flag: 
@@ -3730,29 +3801,34 @@ class handler_class:
 
         :return: None
         """
-        force_list = Force.force_list
 
-        for force in force_list:
-            if not bpy.data.objects[force.name]['motion']: 
-                # Retrieve objects of interest
-                assoc_cell = force.associated_cell
-                cell_obj = bpy.data.objects[assoc_cell]
-                force_obj = bpy.data.objects.get(force.name)
-                bpy.context.view_layer.objects.active = cell_obj
+        adhesion_forces = [
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'force'
+                and obj.get('motion') == 0
+            )
+        ]
 
-                # Update the force location to its corresponding cell's center of mass
-                COM = get_centerofmass(cell_obj)
-                force_obj.location = COM
-                # Adapt the radius of the force field to match with cell size
-                _, len_long_axis, _ = get_long_axis(cell_obj)                
-                force_obj.field.distance_max = (len_long_axis / 2) + 0.4
+        for force in adhesion_forces:
+            # Retrieve objects of interest
+            assoc_cell = force.get('cell')
+            cell_obj = bpy.data.objects[assoc_cell]
+            bpy.context.view_layer.objects.active = cell_obj
 
-                # cell type: 
-                # cells will only adhere with cells from the same collection
-                cloth_modifier = bpy.data.objects[assoc_cell].modifiers["Cloth"]
-                cloth_settings = cloth_modifier.settings
-                cloth_collection = bpy.data.objects[assoc_cell].users_collection[0]
-                cloth_settings.effector_weights.collection = cloth_collection
+            # Update the force location to its corresponding cell's center of mass
+            COM = get_centerofmass(cell_obj)
+            force.location = COM
+            # Adapt the radius of the force field to match with cell size
+            _, len_long_axis, _ = get_long_axis(cell_obj)                
+            force.field.distance_max = (len_long_axis / 2) + 0.4
+
+            # cell type: 
+            # cells will only adhere with cells from the same collection
+            cloth_modifier = bpy.data.objects[assoc_cell].modifiers["Cloth"]
+            cloth_settings = cloth_modifier.settings
+            cloth_collection = bpy.data.objects[assoc_cell].users_collection[0]
+            cloth_settings.effector_weights.collection = cloth_collection
 
     def data_export_handler(self, scene, depsgraph): 
         """
