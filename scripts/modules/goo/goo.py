@@ -1523,8 +1523,6 @@ class Force():
         and its shape is set to `SURFACE`. 
     """
 
-    force_list = []
-
     def __init__(self, 
                  force_name, 
                  cell_name, 
@@ -1541,8 +1539,6 @@ class Force():
         self.falloff_type = 'SPHERE'
         self.shape = 'SURFACE'
         self.type = type  # boolean
-        if not self.type:
-            Force.force_list.append(self)  # list of all the created forces
 
     def get_strength(self): 
         """
@@ -2462,6 +2458,7 @@ class handler_class:
         # For cell growth 
         self.volumes = defaultdict(list)
         self.pressures = defaultdict(list)
+        self.growth = None  # Flag for growth
 
         # For random motion
         self.seed = int()
@@ -2495,6 +2492,7 @@ class handler_class:
             filepath,
             target_volume=30,
             cell_cycle_time=50,
+            cell_cycle_var=0,
             start=1,
             end=250,
             motion_strength=-500,
@@ -2547,9 +2545,11 @@ class handler_class:
         
         self.motion_strength = motion_strength
         self.data_flag = data  # used to decide if data are computed
+        self.growth = growth
 
         self.division_type = division_type
         self.cell_cycle_time = cell_cycle_time  # division per minutes
+        self.cell_cycle_variance = cell_cycle_var  # % of cell cycle time
         self.target_volume = target_volume
 
         self.growth_type = growth_type
@@ -3133,7 +3133,9 @@ class handler_class:
 
         # Get cells that are candidates for division
         mu = self.cell_cycle_time
-        variance = mu * 0
+        var = self.cell_cycle_variance
+        # variance = mu * 0.001
+        variance = mu * var
 
         cells = [
             obj for obj in bpy.context.scene.objects
@@ -3241,7 +3243,10 @@ class handler_class:
                 initial_volume = calculate_volume(cell)
                 pid_scale = 60
 
-                if self.growth_type in ['linear', 'exp', 'logistic']:
+                if (
+                    self.growth 
+                    and self.growth_type in ['linear', 'exp', 'logistic']
+                ): 
                     self.KP = 0.05
                     self.KI = 0.000001
                     self.KD = 0.5
@@ -3266,7 +3271,10 @@ class handler_class:
             
     def growth_PID_handler(self, scene, depsgraph):
         for cell in bpy.context.scene.objects:
-            if cell.get('object') == 'cell' and cell.modifiers.get('Cloth'):
+            if (
+                cell.get('object') == 'cell' and cell.modifiers.get('Cloth') 
+                and scene.frame_current != 1
+            ): 
                 # Check if PID-related properties are initialized for the cell
                 self.initialize_cell_PID(cell)
                 properties = self.cell_PIDs[cell.name]
@@ -3351,9 +3359,10 @@ class handler_class:
                 self.pressures[cell_name].append(
                     cell.modifiers["Cloth"].settings.uniform_pressure_force
                 )
+
                 volume_deviation = ((properties['next_volume'] - volume) 
                                     / properties['next_volume'])
-
+            
                 print(
                     f"Volume deviation: {volume_deviation}; "
                     f"Target volume: {target_volume}; "
