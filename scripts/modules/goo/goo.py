@@ -2507,7 +2507,8 @@ class handler_class:
             data=False,
             motility=False,
             boundary=False, 
-            test=False):
+            test=False, 
+            colorize='pressure'):
         
         """
         Launches the simulation with specified parameters. 
@@ -2569,6 +2570,7 @@ class handler_class:
 
         bpy.app.handlers.frame_change_post.clear()
         bpy.app.handlers.frame_change_post.append(self.timing_init_handler)
+        bpy.app.handlers.frame_change_post.append(self.background_logic)
 
         if motility:
             bpy.app.handlers.frame_change_post.append(self.motion_handler)
@@ -2599,6 +2601,8 @@ class handler_class:
             # bpy.app.handlers.frame_change_post.append(self.contact_area_handler)
         if test: 
             bpy.app.handlers.frame_change_post.append(self.test_long_axis)
+        if colorize == 'pressure': 
+            bpy.app.handlers.frame_change_post.append(self.colorize)
 
         # bpy.app.handlers.frame_change_post.append(self.wall_compression_handler)
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
@@ -2668,7 +2672,66 @@ class handler_class:
         self.distance_between_walls.append(distance_between_wall)
 
         return 
+        
+    def colorize(self, scene, depsgraph): 
+        # Get all cell objects
+        cells = [obj for obj in bpy.context.scene.objects if obj.get('object') == 'cell']
 
+        # Find min and max pressure
+        min_p = min(cell.get('previous_pressure', 0) for cell in cells)
+        max_p = max(cell.get('previous_pressure', 0) for cell in cells)
+
+        # Define red and blue colors
+        red = Vector((1.0, 0.0, 0.0))
+        blue = Vector((0.0, 0.0, 1.0))
+
+        # Iterate over cells and set color based on pressure
+        for cell in cells: 
+            pressure = cell.get('previous_pressure', 0)
+            # Normalize pressure to [0, 1]
+            normalized_pressure = (pressure - min_p) / (max_p - min_p)
+            # Interpolate between red and blue based on pressure
+            color = blue.lerp(red, normalized_pressure)
+
+            # Clear existing materials
+            cell.data.materials.clear()
+
+            # Create and append new material
+            material_name = f"mat_{cell.name}"
+            '''bpy.context.view_layer.objects.active = bpy.data.objects[cell.name]
+            mat = add_material(material_name, 
+                               color.x, 
+                               color.y, 
+                               color.z
+                               )
+            bpy.context.active_object.data.materials.append(mat)'''
+            mat = bpy.data.materials.new(name=material_name)
+            mat.use_nodes = True
+            bsdf = mat.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (color.x, color.y, color.z, 1.0)
+            cell.data.materials.append(mat)
+    
+    def background_logic(self, scene, depsgraph): 
+        cells = [
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'cell'
+            )
+        ]
+
+        for cell in cells: 
+            com = get_centerofmass(cell)
+            cell['current position'] = com
+            self.motion_path[f'{cell.name}'].append(tuple(com)[:3])
+
+            # Calculate speed as displacement per unit of time
+            disp = (Vector(cell.get('current position')) - 
+                    Vector(cell.get('past position'))).length
+            self.speed[f'{cell.name}'].append(disp)
+
+            cell['past position'] = com
+
+    # not used
     def remeshing_handler(self, scene, depsgraph): 
         """
         Handlers responsible for remeshing cells at every time step.
@@ -3841,7 +3904,7 @@ class handler_class:
 
     def data_export_handler(self, scene, depsgraph): 
         """
-        Handler responsible for exporting simulation data.
+        Handler responsible for exporting simulation data.x
 
         This method writes various simulation data to JSON files at the end of 
         the simulation.
@@ -3854,31 +3917,42 @@ class handler_class:
         self.seed = bpy.context.scene.get("seed")
         # Write the list at the end of the simulation
         if scene.frame_current == self.frame_interval[1]:
-            with open(f"{self.data_file_path}_times.json", 'w') as write_file:
-                write_file.write(json.dumps(self.times))
-            with open(f"{self.data_file_path}_frame_cells.json", 'w') as write_file:
-                write_file.write(json.dumps(self.frame_cells))
-            with open(f"{self.data_file_path}_contact_ratios.json", 'w') as write_file:
-                write_file.write(json.dumps(self.contact_ratios))
-            with open(f"{self.data_file_path}_msd.json", 'w') as write_file:
-                write_file.write(json.dumps(self.msd))
-            with open(f"{self.data_file_path}_sorting_scores.json", 'w') as write_file:
-                write_file.write(json.dumps(self.sorting_scores))
-            with open(f"{self.data_file_path}_speed.json", 'w') as write_file:
-                write_file.write(json.dumps(self.speed))
-            with open(f"{self.data_file_path}_motion_path.json", 'w') as write_file:
-                write_file.write(json.dumps(self.motion_path))
-            with open(f"{self.data_file_path}_contact_areas.json", 'w') as write_file:
-                write_file.write(json.dumps(self.contact_areas))
-            with open(f"{self.data_file_path}_volumes.json", 'w') as write_file:
-                write_file.write(json.dumps(self.volumes))
-            with open(f"{self.data_file_path}_pressures.json", 'w') as write_file:
-                write_file.write(json.dumps(self.pressures))
-            with open(f"{self.data_file_path}_distance_walls.json", 'w') as write_file:
-                write_file.write(json.dumps(self.distance_between_walls))
+            if bool(self.times): 
+                with open(f"{self.data_file_path}_times.json", 'w') as file:
+                    file.write(json.dumps(self.times))
+            if bool(self.frame_cells): 
+                with open(f"{self.data_file_path}_frame_cells.json", 'w') as file:
+                    file.write(json.dumps(self.frame_cells))
+            if bool(self.contact_ratios): 
+                with open(f"{self.data_file_path}_contact_ratios.json", 'w') as file:
+                    file.write(json.dumps(self.contact_ratios))
+            if bool(self.msd): 
+                with open(f"{self.data_file_path}_msd.json", 'w') as file:
+                    file.write(json.dumps(self.msd))
+            if bool(self.sorting_scores): 
+                with open(f"{self.data_file_path}_sorting_scores.json", 'w') as file:
+                    file.write(json.dumps(self.sorting_scores))
+            if bool(self.speed): 
+                with open(f"{self.data_file_path}_speed.json", 'w') as file:
+                    file.write(json.dumps(self.speed))
+            if bool(self.motion_path): 
+                with open(f"{self.data_file_path}_motion_path.json", 'w') as file:
+                    file.write(json.dumps(self.motion_path))
+            if bool(self.contact_areas): 
+                with open(f"{self.data_file_path}_contact_areas.json", 'w') as file:
+                    file.write(json.dumps(self.contact_areas))
+            if bool(self.volumes): 
+                with open(f"{self.data_file_path}_volumes.json", 'w') as file:
+                    file.write(json.dumps(self.volumes))
+            if bool(self.pressures): 
+                with open(f"{self.data_file_path}_pressures.json", 'w') as file:
+                    file.write(json.dumps(self.pressures))
+            if bool(self.distance_between_walls): 
+                with open(f"{self.data_file_path}_distance_walls.json", 'w') as file:
+                    file.write(json.dumps(self.distance_between_walls))
             if self.seed is not None: 
-                with open(f"{self.data_file_path}_seed.json", 'w') as write_file:
-                    write_file.write(json.dumps(self.seed))
+                with open(f"{self.data_file_path}_seed.json", 'w') as file:
+                    file.write(json.dumps(self.seed))
 
             '''subprocess.run([
                 "python",
@@ -4006,10 +4080,11 @@ class handler_class:
                   f" {elapsed_time_secs:.1f}")
             
         cells = [
-            obj 
-            for obj in bpy.data.objects 
-            if "object" in obj.keys() and obj["object"] == "cell"
-            ]
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'cell'
+            )
+        ]
         
         for cell in cells: 
             if cell.name not in self.frame_cells:
@@ -4041,6 +4116,7 @@ class handler_class:
             print('_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _')
             print("The simulation has ended.")
             # True enables the last frame not to be repeated
+            bpy.ops.screen.animation_play()
             bpy.ops.screen.animation_cancel(restore_frame=True) 
             # closes Blender then
             # bpy.ops.wm.quit_blender()
