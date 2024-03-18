@@ -2606,7 +2606,7 @@ class handler_class:
 
         # bpy.app.handlers.frame_change_post.append(self.wall_compression_handler)
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
-        bpy.app.handlers.frame_change_post.append(self.stop_animation)
+        bpy.app.handlers.frame_change_post.append(self.stop_simulation)
 
         # bpy.ops.screen.animation_play()
 
@@ -4099,7 +4099,7 @@ class handler_class:
             if frame_written == self.frame_interval[1] - 1:
                 break 
 
-    def stop_animation(self, scene, depsgraph):
+    def stop_simulation(self, scene, depsgraph):
         """
         Handler responsible to stop the simulation.
 
@@ -4117,6 +4117,18 @@ class handler_class:
         if scene.frame_current == self.frame_interval[1]:
             print('_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _')
             print("The simulation has ended.")
+            print("Applying modifiers to fix the geometry...")
+
+            cells = [
+                obj for obj in bpy.context.scene.objects
+                if (
+                    obj.get('object') == 'cell'
+                )
+            ]
+
+            for cell in cells: 
+                apply_modifiers(cell, 
+                                which='all')
             # True enables the last frame not to be repeated
             bpy.ops.screen.animation_play()
             bpy.ops.screen.animation_cancel(restore_frame=True) 
