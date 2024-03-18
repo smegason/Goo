@@ -2678,8 +2678,10 @@ class handler_class:
         cells = [obj for obj in bpy.context.scene.objects if obj.get('object') == 'cell']
 
         # Find min and max pressure
-        min_p = min(cell.get('previous_pressure', 0) for cell in cells)
-        max_p = max(cell.get('previous_pressure', 0) for cell in cells)
+        pressures = [cell.get('previous_pressure', 0) for cell in cells]
+        min_p = min(pressures)
+        max_p = max(pressures)
+        range_p = max_p - min_p
 
         # Define red and blue colors
         red = Vector((1.0, 0.0, 0.0))
@@ -2689,7 +2691,7 @@ class handler_class:
         for cell in cells: 
             pressure = cell.get('previous_pressure', 0)
             # Normalize pressure to [0, 1]
-            normalized_pressure = (pressure - min_p) / (max_p - min_p)
+            normalized_pressure = (pressure - min_p) / max(1, range_p)
             # Interpolate between red and blue based on pressure
             color = blue.lerp(red, normalized_pressure)
 
@@ -2708,7 +2710,7 @@ class handler_class:
             mat = bpy.data.materials.new(name=material_name)
             mat.use_nodes = True
             bsdf = mat.node_tree.nodes["Principled BSDF"]
-            bsdf.inputs["Base Color"].default_value = (color.x, color.y, color.z, 1.0)
+            bsdf.inputs["Base Color"].default_value = (color.x, color.y, color.z, 0.2)
             cell.data.materials.append(mat)
     
     def background_logic(self, scene, depsgraph): 
