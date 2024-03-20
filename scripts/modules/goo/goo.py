@@ -369,7 +369,7 @@ def get_cells_same_type(obj):
     for coll in bpy.data.collections: 
         for cell in coll.all_objects: 
             if (
-                cell.get('object') == 'cell' and 
+                cell.get('object') in ['cell', 'yolk'] and 
                 cell.users_collection[0].get('type') 
                 == obj.users_collection[0].get('type') and 
                 cell != obj
@@ -440,7 +440,8 @@ def get_missing_adhesion_forces(obj1, obj2):
         obj for obj in obj1.users_collection[0].all_objects
         if (
             obj.get('object') == 'force' and 
-            obj.get('motion') == 0
+            obj.get('motion') == 0 and 
+            obj.get('cell') != 'yolk'
         )
     }
 
@@ -448,7 +449,8 @@ def get_missing_adhesion_forces(obj1, obj2):
         obj for obj in obj2.users_collection[0].all_objects
         if (
             obj.get('object') == 'force' and 
-            obj.get('motion') == 0
+            obj.get('motion') == 0 and
+            obj.get('cell') != 'yolk'
         )
     }
 
@@ -799,6 +801,16 @@ def divide_boolean(obj):
                 do_unlink=True
             )
 
+        yolk_force = bpy.data.objects.get('homotypic_yolk')
+        if (
+            yolk_force is not None 
+            and yolk_force.name in bpy.data.objects
+        ): 
+            bpy.data.objects.remove(
+                bpy.data.objects['homotypic_yolk'], 
+                do_unlink=True
+            )
+
     # Remove mother motion force
     if 'motion force' in obj: 
         mother_motion = True
@@ -899,8 +911,8 @@ def divide_boolean(obj):
 
     d1['volume'] = calculate_volume(d1)
     d2['volume'] = calculate_volume(d2)
-    d1['previous_pressure'] = 1
-    d2['previous_pressure'] = 1
+    d1['previous_pressure'] = 2
+    d2['previous_pressure'] = 2
 
     bpy.ops.object.mode_set(mode='EDIT') 
     bpy.ops.object.mode_set(mode='OBJECT') 
@@ -1125,7 +1137,7 @@ def to_sphere(obj):
     return
 
 
-def make_collection(name, type): 
+def make_collection(name, type, yolk=False): 
     """
     Create and link a new Blender collection to the scene.
 
@@ -1142,6 +1154,7 @@ def make_collection(name, type):
     collection = bpy.data.collections.new(name)
     # Cell type
     collection['type'] = type
+    collection['yolk'] = yolk
     # Blender object type
     collection['object'] = 'collection'
     # link the collection to the scene for visualization 
@@ -1186,7 +1199,7 @@ def make_cell(
     :returns: None
     """
 
-    collection = make_collection(f'{name}_collection', type=type)
+    collection = make_collection(f'{name}_collection', type=type, yolk=False)
 
     if mesh == 'roundcube': 
         # Create mesh
@@ -1271,7 +1284,7 @@ def make_cell(
         = 10000
     # Cloth > Pressure
     bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
-    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 1
+    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 2
     bpy.context.object['previous_pressure'] = \
         bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
     bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
@@ -1321,6 +1334,188 @@ def make_cell(
     bpy.ops.collection.objects_remove_all()
     # Add the active cell to our specific collection 
     bpy.data.collections[collection.name].objects.link(bpy.data.objects[name])
+
+    return obj
+
+
+def make_yolk(
+    name,
+    loc,
+    type,
+    radius=10,
+    remeshing=True,
+    scale=(1, 1, 1),
+    rotation=(0, 0, 0), 
+    stiffness=5,
+    material=("grey", .64, .64, .64), 
+    arcdiv=5,
+    subdiv=3, 
+    adhesion_strength=-5000,
+    mesh='icosphere'
+):
+
+    """
+    Creates a Blender cell object.
+
+    This function creates a new Blender cell object with various settings,
+    such as mesh type, scale, material, and modifiers.
+
+    :param str name: The name of the new cell object.
+    :param tuple loc: The location of the cell object.
+    :param str type: The type of the new cell object.
+    :param float radius: The radius of the cell object.
+    :param bool remeshing: Whether to apply remeshing modifiers.
+    :param tuple scale: The scale of the cell object.
+    :param float stiffness: The stiffness of the cloth modifier.
+    :param tuple material: The material properties for the cell.
+    :param int arcdiv: The arc divisions for the primitive_round_cube_add function.
+    :param int subdiv: The subdivision levels for the Subsurf modifier.
+    :param str mesh: The type of mesh to create ('roundcube' or 'icosphere').
+
+    :returns: None
+    """
+
+    collection = make_collection(f'{name}_collection', type=type, yolk=True)
+
+    if mesh == 'roundcube': 
+        # Create mesh
+        bpy.ops.mesh.primitive_round_cube_add(change=False,
+                                              radius=radius,
+                                              size=scale,
+                                              arc_div=arcdiv,
+                                              lin_div=0,
+                                              div_type='CORNERS',
+                                              odd_axis_align=False,
+                                              no_limit=False,
+                                              location=loc, 
+                                              rotation=rotation, 
+                                              scale=scale
+                                              )
+        
+    elif mesh == 'icosphere': 
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=subdiv,
+                                              radius=radius,
+                                              calc_uvs=True,
+                                              align='WORLD',
+                                              location=loc,
+                                              rotation=rotation, 
+                                              scale=scale
+                                              )
+    else:
+        raise ValueError("Invalid mesh type. Goo currently supports \
+                         'roundcube' and 'icosphere'")
+
+    # Give the Blender object the cell's name
+    obj = bpy.context.object
+    bpy.context.object.name = name
+    bpy.context.object['object'] = 'yolk'
+    bpy.context.object['initial_volume'] = calculate_volume(obj)
+    bpy.context.object['adhesion_strength'] = -adhesion_strength
+    
+    # Smooth the mesh
+    bpy.ops.object.select = True
+    bpy.ops.object.shade_smooth()
+
+    # Add subsurface modifier to make smoother
+    bpy.ops.object.modifier_add(type='SUBSURF')
+    bpy.context.object.modifiers["Subdivision"].levels = subdiv
+
+    # Add cloth settings 
+    bpy.ops.object.modifier_add(type='CLOTH')
+    bpy.context.object.modifiers['Cloth'].settings.quality = 10
+    bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
+    bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
+    bpy.context.object.modifiers["Cloth"].settings.mass = 50
+    bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
+
+    # Cloth > Stiffness 
+    bpy.context.object.modifiers['Cloth'].settings.tension_stiffness = stiffness
+    bpy.context.object.modifiers['Cloth'].settings.compression_stiffness = stiffness
+    bpy.context.object.modifiers['Cloth'].settings.shear_stiffness = stiffness
+    bpy.context.object.modifiers['Cloth'].settings.bending_stiffness = stiffness / 10
+    # Cloth > Damping
+    bpy.context.object.modifiers['Cloth'].settings.tension_damping = 50
+    bpy.context.object.modifiers['Cloth'].settings.compression_damping = 50
+    bpy.context.object.modifiers['Cloth'].settings.shear_damping = 50
+    bpy.context.object.modifiers['Cloth'].settings.bending_damping = 0.5
+    # Cloth > Internal Springs
+    bpy.context.object.modifiers['Cloth'].settings.use_internal_springs = True
+    bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_length = 1
+    bpy.context.object.modifiers['Cloth'].settings.internal_spring_max_diversion \
+        = 0.785398
+    bpy.context.object.modifiers['Cloth'].settings.internal_spring_normal_check = False
+    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness = 10000
+    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness \
+        = 10000
+    bpy.context.object.modifiers['Cloth'].settings.internal_tension_stiffness_max \
+        = 10000
+    bpy.context.object.modifiers['Cloth'].settings.internal_compression_stiffness_max \
+        = 10000
+    # Cloth > Pressure
+    bpy.context.object.modifiers["Cloth"].settings.use_pressure = True
+    bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force = 5.2
+    bpy.context.object['previous_pressure'] = \
+        bpy.context.object.modifiers['Cloth'].settings.uniform_pressure_force
+    bpy.context.object.modifiers['Cloth'].settings.use_pressure_volume = True
+    bpy.context.object.modifiers['Cloth'].settings.target_volume = 1
+    bpy.context.object.modifiers['Cloth'].settings.pressure_factor = 2
+    bpy.context.object.modifiers['Cloth'].settings.fluid_density = 1.15
+    # Cloth > Collisions
+    bpy.context.object.modifiers['Cloth'].collision_settings.collision_quality = 6
+    bpy.context.object.modifiers['Cloth'].collision_settings.use_collision = True
+    bpy.context.object.modifiers['Cloth'].collision_settings.use_self_collision = True
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_friction = 0
+    bpy.context.object.modifiers['Cloth'].collision_settings.friction = 0
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_distance_min = 0.005
+    bpy.context.object.modifiers['Cloth'].collision_settings.distance_min = 0.005
+    bpy.context.object.modifiers['Cloth'].collision_settings.self_impulse_clamp = 0
+
+    # Collision
+    bpy.ops.object.modifier_add(type='COLLISION')
+    bpy.context.object.modifiers['Collision'].settings.use_culling = True
+    bpy.context.object.modifiers['Collision'].settings.damping = 1
+    bpy.context.object.modifiers['Collision'].settings.thickness_outer = 0.025
+    bpy.context.object.modifiers['Collision'].settings.thickness_inner = 0.25
+    bpy.context.object.modifiers['Collision'].settings.cloth_friction = 0
+
+    if remeshing: 
+
+        remesh_mod = obj.modifiers.new(name=f"Remesh_{obj.name}", type='REMESH')
+        obj.modifiers[f"Remesh_{obj.name}"].name = f"Remesh_{obj.name}"
+        remesh_mod.mode = 'VOXEL'
+        remesh_mod.voxel_size = 0.25  # microns
+        remesh_mod.adaptivity = 0
+        remesh_mod.use_remove_disconnected = True
+        remesh_mod.use_smooth_shade = True
+        remesh_mod.show_in_editmode = True
+        bpy.ops.object.modifier_move_to_index(modifier=f"Remesh1_{obj.name}", index=3)
+
+    # add material, default is purple bubble
+    bpy.context.view_layer.objects.active = bpy.data.objects[name]
+    # Clear existing materials
+    obj.data.materials.clear()
+
+    color = Vector((0.5, 0.5, 0.5))
+
+    # Create and append new material
+    material_name = f"mat_{obj.name}"
+    mat = bpy.data.materials.new(name=material_name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = (color.x, color.y, color.z, 0.2)
+    obj.data.materials.append(mat)
+    '''mat = add_material(material[0], 
+                       float(material[1]), 
+                       float(material[2]), 
+                       float(material[3])
+                       )
+    bpy.context.active_object.data.materials.append(mat)'''
+
+    # remove duplicate objects outside of the collection
+    bpy.ops.collection.objects_remove_all()
+    # Add the active cell to our specific collection 
+    bpy.data.collections[collection.name].objects.link(bpy.data.objects[name])
+    add_homo_adhesion(obj.name, -adhesion_strength)
 
     return obj
 
@@ -1817,12 +2012,55 @@ def add_homo_adhesion(cell_name, strength):
     """
     homo_collections = [
         coll for coll in bpy.data.collections
-        if coll.get('type') 
-        in bpy.data.objects[cell_name].users_collection[0].get("type")
+        if (
+            coll.get('type') and 
+            not coll.get('yolk') and
+            bpy.data.objects[cell_name].users_collection[0].get("type") ==
+            coll.get("type")
+        )
     ]
     print(f"Homotypic collections: {homo_collections}")
 
-    cell_type = f"{bpy.data.objects[cell_name].users_collection[0]['type']}"
+    cell_type = f"{bpy.data.objects[cell_name].users_collection[0].get('type')}"
+    force = make_force(force_name=f'homotypic_{cell_name}',
+                       cell_name=cell_name,
+                       type=cell_type,
+                       strength=strength,
+                       falloff=0.5,
+                       motion=False)
+    
+    for coll in homo_collections:
+        coll.objects.link(bpy.data.objects[force.name])
+
+    return
+
+
+def add_homo_adhesion_multiple(cell_name, strength):
+    """
+    Adds homotypic adhesion force within a cell type.
+
+    This function creates a homotypic adhesion force within a cell type. 
+    The adhesion force is applied to the specified cell based on the specified 
+    strength, and it affects other cells of the same type.
+
+    :param str cell_name: The name of the cell to which the homotypic adhesion force \
+        will be applied.
+    :param float strength: The strength of the homotypic adhesion force.
+
+    :return: None
+    """
+    homo_collections = [
+        coll for coll in bpy.data.collections
+        if (
+            coll.get('type') and 
+            not coll.get('yolk') and
+            bpy.data.objects[cell_name].users_collection[0].get("type") ==
+            coll.get("type")
+        )
+    ]
+    print(f"Homotypic collections: {homo_collections}")
+
+    cell_type = f"{bpy.data.objects[cell_name].users_collection[0].get('type')}"
     force = make_force(force_name=f'homotypic_{cell_name}',
                        cell_name=cell_name,
                        type=cell_type,
@@ -1917,6 +2155,94 @@ def make_force(force_name,
     return force
 
 
+def make_forces(force_name,
+                cell_name,
+                type,
+                strength,
+                falloff=0.5,
+                motion=False,
+                min_dist=0,
+                max_dist=0.5,
+                num_forces=6):
+    """
+    Creates forces on the surface of a cell mesh.
+
+    This function creates Blender force objects evenly distributed on the 
+    surface of the cell mesh.
+    The number of forces created is specified by the 'num_forces' parameter.
+
+    :param str force_name: The base name for the force objects.
+    :param str cell_name: The name of the associated cell object.
+    :param str type: The type of the cell.
+    :param float strength: The strength of the force.
+    :param float falloff: The falloff power of the force (default is 0.5).
+    :param bool motion: A flag indicating whether the force is a motion force 
+    (default is False).
+    :param float min_dist: The minimum distance for the force (default is 0).
+    :param float max_dist: The maximum distance for the force (default is 1.2).
+    :param int num_forces: The number of forces to create (default is 6).
+
+    :return: List of the created Goo :class:`Force` objects.
+    :rtype: list
+    """
+    collection = bpy.data.objects[cell_name].users_collection[0]
+    forces = []
+
+    # Get vertices of the cell mesh
+    mesh = bpy.data.objects[cell_name].data
+    verts = [v.co for v in mesh.vertices]
+
+    # Calculate the step size for even distribution
+    step = len(verts) // num_forces
+    remainder = len(verts) % num_forces
+    indices = [i * step + min(i, remainder) for i in range(num_forces)]
+
+    # Distribute forces evenly on the vertices
+    for i in indices:
+        vertex = verts[i]
+        
+        # Add a force object
+        bpy.ops.object.effector_add(
+            type='FORCE',
+            enter_editmode=False,
+            align='WORLD',
+            location=vertex,
+            scale=(1, 1, 1)
+        )
+
+        force = Force(f"{force_name}_{i+1}", 
+                      cell_name, 
+                      strength, 
+                      falloff, 
+                      collection.name, 
+                      motion)
+        
+        forces.append(force)
+
+        # Set force parameters
+        bpy.context.object.field.strength = strength
+        bpy.context.object.field.use_max_distance = True
+        bpy.context.object.field.use_min_distance = True
+        bpy.context.object.field.distance_max = max_dist
+        bpy.context.object.field.distance_min = min_dist
+        bpy.context.object.field.falloff_power = falloff
+        bpy.context.object['cell'] = cell_name
+        bpy.context.object['object'] = 'force'
+
+        if not motion:
+            bpy.context.object['motion'] = False
+            bpy.data.objects.get(cell_name)["adhesion force"] = force.name
+        elif motion:
+            bpy.context.object['motion'] = True
+            bpy.data.objects.get(cell_name)["motion force"] = force.name
+            collection.objects.link(bpy.data.objects[force.name])
+
+        scene_collection = bpy.context.scene.collection
+        scene_collection.objects.unlink(bpy.data.objects[force.name])
+
+    return forces
+
+
 def setup_world(seed=None):
     """Sets up the default values used for simulations in Goo 
     including units and rendering background. 
@@ -1942,7 +2268,7 @@ def setup_world(seed=None):
     bpy.context.scene.use_gravity = False
     # Set units to the metric system
     bpy.context.scene.unit_settings.system = 'METRIC'
-    bpy.context.scene.unit_settings.scale_length = 1
+    bpy.context.scene.unit_settings.scale_length = 0.0001
     bpy.context.scene.unit_settings.system_rotation = 'DEGREES'
     bpy.context.scene.unit_settings.length_unit = 'MICROMETERS'
     bpy.context.scene.unit_settings.mass_unit = 'MILLIGRAMS'
@@ -2361,6 +2687,7 @@ def scaffold_mesh(obj,
         selected_verts = [v for v in obj.data.vertices if v.select]
         if len(selected_verts) == 0:
             bpy.ops.mesh.select_all(action='SELECT')
+
     elif current_mode == "OBJECT":
         bpy.ops.object.mode_set(mode="EDIT")
         bpy.ops.mesh.select_mode(type="VERT")
@@ -2368,13 +2695,9 @@ def scaffold_mesh(obj,
 
     for level in range(num_levels, 1, -1):
         bpy.ops.mesh.extrude_edges_indiv()
-        scale = (level-1)/level
+        scale = ((level-1)/(level))**(1/3)
         bpy.ops.transform.resize(value=(scale, scale, scale))
-        
-        # if level == num_levels:
-        # First level - store it as we need it to be able to remove faces
-        # firstlevel_verts = [v for v in obj.data.vertices if v.select]
-        
+
     bpy.ops.mesh.extrude_edges_indiv()    
     bpy.ops.mesh.merge(type='CENTER')
 
@@ -2389,6 +2712,7 @@ def scaffold_mesh(obj,
     vertexgroup = bpy.context.object.vertex_groups.new()
     vertexgroup.name = ("InternalScaffold")
     bpy.ops.object.vertex_group_assign()
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     return None
 
@@ -2700,13 +3024,6 @@ class handler_class:
 
             # Create and append new material
             material_name = f"mat_{cell.name}"
-            '''bpy.context.view_layer.objects.active = bpy.data.objects[cell.name]
-            mat = add_material(material_name, 
-                               color.x, 
-                               color.y, 
-                               color.z
-                               )
-            bpy.context.active_object.data.materials.append(mat)'''
             mat = bpy.data.materials.new(name=material_name)
             mat.use_nodes = True
             bsdf = mat.node_tree.nodes["Principled BSDF"]
@@ -2847,7 +3164,7 @@ class handler_class:
             current_frame = scene.frame_current
             delta_frame = current_frame - division_frame
             
-            if delta_frame == 0: 
+            if delta_frame == 1: 
                 # Toggle back on physics after mesh separation
                 apply_physics(obj=cell, 
                               stiffness=self.mother_stiffness.get(cell.name))
@@ -2860,13 +3177,14 @@ class handler_class:
                 
     def delay_adhesion_after_division(self, scene, depsgraph): 
         cells_to_remove = []
+        print(f"Cells division time: {self.daugthers_division_frame}")
 
         for cell1 in self.cells_turnon_adhesion: 
             division_frame = self.daugthers_division_frame.get(cell1.name)
             current_frame = scene.frame_current
             delta_frame = current_frame - division_frame
 
-            if delta_frame == 1: 
+            if delta_frame == 2: 
                 print('Mother adhesion detected, passing it on')
                 add_homo_adhesion(cell_name=cell1.name, 
                                   strength=self.mother_adhesion_strength.get(cell1.name))
@@ -2874,17 +3192,31 @@ class handler_class:
                 for cell2 in self.cells_turnon_adhesion:
                     cells_same_type = get_cells_same_type(cell2)
                     for cell_same_type in cells_same_type:
+                        print(cell_same_type)
                         missing_forces = get_missing_adhesion_forces(cell_same_type,
                                                                      cell2)
                         print(f"Missing adhesion forces: {missing_forces}")
                         for force in missing_forces:
-                            cell2.users_collection[0].objects.link(force)
+                            if force.name not in cell2.users_collection[0].objects: 
+                                cell2.users_collection[0].objects.link(force)
 
                 cells_to_remove.append(cell1)
 
         # Remove cells after adhesion has been added
         for cell in cells_to_remove:
             self.cells_turnon_adhesion.remove(cell)
+
+        # Add yolk adhesion force after cell division
+        if self.daugthers_division_frame.get('yolk') is not None: 
+            current_frame = scene.frame_current
+            division_frame_yolk = self.daugthers_division_frame.get('yolk')
+            delta_frame_yolk = current_frame - division_frame_yolk
+            yolk_obj = bpy.data.objects['yolk']
+
+            if delta_frame_yolk == 2: 
+                print('Yolk force added!')
+                add_homo_adhesion(cell_name=yolk_obj.name, 
+                                  strength=yolk_obj.get("adhesion_strength"))
 
     def delay_motion_after_division(self, scene, depsgraph): 
         cells_to_remove = []
@@ -2989,6 +3321,7 @@ class handler_class:
             self.cells_division_frame[mother_name] = scene.frame_current
             self.daugthers_division_frame[d1.name] = scene.frame_current
             self.daugthers_division_frame[d2.name] = scene.frame_current
+            self.daugthers_division_frame['yolk'] = scene.frame_current
 
             self.mother_adhesion = mother_adhesion
             self.mother_motion = mother_motion
@@ -3259,6 +3592,7 @@ class handler_class:
             self.cells_division_frame[mother_name] = scene.frame_current
             self.daugthers_division_frame[d1.name] = scene.frame_current
             self.daugthers_division_frame[d2.name] = scene.frame_current
+            self.daugthers_division_frame['yolk'] = scene.frame_current
 
             self.mother_adhesion = mother_adhesion
             self.mother_motion = mother_motion
@@ -3284,11 +3618,14 @@ class handler_class:
                     if str in obj:
                         del obj[str]
 
+            yolk_obj = bpy.data.objects['yolk']
             if self.mother_motion: 
                 self.cells_turnon_motion.append(d1)
                 self.cells_turnon_motion.append(d2)
                 self.mother_motion_strength[d1.name] = mother_motion_strength
                 self.mother_motion_strength[d2.name] = mother_motion_strength
+                self.mother_motion_strength['yolk'] = yolk_obj.get("adhesion_strength")
+
                 print(f'Motion strength: {self.mother_motion_strength}')
             else: 
                 str = 'motion force'
@@ -3333,108 +3670,197 @@ class handler_class:
                     'pid_scale': pid_scale, 
                     'initial_volume': initial_volume
                 }
+
+    def initialize_yolk_PID(self, yolk):
+        if yolk.name not in self.cell_PIDs:
+            cloth_modifier = yolk.modifiers.get('Cloth')
+            if cloth_modifier:
+                initial_pressure = cloth_modifier.settings.uniform_pressure_force
+                initial_volume = calculate_volume(yolk)
+                pid_scale = 20
+
+                self.KP = 0.05
+                self.KI = 0.000001
+                self.KD = 0.5
+
+                self.cell_PIDs[yolk.name] = {
+                    'integral': 0,
+                    'previous_error': 0,
+                    'previous_pressure': initial_pressure,
+                    'kp': self.KP,
+                    'ki': self.KI,
+                    'kd': self.KD,
+                    'next_volume': initial_volume, 
+                    'pid_scale': pid_scale, 
+                    'initial_volume': initial_volume
+                }
             
     def growth_PID_handler(self, scene, depsgraph):
-        for cell in bpy.context.scene.objects:
-            if (
-                cell.get('object') == 'cell' and cell.modifiers.get('Cloth') 
-                and scene.frame_current != 1
-            ): 
-                # Check if PID-related properties are initialized for the cell
-                self.initialize_cell_PID(cell)
-                properties = self.cell_PIDs[cell.name]
 
-                # Calculate current volume
-                volume = calculate_volume(cell)
-                target_volume = self.target_volume
-                cell['target_volume'] = target_volume
-                cell['volume'] = volume
-                dt = self.dt_physics
-                division_frame = self.daugthers_division_frame.get(cell.name)
-                current_time = scene.frame_current * dt
-                
-                # Supports linear and exponential growth
-                if properties['next_volume'] < target_volume:
-                    print("Selected linear volume growth and control!")
+        cells = [
+            obj for obj in scene.objects
+            if obj.get('object') == 'cell'
+        ]
 
-                    if self.growth_type == 'linear': 
-                        if (
-                            self.daugthers_division_frame.get(cell.name)
-                            # +1 depends on the delay imposed on physics after division 
-                            and (division_frame + 1) * dt == current_time
-                        ): 
-                            properties['next_volume'] = target_volume / 2
+        for cell in cells:
+            # Check if PID-related properties are initialized for the cell
+            self.initialize_cell_PID(cell)
+            properties = self.cell_PIDs[cell.name]
 
-                        else: 
-                            # Update volume with growth rate
-                            properties['next_volume'] \
-                                += (properties['growth_rate'] * self.dt_physics)
-                            # Clip next_volume to target_volume
-                            properties['next_volume'] = min(properties['next_volume'], 
-                                                            target_volume)
-                        
-                    elif self.growth_type == 'exp': 
-                        print("Selected exponential volume growth and control!")
-
-                        if (
-                            self.daugthers_division_frame.get(cell.name)
-                            # +1 depends on the delay imposed on physics after division 
-                            and (division_frame + 1) * dt == current_time
-                        ): 
-                            properties['next_volume'] = target_volume / 2
-
-                        else: 
-                            # Update volume with growth rate
-                            properties['next_volume'] \
-                                *= ((1 + properties['growth_rate'] * self.dt_physics))
-                            # Clip next_volume to target_volume
-                            properties['next_volume'] = min(properties['next_volume'], 
-                                                            target_volume)
-                        
-                    elif self.growth_type == 'logistic':
-                        print("Selected logistic volume growth and control!")
-                        if (
-                            # Get the cell's last division time
-                            self.daugthers_division_frame.get(cell.name)
-                            # +1 depends on the delay imposed on physics after division 
-                            and (division_frame + 1) * dt == current_time
-                        ): 
-                            properties['next_volume'] = target_volume / 2
-
-                        else: 
-                            growth_rate = properties['growth_rate']
-                            time_step = self.dt_physics
-                            # Update volume with growth rate
-                            properties['next_volume'] = (
-                                1 + growth_rate * 
-                                (1 - properties['next_volume'] / target_volume) * 
-                                time_step
-                            ) * properties['next_volume']
-
-                    else:
-                        raise ValueError(
-                            f"Goo supports linear, exponential, and logistic growth. "
-                            f"{self.growth_type} is not."
-                        )
-
-                cell_name = cell.name
-
-                # Batch updates for volumes and pressures
-                self.volumes[cell_name].append(volume)
-                self.pressures[cell_name].append(
-                    cell.modifiers["Cloth"].settings.uniform_pressure_force
-                )
-
-                volume_deviation = ((properties['next_volume'] - volume) 
-                                    / properties['next_volume'])
+            # Calculate current volume
+            volume = calculate_volume(cell)
+            target_volume = self.target_volume
+            cell['target_volume'] = target_volume
+            cell['volume'] = volume
+            dt = self.dt_physics
+            division_frame = self.daugthers_division_frame.get(cell.name)
+            current_time = scene.frame_current * dt
             
-                print(
-                    f"Volume deviation: {volume_deviation}; "
-                    f"Target volume: {target_volume}; "
-                    f"Next volume: {properties['next_volume']}; "
-                    f"Volume: {volume}"
-                )
+            # Supports linear and exponential growth
+            if properties['next_volume'] < target_volume:
+                print("Selected linear volume growth and control!")
 
+                if self.growth_type == 'linear': 
+                    if (
+                        self.daugthers_division_frame.get(cell.name)
+                        # +1 depends on the delay imposed on physics after division 
+                        and (division_frame + 1) * dt == current_time
+                    ): 
+                        properties['next_volume'] = target_volume / 2
+
+                    else: 
+                        # Update volume with growth rate
+                        properties['next_volume'] \
+                            += (properties['growth_rate'] * self.dt_physics)
+                        # Clip next_volume to target_volume
+                        properties['next_volume'] = min(properties['next_volume'], 
+                                                        target_volume)
+                    
+                elif self.growth_type == 'exp': 
+                    print("Selected exponential volume growth and control!")
+
+                    if (
+                        self.daugthers_division_frame.get(cell.name)
+                        # +1 depends on the delay imposed on physics after division 
+                        and (division_frame + 1) * dt == current_time
+                    ): 
+                        properties['next_volume'] = target_volume / 2
+
+                    else: 
+                        # Update volume with growth rate
+                        properties['next_volume'] \
+                            *= ((1 + properties['growth_rate'] * self.dt_physics))
+                        # Clip next_volume to target_volume
+                        properties['next_volume'] = min(properties['next_volume'], 
+                                                        target_volume)
+                    
+                elif self.growth_type == 'logistic':
+                    print("Selected logistic volume growth and control!")
+                    if (
+                        # Get the cell's last division time
+                        self.daugthers_division_frame.get(cell.name)
+                        # +1 depends on the delay imposed on physics after division 
+                        and (division_frame + 1) * dt == current_time
+                    ): 
+                        properties['next_volume'] = target_volume / 2
+
+                    else: 
+                        growth_rate = properties['growth_rate']
+                        time_step = self.dt_physics
+                        # Update volume with growth rate
+                        properties['next_volume'] = (
+                            1 + growth_rate * 
+                            (1 - properties['next_volume'] / target_volume) * 
+                            time_step
+                        ) * properties['next_volume']
+
+                else:
+                    raise ValueError(
+                        f"Goo supports linear, exponential, and logistic growth. "
+                        f"{self.growth_type} is not."
+                    )
+
+            cell_name = cell.name
+
+            # Batch updates for volumes and pressures
+            self.volumes[cell_name].append(volume)
+            self.pressures[cell_name].append(
+                cell.modifiers["Cloth"].settings.uniform_pressure_force
+            )
+
+            volume_deviation = ((properties['next_volume'] - volume) 
+                                / properties['next_volume'])
+        
+            print(
+                f"Volume deviation: {volume_deviation}; "
+                f"Target volume: {target_volume}; "
+                f"Next volume: {properties['next_volume']}; "
+                f"Volume: {volume}"
+            )
+
+            # Retrieve PID-related properties from the dictionary
+            error = volume_deviation
+            properties['integral'] += error
+            derivative = error - properties['previous_error']
+
+            pid_output = (
+                properties['kp'] * error +
+                properties['ki'] * properties['integral'] +
+                properties['kd'] * derivative
+            )
+
+            # Update pressure based on PID output
+            new_pressure = (
+                properties['previous_pressure'] + 
+                (pid_output * properties['pid_scale'])
+            )
+            growth_adjusted_pressure = new_pressure
+
+            # Update the cloth pressure settings
+            cloth_settings = cell.modifiers["Cloth"].settings
+            cloth_settings.uniform_pressure_force = growth_adjusted_pressure
+
+            # Update previous error and pressure for the next iteration
+            properties['previous_error'] = error
+            properties['previous_pressure'] = growth_adjusted_pressure
+            cell['previous_pressure'] = growth_adjusted_pressure
+
+            print(f"New pressure for {cell_name}: {growth_adjusted_pressure}")
+
+        yolks = [
+            obj for obj in scene.objects
+            if obj.get('object') == 'yolk'
+        ]
+
+        for yolk in yolks: 
+            # Check if PID-related properties are initialized for the cell
+            self.initialize_yolk_PID(yolk)
+            properties = self.cell_PIDs[yolk.name]
+
+            # Calculate current volume
+            volume = calculate_volume(yolk)
+            target_volume = yolk.get('initial_volume')
+            yolk['volume'] = volume
+            dt = self.dt_physics
+            # division_frame = self.daugthers_division_frame.get(yolk.name)
+            current_time = scene.frame_current * dt
+
+            # Batch updates for volumes and pressures
+            self.volumes[cell_name].append(volume)
+            self.pressures[cell_name].append(
+                cell.modifiers["Cloth"].settings.uniform_pressure_force
+            )
+
+            volume_deviation = ((target_volume - volume) 
+                                / target_volume)
+        
+            print(
+                f"Volume deviation: {volume_deviation}; "
+                f"Target volume: {target_volume}; "
+                f"Volume: {volume}"
+            )
+            
+            if abs(volume_deviation) >= 0.01:
                 # Retrieve PID-related properties from the dictionary
                 error = volume_deviation
                 properties['integral'] += error
@@ -3454,16 +3880,16 @@ class handler_class:
                 growth_adjusted_pressure = new_pressure
 
                 # Update the cloth pressure settings
-                cloth_settings = cell.modifiers["Cloth"].settings
+                cloth_settings = yolk.modifiers["Cloth"].settings
                 cloth_settings.uniform_pressure_force = growth_adjusted_pressure
 
                 # Update previous error and pressure for the next iteration
                 properties['previous_error'] = error
                 properties['previous_pressure'] = growth_adjusted_pressure
-                cell['previous_pressure'] = growth_adjusted_pressure
+                yolk['previous_pressure'] = growth_adjusted_pressure
 
-                print(f"New pressure for {cell_name}: {growth_adjusted_pressure}")
-
+                print(f"New pressure for {yolk.name}: {growth_adjusted_pressure}")
+                        
     def boundary_handler(self, scene, depsgraph):
         """
         Handler responsible for enforcing reflective boundaries on motion forces.
@@ -3888,21 +4314,29 @@ class handler_class:
             # Retrieve objects of interest
             assoc_cell = force.get('cell')
             cell_obj = bpy.data.objects[assoc_cell]
+
             bpy.context.view_layer.objects.active = cell_obj
 
             # Update the force location to its corresponding cell's center of mass
             COM = get_centerofmass(cell_obj)
             force.location = COM
             # Adapt the radius of the force field to match with cell size
-            _, len_long_axis, _ = get_long_axis(cell_obj)                
-            force.field.distance_max = (len_long_axis / 2) + 0.4
+            _, len_long_axis, _ = get_long_axis(cell_obj)   
 
-            # cell type: 
-            # cells will only adhere with cells from the same collection
-            cloth_modifier = bpy.data.objects[assoc_cell].modifiers["Cloth"]
-            cloth_settings = cloth_modifier.settings
-            cloth_collection = bpy.data.objects[assoc_cell].users_collection[0]
-            cloth_settings.effector_weights.collection = cloth_collection
+            if cell_obj.get('object') == 'cell': 
+                force.field.distance_max = (len_long_axis / 2) + 0.4
+                force.field.distance_min = (len_long_axis / 2) - 0.4
+
+                # cell type: 
+                # cells will only adhere with cells from the same collection
+                cloth_modifier = bpy.data.objects[assoc_cell].modifiers["Cloth"]
+                cloth_settings = cloth_modifier.settings
+                cloth_collection = bpy.data.objects[assoc_cell].users_collection[0]
+                cloth_settings.effector_weights.collection = cloth_collection
+
+            elif cell_obj.get('object') == 'yolk':
+                force.field.distance_max = (len_long_axis / 2) + 1
+                force.field.distance_min = (len_long_axis / 2) - 0
 
     def data_export_handler(self, scene, depsgraph): 
         """
@@ -4121,9 +4555,7 @@ class handler_class:
 
             cells = [
                 obj for obj in bpy.context.scene.objects
-                if (
-                    obj.get('object') == 'cell'
-                )
+                if obj.get('object') in ['cell', 'yolk']
             ]
 
             for cell in cells: 
