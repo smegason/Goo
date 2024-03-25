@@ -13,11 +13,11 @@ goo.make_cell("cell_A1",
               stiffness=1)
 
 goo.make_yolk("yolk", 
-              loc=(0, 0, -5.9), 
+              loc=(0, 0, -5.75), 
               type="cellsA", 
-              scale=(0.4, 0.4, 0.4), 
-              adhesion_strength=10000,
-              stiffness=10)
+              scale=(0.38, 0.38, 0.38), 
+              adhesion_strength=12000,
+              stiffness=1)
 
 # Forces A
 homoA = 10000
@@ -36,6 +36,6 @@ handlers.launch_simulation(start=1,  # default, 1
                            motility=False, 
                            division=True, 
                            target_volume=50, 
-                           cell_cycle_time=100,
+                           cell_cycle_time=30,
                            cell_cycle_var=0
                            )

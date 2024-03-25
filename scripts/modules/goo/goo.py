@@ -912,7 +912,8 @@ def divide_boolean(obj):
     d1['volume'] = calculate_volume(d1)
     d2['volume'] = calculate_volume(d2)
     d1['previous_pressure'] = 2
-    d2['previous_pressure'] = 2
+    d1['cell'] = 'cell'
+    d2['cell'] = 'cell'
 
     bpy.ops.object.mode_set(mode='EDIT') 
     bpy.ops.object.mode_set(mode='OBJECT') 
@@ -1174,7 +1175,7 @@ def make_cell(
     stiffness=1,
     material=("bubble", 0.007, 0.021, 0.3), 
     arcdiv=5,
-    subdiv=3, 
+    subdiv=2, 
     mesh='icosphere'
 ):
 
@@ -1217,7 +1218,7 @@ def make_cell(
                                               )
         
     elif mesh == 'icosphere': 
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=subdiv,
                                               radius=radius,
                                               calc_uvs=True,
                                               align='WORLD',
@@ -1349,7 +1350,7 @@ def make_yolk(
     stiffness=5,
     material=("grey", .64, .64, .64), 
     arcdiv=5,
-    subdiv=3, 
+    subdiv=4, 
     adhesion_strength=-5000,
     mesh='icosphere'
 ):
@@ -1425,14 +1426,14 @@ def make_yolk(
     bpy.context.object.modifiers['Cloth'].settings.quality = 10
     bpy.context.object.modifiers['Cloth'].settings.air_damping = 10
     bpy.context.object.modifiers['Cloth'].settings.bending_model = 'ANGULAR'
-    bpy.context.object.modifiers["Cloth"].settings.mass = 50
+    bpy.context.object.modifiers["Cloth"].settings.mass = 2
     bpy.context.object.modifiers["Cloth"].settings.time_scale = 1
 
     # Cloth > Stiffness 
     bpy.context.object.modifiers['Cloth'].settings.tension_stiffness = stiffness
     bpy.context.object.modifiers['Cloth'].settings.compression_stiffness = stiffness
     bpy.context.object.modifiers['Cloth'].settings.shear_stiffness = stiffness
-    bpy.context.object.modifiers['Cloth'].settings.bending_stiffness = stiffness / 10
+    bpy.context.object.modifiers['Cloth'].settings.bending_stiffness = stiffness
     # Cloth > Damping
     bpy.context.object.modifiers['Cloth'].settings.tension_damping = 50
     bpy.context.object.modifiers['Cloth'].settings.compression_damping = 50
@@ -2778,7 +2779,7 @@ class handler_class:
         self.mother_adhesion_strength = defaultdict()
         self.mother_adhesion_falloff = defaultdict()
         self.mother_motion_strength = defaultdict()
-
+        
         # For cell growth 
         self.volumes = defaultdict(list)
         self.pressures = defaultdict(list)
@@ -2876,6 +2877,7 @@ class handler_class:
         self.cell_cycle_time = cell_cycle_time  # division per minutes
         self.cell_cycle_variance = cell_cycle_var  # % of cell cycle time
         self.target_volume = target_volume
+        self.mother_volume = target_volume
 
         self.growth_type = growth_type
         self.growth_rate = growth_rate
@@ -2901,8 +2903,7 @@ class handler_class:
         if adhesion:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
         if growth:
-            bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
-            # bpy.app.handlers.frame_change_post.append(self.motion_PID_handler)
+            bpy.app.handlers.frame_change_post.append(self.growth_embryo_PID_handler)
         if (division and division_type == 'random_volume'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_random_volume)
             bpy.app.handlers.frame_change_post.append(self.delay_physics_after_division)  
@@ -3207,7 +3208,10 @@ class handler_class:
             self.cells_turnon_adhesion.remove(cell)
 
         # Add yolk adhesion force after cell division
-        if self.daugthers_division_frame.get('yolk') is not None: 
+        if (
+            self.daugthers_division_frame.get('yolk') is not None and
+            bpy.data.objects.get('yolk') is not None
+        ):
             current_frame = scene.frame_current
             division_frame_yolk = self.daugthers_division_frame.get('yolk')
             delta_frame_yolk = current_frame - division_frame_yolk
@@ -3592,7 +3596,6 @@ class handler_class:
             self.cells_division_frame[mother_name] = scene.frame_current
             self.daugthers_division_frame[d1.name] = scene.frame_current
             self.daugthers_division_frame[d2.name] = scene.frame_current
-            self.daugthers_division_frame['yolk'] = scene.frame_current
 
             self.mother_adhesion = mother_adhesion
             self.mother_motion = mother_motion
@@ -3618,13 +3621,16 @@ class handler_class:
                     if str in obj:
                         del obj[str]
 
-            yolk_obj = bpy.data.objects['yolk']
+            if bpy.data.objects.get('yolk'): 
+                yolk_obj = bpy.data.objects['yolk']
+                self.mother_motion_strength['yolk'] = yolk_obj.get("adhesion_strength")
+                self.daugthers_division_frame['yolk'] = scene.frame_current
+
             if self.mother_motion: 
                 self.cells_turnon_motion.append(d1)
                 self.cells_turnon_motion.append(d2)
                 self.mother_motion_strength[d1.name] = mother_motion_strength
                 self.mother_motion_strength[d2.name] = mother_motion_strength
-                self.mother_motion_strength['yolk'] = yolk_obj.get("adhesion_strength")
 
                 print(f'Motion strength: {self.mother_motion_strength}')
             else: 
@@ -3718,6 +3724,211 @@ class handler_class:
             
             # Supports linear and exponential growth
             if properties['next_volume'] < target_volume:
+                print("Selected linear volume growth and control!")
+
+                if self.growth_type == 'linear': 
+                    if (
+                        self.daugthers_division_frame.get(cell.name)
+                        # +1 depends on the delay imposed on physics after division 
+                        and (division_frame + 1) * dt == current_time
+                    ): 
+                        properties['next_volume'] = target_volume / 2
+
+                    else: 
+                        # Update volume with growth rate
+                        properties['next_volume'] \
+                            += (properties['growth_rate'] * self.dt_physics)
+                        # Clip next_volume to target_volume
+                        properties['next_volume'] = min(properties['next_volume'], 
+                                                        target_volume)
+                    
+                elif self.growth_type == 'exp': 
+                    print("Selected exponential volume growth and control!")
+
+                    if (
+                        self.daugthers_division_frame.get(cell.name)
+                        # +1 depends on the delay imposed on physics after division 
+                        and (division_frame + 1) * dt == current_time
+                    ): 
+                        properties['next_volume'] = target_volume / 2
+
+                    else: 
+                        # Update volume with growth rate
+                        properties['next_volume'] \
+                            *= ((1 + properties['growth_rate'] * self.dt_physics))
+                        # Clip next_volume to target_volume
+                        properties['next_volume'] = min(properties['next_volume'], 
+                                                        target_volume)
+                    
+                elif self.growth_type == 'logistic':
+                    print("Selected logistic volume growth and control!")
+                    if (
+                        # Get the cell's last division time
+                        self.daugthers_division_frame.get(cell.name)
+                        # +1 depends on the delay imposed on physics after division 
+                        and (division_frame + 1) * dt == current_time
+                    ): 
+                        properties['next_volume'] = target_volume / 2
+
+                    else: 
+                        growth_rate = properties['growth_rate']
+                        time_step = self.dt_physics
+                        # Update volume with growth rate
+                        properties['next_volume'] = (
+                            1 + growth_rate * 
+                            (1 - properties['next_volume'] / target_volume) * 
+                            time_step
+                        ) * properties['next_volume']
+
+                else:
+                    raise ValueError(
+                        f"Goo supports linear, exponential, and logistic growth. "
+                        f"{self.growth_type} is not."
+                    )
+
+            cell_name = cell.name
+
+            # Batch updates for volumes and pressures
+            self.volumes[cell_name].append(volume)
+            self.pressures[cell_name].append(
+                cell.modifiers["Cloth"].settings.uniform_pressure_force
+            )
+
+            volume_deviation = ((properties['next_volume'] - volume) 
+                                / properties['next_volume'])
+        
+            print(
+                f"Volume deviation: {volume_deviation}; "
+                f"Target volume: {target_volume}; "
+                f"Next volume: {properties['next_volume']}; "
+                f"Volume: {volume}"
+            )
+
+            # Retrieve PID-related properties from the dictionary
+            error = volume_deviation
+            properties['integral'] += error
+            derivative = error - properties['previous_error']
+
+            pid_output = (
+                properties['kp'] * error +
+                properties['ki'] * properties['integral'] +
+                properties['kd'] * derivative
+            )
+
+            # Update pressure based on PID output
+            new_pressure = (
+                properties['previous_pressure'] + 
+                (pid_output * properties['pid_scale'])
+            )
+            growth_adjusted_pressure = new_pressure
+
+            # Update the cloth pressure settings
+            cloth_settings = cell.modifiers["Cloth"].settings
+            cloth_settings.uniform_pressure_force = growth_adjusted_pressure
+
+            # Update previous error and pressure for the next iteration
+            properties['previous_error'] = error
+            properties['previous_pressure'] = growth_adjusted_pressure
+            cell['previous_pressure'] = growth_adjusted_pressure
+
+            print(f"New pressure for {cell_name}: {growth_adjusted_pressure}")
+
+        yolks = [
+            obj for obj in scene.objects
+            if obj.get('object') == 'yolk'
+        ]
+
+        for yolk in yolks: 
+            # Check if PID-related properties are initialized for the cell
+            self.initialize_yolk_PID(yolk)
+            properties = self.cell_PIDs[yolk.name]
+
+            # Calculate current volume
+            volume = calculate_volume(yolk)
+            target_volume = yolk.get('initial_volume')
+            yolk['volume'] = volume
+            dt = self.dt_physics
+            # division_frame = self.daugthers_division_frame.get(yolk.name)
+            current_time = scene.frame_current * dt
+
+            # Batch updates for volumes and pressures
+            self.volumes[cell_name].append(volume)
+            self.pressures[cell_name].append(
+                cell.modifiers["Cloth"].settings.uniform_pressure_force
+            )
+
+            volume_deviation = ((target_volume - volume) 
+                                / target_volume)
+        
+            print(
+                f"Volume deviation: {volume_deviation}; "
+                f"Target volume: {target_volume}; "
+                f"Volume: {volume}"
+            )
+            
+            if abs(volume_deviation) >= 0.01:
+                # Retrieve PID-related properties from the dictionary
+                error = volume_deviation
+                properties['integral'] += error
+                derivative = error - properties['previous_error']
+
+                pid_output = (
+                    properties['kp'] * error +
+                    properties['ki'] * properties['integral'] +
+                    properties['kd'] * derivative
+                )
+
+                # Update pressure based on PID output
+                new_pressure = (
+                    properties['previous_pressure'] + 
+                    (pid_output * properties['pid_scale'])
+                )
+                growth_adjusted_pressure = new_pressure
+
+                # Update the cloth pressure settings
+                cloth_settings = yolk.modifiers["Cloth"].settings
+                cloth_settings.uniform_pressure_force = growth_adjusted_pressure
+
+                # Update previous error and pressure for the next iteration
+                properties['previous_error'] = error
+                properties['previous_pressure'] = growth_adjusted_pressure
+                yolk['previous_pressure'] = growth_adjusted_pressure
+
+                print(f"New pressure for {yolk.name}: {growth_adjusted_pressure}")
+                        
+    def growth_embryo_PID_handler(self, scene, depsgraph):
+
+        cells = [
+            obj for obj in scene.objects
+            if obj.get('object') == 'cell'
+        ]
+
+        for cell in cells:
+            # Check if PID-related properties are initialized for the cell
+            self.initialize_cell_PID(cell)
+            properties = self.cell_PIDs[cell.name]
+
+            # Calculate current volume
+            volume = calculate_volume(cell)
+            target_volume = self.target_volume
+            cell['target_volume'] = target_volume
+            cell['volume'] = volume
+            dt = self.dt_physics
+            division_frame = self.daugthers_division_frame.get(cell.name)
+            current_time = scene.frame_current * dt
+
+            '''if current_time <= self.cell_cycle_time: 
+                i_th_cycle = 1
+                cell['target_volume'] = self.target_volume
+                print(f"Cycle number: {i_th_cycle}")
+            else: '''
+
+            i_th_cycle = (current_time // self.cell_cycle_time)
+            cell['post_division_volume'] = self.target_volume / 2**i_th_cycle
+            print(f"Cycle number: {i_th_cycle}")
+
+            # Supports linear and exponential growth
+            if properties['next_volume'] < target_volume / 2**i_th_cycle:
                 print("Selected linear volume growth and control!")
 
                 if self.growth_type == 'linear': 
