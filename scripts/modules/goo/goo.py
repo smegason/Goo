@@ -2827,7 +2827,7 @@ class handler_class:
             dt_physics=1,
             dt_biorcircuits=1,
             adhesion=True,
-            growth=False,
+            growth=True,
             division=False,
             data=False,
             motility=False,
@@ -2902,8 +2902,10 @@ class handler_class:
             bpy.app.handlers.frame_change_post.append(self.motion_handler)
         if adhesion:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
-        if growth:
+        if growth == 'embryo':
             bpy.app.handlers.frame_change_post.append(self.growth_embryo_PID_handler)
+        if growth == 'tissue':
+            bpy.app.handlers.frame_change_post.append(self.growth_PID_handler)
         if (division and division_type == 'random_volume'):
             bpy.app.handlers.frame_change_post.append(self.division_handler_random_volume)
             bpy.app.handlers.frame_change_post.append(self.delay_physics_after_division)  
@@ -2927,7 +2929,11 @@ class handler_class:
         if test: 
             bpy.app.handlers.frame_change_post.append(self.test_long_axis)
         if colorize == 'pressure': 
-            bpy.app.handlers.frame_change_post.append(self.colorize)
+            bpy.app.handlers.frame_change_post.append(self.colorize_pressure)
+        if colorize == 'volume': 
+            bpy.app.handlers.frame_change_post.append(self.colorize_volume)
+        if colorize == 'random': 
+            bpy.app.handlers.frame_change_post.append(self.colorize_random)
 
         # bpy.app.handlers.frame_change_post.append(self.wall_compression_handler)
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
@@ -2998,7 +3004,7 @@ class handler_class:
 
         return 
         
-    def colorize(self, scene, depsgraph): 
+    def colorize_pressure(self, scene, depsgraph): 
         # Get all cell objects
         cells = [obj for obj in bpy.context.scene.objects if obj.get('object') == 'cell']
 
@@ -3031,6 +3037,64 @@ class handler_class:
             bsdf.inputs["Base Color"].default_value = (color.x, color.y, color.z, 0.2)
             cell.data.materials.append(mat)
     
+    def colorize_volume(self, scene, depsgraph): 
+        # Get all cell objects
+        cells = [obj for obj in bpy.context.scene.objects if obj.get('object') == 'cell']
+
+        # Find min and max pressure
+        # volumes = [cell.get('volume', 0) for cell in cells]
+        min_p = 0
+        max_p = 100
+        range_p = max_p - min_p
+
+        # Define red and blue colors
+        red = Vector((1.0, 0.0, 0.0))
+        blue = Vector((0.0, 0.0, 1.0))
+
+        # Iterate over cells and set color based on pressure
+        for cell in cells: 
+            volume = cell.get('volume', 0)
+            # Normalize pressure to [0, 1]
+            normalized_pressure = (volume - min_p) / max(1, range_p)
+            # Interpolate between red and blue based on pressure
+            color = blue.lerp(red, normalized_pressure)
+
+            # Clear existing materials
+            cell.data.materials.clear()
+
+            # Create and append new material
+            material_name = f"mat_{cell.name}"
+            mat = bpy.data.materials.new(name=material_name)
+            mat.use_nodes = True
+            bsdf = mat.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (color.x, color.y, color.z, 0.2)
+            cell.data.materials.append(mat)
+
+    def colorize_random(self, scene, depsgraph):
+        # Get all cell objects
+        cells = [obj for obj in bpy.context.scene.objects if obj.get('object') == 'cell']
+
+        # Iterate over cells
+        for cell in cells:
+            for mat in cell.data.materials:
+                print(mat)
+                if not (mat and "mat_cell" in mat.name):
+                    # Generate a random RGB color
+                    random_color = (np.random.uniform(0, 1), 
+                                    np.random.uniform(0, 1), 
+                                    np.random.uniform(0, 1))
+
+                    # Clear existing materials
+                    cell.data.materials.clear()
+
+                    # Create and append new material with random color
+                    material_name = f"mat_{cell.name}"
+                    mat = bpy.data.materials.new(name=material_name)
+                    mat.use_nodes = True
+                    bsdf = mat.node_tree.nodes["Principled BSDF"]
+                    bsdf.inputs["Base Color"].default_value = (*random_color, 1)  
+                    cell.data.materials.append(mat)
+
     def background_logic(self, scene, depsgraph): 
         cells = [
             obj for obj in bpy.context.scene.objects
@@ -3325,7 +3389,6 @@ class handler_class:
             self.cells_division_frame[mother_name] = scene.frame_current
             self.daugthers_division_frame[d1.name] = scene.frame_current
             self.daugthers_division_frame[d2.name] = scene.frame_current
-            self.daugthers_division_frame['yolk'] = scene.frame_current
 
             self.mother_adhesion = mother_adhesion
             self.mother_motion = mother_motion
