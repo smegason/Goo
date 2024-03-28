@@ -74,20 +74,13 @@ class Cell:
 
         return volume
 
-    def COM(self):
-        """Calculates the center of mass of a mesh.
-
-        This function fetch the evaluated object's dependency graph,
-        retrieves the coordinates of each vertex then computes the center of mass
-        as the mean position among the set of vertices.
-
-        :param bpy.data.objects['name'] obj: The Blender mesh.
-        :returns: The coordinates of the center of mass of the mesh as a tuple(x, y, z).
-        :rtype: tuple
-        """
+    def COM(self, global_coords=True):
+        """Calculates the center of mass of a mesh."""
         obj_eval = self.obj_eval
         vert_coords = _get_vertex_coords(obj_eval)
-        com = np.mean(vert_coords, axis=0)
+        com = Vector(np.mean(vert_coords, axis=0))
+        if not global_coords:
+            com = self.obj.matrix_world.inverted() @ com
         return Vector(com)
 
     def _eigenvector(self, n):
@@ -126,6 +119,12 @@ class Cell:
         self.obj.data.remesh_voxel_size = 0.25
         with bpy.context.temp_override(active_object=self.obj):
             bpy.ops.object.voxel_remesh()
+
+    def copy(self):
+        obj_copy = self.obj.copy()
+        obj_copy.data = self.obj.data.copy()
+        bpy.context.collection.objects.link(obj_copy)
+        return Cell(obj_copy)
 
 
 def create_cell(name, loc, **kwargs):
@@ -189,7 +188,6 @@ def _eigenvectors(vert_coords):
     covariance_matrix = np.cov(vert_coords, rowvar=False)
     # Calculate the eigenvectors and eigenvalues of the covariance matrix
     eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
-    # Sort the eigenvectors by descending eigenvalues
     eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
     return eigenvectors
 
@@ -198,11 +196,6 @@ def _create_division_plane(name, major_axis, com):
     """
     Creates a plane orthogonal to the long axis vector
     and passing through the cell's center of mass.
-
-    :param long_axis: The long axis vector.
-    :type long_axis: numpy.ndarray
-    :param com: The center of mass of the mesh.
-    :type com: numpy.ndarray
     """
     # TODO: not sure about length of the plane, maybe short axis?
     # Define new plane

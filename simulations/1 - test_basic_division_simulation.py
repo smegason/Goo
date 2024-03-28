@@ -14,7 +14,7 @@ celltype = CellType("default")
 cell = celltype.create_cell("cell", (0, 0, 0), size=5, subdivisions=3)
 
 sim = Simulator(celltypes=[celltype])
-division_handler = TimeDivisionHandler(BooleanDivisionLogic())
+division_handler = TimeDivisionHandler(BisectDivisionLogic)
 sim.add_handler(division_handler)
 
 sim.run_simulation()

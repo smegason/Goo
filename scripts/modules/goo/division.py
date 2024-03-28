@@ -7,6 +7,51 @@ class DivisionLogic:
         pass
 
 
+class BisectDivisionLogic(DivisionLogic):
+    def make_divide(self, mother):
+        com = mother.COM(global_coords=False)
+        axis = mother.major_axis().axis()
+
+        daughter = mother.copy()
+        self._bisect(mother.obj.data, com, axis, True)
+        self._bisect(daughter.obj.data, com, axis, False)
+
+        mother.remesh()
+        daughter.remesh()
+
+        daughter.name = mother.name + ".1"
+        mother.name = mother.name + ".0"
+
+        return mother, daughter
+
+    def _bisect(self, mesh, com, axis, inner):
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+
+        # bisect with plane
+        verts = [v for v in bm.verts]
+        edges = [e for e in bm.edges]
+        faces = [f for f in bm.faces]
+        geom = verts + edges + faces
+
+        result = bmesh.ops.bisect_plane(
+            bm,
+            geom=geom,
+            plane_co=com,
+            plane_no=axis,
+            clear_outer=inner,
+            clear_inner=not inner,
+        )
+
+        # fill in bisected face
+        edges = [e for e in result["geom_cut"] if isinstance(e, bmesh.types.BMEdge)]
+        bmesh.ops.edgeloop_fill(bm, edges=edges)
+
+        bm.to_mesh(mesh)
+        bm.free()
+        mesh.update()
+
+
 class BooleanDivisionLogic(DivisionLogic):
     def __init__(self):
         pass
@@ -51,7 +96,7 @@ class TimeDivisionHandler:
     def __init__(self, divider_handler, mu=10, var=0):
         self.mu = mu
         self.var = var
-        self.divider_handler = divider_handler
+        self.divider_handler = divider_handler()
 
     def setup(self, get_cells, dt):
         self.get_cells = get_cells

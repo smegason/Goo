@@ -1,5 +1,6 @@
 # Goal: test the ability to import and reload modules
 
+import bmesh
 from importlib import reload
 import goo
 from goo import goo as g
