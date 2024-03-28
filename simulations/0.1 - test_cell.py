@@ -11,7 +11,8 @@ reload(goo)
 reset_modules()
 reset_scene()
 
-cell = create_cell("cell", (1, 2, 3), rotation=(1, 2, 3), scale=(2, 1, 0.5))
+cell = create_cell("cell", (1, 2, 3), rotation=(1, 2, 3), scale=(5, 4.5, 4))
+print(cell.obj.location)
 
 print("Volume", cell.volume())
 print("COM:", cell.COM())
@@ -24,7 +25,12 @@ print(axis.axis(), axis.length(global_coords=True), axis.endpoints())
 print("---- Short axis ----")
 print(g.get_minor_axis(cell.obj))
 m_axis = cell.minor_axis()
-print(m_axis.axis(global_coords=True), m_axis.length(), m_axis.endpoints())
+print(
+    m_axis.axis(global_coords=True),
+    m_axis.length(),
+    m_axis.endpoints(global_coords=True),
+)
+print(m_axis._matrix_world)
 
 plane = cell.create_division_plane()
 plane.hide_set(False)

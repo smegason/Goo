@@ -1,6 +1,6 @@
 import numpy as np
 import bpy, bmesh
-from mathutils import Vector, Matrix, Euler
+from mathutils import Vector, Matrix, Euler, Quaternion
 
 
 class Cell:
@@ -112,22 +112,26 @@ class Cell:
         return self._eigenvector(0)
 
     def create_division_plane(self):
-        return _create_division_plane(
-            self.obj.name,
-            self.major_axis(),
-            self.COM(),
-        )
+        return _create_division_plane(self.obj.name, self.major_axis(), self.COM())
 
-    def divide(self, dividerHandler):
-        mother, daughter = dividerHandler.make_divide(self)
+    def divide(self, divisionLogic):
+        mother, daughter = divisionLogic.make_divide(self)
         if mother.celltype:
             mother.celltype.add_cell(daughter)
         return mother, daughter
+
+    def remesh(self):
+        # use of object ops is 2x faster than remeshing with modifiers
+        self.obj.data.remesh_mode = "VOXEL"
+        self.obj.data.remesh_voxel_size = 0.25
+        with bpy.context.temp_override(active_object=self.obj):
+            bpy.ops.object.voxel_remesh()
 
 
 def create_cell(name, loc, **kwargs):
     obj = _create_mesh(name, loc, mesh="icosphere", **kwargs)
     cell = Cell(obj)
+    cell.remesh()
     return cell
 
 
@@ -142,24 +146,20 @@ def _create_mesh(
     subdivisions=2,
     **kwargs,
 ):
+    # use of bmesh is about 10x faster than bpy.ops
     bm = bmesh.new()
 
     if isinstance(rotation, tuple):
         rotation = Euler(rotation)
+    elif isinstance(rotation, Quaternion):
+        rotation = rotation.to_euler()
 
     if mesh == "icosphere":
-        matrix_world = Matrix.LocRotScale(loc, rotation, scale)
-        bmesh.ops.create_icosphere(
-            bm, subdivisions=subdivisions, radius=size, matrix=matrix_world, **kwargs
-        )
+        bmesh.ops.create_icosphere(bm, subdivisions=subdivisions, radius=size, **kwargs)
     elif mesh == "plane":
-        matrix_world = Matrix.LocRotScale(loc, rotation, scale)
-        bmesh.ops.create_grid(
-            bm, x_segments=1, y_segments=1, size=size / 2, matrix=matrix_world, **kwargs
-        )
+        bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=size / 2, **kwargs)
     elif mesh == "monkey":
-        matrix_world = Matrix.LocRotScale(loc, rotation, size * Vector(scale))
-        bmesh.ops.create_monkey(bm, matrix=matrix_world, **kwargs)
+        bmesh.ops.create_monkey(bm, **kwargs)
     else:
         raise ValueError("""mesh must be one of "icosphere", "plane", or "monkey".""")
 
@@ -168,6 +168,10 @@ def _create_mesh(
     bm.free()
 
     obj = bpy.data.objects.new(name, me)
+    obj.location = loc
+    obj.rotation_euler = rotation
+    obj.scale = scale
+
     bpy.context.collection.objects.link(obj)
     return obj
 
@@ -190,7 +194,7 @@ def _eigenvectors(vert_coords):
     return eigenvectors
 
 
-def _create_division_plane(name, long_axis, com):
+def _create_division_plane(name, major_axis, com):
     """
     Creates a plane orthogonal to the long axis vector
     and passing through the cell's center of mass.
@@ -206,8 +210,8 @@ def _create_division_plane(name, long_axis, com):
         f"{name}_division_plane",
         loc=com,
         mesh="plane",
-        size=long_axis.length() + 1,
-        rotation=long_axis.axis().to_track_quat("Z", "Y"),
+        size=major_axis.length(global_coords=True) + 1,
+        rotation=major_axis.axis().to_track_quat("Z", "Y"),
     )
 
     # Add thickness to plane

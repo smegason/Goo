@@ -2,12 +2,12 @@ import bpy, bmesh
 from goo.cell import Cell
 
 
-class DividerHandler:
-    def divide(self, mother: Cell) -> tuple[Cell, Cell]:
+class DivisionLogic:
+    def make_divide(self, mother: Cell) -> tuple[Cell, Cell]:
         pass
 
 
-class BooleanDivider(DividerHandler):
+class BooleanDivisionLogic(DivisionLogic):
     def __init__(self):
         pass
 
@@ -32,32 +32,21 @@ class BooleanDivider(DividerHandler):
         bpy.ops.object.mode_set(mode="OBJECT")
 
         daughter = Cell(bpy.context.selected_objects[0])
+        daughter.obj.select_set(False)
         daughter.name = mother.name + ".1"
         mother.name = mother.name + ".0"
 
         # remesh daughter cells
-        self._division_remesh(mother.obj)
-        self._division_remesh(daughter.obj)
+        mother.remesh()
+        daughter.remesh()
 
         # clean up
-        mesh = plane.data
-        bpy.data.meshes.remove(mesh, do_unlink=True)
-        bpy.ops.object.select_all(action="DESELECT")
+        bpy.data.meshes.remove(plane.data, do_unlink=True)
 
         return mother, daughter
 
-    def _division_remesh(self, obj):
-        bpy.context.view_layer.objects.active = obj
-        remesh_modifier = obj.modifiers.new(name="Remesh", type="REMESH")
-        remesh_modifier.mode = "VOXEL"
-        remesh_modifier.voxel_size = 0.25  # microns
-        remesh_modifier.adaptivity = 0
-        remesh_modifier.use_remove_disconnected = True
-        # remesh_modifier.use_smooth_shade = True
-        bpy.ops.object.modifier_apply(modifier="Remesh")
 
-
-class DivisionTimeHandler:
+class TimeDivisionHandler:
     # TODO: implement variance
     def __init__(self, divider_handler, mu=10, var=0):
         self.mu = mu
