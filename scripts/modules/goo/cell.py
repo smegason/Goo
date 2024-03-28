@@ -6,7 +6,8 @@ from mathutils import Vector, Matrix, Euler
 class Cell:
     def __init__(self, obj, celltype=None):
         self.obj = obj
-        self.celltype = celltype
+        self._celltype = celltype
+        self._last_division_time = 0
 
     @property
     def name(self):
@@ -15,6 +16,24 @@ class Cell:
     @name.setter
     def name(self, name):
         self.obj.name = name
+
+    @property
+    def celltype(self):
+        return self._celltype
+
+    @celltype.setter
+    def celltype(self, celltype):
+        self._celltype = celltype
+        self.obj.data["celltype"] = celltype.name
+
+    @property
+    def last_division_time(self):
+        return self._last_division_time
+
+    @last_division_time.setter
+    def last_division_time(self, time):
+        self._last_division_time = time
+        self.obj.data["last_division_time"] = time
 
     @property
     def obj_eval(self):
@@ -51,7 +70,6 @@ class Cell:
         bm.from_mesh(mesh_from_eval)
         bm.transform(obj_eval.matrix_world)
         volume = bm.calc_volume()
-        # print(f"Volume of {obj.name}: {abs(volume)}")  # Output the result
         bm.free()
 
         return volume
@@ -101,7 +119,10 @@ class Cell:
         )
 
     def divide(self, dividerHandler):
-        return dividerHandler.make_divide(self)
+        mother, daughter = dividerHandler.make_divide(self)
+        if mother.celltype:
+            mother.celltype.add_cell(daughter)
+        return mother, daughter
 
 
 def create_cell(name, loc, **kwargs):
@@ -179,21 +200,22 @@ def _create_division_plane(name, long_axis, com):
     :param com: The center of mass of the mesh.
     :type com: numpy.ndarray
     """
-    # Define a new plane object
+    # TODO: not sure about length of the plane, maybe short axis?
+    # Define new plane
     plane = _create_mesh(
         f"{name}_division_plane",
         loc=com,
         mesh="plane",
-        size=long_axis.axis().length + 1,
+        size=long_axis.length() + 1,
         rotation=long_axis.axis().to_track_quat("Z", "Y"),
     )
 
-    # Add solidify modifier to the plane, add thickness to the plane
+    # Add thickness to plane
     solid_mod = plane.modifiers.new(name="Solidify", type="SOLIDIFY")
     solid_mod.offset = 0
     solid_mod.thickness = 0.025
 
-    # Hide the plane
+    # Hide plane
     plane.hide_set(True)
     return plane
 
@@ -202,6 +224,7 @@ def _create_division_plane(name, long_axis, com):
 
 
 class Axis:
+    # TODO: global vs. local coordinate parameters are probably wrong
     def __init__(self, axis, start, end, world_matrix):
         """
         :param axis: Vector of axis
@@ -230,17 +253,23 @@ class Axis:
 
 
 class CellType:
-    def __init__(self):
-        pass
+    def __init__(self, name):
+        self.name = name
+        self._cells = set()
 
     def add_cell(self, cell):
         cell.celltype = self
-        self.cells.append(cell)
+        self._cells.add(cell)
 
-    def create_cell(celltype, loc):
-        cell = Cell(loc)
-        celltype.add_cell(cell)
+    def create_cell(self, name, loc, **kwargs):
+        cell = create_cell(name, loc, **kwargs)
+        self.add_cell(cell)
+        return cell
 
     def create_cells(celltype, locs=None, shape=None, size=None):
-        # create cells in shape or in specified locations of specified cell types
+        # TODO: create cells in shape or in specified locations of specified cell types
         pass
+
+    @property
+    def cells(self):
+        return list(self._cells)

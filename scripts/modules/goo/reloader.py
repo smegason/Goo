@@ -12,6 +12,8 @@ def reset_modules():
 
 
 def reset_scene():
+    bpy.app.handlers.frame_change_post.clear()
+    bpy.context.scene.frame_set(1)
     try:
         bpy.ops.object.mode_set(mode="OBJECT")
     except:

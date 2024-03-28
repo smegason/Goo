@@ -4,7 +4,8 @@
 from importlib import reload
 import goo
 from goo import goo as g
-from goo import *
+from goo.cell import *
+from goo.reloader import *
 
 reload(goo)
 reset_modules()

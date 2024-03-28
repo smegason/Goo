@@ -1,20 +1,22 @@
 import bpy
-from handler import TimingHandler
-import datetime
+
+from goo.handler import TimingHandler
+from datetime import datetime
 
 
 class Simulator:
-    def __init__(self):
+    def __init__(self, celltypes, physics_dt=1):
         self.handlers = []
+        self.celltypes = celltypes
+        self.physics_dt = physics_dt
 
-    def add_handlers(self, handlers):
-        self.handlers.extend(handlers)
+    def get_cells(self):
+        return [cell for celltype in self.celltypes for cell in celltype.cells]
 
     def add_handler(self, handler):
-        self.handlers.append(handler)
+        handler.setup(self.get_cells, self.physics_dt)
+        self.handlers.append(handler.run)
 
     def run_simulation(self):
         start_time = datetime.now()
-        bpy.app.handlers.frame_change_post.clear()
         bpy.app.handlers.frame_change_post.extend(self.handlers)
-        bpy.app.handlers.frame_change_post.append(TimingHandler(start_time))
