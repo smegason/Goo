@@ -10,11 +10,11 @@ reload(goo)
 reset_modules()
 reset_scene()
 
-celltype = CellType("default")
-cell = celltype.create_cell("cell", (0, 0, 0), size=5, subdivisions=3)
+celltype = CellType("default", physics_on=False)
+cell = celltype.create_cell("cell", (0, 0, 0), size=5)
 
 sim = Simulator(celltypes=[celltype])
 division_handler = TimeDivisionHandler(BisectDivisionLogic)
 sim.add_handler(division_handler)
 
-sim.run_simulation()
+sim.run_simulation(start=1, end=80)

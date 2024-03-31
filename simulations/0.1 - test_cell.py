@@ -11,7 +11,9 @@ reload(goo)
 reset_modules()
 reset_scene()
 
-cell = create_cell("cell", (1, 2, 3), rotation=(1, 2, 3), scale=(5, 4.5, 4))
+cell = create_cell(
+    "cell", (1, 2, 3), rotation=(1, 2, 3), scale=(5, 4.5, 4), physics_on=False
+)
 print(cell.obj.location)
 
 print("Volume", cell.volume())

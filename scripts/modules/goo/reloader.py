@@ -12,12 +12,17 @@ def reset_modules():
 
 
 def reset_scene():
+    bpy.app.handlers.frame_change_pre.clear()
     bpy.app.handlers.frame_change_post.clear()
     bpy.context.scene.frame_set(1)
+    bpy.context.scene.frame_start = 1
+    bpy.context.scene.frame_end = 250
+
     try:
         bpy.ops.object.mode_set(mode="OBJECT")
     except:
         pass
+
     for obj in bpy.context.scene.objects:
         bpy.data.objects.remove(obj, do_unlink=True)
 

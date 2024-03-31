@@ -1,32 +1,40 @@
 import bpy, bmesh
 from goo.cell import Cell
+import numpy as np
 
 
 class DivisionLogic:
     def make_divide(self, mother: Cell) -> tuple[Cell, Cell]:
         pass
 
+    def flush(self):
+        pass
+
 
 class BisectDivisionLogic(DivisionLogic):
+    def __init__(self, margin=0.025):
+        self.margin = margin
+        self.to_flush = []
+
     def make_divide(self, mother):
         com = mother.COM(global_coords=False)
         axis = mother.major_axis().axis()
 
         daughter = mother.copy()
-        self._bisect(mother.obj.data, com, axis, True)
-        self._bisect(daughter.obj.data, com, axis, False)
 
-        mother.remesh()
-        daughter.remesh()
+        m_mb = self._bisect(mother.obj_eval, com, axis, True, self.margin)
+        d_mb = self._bisect(mother.obj_eval.copy(), com, axis, False, self.margin)
+        self.to_flush.append((m_mb, mother))
+        self.to_flush.append((d_mb, daughter))
 
         daughter.name = mother.name + ".1"
         mother.name = mother.name + ".0"
 
         return mother, daughter
 
-    def _bisect(self, mesh, com, axis, inner):
+    def _bisect(self, obj_eval, com, axis, inner, margin):
         bm = bmesh.new()
-        bm.from_mesh(mesh)
+        bm.from_mesh(obj_eval.to_mesh())
 
         # bisect with plane
         verts = [v for v in bm.verts]
@@ -37,19 +45,23 @@ class BisectDivisionLogic(DivisionLogic):
         result = bmesh.ops.bisect_plane(
             bm,
             geom=geom,
-            plane_co=com,
+            plane_co=com + axis * margin / 2 if inner else com - axis * margin / 2,
             plane_no=axis,
-            clear_outer=inner,
-            clear_inner=not inner,
+            clear_inner=inner,
+            clear_outer=not inner,
         )
 
         # fill in bisected face
         edges = [e for e in result["geom_cut"] if isinstance(e, bmesh.types.BMEdge)]
         bmesh.ops.edgeloop_fill(bm, edges=edges)
+        return bm
 
-        bm.to_mesh(mesh)
-        bm.free()
-        mesh.update()
+    def flush(self):
+        for bm, cell in self.to_flush:
+            bm.to_mesh(cell.obj.data)
+            bm.free()
+            cell.remesh()
+        self.to_flush.clear()
 
 
 class BooleanDivisionLogic(DivisionLogic):
@@ -67,17 +79,16 @@ class BooleanDivisionLogic(DivisionLogic):
         bool_mod.object = plane
         bool_mod.operation = "DIFFERENCE"
         bool_mod.solver = "EXACT"
-        # TODO: this is expensive, and requires disabling physics/evaluating depsgraph for each call. Maybe look at different contexts, or creating new objects?
         bpy.ops.object.modifier_apply(modifier=bool_mod.name)
 
         # separate two daughter cells
-        # TODO: ops are expensive, look to reduce this to low-level.
         bpy.ops.object.mode_set(mode="EDIT")
         bpy.ops.mesh.separate(type="LOOSE")
         bpy.ops.object.mode_set(mode="OBJECT")
 
         daughter = Cell(bpy.context.selected_objects[0])
         daughter.obj.select_set(False)
+
         daughter.name = mother.name + ".1"
         mother.name = mother.name + ".0"
 
@@ -89,6 +100,9 @@ class BooleanDivisionLogic(DivisionLogic):
         bpy.data.meshes.remove(plane.data, do_unlink=True)
 
         return mother, daughter
+
+    def flush(self):
+        pass
 
 
 class TimeDivisionHandler:
@@ -110,3 +124,26 @@ class TimeDivisionHandler:
                 mother, daughter = cell.divide(self.divider_handler)
                 mother.last_division_time = time
                 daughter.last_division_time = time
+        self.divider_handler.flush()
+
+
+class TimeDivisionPhysicsHandler(TimeDivisionHandler):
+    def setup(self, get_cells, dt):
+        super(TimeDivisionPhysicsHandler, self).setup(get_cells, dt)
+        self._cells_to_update = []
+
+    def run(self, scene, depsgraph):
+        for cell in self._cells_to_update:
+            cell.enable_physics(collision=False)
+            cell.cloth_mod.point_cache.frame_start = scene.frame_current
+        self._cells_to_update.clear()
+
+        time = scene.frame_current * self.dt
+        for cell in self.get_cells():
+            if time - cell.last_division_time >= self.mu:
+                mother, daughter = cell.divide(self.divider_handler)
+                self._cells_to_update.extend([mother, daughter])
+        for cell in self._cells_to_update:
+            cell.disable_physics(collision=False)
+            cell.last_division_time = time
+        self.divider_handler.flush()

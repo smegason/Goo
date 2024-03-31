@@ -11,4 +11,4 @@ reload(goo)
 reset_modules()
 reset_scene()
 
-cell = create_cell("cell", (0, 0, 0))
+cell = create_cell("cell", (0, 0, 0), physics_on=False)
