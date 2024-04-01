@@ -1,7 +1,7 @@
 from importlib import reload
+import bpy
 import goo
-from goo.division import *
-from goo.handler import ForceUpdateHandler
+import goo.handler as handler
 
 reload(goo)
 
@@ -14,9 +14,12 @@ celltype = goo.CellType("default", physics_on=True)
 cell = celltype.create_cell("cell", (1, 1, 0), size=2)
 
 sim = goo.Simulator(celltypes=[celltype])
-division_handler = TimeDivisionPhysicsHandler(BisectDivisionLogic, mu=20)
-# TODO: integrate division and origin change handling
-sim.add_handler(division_handler)
+origin_handler = handler.ForceUpdateHandler()
+sim.add_handler(origin_handler)
 
 sim.toggle_gravity(False)
-sim.run_simulation(start=1, end=49)
+sim.run_simulation(start=1, end=50)
+
+for i in range(1, 10):
+    bpy.context.scene.frame_set(i)
+    print(i, cell.obj_eval.location, cell.COM())

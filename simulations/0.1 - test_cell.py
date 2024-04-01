@@ -4,14 +4,12 @@
 from importlib import reload
 import goo
 from goo import goo as g
-from goo.cell import *
-from goo.reloader import *
 
 reload(goo)
-reset_modules()
-reset_scene()
+goo.reset_modules()
+goo.reset_scene()
 
-cell = create_cell(
+cell = goo.create_cell(
     "cell", (1, 2, 3), rotation=(1, 2, 3), scale=(5, 4.5, 4), physics_on=False
 )
 print(cell.obj.location)

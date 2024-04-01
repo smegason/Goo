@@ -130,6 +130,10 @@ class Cell(BlenderObject):
         with bpy.context.temp_override(active_object=self.obj):
             bpy.ops.object.voxel_remesh()
 
+    def toggle_smooth(self, on):
+        for f in self.obj.data.polygons:
+            f.use_smooth = on
+
     def has_modifier(self, type):
         return len([m for m in self.obj.modifiers if m.type == type]) > 0
 
@@ -218,15 +222,16 @@ class Cell(BlenderObject):
 
     @property
     def forces(self):
-        return self.adhesion_forces.values()
+        return list(self.adhesion_forces.values())
 
 
-def create_cell(name, loc, physics_on=True, **kwargs):
+def create_cell(name, loc, physics_on=True, smooth=True, **kwargs):
     obj = _create_mesh(name, loc, mesh="icosphere", **kwargs)
     cell = Cell(obj)
     cell.remesh()
     if physics_on:
         cell.enable_physics()
+    cell.toggle_smooth(smooth)
     return cell
 
 
