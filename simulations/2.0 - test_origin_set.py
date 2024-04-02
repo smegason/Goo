@@ -22,4 +22,4 @@ sim.run_simulation(start=1, end=50)
 
 for i in range(1, 10):
     bpy.context.scene.frame_set(i)
-    print(i, cell.obj_eval.location, cell.COM())
+    print(i, cell.obj_eval.location, cell.get_COM())

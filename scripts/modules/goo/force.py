@@ -38,6 +38,9 @@ class Force(BlenderObject):
         if self.obj.field:
             self.obj.field.type = "NONE"
 
+    def enabled(self):
+        return self.obj.field and self.obj.field.type == "FORCE"
+
     @property
     def strength(self):
         return self.obj.field.strength

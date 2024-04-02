@@ -10,27 +10,31 @@ goo.reset_modules()
 goo.reset_scene()
 
 cell = goo.create_cell(
-    "cell", (1, 2, 3), rotation=(1, 2, 3), scale=(5, 4.5, 4), physics_on=False
+    "cell",
+    (1, 2, 3),
+    rotation=(1, 2, 3),
+    scale=(1, 2, 3),
+    subdivisions=4,
+    physics_on=False,
 )
 print(cell.obj.location)
 
-print("Volume", cell.volume())
-print("COM:", cell.COM())
+print("Volume", cell.get_volume())
+print("COM:", cell.get_COM())
 
 print("---- Long axis ----")
 print(g.get_long_axis(cell.obj))
-axis = cell.major_axis()
-print(axis.axis(), axis.length(global_coords=True), axis.endpoints())
+axis = cell.get_major_axis()
+print(axis.axis(), axis.length(), axis.endpoints(local_coords=True))
 
 print("---- Short axis ----")
 print(g.get_minor_axis(cell.obj))
-m_axis = cell.minor_axis()
+m_axis = cell.get_minor_axis()
 print(
-    m_axis.axis(global_coords=True),
-    m_axis.length(),
-    m_axis.endpoints(global_coords=True),
+    m_axis.axis(),
+    m_axis.length(local_coords=True),
+    m_axis.endpoints(),
 )
-print(m_axis._matrix_world)
 
 plane = cell.create_division_plane()
 plane.hide_set(False)

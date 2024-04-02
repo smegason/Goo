@@ -1,3 +1,4 @@
+import bpy
 from importlib import reload
 import goo
 from goo.handler import *
@@ -8,7 +9,7 @@ goo.reset_modules()
 goo.reset_scene()
 
 celltype = goo.CellType("default", physics_on=True)
-celltype.homo_adhesion_strength = 500
+celltype.homo_adhesion_strength = 2000
 
 locs = [
     (-1.36, -1, 0.2),
@@ -27,4 +28,16 @@ for i, loc in enumerate(locs):
 sim = goo.Simulator(celltypes=[celltype])
 sim.add_handler(ForceUpdateHandler())
 sim.toggle_gravity(False)
-sim.run_simulation()
+sim.run_simulation(start=1, end=250)
+
+
+def render():
+    fp = bpy.context.scene.render.filepath
+    for i in range(1, 11):
+        bpy.context.scene.frame_set(i)
+        bpy.context.scene.render.filepath = fp + f"{i:04d}"
+        bpy.ops.render.opengl(write_still=True)
+    bpy.context.scene.render.filepath = fp
+
+
+render()

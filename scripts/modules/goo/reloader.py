@@ -24,6 +24,8 @@ def reset_scene():
         pass
 
     for obj in bpy.context.scene.objects:
+        # if obj.type in ["CAMERA", "LIGHT"]:
+        #     continue
         bpy.data.objects.remove(obj, do_unlink=True)
 
     for mesh in bpy.data.meshes:

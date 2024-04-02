@@ -1,5 +1,12 @@
+import bpy, bmesh
+
+
 # TODO: this is probably not necessary, handlers can exist within motion, divider submodules
 class Handler:
+    def setup(self, get_cells, dt):
+        self.get_cells = get_cells
+        self.dt = dt
+
     def run(self, scene, depsgraph):
         raise NotImplementedError("Subclasses must implement run() method.")
 
@@ -13,17 +20,39 @@ class MotionHandler(Handler):
     pass
 
 
-class ForceUpdateHandler(Handler):
-    # TODO: change to forces rather than cells. Adhesion forces will move with the cells themselves.
-    def setup(self, get_cells, dt):
-        self.get_cells = get_cells
-        self.dt = dt
+class RemeshHandler(Handler):
+    def __init__(self, freq):
+        self.freq = freq
 
-    # TODO: change force size to match cell size
+    def run(self, scene, depsgraph):
+        if scene.frame_current % self.freq != 0:
+            return
+        for cell in self.get_cells():
+            if cell.physics_enabled:
+                bm = bmesh.new()
+                bm.from_mesh(cell.obj_eval.to_mesh())
+
+                cell.disable_physics()
+
+                bm.to_mesh(cell.obj.data)
+                bm.free()
+                cell.remesh()
+                cell.recenter()
+
+                cell.enable_physics()
+                cell.cloth_mod.point_cache.frame_start = scene.frame_current
+
+
+class ForceUpdateHandler(Handler):
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
+            cell_size = cell.get_major_axis().length() / 2
             for force in cell.forces:
-                force.loc = cell.COM()
+                if not force.enabled():
+                    continue
+                force.loc = cell.get_COM()
+                force.min_dist = cell_size - 0.4
+                force.max_dist = cell_size + 0.4
 
 
 class TimingHandler(Handler):

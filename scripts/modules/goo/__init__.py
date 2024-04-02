@@ -1,9 +1,6 @@
 from .cell import CellType, create_cell
 
-try:
-    from goo.reloader import *
-except:
-    from .reloader import reset_modules, reset_scene
+from .reloader import *
 from . import division
 from .simulator import Simulator
 from .force import make_force

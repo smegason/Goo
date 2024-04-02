@@ -1,4 +1,5 @@
 import bpy, bmesh
+from mathutils import Vector
 from goo.cell import Cell
 import numpy as np
 
@@ -17,13 +18,15 @@ class BisectDivisionLogic(DivisionLogic):
         self.to_flush = []
 
     def make_divide(self, mother):
-        com = mother.COM(global_coords=False)
-        axis = mother.major_axis().axis()
+        com = mother.get_COM(local_coords=True)
+        axis = mother.get_major_axis().axis(local_coords=True)
+        obj_eval = mother.obj_eval.copy()
 
         daughter = mother.copy()
 
-        m_mb = self._bisect(mother.obj_eval, com, axis, True, self.margin)
-        d_mb = self._bisect(mother.obj_eval.copy(), com, axis, False, self.margin)
+        m_mb = self._bisect(obj_eval, com, axis, True, self.margin)
+        d_mb = self._bisect(obj_eval, com, axis, False, self.margin)
+
         self.to_flush.append((m_mb, mother))
         self.to_flush.append((d_mb, daughter))
 
@@ -54,6 +57,7 @@ class BisectDivisionLogic(DivisionLogic):
         # fill in bisected face
         edges = [e for e in result["geom_cut"] if isinstance(e, bmesh.types.BMEdge)]
         bmesh.ops.edgeloop_fill(bm, edges=edges)
+
         return bm
 
     def flush(self):
@@ -61,6 +65,7 @@ class BisectDivisionLogic(DivisionLogic):
             bm.to_mesh(cell.obj.data)
             bm.free()
             cell.remesh()
+            cell.recenter()
         self.to_flush.clear()
 
 

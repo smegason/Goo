@@ -14,6 +14,7 @@ class Cell(BlenderObject):
         self.cloth_settings = {}
         self.cloth_collision_settings = {}
         self.collision_settings = {}
+        self.physics_enabled = False
 
     def copy(self):
         """Copies cell data and physics modifiers (except forces)."""
@@ -53,7 +54,14 @@ class Cell(BlenderObject):
         obj_eval = self.obj.evaluated_get(dg)
         return obj_eval
 
-    def volume(self):
+    def get_vertices(self, local_coords=False):
+        verts = self.obj_eval.data.vertices
+        if local_coords:
+            return [v.co for v in verts]
+        else:
+            return [self.obj_eval.matrix_world @ v.co for v in verts]
+
+    def get_volume(self):
         """Calculates the volume of the Blender mesh.
 
         In order to retrieve the mesh as it is currrently evaluated - including
@@ -84,38 +92,56 @@ class Cell(BlenderObject):
 
         return volume
 
-    def COM(self, global_coords=True):
+    def get_COM(self, local_coords=False):
         """Calculates the center of mass of a mesh."""
-        obj_eval = self.obj_eval
-        vert_coords = _get_vertex_coords(obj_eval)
+        vert_coords = self.get_vertices(local_coords)
         com = Vector(np.mean(vert_coords, axis=0))
-        if not global_coords:
-            com = self.obj.matrix_world.inverted() @ com
-        return Vector(com)
+        return com
 
-    def _eigenvector(self, n):
+    def recenter(self):
+        """Recenter origin to COM."""
+        com = self.get_COM()
+        bm = bmesh.new()
+        bm.from_mesh(self.obj_eval.to_mesh())
+        bmesh.ops.translate(bm, verts=bm.verts, vec=-self.get_COM(local_coords=True))
+        bm.to_mesh(self.obj.data)
+        bm.free()
+        self.loc = com
+
+    def _get_eigenvectors(self):
+        """Returns a list eigenvectors in object space sorted by descending eigenvalue."""
+        # Calculate the covariance matrix of the vertices
+        covariance_matrix = np.cov(self.get_vertices(), rowvar=False)
+        # Calculate the eigenvectors and eigenvalues of the covariance matrix
+        eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+        eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
+        return eigenvectors
+
+    def _get_eigenvector(self, n):
         """Returns the nth eigenvector in object space as a line defined by two Vectors."""
         obj_eval = self.obj_eval
-        vert_coords = _get_vertex_coords(obj_eval)
-        eigenvectors = _eigenvectors(vert_coords)
-
+        verts = self.get_vertices()
+        eigenvectors = self._get_eigenvectors()
         axis = eigenvectors[:, n]
 
-        vertices = obj_eval.data.vertices
-        vert_indices = np.argsort(vert_coords.dot(axis))  # sort indices by distance
-        first_vertex = vertices[vert_indices[0]].co
-        last_vertex = vertices[vert_indices[-1]].co
+        vert_indices = np.argsort(
+            np.asarray(verts).dot(axis)
+        )  # sort indices by distance
+        first_vertex = verts[vert_indices[0]]
+        last_vertex = verts[vert_indices[-1]]
 
         return Axis(Vector(axis), first_vertex, last_vertex, obj_eval.matrix_world)
 
-    def minor_axis(self):
-        return self._eigenvector(1)
+    def get_minor_axis(self):
+        return self._get_eigenvector(1)
 
-    def major_axis(self):
-        return self._eigenvector(0)
+    def get_major_axis(self):
+        return self._get_eigenvector(0)
 
     def create_division_plane(self):
-        return _create_division_plane(self.obj.name, self.major_axis(), self.COM())
+        return _create_division_plane(
+            self.obj.name, self.get_major_axis(), self.get_COM()
+        )
 
     def divide(self, divisionLogic):
         mother, daughter = divisionLogic.make_divide(self)
@@ -123,16 +149,14 @@ class Cell(BlenderObject):
             mother.celltype.add_cell(daughter)
         return mother, daughter
 
-    def remesh(self):
+    def remesh(self, smooth=True):
         # use of object ops is 2x faster than remeshing with modifiers
         self.obj.data.remesh_mode = "VOXEL"
         self.obj.data.remesh_voxel_size = 0.25
         with bpy.context.temp_override(active_object=self.obj):
             bpy.ops.object.voxel_remesh()
-
-    def toggle_smooth(self, on):
         for f in self.obj.data.polygons:
-            f.use_smooth = on
+            f.use_smooth = smooth
 
     def has_modifier(self, type):
         return len([m for m in self.obj.modifiers if m.type == type]) > 0
@@ -146,6 +170,7 @@ class Cell(BlenderObject):
         if forces:
             for force in self.forces:
                 force.enable()
+        self.physics_enabled = True
 
     def setup_cloth(self):
         cloth_mod = self.obj.modifiers.new(name="Cloth", type="CLOTH")
@@ -178,6 +203,7 @@ class Cell(BlenderObject):
         if forces:
             for force in self.forces:
                 force.disable()
+        self.physics_enabled = False
 
     def toggle_physics(self, on):
         if self.cloth_mod:
@@ -231,7 +257,6 @@ def create_cell(name, loc, physics_on=True, smooth=True, **kwargs):
     cell.remesh()
     if physics_on:
         cell.enable_physics()
-    cell.toggle_smooth(smooth)
     return cell
 
 
@@ -278,23 +303,6 @@ def _create_mesh(
     return obj
 
 
-def _get_vertex_coords(obj_eval):
-    """Returns a list of mesh vertex coordinates in global coordinates."""
-    vertices = obj_eval.data.vertices
-    vert_coords = np.asarray([obj_eval.matrix_world @ v.co for v in vertices])
-    return vert_coords
-
-
-def _eigenvectors(vert_coords):
-    """Returns a list eigenvectors in object space sorted by descending eigenvalue."""
-    # Calculate the covariance matrix of the vertices
-    covariance_matrix = np.cov(vert_coords, rowvar=False)
-    # Calculate the eigenvectors and eigenvalues of the covariance matrix
-    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
-    eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
-    return eigenvectors
-
-
 def _create_division_plane(name, major_axis, com):
     """
     Creates a plane orthogonal to the long axis vector
@@ -306,7 +314,7 @@ def _create_division_plane(name, major_axis, com):
         f"{name}_division_plane",
         loc=com,
         mesh="plane",
-        size=major_axis.length(global_coords=True) + 1,
+        size=major_axis.length() + 1,
         rotation=major_axis.axis().to_track_quat("Z", "Y"),
     )
 
@@ -353,12 +361,12 @@ cloth_collision_setting_attrs = [
 ]
 
 
-def _setup_cloth_defaults(cloth_mod, stiffness=1, pressure=1):
+def _setup_cloth_defaults(cloth_mod, stiffness=15, pressure=5):
     cloth_mod.settings.quality = 10
     cloth_mod.settings.air_damping = 10
     cloth_mod.settings.bending_model = "ANGULAR"
     cloth_mod.settings.mass = 1
-    cloth_mod.settings.time_scale = 1
+    cloth_mod.settings.time_scale = 2
 
     # Cloth > Stiffness
     cloth_mod.settings.tension_stiffness = stiffness
@@ -436,24 +444,26 @@ class Axis:
         :param start: Vector of start endpoint in object space
         :param end: Vector of end endpoint in object space
         :param world_matrix: 4x4 matrix of object to world transformation
+        :param local_coords: if coordinates given are in local space
         """
         self._axis = axis
         self._start = start
         self._end = end
-        self._matrix_world = world_matrix
+        self._matrix_world = world_matrix.inverted()
 
-    def axis(self, global_coords=False):
-        if global_coords:
-            return self._matrix_world @ self._axis
+    def axis(self, local_coords=False):
+        if local_coords:
+            axis = self._axis.copy()
+            axis.rotate(self._matrix_world.to_quaternion())
+            return axis
         return self._axis
 
-    def endpoints(self, global_coords=False):
-        if global_coords:
-            return [self._matrix_world @ self._start, self._matrix_world @ self._end]
-        return [self._start, self._end]
+    def endpoints(self, local_coords=False):
+        mat = self._matrix_world if local_coords else Matrix.Identity(4)
+        return [mat @ self._start, mat @ self._end]
 
-    def length(self, global_coords=False):
-        start, end = self.endpoints(global_coords)
+    def length(self, local_coords=False):
+        start, end = self.endpoints(local_coords)
         return (end - start).length
 
 
@@ -468,6 +478,9 @@ class CellType:
     def add_cell(self, cell):
         cell.celltype = self
         self._cells.add(cell)
+        if self.physics_on:
+            homo_adhesion = make_homo_adhesion(cell.obj, self._homo_adhesion_strength)
+            cell.add_force(self.name, homo_adhesion)
 
     def create_cell(self, name, loc, **kwargs):
         cell = create_cell(name, loc, physics_on=self.physics_on, **kwargs)
