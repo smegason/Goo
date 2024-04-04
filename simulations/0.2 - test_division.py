@@ -14,9 +14,10 @@ cell = goo.create_cell(
     physics_on=False,
 )
 print(f"Initial volume: {cell.get_volume()}")
-logic = BisectDivisionLogic(0.025)
+logic = BisectDivisionLogic(margin=0.025)
 # logic = BooleanDivisionLogic()
 mother, daughter = cell.divide(logic)
 logic.flush()
+
 print(mother.name, daughter.name)
 print(f"Volumes after division: {mother.get_volume()}, {daughter.get_volume()}")

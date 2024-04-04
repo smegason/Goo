@@ -5,7 +5,7 @@ from mathutils import *
 
 
 class BlenderObject:
-    def __init__(self, obj):
+    def __init__(self, obj: bpy.types.Object):
         self._obj = obj
 
     @property

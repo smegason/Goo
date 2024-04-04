@@ -119,30 +119,31 @@ def create_motion(name, loc, strength) -> Force:
     force.enable()
 
     force.strength = strength
-    force.min_dist = 0.6
-    force.max_dist = 1.4
-    force.falloff = 0.5
+    force.falloff = 2
     return force
 
 
 class ForceCollection:
     def __init__(self, name: str):
         self._col = bpy.data.collections.new(name)
+        self._forces = []
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._col.name
 
     @property
-    def collection(self):
+    def collection(self) -> bpy.types.Collection:
         return self._col
 
     def add_force(self, force: Force):
         self._col.objects.link(force.obj)
+        self._forces.append(force)
 
     def remove_force(self, force: Force):
         self._col.objects.unlink(force.obj)
+        self._forces.remove(force)
 
     @property
     def forces(self):
-        return self._col.all_objects
+        return self._forces

@@ -1,10 +1,10 @@
 from functools import reduce
-from typing import Optional
-
+from typing import Optional, Union, Callable
 import numpy as np
 
 import bpy, bmesh
 from mathutils import *
+
 from goo.force import *
 from goo.utils import *
 
@@ -24,7 +24,7 @@ class Cell(BlenderObject):
         self._adhesion_forces: list[AdhesionForce] = []
         self._motion_force: Force = None
 
-        self._last_division_time = 0
+        self._custom_properties = {}
 
     @property
     def name(self) -> str:
@@ -32,8 +32,15 @@ class Cell(BlenderObject):
 
     @name.setter
     def name(self, name: str):
+        old_name = self._obj.name
+
+        self._effectors.name = self._effectors.name.replace(old_name, name, 1)
+        for force in self._adhesion_forces:
+            force.name = force.name.replace(old_name, name, 1)
+        if self._motion_force:
+            self._motion_force.name = self._motion_force.name.replace(old_name, name, 1)
+
         self._obj.name = name
-        self._effectors.name = f"{name}_effectors"
 
     def copy(self) -> "Cell":
         """Copies cell data and physics modifiers, including homotypic adhesion forces."""
@@ -44,15 +51,11 @@ class Cell(BlenderObject):
         cell_copy = Cell(obj_copy)
         return cell_copy
 
-    # TODO: turn into custom properties
-    @property
-    def last_division_time(self):
-        return self._last_division_time
+    def set_property(self, k: str, v: Union[float, list[float], int, list[int], str]):
+        self._obj.data[k] = v
 
-    @last_division_time.setter
-    def last_division_time(self, time):
-        self._last_division_time = time
-        self._obj.data["last_division_time"] = time
+    def get_property(self, k: str):
+        return self._obj.data[k]
 
     @property
     def obj_eval(self):
@@ -113,13 +116,14 @@ class Cell(BlenderObject):
         com = self.get_COM()
         bm = bmesh.new()
         bm.from_mesh(self.obj_eval.to_mesh())
+
         bmesh.ops.translate(bm, verts=bm.verts, vec=-self.get_COM(local_coords=True))
         bm.to_mesh(self._obj.data)
         bm.free()
 
         self.loc = com
 
-    def divide(self, divisionLogic):
+    def divide(self, divisionLogic) -> tuple["Cell", "Cell"]:
         mother, daughter = divisionLogic.make_divide(self)
         if mother.celltype:
             mother.celltype.add_cell(daughter)
@@ -206,23 +210,23 @@ class Cell(BlenderObject):
         self.cloth_mod.settings.uniform_pressure_force = pressure
 
     # ----- FORCES -----
-    def link_adhesion_force(self, force: AdhesionForce):
-        """Add force that stems from this cell."""
-        self._adhesion_forces.append(force)
-
     def add_effector(self, force: Force | ForceCollection):
-        """Add a force or a collection of forces that affect this cell."""
+        """Add a force or a collection of forces that affects this cell."""
         if isinstance(force, Force):
             self._effectors.objects.link(force.obj)
         elif isinstance(force, ForceCollection):
             self._effectors.children.link(force.collection)
 
     def remove_effector(self, force: Force | ForceCollection):
-        """Removes a force or a collection of forces that affect this cell."""
+        """Removes a force or a collection of forces that affects this cell."""
         if isinstance(force, Force):
             self._effectors.objects.unlink(force.obj)
         elif isinstance(force, ForceCollection):
             self._effectors.children.unlink(force.collection)
+
+    def link_adhesion_force(self, force: AdhesionForce):
+        """Add force that stems from this cell."""
+        self._adhesion_forces.append(force)
 
     @property
     def adhesion_forces(self) -> list[AdhesionForce]:
@@ -238,6 +242,7 @@ class Cell(BlenderObject):
             self.remove_effector(self.motion_force)
         self.add_effector(force)
         self._motion_force = force
+        force.obj.hide_set(True)
 
 
 def create_cell(name, loc, physics_on=True, **kwargs) -> Cell:
@@ -373,7 +378,7 @@ class CellType:
         for celltype, item in self.hetero_adhesions.items():
             outgoing_forces, incoming_forces, strength = item
             hetero_adhesion = create_adhesion(
-                strength, name=cell.name + "_to_" + celltype.name, loc=cell.loc
+                strength, name=f"{cell.name}_to_{celltype.name}", loc=cell.loc
             )
             outgoing_forces.add_force(hetero_adhesion)
             cell.link_adhesion_force(hetero_adhesion)
@@ -382,11 +387,17 @@ class CellType:
 
         # add motion force
         motion = create_motion(
-            name=cell.name + "_motion",
-            loc=cell.get_COM(),
+            name=f"{cell.name}_motion",
+            # loc=cell.get_COM(),
+            loc=(0, 0, 0),
             strength=self.motion_strength,
         )
+        print(motion.name, motion.loc, cell.get_COM())
         cell.motion_force = motion
+
+    def remove_cell(self, cell: Cell):
+        cell.celltype = None
+        self._cells.remove(cell)
 
     def create_cell(self, name, loc, **kwargs) -> Cell:
         cell = create_cell(name, loc, physics_on=self.physics_enabled, **kwargs)
@@ -405,8 +416,8 @@ class CellType:
         self.homo_adhesion_strength = strength
 
     def set_hetero_adhesion(self, other_celltype: "CellType", strength: float):
-        outgoing_forces = ForceCollection(self.name + "_to_" + other_celltype.name)
-        incoming_forces = ForceCollection(other_celltype.name + "_to_" + self.name)
+        outgoing_forces = ForceCollection(f"{self.name}_to_{other_celltype.name}")
+        incoming_forces = ForceCollection(f"{other_celltype.name}_to_{self.name}")
         self.hetero_adhesions[other_celltype] = (
             outgoing_forces,
             incoming_forces,

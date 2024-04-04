@@ -8,10 +8,10 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-goo.make_force("Force", (-1, 1, 0), 500)
-goo.make_force("Force", (1, -1, 0), 500)
-celltype = goo.CellType("default", physics_on=True)
+celltype = goo.create_celltype("default", physics_on=True)
 cell = celltype.create_cell("cell", (1, 1, 0), size=2)
+cell.motion_force.loc = (0, 0, 0)
+cell.motion_force.strength = 10000
 
 sim = goo.Simulator(celltypes=[celltype])
 origin_handler = handler.ForceUpdateHandler()

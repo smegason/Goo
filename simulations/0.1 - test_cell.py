@@ -35,6 +35,3 @@ print(
     m_axis.length(local_coords=True),
     m_axis.endpoints(),
 )
-
-plane = cell.create_division_plane()
-plane.hide_set(False)

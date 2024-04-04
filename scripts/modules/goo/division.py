@@ -1,3 +1,5 @@
+from typing import Callable
+
 import bpy, bmesh
 from mathutils import Vector
 import numpy as np
@@ -144,18 +146,19 @@ class TimeDivisionHandler:
         self.var = var
         self.divider_handler = divider_handler()
 
-    def setup(self, get_cells, dt):
+    def setup(self, get_cells: Callable[[], list[Cell]], dt):
         self.get_cells = get_cells
         self.dt = dt
+        for cell in self.get_cells():
+            cell.set_property("last_division_time", 0)
 
     def run(self, scene, depsgraph):
         time = scene.frame_current * self.dt
-        cells = self.get_cells()
         for cell in self.get_cells():
-            if time - cell.last_division_time >= self.mu:
+            if time - cell.get_property("last_division_time") >= self.mu:
                 mother, daughter = cell.divide(self.divider_handler)
-                mother.last_division_time = time
-                daughter.last_division_time = time
+                mother.set_property("last_division_time", time)
+                daughter.set_property("last_division_time", time)
         self.divider_handler.flush()
 
 
@@ -172,10 +175,10 @@ class TimeDivisionPhysicsHandler(TimeDivisionHandler):
 
         time = scene.frame_current * self.dt
         for cell in self.get_cells():
-            if time - cell.last_division_time >= self.mu:
+            if time - cell.get_property("last_division_time") >= self.mu:
                 mother, daughter = cell.divide(self.divider_handler)
                 self._cells_to_update.extend([mother, daughter])
         for cell in self._cells_to_update:
             cell.disable_physics(collision=False)
-            cell.last_division_time = time
+            cell.set_property("last_division_time", time)
         self.divider_handler.flush()

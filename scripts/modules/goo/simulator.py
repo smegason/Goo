@@ -1,6 +1,6 @@
 import bpy
 
-from goo.handler import TimingHandler
+from goo.handler import Handler
 from datetime import datetime
 
 
@@ -16,9 +16,13 @@ class Simulator:
     def get_cells(self):
         return [cell for celltype in self.celltypes for cell in celltype.cells]
 
-    def add_handler(self, handler):
+    def add_handler(self, handler: Handler):
         handler.setup(self.get_cells, self.physics_dt)
         self.handlers.append(handler.run)
+
+    def add_handlers(self, handlers: list[Handler]):
+        for handler in handlers:
+            self.add_handler(handler)
 
     def run_simulation(self, start=1, end=250):
         start_time = datetime.now()
