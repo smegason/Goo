@@ -30,3 +30,6 @@ def reset_scene():
 
     for mesh in bpy.data.meshes:
         bpy.data.meshes.remove(mesh, do_unlink=True)
+
+    for col in bpy.data.collections:
+        bpy.data.collections.remove(col)

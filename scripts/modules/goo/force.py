@@ -100,7 +100,7 @@ class AdhesionForce(Force):
         self.obj.field.strength = -strength
 
 
-def make_force(name, loc, strength, falloff=0, min_dist=None, max_dist=None):
+def create_force(name, loc, strength, falloff=0, min_dist=None, max_dist=None) -> Force:
     obj = bpy.data.objects.new(name, None)
     obj.location = loc
 
@@ -115,12 +115,17 @@ def make_force(name, loc, strength, falloff=0, min_dist=None, max_dist=None):
     return force
 
 
-def make_homo_adhesion(cell, strength=2000):
-    homo_force = AdhesionForce(cell)
-    homo_force.enable()
+def create_adhesion(strength, obj=None, name="", loc=(0, 0, 0)) -> AdhesionForce:
+    if obj is None:
+        assert name != ""
+        obj = bpy.data.objects.new(name, None)
+        obj.location = loc
 
-    homo_force.strength = strength
-    homo_force.min_dist = 0.6
-    homo_force.max_dist = 1.4
-    homo_force.falloff = 0.5
-    return homo_force
+    adhesion_force = AdhesionForce(obj)
+    adhesion_force.enable()
+
+    adhesion_force.strength = strength
+    adhesion_force.min_dist = 0.6
+    adhesion_force.max_dist = 1.4
+    adhesion_force.falloff = 0.5
+    return adhesion_force
