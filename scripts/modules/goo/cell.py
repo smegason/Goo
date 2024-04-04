@@ -1,52 +1,50 @@
 from functools import reduce
+from typing import Optional
+
 import numpy as np
 
 import bpy, bmesh
-from mathutils import Vector, Matrix, Euler, Quaternion
-
-from goo.force import BlenderObject, create_force, create_adhesion
+from mathutils import *
+from goo.force import *
+from goo.utils import *
 
 
 class Cell(BlenderObject):
-    def __init__(self, obj: bpy.types.Object, obj_col: bpy.types.Collection):
+    def __init__(self, obj: bpy.types.Object):
         super(Cell, self).__init__(obj)
-        self.obj_col = obj_col
-        self.celltype = None
+        self._effectors = bpy.data.collections.new(f"{obj.name}_effectors")
+        bpy.context.scene.collection.children.link(self._effectors)
 
-        self.physics_enabled = False
+        self.celltype: CellType = None
+
+        self._physics_enabled = False
         self.cloth_settings = {}
         self.collision_settings = {}
-        self.adhesion_forces = []
+
+        self._adhesion_forces: list[AdhesionForce] = []
+        self._motion_force: Force = None
 
         self._last_division_time = 0
 
     @property
-    def name(self):
-        return self.obj.name
+    def name(self) -> str:
+        return self._obj.name
 
     @name.setter
-    def name(self, name):
-        self.obj.name = name
-        self.obj_col.name = name
+    def name(self, name: str):
+        self._obj.name = name
+        self._effectors.name = f"{name}_effectors"
 
-    # TODO: fix
-    def copy(self):
-        """Copies cell data and physics modifiers (except forces)."""
-        obj_copy = self.obj.copy()
-        obj_copy.data = self.obj.data.copy()
+    def copy(self) -> "Cell":
+        """Copies cell data and physics modifiers, including homotypic adhesion forces."""
+        obj_copy = self._obj.copy()
+        obj_copy.data = self._obj.data.copy()
+        bpy.context.scene.collection.objects.link(obj_copy)
 
-        obj_col = bpy.data.collections.new(self.name)
-        bpy.context.scene.collection.children.link(obj_col)
-        obj_col.objects.link(obj_copy)
-
-        cell_copy = Cell(obj_copy, obj_col)
-        if self.celltype:
-            self.celltype.add_cell(cell_copy)
-        else:
-            bpy.context.collection.objects.link(obj_copy)
-
+        cell_copy = Cell(obj_copy)
         return cell_copy
 
+    # TODO: turn into custom properties
     @property
     def last_division_time(self):
         return self._last_division_time
@@ -54,12 +52,12 @@ class Cell(BlenderObject):
     @last_division_time.setter
     def last_division_time(self, time):
         self._last_division_time = time
-        self.obj.data["last_division_time"] = time
+        self._obj.data["last_division_time"] = time
 
     @property
     def obj_eval(self):
         dg = bpy.context.evaluated_depsgraph_get()
-        obj_eval = self.obj.evaluated_get(dg)
+        obj_eval = self._obj.evaluated_get(dg)
         return obj_eval
 
     def get_vertices(self, local_coords=False):
@@ -69,7 +67,7 @@ class Cell(BlenderObject):
         else:
             return [self.obj_eval.matrix_world @ v.co for v in verts]
 
-    def get_volume(self):
+    def get_volume(self) -> float:
         """Calculates the volume of the Blender mesh."""
         bm = bmesh.new()
         bm.from_mesh(self.obj_eval.to_mesh())
@@ -79,37 +77,22 @@ class Cell(BlenderObject):
 
         return volume
 
-    def get_COM(self, local_coords=False):
+    def get_COM(self, local_coords: bool = False) -> Vector:
         """Calculates the center of mass of a mesh."""
         vert_coords = self.get_vertices(local_coords)
         com = Vector(np.mean(vert_coords, axis=0))
         return com
 
-    def recenter(self):
-        """Recenter origin to COM."""
-        com = self.get_COM()
-        bm = bmesh.new()
-        bm.from_mesh(self.obj_eval.to_mesh())
-        bmesh.ops.translate(bm, verts=bm.verts, vec=-self.get_COM(local_coords=True))
-        bm.to_mesh(self.obj.data)
-        bm.free()
-
-        self.loc = com
-
-    def _get_eigenvectors(self):
-        """Returns a list eigenvectors in object space sorted by descending eigenvalue."""
-        # Calculate the covariance matrix of the vertices
-        covariance_matrix = np.cov(self.get_vertices(), rowvar=False)
-        # Calculate the eigenvectors and eigenvalues of the covariance matrix
-        eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
-        eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
-        return eigenvectors
-
     def _get_eigenvector(self, n):
-        """Returns the nth eigenvector in object space as a line defined by two Vectors."""
+        """Returns the nth eigenvector (axis) in object space as a line defined by two Vectors."""
         obj_eval = self.obj_eval
         verts = self.get_vertices()
-        eigenvectors = self._get_eigenvectors()
+
+        # Calculate the eigenvectors and eigenvalues of the covariance matrix
+        covariance_matrix = np.cov(verts, rowvar=False)
+        eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+        eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
+
         axis = eigenvectors[:, n]
 
         # sort indices by distance
@@ -119,16 +102,22 @@ class Cell(BlenderObject):
 
         return Axis(Vector(axis), first_vertex, last_vertex, obj_eval.matrix_world)
 
-    def get_minor_axis(self):
-        return self._get_eigenvector(1)
-
-    def get_major_axis(self):
+    def get_major_axis(self) -> "Axis":
         return self._get_eigenvector(0)
 
-    def create_division_plane(self):
-        return _create_division_plane(
-            self.obj.name, self.get_major_axis(), self.get_COM()
-        )
+    def get_minor_axis(self) -> "Axis":
+        return self._get_eigenvector(1)
+
+    def recenter(self):
+        """Recenter origin to COM."""
+        com = self.get_COM()
+        bm = bmesh.new()
+        bm.from_mesh(self.obj_eval.to_mesh())
+        bmesh.ops.translate(bm, verts=bm.verts, vec=-self.get_COM(local_coords=True))
+        bm.to_mesh(self._obj.data)
+        bm.free()
+
+        self.loc = com
 
     def divide(self, divisionLogic):
         mother, daughter = divisionLogic.make_divide(self)
@@ -136,195 +125,135 @@ class Cell(BlenderObject):
             mother.celltype.add_cell(daughter)
         return mother, daughter
 
-    def remesh(self, smooth=True):
+    def remesh(self, smooth: bool = True):
         # use of object ops is 2x faster than remeshing with modifiers
-        self.obj.data.remesh_mode = "VOXEL"
-        self.obj.data.remesh_voxel_size = 0.25
-        with bpy.context.temp_override(active_object=self.obj):
+        self._obj.data.remesh_mode = "VOXEL"
+        self._obj.data.remesh_voxel_size = 0.25
+        with bpy.context.temp_override(active_object=self._obj):
             bpy.ops.object.voxel_remesh()
 
-        for f in self.obj.data.polygons:
+        for f in self._obj.data.polygons:
             f.use_smooth = smooth
 
-    def get_modifier(self, type):
-        return next((m for m in self.obj.modifiers if m.type == type), None)
-
     # ----- PHYSICS -----
+    def physics_enabled(self) -> bool:
+        return self._physics_enabled
+
     def enable_physics(self, cloth=True, collision=True, forces=True):
         if cloth and self.cloth_mod is None:
             self.setup_cloth()
         if collision and self.collision_mod is None:
             self.setup_collision()
         if forces:
-            for force in self.forces:
+            for force in self.adhesion_forces:
                 force.enable()
-        self.physics_enabled = True
+        self._physics_enabled = True
+
+    def disable_physics(self, cloth=True, collision=True, forces=True):
+        if cloth and self.cloth_mod is not None:
+            store_settings(self.cloth_mod, default_cloth_settings, self.cloth_settings)
+            self._obj.modifiers.remove(self.cloth_mod)
+        if collision and self.collision_mod is not None:
+            store_settings(
+                self.collision_mod, default_collision_settings, self.collision_settings
+            )
+            self._obj.modifiers.remove(self.collision_mod)
+        if forces:
+            for force in self.adhesion_forces:
+                force.disable()
+        self._physics_enabled = False
 
     def setup_cloth(self):
-        cloth_mod = self.obj.modifiers.new(name="Cloth", type="CLOTH")
+        cloth_mod = self._obj.modifiers.new(name="Cloth", type="CLOTH")
         update_settings(cloth_mod, default_cloth_settings, self.cloth_settings)
-        self.cloth_mod.settings.effector_weights.collection = self.obj_col
+        self.cloth_mod.settings.effector_weights.collection = self._effectors
         self.cloth_settings = {}
 
     def setup_collision(self):
-        collision_mod = self.obj.modifiers.new(name="Collision", type="COLLISION")
+        collision_mod = self._obj.modifiers.new(name="Collision", type="COLLISION")
         update_settings(
             collision_mod, default_collision_settings, self.collision_settings
         )
         self.collision_settings = {}
 
-    def disable_physics(self, cloth=True, collision=True, forces=True):
-        if cloth and self.cloth_mod is not None:
-            store_settings(self.cloth_mod, default_cloth_settings, self.cloth_settings)
-            self.obj.modifiers.remove(self.cloth_mod)
-        if collision and self.collision_mod is not None:
-            store_settings(
-                self.collision_mod, default_collision_settings, self.collision_settings
-            )
-            self.obj.modifiers.remove(self.collision_mod)
-        if forces:
-            for force in self.forces:
-                force.disable()
-        self.physics_enabled = False
-
-    def toggle_physics(self, on):
-        if self.cloth_mod:
-            self.cloth_mod.show_viewport = on
-            self.cloth_mod.show_render = on
-            self.collision_mod.collision.use = on
+    def get_modifier(self, type) -> Optional[bpy.types.Modifier]:
+        return next((m for m in self._obj.modifiers if m.type == type), None)
 
     @property
-    def cloth_mod(self):
-        return next((m for m in self.obj.modifiers if m.type == "CLOTH"), None)
+    def cloth_mod(self) -> Optional[bpy.types.ClothModifier]:
+        return self.get_modifier("CLOTH")
 
     @property
-    def collision_mod(self):
-        return next((m for m in self.obj.modifiers if m.type == "COLLISION"), None)
+    def collision_mod(self) -> Optional[bpy.types.CollisionModifier]:
+        return self.get_modifier("COLLISION")
 
     @property
-    def stiffness(self):
+    def stiffness(self) -> float:
         return self.cloth_mod.settings.tension_stiffness
 
     @stiffness.setter
-    def stiffness(self, stiffness):
+    def stiffness(self, stiffness: float):
         self.cloth_mod.settings.tension_stiffness = stiffness
         self.cloth_mod.settings.compression_stiffness = stiffness
         self.cloth_mod.settings.shear_stiffness = stiffness
 
     @property
-    def pressure(self):
+    def pressure(self) -> float:
         return self.cloth_mod.settings.uniform_pressure_force
 
     @pressure.setter
-    def pressure(self, pressure):
+    def pressure(self, pressure: float):
         self.cloth_mod.settings.uniform_pressure_force = pressure
 
     # ----- FORCES -----
-    def add_force(self, force):
-        """Add force towards a specific cell type (homotypic = same cell type)."""
-        self.adhesion_forces.append(force)
+    def link_adhesion_force(self, force: AdhesionForce):
+        """Add force that stems from this cell."""
+        self._adhesion_forces.append(force)
 
-    def get_force(self, celltype):
-        """Find force towards a specific cell type."""
-        return self.adhesion_forces
+    def add_effector(self, force: Force | ForceCollection):
+        """Add a force or a collection of forces that affect this cell."""
+        if isinstance(force, Force):
+            self._effectors.objects.link(force.obj)
+        elif isinstance(force, ForceCollection):
+            self._effectors.children.link(force.collection)
+
+    def remove_effector(self, force: Force | ForceCollection):
+        """Removes a force or a collection of forces that affect this cell."""
+        if isinstance(force, Force):
+            self._effectors.objects.unlink(force.obj)
+        elif isinstance(force, ForceCollection):
+            self._effectors.children.unlink(force.collection)
 
     @property
-    def forces(self):
-        return self.adhesion_forces
+    def adhesion_forces(self) -> list[AdhesionForce]:
+        return self._adhesion_forces
+
+    @property
+    def motion_force(self) -> Force:
+        return self._motion_force
+
+    @motion_force.setter
+    def motion_force(self, force: Force):
+        if self.motion_force:
+            self.remove_effector(self.motion_force)
+        self.add_effector(force)
+        self._motion_force = force
 
 
-def create_cell(name, loc, obj=None, physics_on=True, **kwargs) -> Cell:
-    if obj is None:
-        obj = _create_mesh(name, loc, mesh="icosphere", **kwargs)
-    obj_col = bpy.data.collections.new(name)
-    bpy.context.scene.collection.children.link(obj_col)
-    obj_col.objects.link(obj)
-
-    cell = Cell(obj, obj_col)
+def create_cell(name, loc, physics_on=True, **kwargs) -> Cell:
+    obj = create_mesh(name, loc, mesh="icosphere", **kwargs)
+    bpy.context.scene.collection.objects.link(obj)
+    cell = Cell(obj)
     cell.remesh()
+
     if physics_on:
         cell.enable_physics()
-
     return cell
 
 
-# --- Begin: Blender Functions ---
-
-
-def _create_mesh(
-    name,
-    loc,
-    mesh="icosphere",
-    size=1,
-    rotation=(0, 0, 0),
-    scale=(1, 1, 1),
-    subdivisions=2,
-    **kwargs,
-):
-    bm = bmesh.new()
-
-    if isinstance(rotation, tuple):
-        rotation = Euler(rotation)
-    elif isinstance(rotation, Quaternion):
-        rotation = rotation.to_euler()
-
-    if mesh == "icosphere":
-        bmesh.ops.create_icosphere(bm, subdivisions=subdivisions, radius=size, **kwargs)
-    elif mesh == "plane":
-        bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=size / 2, **kwargs)
-    elif mesh == "monkey":
-        bmesh.ops.create_monkey(bm, **kwargs)
-    else:
-        raise ValueError("""mesh must be one of "icosphere", "plane", or "monkey".""")
-
-    me = bpy.data.meshes.new(f"{name}_mesh")
-    bm.to_mesh(me)
-    bm.free()
-
-    obj = bpy.data.objects.new(name, me)
-    obj.location = loc
-    obj.rotation_euler = rotation
-    obj.scale = scale
-
-    return obj
-
-
-def _create_division_plane(name, major_axis, com, collection=None):
-    """
-    Creates a plane orthogonal to the long axis vector
-    and passing through the cell's center of mass.
-    """
-    # Define new plane
-    plane = _create_mesh(
-        f"{name}_division_plane",
-        loc=com,
-        mesh="plane",
-        size=major_axis.length() + 1,
-        rotation=major_axis.axis().to_track_quat("Z", "Y"),
-    )
-
-    # Add thickness to plane
-    solid_mod = plane.modifiers.new(name="Solidify", type="SOLIDIFY")
-    solid_mod.offset = 0
-    solid_mod.thickness = 0.025
-
-    plane.hide_set(True)
-    return plane
-
-
-# Utility functions for settings
-def rsetattr(obj, attr, val):
-    pre, _, post = attr.rpartition(".")
-    return setattr(rgetattr(obj, pre) if pre else obj, post, val)
-
-
-def rgetattr(obj, attr, *args):
-    def _getattr(obj, attr):
-        return getattr(obj, attr, *args)
-
-    return reduce(_getattr, [obj] + attr.split("."))
-
-
+# --- Physics Modifier Utilities ---
+default_stiffness = 15
+default_pressure = 5
 default_cloth_settings = {
     "settings.quality": 10,
     "settings.air_damping": 10,
@@ -332,9 +261,9 @@ default_cloth_settings = {
     "settings.mass": 1,
     "settings.time_scale": 1,
     # Cloth > Stiffness
-    "settings.tension_stiffness": 15,
-    "settings.compression_stiffness": 15,
-    "settings.shear_stiffness": 15,
+    "settings.tension_stiffness": default_stiffness,
+    "settings.compression_stiffness": default_stiffness,
+    "settings.shear_stiffness": default_stiffness,
     "settings.bending_stiffness": 1,
     # Cloth > Damping
     "settings.tension_damping": 50,
@@ -343,7 +272,7 @@ default_cloth_settings = {
     "settings.bending_damping": 0.5,
     # Cloth > Pressure
     "settings.use_pressure": True,
-    "settings.uniform_pressure_force": 5,
+    "settings.uniform_pressure_force": default_pressure,
     "settings.use_pressure_volume": True,
     "settings.target_volume": 1,
     "settings.pressure_factor": 2,
@@ -413,20 +342,19 @@ class Axis:
 
 
 class CellType:
-    def __init__(self, collection: bpy.types.Collection, physics_on=True):
-        self.collection = collection
+    def __init__(self, collection: ForceCollection, physics_on=True):
+        self.homo_adhesions = collection
         self._cells = set()
 
         self.physics_enabled = physics_on
-        self.homo_adhesion_strength = 2000
-
         self.hetero_adhesions = {}
 
+        self.homo_adhesion_strength = 2000
         self.motion_strength = 0
 
     @property
     def name(self):
-        return self.collection.name
+        return self.homo_adhesions.name
 
     def add_cell(self, cell: Cell):
         cell.celltype = self
@@ -435,30 +363,30 @@ class CellType:
         if not self.physics_enabled:
             return
         # add homotypic adhesion force
-        homo_adhesion = create_adhesion(self.homo_adhesion_strength, obj=cell.obj)
-        try:
-            self.collection.objects.link(homo_adhesion.obj)
-            cell.obj_col.children.link(self.collection)
-        except:
-            pass
-        cell.add_force(homo_adhesion)
+        homo_adhesion = create_adhesion(self.homo_adhesion_strength, obj=cell._obj)
+        cell.link_adhesion_force(homo_adhesion)
+        self.homo_adhesions.add_force(homo_adhesion)
 
-        # TODO: hetero adhesion
+        cell.add_effector(self.homo_adhesions)
+
+        # add hetero adhesion forces
         for celltype, item in self.hetero_adhesions.items():
-            outgoing_col, incoming_col, strength = item
+            outgoing_forces, incoming_forces, strength = item
             hetero_adhesion = create_adhesion(
                 strength, name=cell.name + "_to_" + celltype.name, loc=cell.loc
             )
-            outgoing_col.objects.link(hetero_adhesion.obj)
-            cell.add_force(hetero_adhesion)
+            outgoing_forces.add_force(hetero_adhesion)
+            cell.link_adhesion_force(hetero_adhesion)
 
-            cell.obj_col.children.link(incoming_col)
+            cell.add_effector(incoming_forces)
 
-        motion = create_force(
-            cell.name + "_motion", loc=cell.get_COM(), strength=self.motion_strength
+        # add motion force
+        motion = create_motion(
+            name=cell.name + "_motion",
+            loc=cell.get_COM(),
+            strength=self.motion_strength,
         )
-        cell.obj_col.objects.link(motion.obj)
-        cell.add_force(motion)
+        cell.motion_force = motion
 
     def create_cell(self, name, loc, **kwargs) -> Cell:
         cell = create_cell(name, loc, physics_on=self.physics_enabled, **kwargs)
@@ -470,26 +398,30 @@ class CellType:
         pass
 
     @property
-    def cells(self):
+    def cells(self) -> list[Cell]:
         return list(self._cells)
 
-    def set_homo_adhesion(self, strength):
+    def set_homo_adhesion(self, strength: float):
         self.homo_adhesion_strength = strength
 
-    def set_hetero_adhesion(self, other_celltype, strength):
-        outgoing_col = bpy.data.collections.new(
-            self.name + "_to_" + other_celltype.name
+    def set_hetero_adhesion(self, other_celltype: "CellType", strength: float):
+        outgoing_forces = ForceCollection(self.name + "_to_" + other_celltype.name)
+        incoming_forces = ForceCollection(other_celltype.name + "_to_" + self.name)
+        self.hetero_adhesions[other_celltype] = (
+            outgoing_forces,
+            incoming_forces,
+            strength,
         )
-        incoming_col = bpy.data.collections.new(
-            other_celltype.name + "_to_" + self.name
+        other_celltype.hetero_adhesions[self] = (
+            incoming_forces,
+            outgoing_forces,
+            strength,
         )
-        self.hetero_adhesions[other_celltype] = outgoing_col, incoming_col, strength
-        other_celltype.hetero_adhesions[self] = incoming_col, outgoing_col, strength
 
-    def set_motion(self, strength):
+    def set_motion(self, strength: float):
         self.motion_strength = strength
 
 
 def create_celltype(name, physics_on=True) -> CellType:
-    col = bpy.data.collections.new(name)
-    return CellType(col, physics_on)
+    collection = ForceCollection(name)
+    return CellType(collection, physics_on)

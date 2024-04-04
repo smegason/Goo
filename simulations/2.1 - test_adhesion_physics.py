@@ -8,7 +8,7 @@ goo.reset_modules()
 goo.reset_scene()
 
 celltype = goo.create_celltype("default", physics_on=True)
-celltype.set_homo_adhesion(2000)
+celltype.set_homo_adhesion(5000)
 
 locs = [
     (-1.36, -1, 0.2),

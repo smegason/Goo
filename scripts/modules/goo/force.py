@@ -1,25 +1,5 @@
 import bpy
-
-
-class BlenderObject:
-    def __init__(self, obj):
-        self.obj = obj
-
-    @property
-    def name(self):
-        return self.obj.name
-
-    @name.setter
-    def name(self, name):
-        self.obj.name = name
-
-    @property
-    def loc(self):
-        return self.obj.location
-
-    @loc.setter
-    def loc(self, loc):
-        self.obj.location = loc
+from goo.utils import *
 
 
 class Force(BlenderObject):
@@ -28,62 +8,62 @@ class Force(BlenderObject):
         self.type = "force"
 
     def enable(self):
-        if not self.obj.field:
-            with bpy.context.temp_override(active_object=self.obj):
+        if not self._obj.field:
+            with bpy.context.temp_override(active_object=self._obj):
                 bpy.ops.object.forcefield_toggle()
         else:
-            self.obj.field.type = "FORCE"
+            self._obj.field.type = "FORCE"
 
     def disable(self):
-        if self.obj.field:
-            self.obj.field.type = "NONE"
+        if self._obj.field:
+            self._obj.field.type = "NONE"
 
     def enabled(self):
-        return self.obj.field and self.obj.field.type == "FORCE"
+        return self._obj.field and self._obj.field.type == "FORCE"
 
     @property
     def strength(self):
-        return self.obj.field.strength
+        return self._obj.field.strength
 
     @strength.setter
     def strength(self, strength):
-        self.obj.field.strength = strength
+        self._obj.field.strength = strength
 
     @property
     def falloff(self):
-        return self.obj.field.falloff
+        return self._obj.field.falloff
 
     @falloff.setter
     def falloff(self, falloff):
-        self.obj.field.falloff_power = falloff
+        self._obj.field.falloff_power = falloff
 
     @property
     def min_dist(self):
-        if self.obj.field.use_min_distance:
-            return self.obj.field.min_dist
+        if self._obj.field.use_min_distance:
+            return self._obj.field.min_dist
         return None
 
     @min_dist.setter
     def min_dist(self, min_dist):
         if min_dist is None:
-            self.obj.field.use_min_distance = False
+            self._obj.field.use_min_distance = False
         else:
-            self.obj.field.use_min_distance = True
-            self.obj.field.distance_min = min_dist
+            self._obj.field.use_min_distance = True
+            self._obj.field.distance_min = min_dist
 
     @property
     def max_dist(self):
-        if self.obj.field.use_max_distance:
-            return self.obj.field.max_dist
+        if self._obj.field.use_max_distance:
+            return self._obj.field.max_dist
         return None
 
     @max_dist.setter
     def max_dist(self, max_dist):
         if max_dist is None:
-            self.obj.field.use_max_distance = False
+            self._obj.field.use_max_distance = False
         else:
-            self.obj.field.use_max_distance = True
-            self.obj.field.distance_max = max_dist
+            self._obj.field.use_max_distance = True
+            self._obj.field.distance_max = max_dist
 
 
 class AdhesionForce(Force):
@@ -93,11 +73,11 @@ class AdhesionForce(Force):
 
     @property
     def strength(self):
-        return -self.obj.field.strength
+        return -self._obj.field.strength
 
     @strength.setter
     def strength(self, strength):
-        self.obj.field.strength = -strength
+        self._obj.field.strength = -strength
 
 
 def create_force(name, loc, strength, falloff=0, min_dist=None, max_dist=None) -> Force:
@@ -129,3 +109,40 @@ def create_adhesion(strength, obj=None, name="", loc=(0, 0, 0)) -> AdhesionForce
     adhesion_force.max_dist = 1.4
     adhesion_force.falloff = 0.5
     return adhesion_force
+
+
+def create_motion(name, loc, strength) -> Force:
+    obj = bpy.data.objects.new(name, None)
+    obj.location = loc
+
+    force = Force(obj)
+    force.enable()
+
+    force.strength = strength
+    force.min_dist = 0.6
+    force.max_dist = 1.4
+    force.falloff = 0.5
+    return force
+
+
+class ForceCollection:
+    def __init__(self, name: str):
+        self._col = bpy.data.collections.new(name)
+
+    @property
+    def name(self):
+        return self._col.name
+
+    @property
+    def collection(self):
+        return self._col
+
+    def add_force(self, force: Force):
+        self._col.objects.link(force.obj)
+
+    def remove_force(self, force: Force):
+        self._col.objects.unlink(force.obj)
+
+    @property
+    def forces(self):
+        return self._col.all_objects

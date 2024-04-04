@@ -1,9 +1,12 @@
+from typing import Callable
+
 import bpy, bmesh
+from goo.cell import Cell
 
 
 # TODO: this is probably not necessary, handlers can exist within motion, divider submodules
 class Handler:
-    def setup(self, get_cells, dt):
+    def setup(self, get_cells: Callable[[], list[Cell]], dt):
         self.get_cells = get_cells
         self.dt = dt
 
@@ -47,7 +50,7 @@ class ForceUpdateHandler(Handler):
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             cell_size = cell.get_major_axis().length() / 2
-            for force in cell.forces:
+            for force in cell.adhesion_forces:
                 if not force.enabled():
                     continue
                 force.loc = cell.get_COM()

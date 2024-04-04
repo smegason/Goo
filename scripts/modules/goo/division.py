@@ -1,7 +1,9 @@
 import bpy, bmesh
 from mathutils import Vector
-from goo.cell import Cell
 import numpy as np
+
+from goo.cell import Cell
+from goo.utils import *
 
 
 class DivisionLogic:
@@ -73,8 +75,11 @@ class BooleanDivisionLogic(DivisionLogic):
     def __init__(self):
         pass
 
-    def make_divide(self, mother):
-        plane = mother.create_division_plane()
+    def make_divide(self, mother: Cell):
+
+        plane = self.create_division_plane(
+            mother.name, mother.get_major_axis(), mother.get_COM()
+        )
         obj = mother.obj
 
         # cut mother cell by division plane
@@ -108,6 +113,28 @@ class BooleanDivisionLogic(DivisionLogic):
 
     def flush(self):
         pass
+
+    def _create_division_plane(name, major_axis, com, collection=None):
+        """
+        Creates a plane orthogonal to the long axis vector
+        and passing through the cell's center of mass.
+        """
+        # Define new plane
+        plane = create_mesh(
+            f"{name}_division_plane",
+            loc=com,
+            mesh="plane",
+            size=major_axis.length() + 1,
+            rotation=major_axis.axis().to_track_quat("Z", "Y"),
+        )
+
+        # Add thickness to plane
+        solid_mod = plane.modifiers.new(name="Solidify", type="SOLIDIFY")
+        solid_mod.offset = 0
+        solid_mod.thickness = 0.025
+
+        plane.hide_set(True)
+        return plane
 
 
 class TimeDivisionHandler:

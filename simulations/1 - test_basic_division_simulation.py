@@ -7,7 +7,7 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-celltype = goo.CellType("default", physics_on=False)
+celltype = goo.create_celltype("default", physics_on=False)
 cell = celltype.create_cell("cell", (0, 0, 0), size=5)
 
 sim = goo.Simulator(celltypes=[celltype])
