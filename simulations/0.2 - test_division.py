@@ -13,11 +13,12 @@ cell = goo.create_cell(
     scale=(2, 3, 1),
     physics_on=False,
 )
-print(f"Initial volume: {cell.get_volume()}")
+
+print(f"Initial volume: {cell.volume()}")
 logic = BisectDivisionLogic(margin=0.025)
 # logic = BooleanDivisionLogic()
 mother, daughter = cell.divide(logic)
 logic.flush()
 
 print(mother.name, daughter.name)
-print(f"Volumes after division: {mother.get_volume()}, {daughter.get_volume()}")
+print(f"Volumes after division: {mother.volume()}, {daughter.volume()}")

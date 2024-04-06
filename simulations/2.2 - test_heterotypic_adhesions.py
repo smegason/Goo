@@ -15,7 +15,7 @@ locs_A = [
     (-3, 2, 0),
 ]
 celltypeA = goo.create_celltype("A", physics_on=True)
-celltypeA.homo_adhesion_strength = 1000
+celltypeA.homo_adhesion_strength = -1000
 
 locs_B = [
     (1, 0, 0),
@@ -24,7 +24,7 @@ locs_B = [
     (3, 2, 0),
 ]
 celltypeB = goo.create_celltype("B", physics_on=True)
-celltypeB.homo_adhesion_strength = 1000
+celltypeB.homo_adhesion_strength = -1000
 
 celltypeA.set_hetero_adhesion(celltypeB, 3500)
 
@@ -36,6 +36,6 @@ for i, loc in enumerate(locs_B):
     cell.stiffness = 5
 
 sim = goo.Simulator(celltypes=[celltypeA, celltypeB])
-sim.add_handler(ForceUpdateHandler())
+sim.add_handler(AdhesionLocationHandler())
 sim.toggle_gravity(False)
 sim.run_simulation(start=1, end=100)

@@ -91,13 +91,13 @@ def create_force(name, loc, strength, falloff=0, min_dist=None, max_dist=None) -
     force.min_dist = min_dist
     force.max_dist = max_dist
 
-    bpy.context.collection.objects.link(obj)
+    bpy.context.scene.collection.objects.link(obj)
     return force
 
 
-def create_adhesion(strength, obj=None, name="", loc=(0, 0, 0)) -> AdhesionForce:
+def create_adhesion(strength, obj=None, name=None, loc=(0, 0, 0)) -> AdhesionForce:
     if obj is None:
-        assert name != ""
+        assert name is not None
         obj = bpy.data.objects.new(name, None)
         obj.location = loc
 

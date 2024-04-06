@@ -8,7 +8,7 @@ goo.reset_modules()
 goo.reset_scene()
 
 celltype = goo.create_celltype("default", physics_on=False)
-cell = celltype.create_cell("cell", (0, 0, 0), size=5)
+cell = celltype.create_cell("cell", (0, 0, 0), size=5, subdivisions=5)
 
 sim = goo.Simulator(celltypes=[celltype])
 division_handler = TimeDivisionHandler(BisectDivisionLogic, mu=10)

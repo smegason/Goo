@@ -24,8 +24,6 @@ class Cell(BlenderObject):
         self._adhesion_forces: list[AdhesionForce] = []
         self._motion_force: Force = None
 
-        self._custom_properties = {}
-
     @property
     def name(self) -> str:
         return self._obj.name
@@ -51,26 +49,31 @@ class Cell(BlenderObject):
         cell_copy = Cell(obj_copy)
         return cell_copy
 
-    def set_property(self, k: str, v: Union[float, list[float], int, list[int], str]):
+    # ----- CUSTOM PROPERTIES -----
+    def __setitem__(self, k: str, v: Union[float, list[float], int, list[int], str]):
         self._obj.data[k] = v
 
-    def get_property(self, k: str):
+    def __contains__(self, k: str):
+        return k in self._obj.data.keys()
+
+    def __getitem__(self, k):
         return self._obj.data[k]
 
+    # ----- BASIC FUNCTIONS -----
     @property
     def obj_eval(self):
         dg = bpy.context.evaluated_depsgraph_get()
         obj_eval = self._obj.evaluated_get(dg)
         return obj_eval
 
-    def get_vertices(self, local_coords=False):
+    def vertices(self, local_coords=False):
         verts = self.obj_eval.data.vertices
         if local_coords:
             return [v.co for v in verts]
         else:
             return [self.obj_eval.matrix_world @ v.co for v in verts]
 
-    def get_volume(self) -> float:
+    def volume(self) -> float:
         """Calculates the volume of the Blender mesh."""
         bm = bmesh.new()
         bm.from_mesh(self.obj_eval.to_mesh())
@@ -80,16 +83,16 @@ class Cell(BlenderObject):
 
         return volume
 
-    def get_COM(self, local_coords: bool = False) -> Vector:
+    def COM(self, local_coords: bool = False) -> Vector:
         """Calculates the center of mass of a mesh."""
-        vert_coords = self.get_vertices(local_coords)
+        vert_coords = self.vertices(local_coords)
         com = Vector(np.mean(vert_coords, axis=0))
         return com
 
     def _get_eigenvector(self, n):
         """Returns the nth eigenvector (axis) in object space as a line defined by two Vectors."""
         obj_eval = self.obj_eval
-        verts = self.get_vertices()
+        verts = self.vertices()
 
         # Calculate the eigenvectors and eigenvalues of the covariance matrix
         covariance_matrix = np.cov(verts, rowvar=False)
@@ -105,19 +108,19 @@ class Cell(BlenderObject):
 
         return Axis(Vector(axis), first_vertex, last_vertex, obj_eval.matrix_world)
 
-    def get_major_axis(self) -> "Axis":
+    def major_axis(self) -> "Axis":
         return self._get_eigenvector(0)
 
-    def get_minor_axis(self) -> "Axis":
+    def minor_axis(self) -> "Axis":
         return self._get_eigenvector(1)
 
     def recenter(self):
         """Recenter origin to COM."""
-        com = self.get_COM()
+        com = self.COM()
         bm = bmesh.new()
         bm.from_mesh(self.obj_eval.to_mesh())
 
-        bmesh.ops.translate(bm, verts=bm.verts, vec=-self.get_COM(local_coords=True))
+        bmesh.ops.translate(bm, verts=bm.verts, vec=-self.COM(local_coords=True))
         bm.to_mesh(self._obj.data)
         bm.free()
 
@@ -129,10 +132,10 @@ class Cell(BlenderObject):
             mother.celltype.add_cell(daughter)
         return mother, daughter
 
-    def remesh(self, smooth: bool = True):
+    def remesh(self, voxel_size=0.25, smooth: bool = True):
         # use of object ops is 2x faster than remeshing with modifiers
         self._obj.data.remesh_mode = "VOXEL"
-        self._obj.data.remesh_voxel_size = 0.25
+        self._obj.data.remesh_voxel_size = voxel_size
         with bpy.context.temp_override(active_object=self._obj):
             bpy.ops.object.voxel_remesh()
 
@@ -140,6 +143,7 @@ class Cell(BlenderObject):
             f.use_smooth = smooth
 
     # ----- PHYSICS -----
+    @property
     def physics_enabled(self) -> bool:
         return self._physics_enabled
 
@@ -392,7 +396,6 @@ class CellType:
             loc=(0, 0, 0),
             strength=self.motion_strength,
         )
-        print(motion.name, motion.loc, cell.get_COM())
         cell.motion_force = motion
 
     def remove_cell(self, cell: Cell):

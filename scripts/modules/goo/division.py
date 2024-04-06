@@ -6,6 +6,7 @@ import numpy as np
 
 from goo.cell import Cell
 from goo.utils import *
+from goo.handler import Handler
 
 
 class DivisionLogic:
@@ -22,8 +23,8 @@ class BisectDivisionLogic(DivisionLogic):
         self.to_flush = []
 
     def make_divide(self, mother):
-        com = mother.get_COM(local_coords=True)
-        axis = mother.get_major_axis().axis(local_coords=True)
+        com = mother.COM(local_coords=True)
+        axis = mother.major_axis().axis(local_coords=True)
         obj_eval = mother.obj_eval.copy()
 
         daughter = mother.copy()
@@ -80,7 +81,7 @@ class BooleanDivisionLogic(DivisionLogic):
     def make_divide(self, mother: Cell):
 
         plane = self.create_division_plane(
-            mother.name, mother.get_major_axis(), mother.get_COM()
+            mother.name, mother.major_axis(), mother.COM()
         )
         obj = mother.obj
 
@@ -139,33 +140,19 @@ class BooleanDivisionLogic(DivisionLogic):
         return plane
 
 
-class TimeDivisionHandler:
-    # TODO: implement variance
-    def __init__(self, divider_handler, mu=10, var=0):
-        self.mu = mu
-        self.var = var
-        self.divider_handler = divider_handler()
+class DivisionHandler(Handler):
+    def __init__(self, divider_logic):
+        self.divider_logic = divider_logic()
 
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
-        self.get_cells = get_cells
-        self.dt = dt
-        for cell in self.get_cells():
-            cell.set_property("last_division_time", 0)
-
-    def run(self, scene, depsgraph):
-        time = scene.frame_current * self.dt
-        for cell in self.get_cells():
-            if time - cell.get_property("last_division_time") >= self.mu:
-                mother, daughter = cell.divide(self.divider_handler)
-                mother.set_property("last_division_time", time)
-                daughter.set_property("last_division_time", time)
-        self.divider_handler.flush()
-
-
-class TimeDivisionPhysicsHandler(TimeDivisionHandler):
-    def setup(self, get_cells, dt):
-        super(TimeDivisionPhysicsHandler, self).setup(get_cells, dt)
+        super(DivisionHandler, self).setup(get_cells, dt)
         self._cells_to_update = []
+
+    def can_divide(self, cell: Cell) -> bool:
+        raise NotImplementedError("Subclasses must implement can_divide() method.")
+
+    def update_on_divide(self, cell: Cell):
+        pass
 
     def run(self, scene, depsgraph):
         for cell in self._cells_to_update:
@@ -173,12 +160,50 @@ class TimeDivisionPhysicsHandler(TimeDivisionHandler):
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
         self._cells_to_update.clear()
 
-        time = scene.frame_current * self.dt
         for cell in self.get_cells():
-            if time - cell.get_property("last_division_time") >= self.mu:
-                mother, daughter = cell.divide(self.divider_handler)
-                self._cells_to_update.extend([mother, daughter])
+            if self.can_divide(cell):
+                mother, daughter = cell.divide(self.divider_logic)
+                self.update_on_divide(mother)
+                self.update_on_divide(daughter)
+
+                if mother.physics_enabled:
+                    self._cells_to_update.extend([mother, daughter])
+
         for cell in self._cells_to_update:
             cell.disable_physics(collision=False)
-            cell.set_property("last_division_time", time)
-        self.divider_handler.flush()
+            if "next_volume" in cell:  # growth integration
+                cell["next_volume"] = cell.volume() / 2
+        self.divider_logic.flush()
+
+
+class TimeDivisionHandler(DivisionHandler):
+    def __init__(self, divider_logic, mu=10, var=0):
+        super(TimeDivisionHandler, self).__init__(divider_logic)
+        self.mu = mu
+        self.var = var
+
+    def setup(self, get_cells, dt):
+        super(TimeDivisionHandler, self).setup(get_cells, dt)
+        for cell in self.get_cells():
+            cell["last_division_time"] = 0
+
+    # TODO: implement variance
+    def can_divide(self, cell: Cell):
+        time = bpy.context.scene.frame_current * self.dt
+        if "last_division_time" not in cell:
+            cell["last_division_time"] = time
+            return False
+        return time - cell["last_division_time"] >= self.mu
+
+    def update_on_divide(self, cell: Cell):
+        time = bpy.context.scene.frame_current * self.dt
+        cell["last_division_time"] = time
+
+
+class SizeDivisionHandler(DivisionHandler):
+    def __init__(self, divider_logic, threshold=30):
+        super(SizeDivisionHandler, self).__init__(divider_logic)
+        self.threshold = threshold
+
+    def can_divide(self, cell: Cell):
+        return cell.volume() >= self.threshold

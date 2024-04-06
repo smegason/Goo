@@ -25,6 +25,6 @@ for i, loc in enumerate(locs):
     celltype.create_cell("cell" + str(i), loc)
 
 sim = goo.Simulator(celltypes=[celltype])
-sim.add_handler(ForceUpdateHandler())
+sim.add_handler(AdhesionLocationHandler())
 sim.toggle_gravity(False)
 sim.run_simulation(start=1, end=250)
