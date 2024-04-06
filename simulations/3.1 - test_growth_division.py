@@ -8,13 +8,14 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
+sim = goo.Simulator()
+
 celltype = goo.create_celltype("A")
 cell = celltype.create_cell("cellA", (0, 0, 0))
 cell.stiffness = 1
 
-sim = goo.Simulator(celltypes=[celltype])
-sim.toggle_gravity(False)
-
+sim.setup_world()
+sim.add_celltype(celltype)
 sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=30),

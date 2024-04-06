@@ -18,14 +18,12 @@ def reset_scene():
     bpy.context.scene.frame_start = 1
     bpy.context.scene.frame_end = 250
 
-    try:
+    if bpy.context.active_object and bpy.context.active_object.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
-    except:
-        pass
 
     for obj in bpy.context.scene.objects:
-        # if obj.type in ["CAMERA", "LIGHT"]:
-        #     continue
+        if obj.type in ["CAMERA", "LIGHT"]:
+            continue
         bpy.data.objects.remove(obj, do_unlink=True)
 
     for mesh in bpy.data.meshes:
