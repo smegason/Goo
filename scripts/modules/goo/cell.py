@@ -18,8 +18,7 @@ class Cell(BlenderObject):
         self.celltype: CellType = None
 
         self._physics_enabled = False
-        self.cloth_settings = {}
-        self.collision_settings = {}
+        self.mod_settings = []
 
         self._adhesion_forces: list[AdhesionForce] = []
         self._motion_force: Force = None
@@ -47,6 +46,10 @@ class Cell(BlenderObject):
         bpy.context.scene.collection.objects.link(obj_copy)
 
         cell_copy = Cell(obj_copy)
+        if cell_copy.cloth_mod:
+            cell_copy.cloth_mod.settings.effector_weights.collection = (
+                cell_copy._effectors
+            )
         return cell_copy
 
     # ----- CUSTOM PROPERTIES -----
@@ -114,6 +117,12 @@ class Cell(BlenderObject):
     def minor_axis(self) -> "Axis":
         return self._get_eigenvector(1)
 
+    def divide(self, divisionLogic) -> tuple["Cell", "Cell"]:
+        mother, daughter = divisionLogic.make_divide(self)
+        if mother.celltype:
+            mother.celltype.add_cell(daughter)
+        return mother, daughter
+
     def recenter(self):
         """Recenter origin to COM."""
         com = self.COM()
@@ -125,12 +134,6 @@ class Cell(BlenderObject):
         bm.free()
 
         self.loc = com
-
-    def divide(self, divisionLogic) -> tuple["Cell", "Cell"]:
-        mother, daughter = divisionLogic.make_divide(self)
-        if mother.celltype:
-            mother.celltype.add_cell(daughter)
-        return mother, daughter
 
     def remesh(self, voxel_size=0.25, smooth: bool = True):
         # use of object ops is 2x faster than remeshing with modifiers
@@ -147,42 +150,45 @@ class Cell(BlenderObject):
     def physics_enabled(self) -> bool:
         return self._physics_enabled
 
-    def enable_physics(self, cloth=True, collision=True, forces=True):
-        if cloth and self.cloth_mod is None:
+    def enable_physics(self):
+        if not self.mod_settings:
+            # set up modifiers for first time
             self.setup_cloth()
-        if collision and self.collision_mod is None:
             self.setup_collision()
-        if forces:
-            for force in self.adhesion_forces:
-                force.enable()
+        else:
+            # recreate modifier stack
+            for name, type, settings in self.mod_settings:
+                mod = self._obj.modifiers.new(name=name, type=type)
+                declare_settings(mod, settings)
+            self.mod_settings.clear()
+
+        for force in self.adhesion_forces:
+            force.enable()
         self._physics_enabled = True
 
-    def disable_physics(self, cloth=True, collision=True, forces=True):
-        if cloth and self.cloth_mod is not None:
-            store_settings(self.cloth_mod, default_cloth_settings, self.cloth_settings)
-            self._obj.modifiers.remove(self.cloth_mod)
-        if collision and self.collision_mod is not None:
-            store_settings(
-                self.collision_mod, default_collision_settings, self.collision_settings
-            )
-            self._obj.modifiers.remove(self.collision_mod)
-        if forces:
-            for force in self.adhesion_forces:
-                force.disable()
+    def disable_physics(self):
+        for mod in self._obj.modifiers:
+            name, type = mod.name, mod.type
+            settings = store_settings(mod)
+            self.mod_settings.append((name, type, settings))
+            self._obj.modifiers.remove(mod)
+
+        for force in self.adhesion_forces:
+            force.disable()
         self._physics_enabled = False
 
     def setup_cloth(self):
+        if self.cloth_mod is not None:
+            return
         cloth_mod = self._obj.modifiers.new(name="Cloth", type="CLOTH")
-        update_settings(cloth_mod, default_cloth_settings, self.cloth_settings)
+        setup_cloth_defaults(cloth_mod)
         self.cloth_mod.settings.effector_weights.collection = self._effectors
-        self.cloth_settings = {}
 
     def setup_collision(self):
+        if self.collision_mod is not None:
+            return
         collision_mod = self._obj.modifiers.new(name="Collision", type="COLLISION")
-        update_settings(
-            collision_mod, default_collision_settings, self.collision_settings
-        )
-        self.collision_settings = {}
+        setup_collision_defaults(collision_mod)
 
     def get_modifier(self, type) -> Optional[bpy.types.Modifier]:
         return next((m for m in self._obj.modifiers if m.type == type), None)
@@ -263,91 +269,76 @@ def create_cell(name, loc, physics_on=True, **kwargs) -> Cell:
 # --- Physics Modifier Utilities ---
 default_stiffness = 15
 default_pressure = 5
-default_cloth_settings = {
-    "settings.quality": 10,
-    "settings.air_damping": 10,
-    "settings.bending_model": "ANGULAR",
-    "settings.mass": 1,
-    "settings.time_scale": 1,
+
+
+def setup_cloth_defaults(mod: bpy.types.ClothModifier, stiffness=1, pressure=5):
+    mod.settings.quality = 10
+    mod.settings.air_damping = 10
+    mod.settings.bending_model = "ANGULAR"
+    mod.settings.mass = 1
+    mod.settings.time_scale = 1
     # Cloth > Stiffness
-    "settings.tension_stiffness": default_stiffness,
-    "settings.compression_stiffness": default_stiffness,
-    "settings.shear_stiffness": default_stiffness,
-    "settings.bending_stiffness": 1,
+    mod.settings.tension_stiffness = stiffness
+    mod.settings.compression_stiffness = stiffness
+    mod.settings.shear_stiffness = stiffness
+    mod.settings.bending_stiffness = 1
     # Cloth > Damping
-    "settings.tension_damping": 50,
-    "settings.compression_damping": 50,
-    "settings.shear_damping": 50,
-    "settings.bending_damping": 0.5,
+    mod.settings.tension_damping = 50
+    mod.settings.compression_damping = 50
+    mod.settings.shear_damping = 50
+    mod.settings.bending_damping = 0.5
+    # Cloth > Internal Springs
+    mod.settings.use_internal_springs = False
+    mod.settings.internal_spring_max_length = 1
+    mod.settings.internal_spring_max_diversion = 0.785398
+    mod.settings.internal_spring_normal_check = False
+    mod.settings.internal_tension_stiffness = 10
+    mod.settings.internal_compression_stiffness = 10
+    mod.settings.internal_tension_stiffness_max = 10000
+    mod.settings.internal_compression_stiffness_max = 10000
     # Cloth > Pressure
-    "settings.use_pressure": True,
-    "settings.uniform_pressure_force": default_pressure,
-    "settings.use_pressure_volume": True,
-    "settings.target_volume": 1,
-    "settings.pressure_factor": 2,
-    "settings.fluid_density": 1.05,
-    # Cloth > Field Weights
-    "settings.effector_weights.collection": None,
+    mod.settings.use_pressure = True
+    mod.settings.uniform_pressure_force = pressure
+    mod.settings.use_pressure_volume = True
+    mod.settings.target_volume = 1
+    mod.settings.pressure_factor = 2
+    mod.settings.fluid_density = 1.05
     # Cloth > Collisions
-    "collision_settings.collision_quality": 5,
-    "collision_settings.use_collision": True,
-    "collision_settings.use_self_collision": True,
-    "collision_settings.self_friction": 0,
-    "collision_settings.friction": 0,
-    "collision_settings.self_distance_min": 0.005,
-    "collision_settings.distance_min": 0.005,
-    "collision_settings.self_impulse_clamp": 0,
-}
-
-default_collision_settings = {
-    "settings.use_culling": True,
-    "settings.damping": 1,
-    "settings.thickness_outer": 0.025,
-    "settings.thickness_inner": 0.25,
-    "settings.cloth_friction": 0,
-}
+    mod.collision_settings.collision_quality = 5
+    mod.collision_settings.use_collision = True
+    mod.collision_settings.use_self_collision = True
+    mod.collision_settings.self_friction = 0
+    mod.collision_settings.friction = 0
+    mod.collision_settings.self_distance_min = 0.005
+    mod.collision_settings.distance_min = 0.005
+    mod.collision_settings.self_impulse_clamp = 0
 
 
-def store_settings(mod, default_settings, custom_settings):
-    for k in default_settings.keys():
-        v = rgetattr(mod, k)
-        custom_settings[k] = v
+def setup_collision_defaults(mod: bpy.types.CollisionModifier):
+    mod.settings.use_culling = True
+    mod.settings.damping = 1
+    mod.settings.thickness_outer = 0.025
+    mod.settings.thickness_inner = 0.25
+    mod.settings.cloth_friction = 0
 
 
-def update_settings(mod, default_settings, custom_settings=None):
-    for k in default_settings.keys():
-        v = custom_settings[k] if custom_settings else default_settings[k]
-        rsetattr(mod, k, v)
+def store_settings(mod: bpy.types.bpy_struct):
+    settings = {}
+    for p in mod.bl_rna.properties:
+        id = p.identifier
+        if not p.is_readonly:
+            settings[id] = getattr(mod, id)
+        elif id in ["settings", "collision_settings", "effector_weights"]:
+            settings[id] = store_settings(getattr(mod, id))
+    return settings
 
 
-class Axis:
-    def __init__(self, axis, start, end, world_matrix):
-        """
-        :param axis: Vector of axis
-        :param start: Vector of start endpoint in object space
-        :param end: Vector of end endpoint in object space
-        :param world_matrix: 4x4 matrix of object to world transformation
-        :param local_coords: if coordinates given are in local space
-        """
-        self._axis = axis
-        self._start = start
-        self._end = end
-        self._matrix_world = world_matrix.inverted()
-
-    def axis(self, local_coords=False):
-        if local_coords:
-            axis = self._axis.copy()
-            axis.rotate(self._matrix_world.to_quaternion())
-            return axis
-        return self._axis
-
-    def endpoints(self, local_coords=False):
-        mat = self._matrix_world if local_coords else Matrix.Identity(4)
-        return [mat @ self._start, mat @ self._end]
-
-    def length(self, local_coords=False):
-        start, end = self.endpoints(local_coords)
-        return (end - start).length
+def declare_settings(mod: bpy.types.bpy_struct, settings: dict):
+    for id, setting in settings.items():
+        if isinstance(setting, dict):
+            declare_settings(getattr(mod, id), settings[id])
+        else:
+            setattr(mod, id, setting)
 
 
 class CellType:

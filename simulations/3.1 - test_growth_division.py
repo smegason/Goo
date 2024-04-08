@@ -1,18 +1,17 @@
 from importlib import reload
 import goo
-from goo.division import *
-from goo.handler import *
+from goo import *
 
 reload(goo)
 
-goo.reset_modules()
-goo.reset_scene()
+reset_modules()
+reset_scene()
 
-sim = goo.Simulator()
+sim = Simulator()
 
-celltype = goo.create_celltype("A")
+celltype = create_celltype("A")
 cell = celltype.create_cell("cellA", (0, 0, 0))
-cell.stiffness = 1
+cell.stiffness = 15
 
 sim.setup_world()
 sim.add_celltype(celltype)
@@ -25,4 +24,4 @@ sim.add_handlers(
     ]
 )
 
-sim.run_simulation(start=1, end=250)
+sim.render(start=1, end=10)

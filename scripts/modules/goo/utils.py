@@ -29,6 +29,36 @@ class BlenderObject:
         self._obj.location = loc
 
 
+class Axis:
+    def __init__(self, axis, start, end, world_matrix):
+        """
+        :param axis: Vector of axis
+        :param start: Vector of start endpoint in object space
+        :param end: Vector of end endpoint in object space
+        :param world_matrix: 4x4 matrix of object to world transformation
+        :param local_coords: if coordinates given are in local space
+        """
+        self._axis = axis
+        self._start = start
+        self._end = end
+        self._matrix_world = world_matrix.inverted()
+
+    def axis(self, local_coords=False):
+        if local_coords:
+            axis = self._axis.copy()
+            axis.rotate(self._matrix_world.to_quaternion())
+            return axis
+        return self._axis
+
+    def endpoints(self, local_coords=False):
+        mat = self._matrix_world if local_coords else Matrix.Identity(4)
+        return [mat @ self._start, mat @ self._end]
+
+    def length(self, local_coords=False):
+        start, end = self.endpoints(local_coords)
+        return (end - start).length
+
+
 def create_mesh(
     name,
     loc,
@@ -67,14 +97,83 @@ def create_mesh(
     return obj
 
 
-# Utility functions for settings
-def rsetattr(obj, attr, val):
-    pre, _, post = attr.rpartition(".")
-    return setattr(rgetattr(obj, pre) if pre else obj, post, val)
+def create_material(name, r, g, b):
+    mat = bpy.data.materials.new(name=name)
+    mat.diffuse_color = (0.1, 0, 0, 0.8)  # viewport color
+    mat.use_nodes = True
+    mat.blend_method = "BLEND"
 
+    # get the material nodes
+    nodes = mat.node_tree.nodes
+    nodes.clear()
 
-def rgetattr(obj, attr, *args):
-    def _getattr(obj, attr):
-        return getattr(obj, attr, *args)
+    # create principled node for main color
+    node_main = nodes.new(type="ShaderNodeBsdfPrincipled")
+    node_main.location = -200, 100
+    node_main.inputs["Base Color"].default_value = (r, g, b, 0.8)
+    node_main.inputs["Metallic"].default_value = 0.136
+    node_main.inputs["Specular"].default_value = 0.500
+    node_main.inputs["Specular Tint"].default_value = 0.555
+    node_main.inputs["Roughness"].default_value = 0.318
+    node_main.inputs["Anisotropic"].default_value = 0.041
+    node_main.inputs["Anisotropic Rotation"].default_value = 0.048
+    node_main.inputs["Sheen"].default_value = 0.052
+    node_main.inputs["Sheen Tint"].default_value = 0.030
+    node_main.inputs["Clearcoat"].default_value = 0.114
+    node_main.inputs["Clearcoat Roughness"].default_value = 0.123
+    node_main.inputs["IOR"].default_value = 1.450
+    node_main.inputs["Transmission"].default_value = 0.882
+    node_main.inputs["Transmission Roughness"].default_value = 0.0
+    node_main.inputs["Alpha"].default_value = 0.414
 
-    return reduce(_getattr, [obj] + attr.split("."))
+    # create noise texture source
+    node_noise = nodes.new(type="ShaderNodeTexNoise")
+    node_noise.inputs["Scale"].default_value = 0.600
+    node_noise.inputs["Detail"].default_value = 15.0
+    node_noise.inputs["Roughness"].default_value = 0.500
+    node_noise.inputs["Distortion"].default_value = 3.0
+
+    # create HSV
+    node_HSV = nodes.new(type="ShaderNodeHueSaturation")
+    node_HSV.inputs["Hue"].default_value = 0.800
+    node_HSV.inputs["Saturation"].default_value = 2.00
+    node_HSV.inputs["Value"].default_value = 2.00
+    node_HSV.inputs["Fac"].default_value = 1.00
+
+    # create second principled node for random color variation
+    node_random = nodes.new(type="ShaderNodeBsdfPrincipled")
+    node_random.location = -200, -100
+    node_random.inputs["Base Color"].default_value = (r, g, b, 1)
+    node_random.inputs["Metallic"].default_value = 0.0
+    node_random.inputs["Specular"].default_value = 0.500
+    node_random.inputs["Specular Tint"].default_value = 0.0
+    node_random.inputs["Roughness"].default_value = 0.482
+    node_random.inputs["Anisotropic"].default_value = 0.0
+    node_random.inputs["Anisotropic Rotation"].default_value = 0.0
+    node_random.inputs["Sheen"].default_value = 0.0
+    node_random.inputs["Sheen Tint"].default_value = 0.0
+    node_random.inputs["Clearcoat"].default_value = 0.0
+    node_random.inputs["Clearcoat Roughness"].default_value = 0.0
+    node_random.inputs["IOR"].default_value = 1.450
+    node_random.inputs["Transmission"].default_value = 1.0
+    node_random.inputs["Transmission Roughness"].default_value = 0.0
+    node_random.inputs["Alpha"].default_value = 0.555
+
+    # create mix shader node
+    node_mix = nodes.new(type="ShaderNodeMixShader")
+    node_mix.location = 0, 0
+    node_mix.inputs["Fac"].default_value = 0.079
+
+    # create output node
+    node_output = nodes.new(type="ShaderNodeOutputMaterial")
+    node_output.location = 200, 0
+
+    # link nodes
+    links = mat.node_tree.links
+    links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV
+    links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random
+    links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix
+    links.new(node_random.outputs[0], node_mix.inputs[2])  # link_random_mix
+    links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out
+
+    return mat

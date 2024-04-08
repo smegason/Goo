@@ -1,6 +1,6 @@
-import numpy as np
+import os
 from datetime import datetime
-
+import numpy as np
 import bpy
 
 from goo.handler import Handler
@@ -66,21 +66,21 @@ class Simulator:
         bpy.context.scene.frame_start = start
         bpy.context.scene.frame_end = end
 
-    def render(start=1, end=250, save=True, path=None, camera=False):
+    def render(self, start=1, end=250, save=True, path=None, camera=False):
         bpy.context.scene.frame_start = start
         bpy.context.scene.frame_end = end
 
-        bpy.context.scene.render.image_settings.file_format = "FFMPEG"
+        bpy.context.scene.render.image_settings.file_format = "PNG"
         bpy.context.scene.render.ffmpeg.format = "MPEG4"
 
         if not path:
-            path = bpy.context.scene.render.filepath
+            path = os.path.dirname(bpy.context.scene.render.filepath)
         elif path and not save:
             print("Save path set but render will not be saved!")
 
         for i in range(1, end + 1):
             bpy.context.scene.frame_set(i)
-            bpy.context.scene.render.filepath = path + f"{i:04d}"
+            bpy.context.scene.render.filepath = os.path.join(path, f"{i:04d}")
             if camera:
                 bpy.ops.render.render(write_still=save)
             else:

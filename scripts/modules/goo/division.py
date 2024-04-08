@@ -156,7 +156,7 @@ class DivisionHandler(Handler):
 
     def run(self, scene, depsgraph):
         for cell in self._cells_to_update:
-            cell.enable_physics(collision=False)
+            cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
         self._cells_to_update.clear()
 
@@ -170,7 +170,7 @@ class DivisionHandler(Handler):
                     self._cells_to_update.extend([mother, daughter])
 
         for cell in self._cells_to_update:
-            cell.disable_physics(collision=False)
+            cell.disable_physics()
             if "next_volume" in cell:  # growth integration
                 cell["next_volume"] = cell.volume() / 2
         self.divider_logic.flush()

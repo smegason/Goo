@@ -39,7 +39,8 @@ class RemeshHandler(Handler):
             # Perform remeshing operations
             if self.sphere_factor:
                 self.cast_to_sphere(cell, self.sphere_factor)
-            cell.remesh(self.voxel_size)
+            if self.voxel_size:
+                cell.remesh(self.voxel_size)
 
             # Recenter and re-enable physics
             cell.recenter()
@@ -81,6 +82,7 @@ class GrowthPIDHandler(Handler):
         self.Kp = 0.05
         self.Ki = 0.000001
         self.Kd = 0.5
+        self.PID_scale = 60
         self.target_volume = target_volume
 
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
@@ -92,7 +94,7 @@ class GrowthPIDHandler(Handler):
         cell["Kp"] = self.Kp
         cell["Ki"] = self.Ki
         cell["Kd"] = self.Kd
-        cell["PID_scale"] = 60
+        cell["PID_scale"] = self.PID_scale
         cell["growth_rate"] = self.growth_rate
 
         cell["integral"] = 0
@@ -107,7 +109,6 @@ class GrowthPIDHandler(Handler):
         cell["target_volume"] = self.target_volume
 
     def run(self, scene, depsgraph):
-        time = scene.frame_current * self.dt
         for cell in self.get_cells():
             if not cell.physics_enabled:
                 continue
@@ -115,17 +116,22 @@ class GrowthPIDHandler(Handler):
                 self.initialize_PID(cell)
             cell["volume"] = cell.volume()
 
-            if self.growth_type == Growth.LINEAR:
-                cell["next_volume"] += cell["growth_rate"] * self.dt
-            elif self.growth_type == Growth.EXPONENTIAL:
-                cell["next_volume"] *= 1 + cell["growth_rate"] * self.dt
-            elif self.growth_type == Growth.LOGISTIC:
-                cell["next_volume"] = cell["next_volume"] * (
-                    1
-                    + cell["growth_rate"]
-                    * (1 - cell["next_volume"] / cell["target_volume"])
-                    * self.dt
-                )
+            match self.growth_type:
+                case Growth.LINEAR:
+                    cell["next_volume"] += cell["growth_rate"] * self.dt
+                case Growth.EXPONENTIAL:
+                    cell["next_volume"] *= 1 + cell["growth_rate"] * self.dt
+                case Growth.LOGISTIC:
+                    cell["next_volume"] = cell["next_volume"] * (
+                        1
+                        + cell["growth_rate"]
+                        * (1 - cell["next_volume"] / cell["target_volume"])
+                        * self.dt
+                    )
+                case _:
+                    raise ValueError(
+                        "Growth type must be one of LINEAR, EXPONENTIAL, or LOGISTIC."
+                    )
             cell["next_volume"] = min(cell["next_volume"], cell["target_volume"])
             volume_deviation = 1 - cell.volume() / cell["next_volume"]
 
