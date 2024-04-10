@@ -9,19 +9,21 @@ reset_scene()
 
 sim = Simulator()
 
-celltype = create_celltype("A")
-cell = celltype.create_cell("cellA", (0, 0, 0))
+celltype = CellType("A")
+celltype.homo_adhesion_strength = 5000
+cell = celltype.create_cell("cellA", (0, 0, 0), mesh_kwargs={"subdivisions": 6})
 cell.stiffness = 15
 
 sim.setup_world()
 sim.add_celltype(celltype)
 sim.add_handlers(
     [
-        GrowthPIDHandler(target_volume=30),
         SizeDivisionHandler(BisectDivisionLogic, threshold=29.5),
+        GrowthPIDHandler(target_volume=30),
         RemeshHandler(),
         AdhesionLocationHandler(),
+        ColorizeHandler(Colorizer.PRESSURE),
     ]
 )
 
-sim.render(start=1, end=10)
+# sim.render(start=1, end=10)

@@ -25,18 +25,16 @@ class BisectDivisionLogic(DivisionLogic):
     def make_divide(self, mother):
         com = mother.COM(local_coords=True)
         axis = mother.major_axis().axis(local_coords=True)
-        obj_eval = mother.obj_eval.copy()
+
+        m_mb = self._bisect(mother.obj_eval, com, axis, True, self.margin)
+        d_mb = self._bisect(mother.obj_eval, com, axis, False, self.margin)
 
         daughter = mother.copy()
-
-        m_mb = self._bisect(obj_eval, com, axis, True, self.margin)
-        d_mb = self._bisect(obj_eval, com, axis, False, self.margin)
+        daughter.name = mother.name + ".1"
+        mother.name = mother.name + ".0"
 
         self.to_flush.append((m_mb, mother))
         self.to_flush.append((d_mb, daughter))
-
-        daughter.name = mother.name + ".1"
-        mother.name = mother.name + ".0"
 
         return mother, daughter
 
@@ -80,7 +78,7 @@ class BooleanDivisionLogic(DivisionLogic):
 
     def make_divide(self, mother: Cell):
 
-        plane = self.create_division_plane(
+        plane = self._create_division_plane(
             mother.name, mother.major_axis(), mother.COM()
         )
         obj = mother.obj
@@ -117,7 +115,7 @@ class BooleanDivisionLogic(DivisionLogic):
     def flush(self):
         pass
 
-    def _create_division_plane(name, major_axis, com, collection=None):
+    def _create_division_plane(self, name, major_axis, com, collection=None):
         """
         Creates a plane orthogonal to the long axis vector
         and passing through the cell's center of mass.
@@ -130,6 +128,7 @@ class BooleanDivisionLogic(DivisionLogic):
             size=major_axis.length() + 1,
             rotation=major_axis.axis().to_track_quat("Z", "Y"),
         )
+        bpy.context.scene.collection.objects.link(plane)
 
         # Add thickness to plane
         solid_mod = plane.modifiers.new(name="Solidify", type="SOLIDIFY")
@@ -172,7 +171,8 @@ class DivisionHandler(Handler):
         for cell in self._cells_to_update:
             cell.disable_physics()
             if "next_volume" in cell:  # growth integration
-                cell["next_volume"] = cell.volume() / 2
+                cell["next_volume"] = cell["next_volume"] / 2
+                cell["previous_pressure"] = cell["previous_pressure"] / 2
         self.divider_logic.flush()
 
 

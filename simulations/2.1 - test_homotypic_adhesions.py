@@ -3,11 +3,10 @@ import goo
 from goo.handler import *
 
 reload(goo)
-
 goo.reset_modules()
 goo.reset_scene()
 
-celltype = goo.create_celltype("default", physics_on=True)
+celltype = goo.OpaqueType("default", physics_on=True)
 celltype.set_homo_adhesion(5000)
 
 locs = [
@@ -22,9 +21,9 @@ locs = [
 ]
 
 for i, loc in enumerate(locs):
-    celltype.create_cell("cell" + str(i), loc)
+    cell = celltype.create_cell("cell" + str(i), loc)
+    cell.stiffness = 15
 
 sim = goo.Simulator(celltypes=[celltype])
+sim.setup_world()
 sim.add_handler(AdhesionLocationHandler())
-sim.toggle_gravity(False)
-sim.run_simulation(start=1, end=250)

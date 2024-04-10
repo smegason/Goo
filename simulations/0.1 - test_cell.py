@@ -1,5 +1,5 @@
-# Goal: test the creation of a world, and population of cells within that world
-# through base Cell creation and CellType creation.
+# Goal: test the basic methods of calculating cell properties,
+# comparing them to the original implementations.
 
 from importlib import reload
 import goo

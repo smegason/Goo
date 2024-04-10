@@ -8,16 +8,19 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-celltype = goo.create_celltype("cellA")
-celltype.homo_adhesion_strength = 2000
+force = goo.create_force("Force", (0, 0, 0), 1000)
 
-cell = celltype.create_cell("cell", (1, 1, 0), scale=(1, 1, 1))
+celltype = goo.OpaqueType("cellA")
+celltype.homo_adhesion_strength = 5000
+cell = celltype.create_cell("cell", (1, 1, 0), mesh_kwargs={"scale": (1, 1, 1)})
+cell.stiffness = 15
 
 sim = goo.Simulator(celltypes=[celltype])
-sim.toggle_gravity(False)
-
-sim.add_handler(TimeDivisionHandler(BisectDivisionLogic, mu=51))
-sim.add_handler(AdhesionLocationHandler())
-sim.add_handler(RemeshHandler(freq=5))
-
-sim.run_simulation(start=1, end=250)
+sim.setup_world()
+sim.add_handlers(
+    [
+        TimeDivisionHandler(BisectDivisionLogic, mu=51),
+        AdhesionLocationHandler(),
+        # RemeshHandler(freq=5),
+    ]
+)

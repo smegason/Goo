@@ -3,6 +3,7 @@ from typing import Optional, Union, Callable
 import numpy as np
 
 import bpy, bmesh
+from bpy.types import Modifier, ClothModifier, CollisionModifier
 from mathutils import *
 
 from goo.force import *
@@ -10,10 +11,16 @@ from goo.utils import *
 
 
 class Cell(BlenderObject):
-    def __init__(self, obj: bpy.types.Object):
+    def __init__(self, obj: bpy.types.Object, mat=None):
         super(Cell, self).__init__(obj)
+
+        # Set up effector collections
         self._effectors = bpy.data.collections.new(f"{obj.name}_effectors")
         bpy.context.scene.collection.children.link(self._effectors)
+        self.add_effector(ForceCollection.global_forces())  # link global forces
+
+        self._mat = mat
+        self._obj.data.materials.append(mat)
 
         self.celltype: CellType = None
 
@@ -31,25 +38,47 @@ class Cell(BlenderObject):
     def name(self, name: str):
         old_name = self._obj.name
 
-        self._effectors.name = self._effectors.name.replace(old_name, name, 1)
+        self._obj.name = name
+        self._obj.data.name = f"{name}_mesh"
+        self._effectors.name = f"{name}_effectors"
+        if self._mat:
+            self._mat.name = f"{name}_material"
+
         for force in self._adhesion_forces:
             force.name = force.name.replace(old_name, name, 1)
         if self._motion_force:
             self._motion_force.name = self._motion_force.name.replace(old_name, name, 1)
 
-        self._obj.name = name
-
     def copy(self) -> "Cell":
         """Copies cell data and physics modifiers, including homotypic adhesion forces."""
+        # Set up object, mesh, and material for copy
         obj_copy = self._obj.copy()
         obj_copy.data = self._obj.data.copy()
         bpy.context.scene.collection.objects.link(obj_copy)
 
-        cell_copy = Cell(obj_copy)
-        if cell_copy.cloth_mod:
+        if self._mat is not None:
+            obj_copy.data.materials.clear()
+            mat_copy = self._mat.copy()
+        else:
+            mat_copy = None
+        cell_copy = Cell(obj_copy, mat_copy)
+
+        # Set up physics for cell copy
+        cell_copy._physics_enabled = self._physics_enabled
+
+        if self._physics_enabled:
             cell_copy.cloth_mod.settings.effector_weights.collection = (
                 cell_copy._effectors
             )
+        elif not self._physics_enabled and self.mod_settings:
+            # if physics are temporarily disabled, enable to change effector collection
+            cell_copy.mod_settings = self.mod_settings
+            cell_copy.enable_physics()
+            cell_copy.cloth_mod.settings.effector_weights.collection = (
+                cell_copy._effectors
+            )
+            cell_copy.disable_physics()
+
         return cell_copy
 
     # ----- CUSTOM PROPERTIES -----
@@ -94,14 +123,12 @@ class Cell(BlenderObject):
 
     def _get_eigenvector(self, n):
         """Returns the nth eigenvector (axis) in object space as a line defined by two Vectors."""
-        obj_eval = self.obj_eval
         verts = self.vertices()
 
         # Calculate the eigenvectors and eigenvalues of the covariance matrix
         covariance_matrix = np.cov(verts, rowvar=False)
         eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
         eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
-
         axis = eigenvectors[:, n]
 
         # sort indices by distance
@@ -109,12 +136,12 @@ class Cell(BlenderObject):
         first_vertex = verts[vert_indices[0]]
         last_vertex = verts[vert_indices[-1]]
 
-        return Axis(Vector(axis), first_vertex, last_vertex, obj_eval.matrix_world)
+        return Axis(Vector(axis), first_vertex, last_vertex, self.obj_eval.matrix_world)
 
-    def major_axis(self) -> "Axis":
+    def major_axis(self) -> Axis:
         return self._get_eigenvector(0)
 
-    def minor_axis(self) -> "Axis":
+    def minor_axis(self) -> Axis:
         return self._get_eigenvector(1)
 
     def divide(self, divisionLogic) -> tuple["Cell", "Cell"]:
@@ -139,34 +166,83 @@ class Cell(BlenderObject):
         # use of object ops is 2x faster than remeshing with modifiers
         self._obj.data.remesh_mode = "VOXEL"
         self._obj.data.remesh_voxel_size = voxel_size
-        with bpy.context.temp_override(active_object=self._obj):
+        with bpy.context.temp_override(active_object=self._obj, object=self._obj):
             bpy.ops.object.voxel_remesh()
 
         for f in self._obj.data.polygons:
             f.use_smooth = smooth
 
+    def recolor(self, color):
+        r, g, b = color
+        _, _, _, a = self._mat.diffuse_color
+        self._mat.diffuse_color = (r, g, b, a)
+
+        if self._mat.use_nodes:
+            for node in self._mat.node_tree.nodes:
+                if "Base Color" in node.inputs:
+                    _, _, _, a = node.inputs["Base Color"].default_value
+                    node.inputs["Base Color"].default_value = r, g, b, a
+
     # ----- PHYSICS -----
+    def get_modifier(self, type) -> Optional[Modifier]:
+        return next((m for m in self._obj.modifiers if m.type == type), None)
+
+    @property
+    def cloth_mod(self) -> Optional[ClothModifier]:
+        return self.get_modifier("CLOTH")
+
+    @property
+    def collision_mod(self) -> Optional[CollisionModifier]:
+        return self.get_modifier("COLLISION")
+
     @property
     def physics_enabled(self) -> bool:
         return self._physics_enabled
 
+    def setup_physics(
+        self,
+        cloth_setup: Callable[[ClothModifier], None] = setup_cloth_defaults,
+        collision_setup: Callable[[CollisionModifier], None] = setup_collision_defaults,
+    ):
+        # subsurf_mod = self._obj.modifiers.new(name="Subdivisions", type="SUBSURF")
+        # subsurf_mod.subdivision_type = "CATMULL_CLARK"
+        # subsurf_mod.levels = 1
+        # subsurf_mod.render_levels = 1
+        # subsurf_mod.quality = 5
+
+        cloth_mod = self._obj.modifiers.new(name="Cloth", type="CLOTH")
+        cloth_setup(cloth_mod)
+        self.cloth_mod.settings.effector_weights.collection = self._effectors
+
+        collision_mod = self._obj.modifiers.new(name="Collision", type="COLLISION")
+        collision_setup(collision_mod)
+        self._physics_enabled = True
+
+        # remesh_mod = self._obj.modifiers.new(name="Remesh", type="REMESH")
+        # remesh_mod.mode = "VOXEL"
+        # remesh_mod.voxel_size = 0.25
+        # remesh_mod.use_smooth_shade = True
+
     def enable_physics(self):
-        if not self.mod_settings:
-            # set up modifiers for first time
-            self.setup_cloth()
-            self.setup_collision()
-        else:
-            # recreate modifier stack
-            for name, type, settings in self.mod_settings:
-                mod = self._obj.modifiers.new(name=name, type=type)
-                declare_settings(mod, settings)
-            self.mod_settings.clear()
+        if self._physics_enabled:
+            raise RuntimeError(
+                f"{self.name}: physics must be disabled before enabling."
+            )
+        # recreate modifier stack
+        for name, type, settings in self.mod_settings:
+            mod = self._obj.modifiers.new(name=name, type=type)
+            declare_settings(mod, settings)
+        self.mod_settings.clear()
 
         for force in self.adhesion_forces:
             force.enable()
         self._physics_enabled = True
 
     def disable_physics(self):
+        if not self._physics_enabled:
+            raise RuntimeError(
+                f"{self.name}: physics must be set up and/or enabled before disabling."
+            )
         for mod in self._obj.modifiers:
             name, type = mod.name, mod.type
             settings = store_settings(mod)
@@ -176,30 +252,6 @@ class Cell(BlenderObject):
         for force in self.adhesion_forces:
             force.disable()
         self._physics_enabled = False
-
-    def setup_cloth(self):
-        if self.cloth_mod is not None:
-            return
-        cloth_mod = self._obj.modifiers.new(name="Cloth", type="CLOTH")
-        setup_cloth_defaults(cloth_mod)
-        self.cloth_mod.settings.effector_weights.collection = self._effectors
-
-    def setup_collision(self):
-        if self.collision_mod is not None:
-            return
-        collision_mod = self._obj.modifiers.new(name="Collision", type="COLLISION")
-        setup_collision_defaults(collision_mod)
-
-    def get_modifier(self, type) -> Optional[bpy.types.Modifier]:
-        return next((m for m in self._obj.modifiers if m.type == type), None)
-
-    @property
-    def cloth_mod(self) -> Optional[bpy.types.ClothModifier]:
-        return self.get_modifier("CLOTH")
-
-    @property
-    def collision_mod(self) -> Optional[bpy.types.CollisionModifier]:
-        return self.get_modifier("COLLISION")
 
     @property
     def stiffness(self) -> float:
@@ -255,71 +307,22 @@ class Cell(BlenderObject):
         force.obj.hide_set(True)
 
 
-def create_cell(name, loc, physics_on=True, **kwargs) -> Cell:
-    obj = create_mesh(name, loc, mesh="icosphere", **kwargs)
+# TODO: rewrite so that it creates a default celltype to create to.
+def create_cell(
+    name, loc, color=None, physics_on=True, mesh_kwargs={}, physics_kwargs={}
+) -> Cell:
+    # Create and link mesh
+    obj = create_mesh(name, loc, mesh="icosphere", **mesh_kwargs)
     bpy.context.scene.collection.objects.link(obj)
-    cell = Cell(obj)
+    # Create material
+    mat = create_material(f"{name}_material", color=color) if color else None
+
+    cell = Cell(obj, mat)
     cell.remesh()
 
     if physics_on:
-        cell.enable_physics()
+        cell.setup_physics(**physics_kwargs)
     return cell
-
-
-# --- Physics Modifier Utilities ---
-default_stiffness = 15
-default_pressure = 5
-
-
-def setup_cloth_defaults(mod: bpy.types.ClothModifier, stiffness=1, pressure=5):
-    mod.settings.quality = 10
-    mod.settings.air_damping = 10
-    mod.settings.bending_model = "ANGULAR"
-    mod.settings.mass = 1
-    mod.settings.time_scale = 1
-    # Cloth > Stiffness
-    mod.settings.tension_stiffness = stiffness
-    mod.settings.compression_stiffness = stiffness
-    mod.settings.shear_stiffness = stiffness
-    mod.settings.bending_stiffness = 1
-    # Cloth > Damping
-    mod.settings.tension_damping = 50
-    mod.settings.compression_damping = 50
-    mod.settings.shear_damping = 50
-    mod.settings.bending_damping = 0.5
-    # Cloth > Internal Springs
-    mod.settings.use_internal_springs = False
-    mod.settings.internal_spring_max_length = 1
-    mod.settings.internal_spring_max_diversion = 0.785398
-    mod.settings.internal_spring_normal_check = False
-    mod.settings.internal_tension_stiffness = 10
-    mod.settings.internal_compression_stiffness = 10
-    mod.settings.internal_tension_stiffness_max = 10000
-    mod.settings.internal_compression_stiffness_max = 10000
-    # Cloth > Pressure
-    mod.settings.use_pressure = True
-    mod.settings.uniform_pressure_force = pressure
-    mod.settings.use_pressure_volume = True
-    mod.settings.target_volume = 1
-    mod.settings.pressure_factor = 2
-    mod.settings.fluid_density = 1.05
-    # Cloth > Collisions
-    mod.collision_settings.collision_quality = 5
-    mod.collision_settings.use_collision = True
-    mod.collision_settings.use_self_collision = True
-    mod.collision_settings.self_friction = 0
-    mod.collision_settings.friction = 0
-    mod.collision_settings.self_distance_min = 0.005
-    mod.collision_settings.distance_min = 0.005
-    mod.collision_settings.self_impulse_clamp = 0
-
-
-def setup_collision_defaults(mod: bpy.types.CollisionModifier):
-    mod.settings.use_culling = True
-    mod.settings.damping = 1
-    mod.settings.thickness_outer = 0.025
-    mod.settings.thickness_inner = 0.25
-    mod.settings.cloth_friction = 0
 
 
 def store_settings(mod: bpy.types.bpy_struct):
@@ -342,8 +345,15 @@ def declare_settings(mod: bpy.types.bpy_struct, settings: dict):
 
 
 class CellType:
-    def __init__(self, collection: ForceCollection, physics_on=True):
-        self.homo_adhesions = collection
+    mesh_kwargs = {}
+    physics_kwargs = {
+        "cloth_setup": setup_cloth_defaults,
+        "collision_setup": setup_collision_defaults,
+    }
+    color = (0.007, 0.021, 0.3)
+
+    def __init__(self, name, physics_on=True):
+        self.homo_adhesions = ForceCollection(name)
         self._cells = set()
 
         self.physics_enabled = physics_on
@@ -363,7 +373,7 @@ class CellType:
         if not self.physics_enabled:
             return
         # add homotypic adhesion force
-        homo_adhesion = create_adhesion(self.homo_adhesion_strength, obj=cell._obj)
+        homo_adhesion = get_adhesion(self.homo_adhesion_strength, obj=cell._obj)
         cell.link_adhesion_force(homo_adhesion)
         self.homo_adhesions.add_force(homo_adhesion)
 
@@ -372,7 +382,7 @@ class CellType:
         # add hetero adhesion forces
         for celltype, item in self.hetero_adhesions.items():
             outgoing_forces, incoming_forces, strength = item
-            hetero_adhesion = create_adhesion(
+            hetero_adhesion = get_adhesion(
                 strength, name=f"{cell.name}_to_{celltype.name}", loc=cell.loc
             )
             outgoing_forces.add_force(hetero_adhesion)
@@ -381,10 +391,9 @@ class CellType:
             cell.add_effector(incoming_forces)
 
         # add motion force
-        motion = create_motion(
+        motion = get_motion(
             name=f"{cell.name}_motion",
-            # loc=cell.get_COM(),
-            loc=(0, 0, 0),
+            loc=cell.COM(),
             strength=self.motion_strength,
         )
         cell.motion_force = motion
@@ -393,8 +402,24 @@ class CellType:
         cell.celltype = None
         self._cells.remove(cell)
 
-    def create_cell(self, name, loc, **kwargs) -> Cell:
-        cell = create_cell(name, loc, physics_on=self.physics_enabled, **kwargs)
+    def create_cell(
+        self, name, loc, color=None, mesh_kwargs=None, physics_kwargs=None
+    ) -> Cell:
+        if mesh_kwargs is None:
+            mesh_kwargs = self.__class__.mesh_kwargs
+        if physics_kwargs is None:
+            physics_kwargs = self.__class__.physics_kwargs
+        if color is None:
+            color = self.__class__.color
+
+        cell = create_cell(
+            name,
+            loc,
+            color,
+            physics_on=self.physics_enabled,
+            mesh_kwargs=mesh_kwargs,
+            physics_kwargs=physics_kwargs,
+        )
         self.add_cell(cell)
         return cell
 
@@ -427,6 +452,17 @@ class CellType:
         self.motion_strength = strength
 
 
-def create_celltype(name, physics_on=True) -> CellType:
-    collection = ForceCollection(name)
-    return CellType(collection, physics_on)
+class OpaqueType(CellType):
+    color = None
+
+
+class YolkType(CellType):
+    mesh_kwargs = {
+        "size": 10,
+        "subdivisions": 4,
+    }
+    physics_kwargs = {
+        "cloth_setup": setup_cloth_yolk,
+        "collision_setup": setup_collision_defaults,
+    }
+    color = (0.64, 0.64, 0.64)

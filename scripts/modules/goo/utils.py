@@ -41,17 +41,17 @@ class Axis:
         self._axis = axis
         self._start = start
         self._end = end
-        self._matrix_world = world_matrix.inverted()
+        self._matrix_world = world_matrix
 
     def axis(self, local_coords=False):
         if local_coords:
             axis = self._axis.copy()
-            axis.rotate(self._matrix_world.to_quaternion())
+            axis.rotate(self._matrix_world.to_quaternion().inverted())
             return axis
         return self._axis
 
     def endpoints(self, local_coords=False):
-        mat = self._matrix_world if local_coords else Matrix.Identity(4)
+        mat = self._matrix_world.inverted() if local_coords else Matrix.Identity(4)
         return [mat @ self._start, mat @ self._end]
 
     def length(self, local_coords=False):
@@ -97,9 +97,63 @@ def create_mesh(
     return obj
 
 
-def create_material(name, r, g, b):
+# ----- CELL DEFAULTS ------
+# --- Physics Modifier Utilities ---
+def setup_cloth_defaults(mod: bpy.types.ClothModifier, stiffness=1, pressure=5):
+    mod.settings.quality = 10
+    mod.settings.air_damping = 10
+    mod.settings.bending_model = "ANGULAR"
+    mod.settings.mass = 1
+    mod.settings.time_scale = 1
+    # Cloth > Stiffness
+    mod.settings.tension_stiffness = stiffness
+    mod.settings.compression_stiffness = stiffness
+    mod.settings.shear_stiffness = stiffness
+    mod.settings.bending_stiffness = 1
+    # Cloth > Damping
+    mod.settings.tension_damping = 50
+    mod.settings.compression_damping = 50
+    mod.settings.shear_damping = 50
+    mod.settings.bending_damping = 0.5
+    # Cloth > Internal Springs
+    mod.settings.use_internal_springs = False
+    mod.settings.internal_spring_max_length = 1
+    mod.settings.internal_spring_max_diversion = 0.785398
+    mod.settings.internal_spring_normal_check = False
+    mod.settings.internal_tension_stiffness = 10
+    mod.settings.internal_compression_stiffness = 10
+    mod.settings.internal_tension_stiffness_max = 10000
+    mod.settings.internal_compression_stiffness_max = 10000
+    # Cloth > Pressure
+    mod.settings.use_pressure = True
+    mod.settings.uniform_pressure_force = pressure
+    mod.settings.use_pressure_volume = True
+    mod.settings.target_volume = 1
+    mod.settings.pressure_factor = 2
+    mod.settings.fluid_density = 1.05
+    # Cloth > Collisions
+    mod.collision_settings.collision_quality = 5
+    mod.collision_settings.use_collision = True
+    mod.collision_settings.use_self_collision = True
+    mod.collision_settings.self_friction = 0
+    mod.collision_settings.friction = 0
+    mod.collision_settings.self_distance_min = 0.005
+    mod.collision_settings.distance_min = 0.005
+    mod.collision_settings.self_impulse_clamp = 0
+
+
+def setup_collision_defaults(mod: bpy.types.CollisionModifier):
+    mod.settings.use_culling = True
+    mod.settings.damping = 1
+    mod.settings.thickness_outer = 0.025
+    mod.settings.thickness_inner = 0.25
+    mod.settings.cloth_friction = 0
+
+
+def create_material(name, color):
     mat = bpy.data.materials.new(name=name)
-    mat.diffuse_color = (0.1, 0, 0, 0.8)  # viewport color
+    r, g, b = color
+    mat.diffuse_color = (r, g, b, 0.8)  # viewport color
     mat.use_nodes = True
     mat.blend_method = "BLEND"
 
@@ -177,3 +231,47 @@ def create_material(name, r, g, b):
     links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out
 
     return mat
+
+
+# ----- YOLK DEFAULTS -----
+def setup_cloth_yolk(mod: bpy.types.ClothModifier, stiffness=1, pressure=5):
+    mod.settings.quality = 10
+    mod.settings.air_damping = 10
+    mod.settings.bending_model = "ANGULAR"
+    mod.settings.mass = 2
+    mod.settings.time_scale = 1
+    # Cloth > Stiffness
+    mod.settings.tension_stiffness = stiffness
+    mod.settings.compression_stiffness = stiffness
+    mod.settings.shear_stiffness = stiffness
+    mod.settings.bending_stiffness = stiffness
+    # Cloth > Damping
+    mod.settings.tension_damping = 50
+    mod.settings.compression_damping = 50
+    mod.settings.shear_damping = 50
+    mod.settings.bending_damping = 0.5
+    # Cloth > Internal Springs
+    mod.settings.use_internal_springs = True
+    mod.settings.internal_spring_max_length = 1
+    mod.settings.internal_spring_max_diversion = 0.785398
+    mod.settings.internal_spring_normal_check = False
+    mod.settings.internal_tension_stiffness = 10000
+    mod.settings.internal_compression_stiffness = 10000
+    mod.settings.internal_tension_stiffness_max = 10000
+    mod.settings.internal_compression_stiffness_max = 10000
+    # Cloth > Pressure
+    mod.settings.use_pressure = True
+    mod.settings.uniform_pressure_force = 5.2
+    mod.settings.use_pressure_volume = True
+    mod.settings.target_volume = 1
+    mod.settings.pressure_factor = 2
+    mod.settings.fluid_density = 1.15
+    # Cloth > Collisions
+    mod.collision_settings.collision_quality = 6
+    mod.collision_settings.use_collision = True
+    mod.collision_settings.use_self_collision = True
+    mod.collision_settings.self_friction = 0
+    mod.collision_settings.friction = 0
+    mod.collision_settings.self_distance_min = 0.005
+    mod.collision_settings.distance_min = 0.005
+    mod.collision_settings.self_impulse_clamp = 0

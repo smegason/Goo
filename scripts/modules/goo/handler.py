@@ -2,11 +2,12 @@ from typing import Callable
 from enum import Enum
 import time
 
+import numpy as np
 import bpy, bmesh
+from mathutils import Vector
 from goo.cell import Cell
 
 
-# TODO: this is probably not necessary, handlers can exist within motion, divider submodules
 class Handler:
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
         self.get_cells = get_cells
@@ -16,6 +17,7 @@ class Handler:
         raise NotImplementedError("Subclasses must implement run() method.")
 
 
+# TODO: remeshing seems to interfere with motion
 class RemeshHandler(Handler):
     def __init__(self, freq=1, voxel_size=0.25, sphere_factor=0):
         self.freq = freq
@@ -48,7 +50,7 @@ class RemeshHandler(Handler):
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
 
     def cast_to_sphere(self, cell, factor):
-        with bpy.context.temp_override(active_object=cell.obj):
+        with bpy.context.temp_override(active_object=cell.obj, object=cell.obj):
             cast_modifier = cell.obj.modifiers.new(name="Cast", type="CAST")
             cast_modifier.factor = factor
             bpy.ops.object.modifier_apply(modifier=cast_modifier.name)
@@ -141,12 +143,13 @@ class GrowthPIDHandler(Handler):
             #     f"Next volume: {cell['next_volume']}; "
             #     f"Volume deviation: {volume_deviation}; "
             # )
+
             # Update pressure based on PID output
             error = volume_deviation
             integral = cell["integral"] + error
             derivative = error - cell["previous_error"]
-
             pid = cell["Kp"] * error + cell["Ki"] * integral + cell["Kd"] * derivative
+
             cell.pressure = cell["previous_pressure"] + pid * cell["PID_scale"]
 
             # Update previous error and pressure for the next iteration
@@ -157,8 +160,96 @@ class GrowthPIDHandler(Handler):
             # print(f"New pressure for {cell.name}: {cell.pressure}")
 
 
+ForceDist = Enum("ForceDist", ["UNIFORM", "GAUSSIAN"])
+
+
 class MotionHandler(Handler):
-    pass
+    def __init__(
+        self, distribution: ForceDist = ForceDist.UNIFORM, distribution_size=0.5
+    ):
+        self.distribution = distribution
+        self.distribution_size = distribution_size
+
+    def setup(self, get_cells: Callable[[], list[Cell]], dt):
+        super(MotionHandler, self).setup(get_cells, dt)
+        for cell in self.get_cells():
+            self.initialize_motion(cell)
+
+    def initialize_motion(self, cell: Cell):
+        if not cell.motion_force.enabled:
+            cell.motion_force.enable()
+        cell.motion_force.loc = cell.COM()
+        cell["current_position"] = cell.COM()
+        cell["previous_position"] = cell.COM()
+
+    def run(self, scene, depsgraph):
+        for cell in self.get_cells():
+            if not cell.physics_enabled:
+                continue
+            if "current_position" not in cell:
+                self.initalize_motion(cell)
+            cell["current_position"] = cell.COM()
+            disp = Vector(cell["current_position"]) - Vector(cell["previous_position"])
+            dist = disp.length
+
+            match self.distribution:
+                case ForceDist.UNIFORM:
+                    noise = Vector(
+                        np.random.uniform(
+                            low=-self.distribution_size,
+                            high=self.distribution_size,
+                            size=(3,),
+                        )
+                    )
+                case ForceDist.GAUSSIAN:
+                    noise = Vector(
+                        np.random.normal(loc=0, scale=self.distribution_size, size=(3,))
+                    )
+                case _:
+                    raise ValueError(
+                        "Motion noise distribution must be one of UNIFORM or GAUSSIAN."
+                    )
+            cell.motion_force.loc = cell.COM() + noise
+
+
+Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM"])
+
+
+class ColorizeHandler(Handler):
+    def __init__(self, colorizer: Colorizer = Colorizer.PRESSURE):
+        self.colorizer = colorizer
+
+    def run(self, scene, depsgraph):
+        red = Vector((1.0, 0.0, 0.0))
+        blue = Vector((0.0, 0.0, 1.0))
+
+        match self.colorizer:
+            case Colorizer.PRESSURE:
+                ps = np.array([cell.pressure for cell in self.get_cells()])
+                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+            case Colorizer.VOLUME:
+                ps = np.array([cell.volume() for cell in self.get_cells()])
+                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+            case Colorizer.RANDOM:
+                ps = np.random.rand(len(self.get_cells()))
+            case _:
+                raise ValueError(
+                    "Colorizer must be one of PRESSURE, VOLUME, or RANDOM."
+                )
+
+        for cell, p in zip(self.get_cells(), ps):
+            color = blue.lerp(red, p)
+            cell.recolor(color)
+
+
+class SceneExtensionHandler(Handler):
+    def __init__(self, end):
+        self.end = end
+
+    def run(self, scene, depsgraph):
+        for cell in self.get_cells():
+            if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.end:
+                cell.cloth_mod.point_cache.frame_end = self.end
 
 
 class TimingHandler(Handler):

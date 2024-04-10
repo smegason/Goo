@@ -1,17 +1,25 @@
+# Goal: test the ability to perform divisions,
+# and that the division is done correctly.
+
 from importlib import reload
 import goo
 from goo.division import *
+from math import pi
 
 reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
+rot = (pi / 4, pi / 4, pi / 4)
 cell = goo.create_cell(
     "cell",
-    (1, 2, 3),
-    subdivisions=3,
-    scale=(2, 3, 1),
+    (0, 0, 0),
     physics_on=False,
+    mesh_kwargs={
+        "subdivisions": 4,
+        "scale": (2, 1, 3),
+        "rotation": rot,
+    },
 )
 
 print(f"Initial volume: {cell.volume()}")

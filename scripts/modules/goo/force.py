@@ -3,23 +3,25 @@ from goo.utils import *
 
 
 class Force(BlenderObject):
-    def __init__(self, obj):
+    def __init__(self, obj, type="FORCE"):
         super(Force, self).__init__(obj)
-        self.type = "force"
+        self.type = type
+
+        # Instantiate force field object
+        if not self._obj.field:
+            with bpy.context.temp_override(active_object=self._obj, object=self._obj):
+                bpy.ops.object.forcefield_toggle()
+        self.enable()
 
     def enable(self):
-        if not self._obj.field:
-            with bpy.context.temp_override(active_object=self._obj):
-                bpy.ops.object.forcefield_toggle()
-        else:
-            self._obj.field.type = "FORCE"
+        self._obj.field.type = self.type
 
     def disable(self):
         if self._obj.field:
             self._obj.field.type = "NONE"
 
     def enabled(self):
-        return self._obj.field and self._obj.field.type == "FORCE"
+        return self._obj.field and self._obj.field.type == self.type
 
     @property
     def strength(self):
@@ -68,8 +70,7 @@ class Force(BlenderObject):
 
 class AdhesionForce(Force):
     def __init__(self, obj):
-        super(AdhesionForce, self).__init__(obj)
-        self.type = "adhesion"
+        super(AdhesionForce, self).__init__(obj, "FORCE")
 
     @property
     def strength(self):
@@ -80,29 +81,36 @@ class AdhesionForce(Force):
         self._obj.field.strength = -strength
 
 
-def create_force(name, loc, strength, falloff=0, min_dist=None, max_dist=None) -> Force:
+def create_force(
+    name, loc, strength, type="FORCE", falloff=0, min_dist=None, max_dist=None
+) -> Force:
     obj = bpy.data.objects.new(name, None)
     obj.location = loc
-
     force = Force(obj)
-    force.enable()
+
     force.strength = strength
     force.falloff = falloff
     force.min_dist = min_dist
     force.max_dist = max_dist
 
-    bpy.context.scene.collection.objects.link(obj)
+    ForceCollection.global_forces().add_force(force)
     return force
 
 
-def create_adhesion(strength, obj=None, name=None, loc=(0, 0, 0)) -> AdhesionForce:
+def create_turbulence(name, loc, strength) -> Force:
+    force = create_force(name, loc, strength, max_dist=10, type="TURBULENCE")
+
+    force.obj.field.size = 7
+    force.obj.field.noise = 0
+    force.obj.field.seed = 1
+    return force
+
+
+def get_adhesion(strength, obj=None, name=None, loc=(0, 0, 0)) -> AdhesionForce:
     if obj is None:
-        assert name is not None
         obj = bpy.data.objects.new(name, None)
         obj.location = loc
-
     adhesion_force = AdhesionForce(obj)
-    adhesion_force.enable()
 
     adhesion_force.strength = strength
     adhesion_force.min_dist = 0.6
@@ -111,12 +119,10 @@ def create_adhesion(strength, obj=None, name=None, loc=(0, 0, 0)) -> AdhesionFor
     return adhesion_force
 
 
-def create_motion(name, loc, strength) -> Force:
+def get_motion(name, loc, strength) -> Force:
     obj = bpy.data.objects.new(name, None)
     obj.location = loc
-
     force = Force(obj)
-    force.enable()
 
     force.strength = strength
     force.falloff = 2
@@ -124,6 +130,8 @@ def create_motion(name, loc, strength) -> Force:
 
 
 class ForceCollection:
+    _global_forces = None
+
     def __init__(self, name: str):
         self._col = bpy.data.collections.new(name)
         self._forces = []
@@ -147,3 +155,12 @@ class ForceCollection:
     @property
     def forces(self):
         return self._forces
+
+    @staticmethod
+    def global_forces():
+        if ForceCollection._global_forces is None:
+            ForceCollection._global_forces = ForceCollection("globals")
+            bpy.context.scene.collection.children.link(
+                ForceCollection._global_forces.collection
+            )
+        return ForceCollection._global_forces

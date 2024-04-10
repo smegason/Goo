@@ -1,9 +1,9 @@
-import os
-from datetime import datetime
+import sys, os
 import numpy as np
 import bpy
 
 from goo.handler import Handler
+from goo.cell import CellType
 
 
 class Simulator:
@@ -21,9 +21,6 @@ class Simulator:
         np.random.seed(seed)
         bpy.context.scene["seed"] = seed
 
-        # Turn off gravity
-        bpy.context.scene.use_gravity = False
-
         # Set units to the metric system
         bpy.context.scene.unit_settings.system = "METRIC"
         bpy.context.scene.unit_settings.scale_length = 0.0001
@@ -32,6 +29,41 @@ class Simulator:
         bpy.context.scene.unit_settings.mass_unit = "MILLIGRAMS"
         bpy.context.scene.unit_settings.time_unit = "SECONDS"
         bpy.context.scene.unit_settings.temperature_unit = "CELSIUS"
+
+        # Turn off gravity
+        self.toggle_gravity(False)
+
+        # Set up rendering environment
+        node_tree = bpy.context.scene.world.node_tree
+        tree_nodes = node_tree.nodes
+        tree_nodes.clear()
+
+        # Add background node
+        node_background = tree_nodes.new(type="ShaderNodeBackground")
+        node_environment = tree_nodes.new("ShaderNodeTexEnvironment")
+        scripts_paths = bpy.utils.script_paths()
+        try:
+            node_environment.image = bpy.data.images.load(
+                scripts_paths[-1] + "/modules/goo/missile_launch_facility_01_4k.hdr"
+            )
+        except Exception:
+            print(sys.exc_info())
+            print(
+                """WARNING FROM GOO: To enable proper rendering you must have
+                /modules/goo/missile_launch_facility_01_4k.hdr in the right location"""
+            )
+        node_environment.location = -300, 0
+
+        # Add output node
+        node_output = tree_nodes.new(type="ShaderNodeOutputWorld")
+        node_output.location = 200, 0
+        # Link all nodes
+        links = node_tree.links
+        links.new(node_environment.outputs["Color"], node_background.inputs["Color"])
+        links.new(node_background.outputs["Background"], node_output.inputs["Surface"])
+
+        # # set film to transparent to hide background
+        bpy.context.scene.render.film_transparent = True
 
     def enable_addon(self, addon):
         if addon not in bpy.context.preferences.addons:
@@ -49,22 +81,21 @@ class Simulator:
     def add_celltypes(self, celltypes):
         self.celltypes.extend(celltypes)
 
-    def get_cells(self):
-        return [cell for celltype in self.celltypes for cell in celltype.cells]
+    def get_cells_func(self, celltypes=None):
+        celltypes = celltypes if celltypes is not None else self.celltypes
 
-    def add_handler(self, handler: Handler):
-        handler.setup(self.get_cells, self.physics_dt)
+        def get_cells():
+            return [cell for celltype in celltypes for cell in celltype.cells]
+
+        return get_cells
+
+    def add_handler(self, handler: Handler, celltypes: list[CellType] = None):
+        handler.setup(self.get_cells_func(celltypes), self.physics_dt)
         bpy.app.handlers.frame_change_post.append(handler.run)
 
-    def add_handlers(self, handlers: list[Handler]):
+    def add_handlers(self, handlers: list[Handler], celltypes: list[CellType] = None):
         for handler in handlers:
-            self.add_handler(handler)
-
-    def run_simulation(self, start=1, end=250):
-        start_time = datetime.now()
-        bpy.context.scene.frame_set(start)
-        bpy.context.scene.frame_start = start
-        bpy.context.scene.frame_end = end
+            self.add_handler(handler, celltypes)
 
     def render(self, start=1, end=250, save=True, path=None, camera=False):
         bpy.context.scene.frame_start = start
