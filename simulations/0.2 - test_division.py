@@ -14,12 +14,10 @@ rot = (pi / 4, pi / 4, pi / 4)
 cell = goo.create_cell(
     "cell",
     (0, 0, 0),
+    subdivisions=4,
+    scale=(2, 1, 3),
+    rotation=rot,
     physics_on=False,
-    mesh_kwargs={
-        "subdivisions": 4,
-        "scale": (2, 1, 3),
-        "rotation": rot,
-    },
 )
 
 print(f"Initial volume: {cell.volume()}")

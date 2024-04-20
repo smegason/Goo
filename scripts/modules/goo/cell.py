@@ -20,40 +20,46 @@ class Cell(BlenderObject):
         self.add_effector(ForceCollection.global_forces())  # link global forces
 
         self._mat = mat
-        self._obj.data.materials.append(mat)
+        self.obj.data.materials.append(mat)
 
         self.celltype: CellType = None
 
         self._physics_enabled = False
         self.mod_settings = []
 
-        self._adhesion_forces: list[AdhesionForce] = []
-        self._motion_force: Force = None
+        self._homo_adhesion: AdhesionForce = None
+        self._hetero_adhesions: list[AdhesionForce] = []
+        self._motion_force: MotionForce = None
 
     @property
     def name(self) -> str:
-        return self._obj.name
+        return self.obj.name
 
     @name.setter
     def name(self, name: str):
-        old_name = self._obj.name
+        old_name = self.obj.name
 
-        self._obj.name = name
-        self._obj.data.name = f"{name}_mesh"
+        self.obj.name = name
+        self.obj.data.name = f"{name}_mesh"
         self._effectors.name = f"{name}_effectors"
         if self._mat:
             self._mat.name = f"{name}_material"
 
-        for force in self._adhesion_forces:
+        for force in self._hetero_adhesions:
             force.name = force.name.replace(old_name, name, 1)
-        if self._motion_force:
-            self._motion_force.name = self._motion_force.name.replace(old_name, name, 1)
+        if self.motion_force:
+            self.motion_force.name = self.motion_force.name.replace(old_name, name, 1)
 
     def copy(self) -> "Cell":
-        """Copies cell data and physics modifiers, including homotypic adhesion forces."""
+        """Copies the cell's underlying Blender object, object data, and material if applicable.
+        Returns a new cell with the copied data.
+
+        Note that any custom collections will not be updated. It is advised that
+        physics modifiers are set up again for the daughter cell after calling `copy`.
+        """
         # Set up object, mesh, and material for copy
-        obj_copy = self._obj.copy()
-        obj_copy.data = self._obj.data.copy()
+        obj_copy = self.obj.copy()
+        obj_copy.data = self.obj.data.copy()
         bpy.context.scene.collection.objects.link(obj_copy)
 
         if self._mat is not None:
@@ -61,41 +67,28 @@ class Cell(BlenderObject):
             mat_copy = self._mat.copy()
         else:
             mat_copy = None
+
         cell_copy = Cell(obj_copy, mat_copy)
-
-        # Set up physics for cell copy
-        cell_copy._physics_enabled = self._physics_enabled
-
-        if self._physics_enabled:
-            cell_copy.cloth_mod.settings.effector_weights.collection = (
-                cell_copy._effectors
-            )
-        elif not self._physics_enabled and self.mod_settings:
-            # if physics are temporarily disabled, enable to change effector collection
-            cell_copy.mod_settings = self.mod_settings
-            cell_copy.enable_physics()
-            cell_copy.cloth_mod.settings.effector_weights.collection = (
-                cell_copy._effectors
-            )
-            cell_copy.disable_physics()
+        cell_copy._physics_enabled = self.physics_enabled
+        cell_copy._update_cloth()
 
         return cell_copy
 
     # ----- CUSTOM PROPERTIES -----
     def __setitem__(self, k: str, v: Union[float, list[float], int, list[int], str]):
-        self._obj.data[k] = v
+        self.obj.data[k] = v
 
     def __contains__(self, k: str):
-        return k in self._obj.data.keys()
+        return k in self.obj.data.keys()
 
     def __getitem__(self, k):
-        return self._obj.data[k]
+        return self.obj.data[k]
 
     # ----- BASIC FUNCTIONS -----
     @property
     def obj_eval(self):
         dg = bpy.context.evaluated_depsgraph_get()
-        obj_eval = self._obj.evaluated_get(dg)
+        obj_eval = self.obj.evaluated_get(dg)
         return obj_eval
 
     def vertices(self, local_coords=False):
@@ -152,24 +145,25 @@ class Cell(BlenderObject):
 
     def recenter(self):
         """Recenter origin to COM."""
-        com = self.COM()
         bm = bmesh.new()
         bm.from_mesh(self.obj_eval.to_mesh())
 
+        com = self.COM()
         bmesh.ops.translate(bm, verts=bm.verts, vec=-self.COM(local_coords=True))
-        bm.to_mesh(self._obj.data)
+
+        bm.to_mesh(self.obj.data)
         bm.free()
 
         self.loc = com
 
     def remesh(self, voxel_size=0.25, smooth: bool = True):
         # use of object ops is 2x faster than remeshing with modifiers
-        self._obj.data.remesh_mode = "VOXEL"
-        self._obj.data.remesh_voxel_size = voxel_size
-        with bpy.context.temp_override(active_object=self._obj, object=self._obj):
+        self.obj.data.remesh_mode = "VOXEL"
+        self.obj.data.remesh_voxel_size = voxel_size
+        with bpy.context.temp_override(active_object=self.obj, object=self.obj):
             bpy.ops.object.voxel_remesh()
 
-        for f in self._obj.data.polygons:
+        for f in self.obj.data.polygons:
             f.use_smooth = smooth
 
     def recolor(self, color):
@@ -185,7 +179,7 @@ class Cell(BlenderObject):
 
     # ----- PHYSICS -----
     def get_modifier(self, type) -> Optional[Modifier]:
-        return next((m for m in self._obj.modifiers if m.type == type), None)
+        return next((m for m in self.obj.modifiers if m.type == type), None)
 
     @property
     def cloth_mod(self) -> Optional[ClothModifier]:
@@ -199,29 +193,15 @@ class Cell(BlenderObject):
     def physics_enabled(self) -> bool:
         return self._physics_enabled
 
-    def setup_physics(
-        self,
-        cloth_setup: Callable[[ClothModifier], None] = setup_cloth_defaults,
-        collision_setup: Callable[[CollisionModifier], None] = setup_collision_defaults,
-    ):
-        # subsurf_mod = self._obj.modifiers.new(name="Subdivisions", type="SUBSURF")
-        # subsurf_mod.subdivision_type = "CATMULL_CLARK"
-        # subsurf_mod.levels = 1
-        # subsurf_mod.render_levels = 1
-        # subsurf_mod.quality = 5
+    def _update_cloth(self):
+        """Ensure that cloth effectors setting is correctly set."""
+        if self.cloth_mod:
+            self.cloth_mod.settings.effector_weights.collection = self._effectors
 
-        cloth_mod = self._obj.modifiers.new(name="Cloth", type="CLOTH")
-        cloth_setup(cloth_mod)
-        self.cloth_mod.settings.effector_weights.collection = self._effectors
-
-        collision_mod = self._obj.modifiers.new(name="Collision", type="COLLISION")
-        collision_setup(collision_mod)
+    def setup_physics(self, physics_constructor: PhysicsConstructor):
+        physics_constructor(self.obj)
+        self._update_cloth()
         self._physics_enabled = True
-
-        # remesh_mod = self._obj.modifiers.new(name="Remesh", type="REMESH")
-        # remesh_mod.mode = "VOXEL"
-        # remesh_mod.voxel_size = 0.25
-        # remesh_mod.use_smooth_shade = True
 
     def enable_physics(self):
         if self._physics_enabled:
@@ -230,9 +210,12 @@ class Cell(BlenderObject):
             )
         # recreate modifier stack
         for name, type, settings in self.mod_settings:
-            mod = self._obj.modifiers.new(name=name, type=type)
+            mod = self.obj.modifiers.new(name=name, type=type)
             declare_settings(mod, settings)
         self.mod_settings.clear()
+
+        # ensure cloth mod is set correctly
+        self._update_cloth()
 
         for force in self.adhesion_forces:
             force.enable()
@@ -243,11 +226,11 @@ class Cell(BlenderObject):
             raise RuntimeError(
                 f"{self.name}: physics must be set up and/or enabled before disabling."
             )
-        for mod in self._obj.modifiers:
+        for mod in self.obj.modifiers:
             name, type = mod.name, mod.type
             settings = store_settings(mod)
             self.mod_settings.append((name, type, settings))
-            self._obj.modifiers.remove(mod)
+            self.obj.modifiers.remove(mod)
 
         for force in self.adhesion_forces:
             force.disable()
@@ -288,40 +271,47 @@ class Cell(BlenderObject):
 
     def link_adhesion_force(self, force: AdhesionForce):
         """Add force that stems from this cell."""
-        self._adhesion_forces.append(force)
+        self._hetero_adhesions.append(force)
+
+    @property
+    def homo_adhesion(self) -> AdhesionForce:
+        return self._homo_adhesion
+
+    @homo_adhesion.setter
+    def homo_adhesion(self, force: AdhesionForce):
+        self._homo_adhesion = force
 
     @property
     def adhesion_forces(self) -> list[AdhesionForce]:
-        return self._adhesion_forces
+        return [self._homo_adhesion] + self._hetero_adhesions
 
     @property
     def motion_force(self) -> Force:
         return self._motion_force
 
     @motion_force.setter
-    def motion_force(self, force: Force):
+    def motion_force(self, force: MotionForce):
         if self.motion_force:
             self.remove_effector(self.motion_force)
         self.add_effector(force)
         self._motion_force = force
-        force.obj.hide_set(True)
+
+    def move_towards(self, dir: Vector):
+        """Sets motion force a certain direction."""
+        if not self._motion_force:
+            raise RuntimeError(
+                f"Cell {self.name} does not have an associated motion force!"
+            )
+        motion_loc = self.loc + dir.normalized() * (2 + self.major_axis().length())
+        self._motion_force.set_loc(motion_loc, self.loc)
 
 
-# TODO: rewrite so that it creates a default celltype to create to.
 def create_cell(
-    name, loc, color=None, physics_on=True, mesh_kwargs={}, physics_kwargs={}
+    name, loc, color=None, physics_constructor=None, physics_on=True, **kwargs
 ) -> Cell:
-    # Create and link mesh
-    obj = create_mesh(name, loc, mesh="icosphere", **mesh_kwargs)
-    bpy.context.scene.collection.objects.link(obj)
-    # Create material
-    mat = create_material(f"{name}_material", color=color) if color else None
-
-    cell = Cell(obj, mat)
-    cell.remesh()
-
-    if physics_on:
-        cell.setup_physics(**physics_kwargs)
+    cell = CellType.default_celltype().create_cell(
+        name, loc, color, physics_constructor, physics_on, **kwargs
+    )
     return cell
 
 
@@ -346,80 +336,108 @@ def declare_settings(mod: bpy.types.bpy_struct, settings: dict):
 
 class CellType:
     mesh_kwargs = {}
-    physics_kwargs = {
-        "cloth_setup": setup_cloth_defaults,
-        "collision_setup": setup_collision_defaults,
-    }
+    physics_constructor = PhysicsConstructor(
+        SubsurfConstructor,
+        ClothConstructor,
+        CollisionConstructor,
+        RemeshConstructor,
+    )
     color = (0.007, 0.021, 0.3)
+    _default_celltype = None
 
-    def __init__(self, name, physics_on=True):
-        self.homo_adhesions = ForceCollection(name)
+    def __init__(self, name, physics_enabled=True):
+        self._homo_adhesions = ForceCollection(name)
         self._cells = set()
 
-        self.physics_enabled = physics_on
-        self.hetero_adhesions = {}
+        self._physics_enabled = physics_enabled
+        self._hetero_adhesions = {}
 
         self.homo_adhesion_strength = 2000
         self.motion_strength = 0
 
+    @staticmethod
+    def default_celltype():
+        if CellType._default_celltype is None:
+            CellType._default_celltype = CellType("default")
+        return CellType._default_celltype
+
     @property
     def name(self):
-        return self.homo_adhesions.name
+        return self._homo_adhesions.name
 
     def add_cell(self, cell: Cell):
+        """Adds cell to the cell type, activating its physics and constructing
+        appropriate adhesion and motion forces."""
         cell.celltype = self
         self._cells.add(cell)
 
-        if not self.physics_enabled:
+        if not self._physics_enabled:
             return
+
         # add homotypic adhesion force
-        homo_adhesion = get_adhesion(self.homo_adhesion_strength, obj=cell._obj)
-        cell.link_adhesion_force(homo_adhesion)
-        self.homo_adhesions.add_force(homo_adhesion)
+        homo_adhesion = get_adhesion(self.homo_adhesion_strength, obj=cell.obj)
+        cell.homo_adhesion = homo_adhesion
 
-        cell.add_effector(self.homo_adhesions)
+        self._homo_adhesions.add_force(homo_adhesion)
+        cell.add_effector(self._homo_adhesions)
 
-        # add hetero adhesion forces
-        for celltype, item in self.hetero_adhesions.items():
+        # add heterotypic adhesion forces
+        for celltype, item in self._hetero_adhesions.items():
             outgoing_forces, incoming_forces, strength = item
             hetero_adhesion = get_adhesion(
                 strength, name=f"{cell.name}_to_{celltype.name}", loc=cell.loc
             )
+            cell.add_effector(incoming_forces)
+
             outgoing_forces.add_force(hetero_adhesion)
             cell.link_adhesion_force(hetero_adhesion)
-
-            cell.add_effector(incoming_forces)
 
         # add motion force
         motion = get_motion(
             name=f"{cell.name}_motion",
-            loc=cell.COM(),
+            loc=(0, 0, 0),
             strength=self.motion_strength,
         )
         cell.motion_force = motion
 
-    def remove_cell(self, cell: Cell):
-        cell.celltype = None
-        self._cells.remove(cell)
+    # TODO: implement correctly
+    def _remove_cell(self, cell: Cell):
+        pass
+        # cell.celltype = None
+        # self._cells.remove(cell)
 
     def create_cell(
-        self, name, loc, color=None, mesh_kwargs=None, physics_kwargs=None
+        self,
+        name,
+        loc,
+        color=None,
+        physics_constructor=None,
+        physics_on=True,
+        **mesh_kwargs,
     ) -> Cell:
-        if mesh_kwargs is None:
-            mesh_kwargs = self.__class__.mesh_kwargs
-        if physics_kwargs is None:
-            physics_kwargs = self.__class__.physics_kwargs
+        """Creates Blender object and materials, and creates a cell.
+
+        Note: `create_cell` does not directly activate physics, which is handled by the
+        `add_cell` function. This is significant for division, which will use the default
+        CellType settings to set up cell physics, rather than any custom settings of the
+        dividing cell."""
+        mesh_kwargs = dict(self.__class__.mesh_kwargs, **mesh_kwargs)
         if color is None:
             color = self.__class__.color
 
-        cell = create_cell(
-            name,
-            loc,
-            color,
-            physics_on=self.physics_enabled,
-            mesh_kwargs=mesh_kwargs,
-            physics_kwargs=physics_kwargs,
-        )
+        obj = create_mesh(name, loc, mesh="icosphere", **mesh_kwargs)
+        bpy.context.scene.collection.objects.link(obj)
+
+        mat = create_material(f"{name}_material", color=color) if color else None
+        cell = Cell(obj, mat)
+        cell.remesh()
+
+        # enable physics for cell
+        if physics_constructor is None:
+            physics_constructor = self.__class__.physics_constructor
+        if self._physics_enabled and physics_on:
+            cell.setup_physics(physics_constructor)
+
         self.add_cell(cell)
         return cell
 
@@ -431,29 +449,27 @@ class CellType:
     def cells(self) -> list[Cell]:
         return list(self._cells)
 
-    def set_homo_adhesion(self, strength: float):
-        self.homo_adhesion_strength = strength
-
     def set_hetero_adhesion(self, other_celltype: "CellType", strength: float):
         outgoing_forces = ForceCollection(f"{self.name}_to_{other_celltype.name}")
         incoming_forces = ForceCollection(f"{other_celltype.name}_to_{self.name}")
-        self.hetero_adhesions[other_celltype] = (
+        self._hetero_adhesions[other_celltype] = (
             outgoing_forces,
             incoming_forces,
             strength,
         )
-        other_celltype.hetero_adhesions[self] = (
+        other_celltype._hetero_adhesions[self] = (
             incoming_forces,
             outgoing_forces,
             strength,
         )
 
-    def set_motion(self, strength: float):
-        self.motion_strength = strength
 
-
-class OpaqueType(CellType):
+class SimpleType(CellType):
     color = None
+    physics_constructor = PhysicsConstructor(
+        ClothConstructor,
+        CollisionConstructor,
+    )
 
 
 class YolkType(CellType):
@@ -461,8 +477,8 @@ class YolkType(CellType):
         "size": 10,
         "subdivisions": 4,
     }
-    physics_kwargs = {
-        "cloth_setup": setup_cloth_yolk,
-        "collision_setup": setup_collision_defaults,
-    }
+    physics_constructor = PhysicsConstructor(
+        YolkClothConstructor,
+        CollisionConstructor,
+    )
     color = (0.64, 0.64, 0.64)

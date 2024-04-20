@@ -25,13 +25,15 @@ class BisectDivisionLogic(DivisionLogic):
     def make_divide(self, mother):
         com = mother.COM(local_coords=True)
         axis = mother.major_axis().axis(local_coords=True)
+        base_name = mother.name
 
         m_mb = self._bisect(mother.obj_eval, com, axis, True, self.margin)
         d_mb = self._bisect(mother.obj_eval, com, axis, False, self.margin)
 
         daughter = mother.copy()
-        daughter.name = mother.name + ".1"
-        mother.name = mother.name + ".0"
+
+        mother.name = base_name + ".0"
+        daughter.name = base_name + ".1"
 
         self.to_flush.append((m_mb, mother))
         self.to_flush.append((d_mb, daughter))
@@ -145,6 +147,8 @@ class DivisionHandler(Handler):
 
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
         super(DivisionHandler, self).setup(get_cells, dt)
+        for cell in self.get_cells():
+            cell["divided"] = False
         self._cells_to_update = []
 
     def can_divide(self, cell: Cell) -> bool:
@@ -157,6 +161,7 @@ class DivisionHandler(Handler):
         for cell in self._cells_to_update:
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
+            cell["divided"] = False
         self._cells_to_update.clear()
 
         for cell in self.get_cells():
@@ -170,9 +175,7 @@ class DivisionHandler(Handler):
 
         for cell in self._cells_to_update:
             cell.disable_physics()
-            if "next_volume" in cell:  # growth integration
-                cell["next_volume"] = cell["next_volume"] / 2
-                cell["previous_pressure"] = cell["previous_pressure"] / 2
+            cell["divided"] = True
         self.divider_logic.flush()
 
 

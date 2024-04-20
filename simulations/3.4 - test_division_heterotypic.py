@@ -7,10 +7,10 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-celltype = goo.OpaqueType("A")
+celltype = goo.SimpleType("A")
 celltype.homo_adhesion_strength = -5000
 
-celltype2 = goo.OpaqueType("B")
+celltype2 = goo.SimpleType("B")
 celltype2.homo_adhesion_strength = -5000
 celltype.set_hetero_adhesion(celltype2, 5000)
 

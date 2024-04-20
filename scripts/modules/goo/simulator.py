@@ -117,3 +117,7 @@ class Simulator:
             else:
                 bpy.ops.render.opengl(write_still=save)
         bpy.context.scene.render.filepath = path
+
+    def run(self, end=250):
+        for i in range(1, end + 1):
+            bpy.context.scene.frame_set(i)

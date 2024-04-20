@@ -1,8 +1,9 @@
 from typing import Callable
-from enum import Enum
-import time
+from enum import Enum, Flag, auto
+from datetime import datetime
 
 import numpy as np
+from scipy.spatial.distance import cdist, pdist, squareform
 import bpy, bmesh
 from mathutils import Vector
 from goo.cell import Cell
@@ -77,14 +78,19 @@ class GrowthPIDHandler(Handler):
         self,
         growth_type: Growth = Growth.LINEAR,
         growth_rate: float = 1,
+        initial_pressure=0.01,
         target_volume=30,
+        Kp=0.05,
+        Ki=0.00001,
+        Kd=0.5,
     ):
         self.growth_type = growth_type
         self.growth_rate = growth_rate  # in cubic microns per frame
-        self.Kp = 0.05
-        self.Ki = 0.000001
-        self.Kd = 0.5
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
         self.PID_scale = 60
+        self.initial_pressure = initial_pressure
         self.target_volume = target_volume
 
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
@@ -102,20 +108,21 @@ class GrowthPIDHandler(Handler):
         cell["integral"] = 0
         cell["previous_error"] = 0
 
-        initial_volume = cell.volume()
-        initial_pressure = cell.pressure
-
-        cell["previous_pressure"] = initial_pressure
-        cell["volume"] = initial_volume
-        cell["next_volume"] = initial_volume
+        cell["previous_pressure"] = self.initial_pressure
+        cell["next_volume"] = cell.volume()
         cell["target_volume"] = self.target_volume
 
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
-            if not cell.physics_enabled:
-                continue
             if "target_volume" not in cell:
                 self.initialize_PID(cell)
+            if "divided" in cell and cell["divided"]:
+                # if divided, reset certain values
+                cell["previous_pressure"] = self.initial_pressure
+                cell["next_volume"] = cell.volume()
+            if not cell.physics_enabled:
+                continue
+
             cell["volume"] = cell.volume()
 
             match self.growth_type:
@@ -135,14 +142,7 @@ class GrowthPIDHandler(Handler):
                         "Growth type must be one of LINEAR, EXPONENTIAL, or LOGISTIC."
                     )
             cell["next_volume"] = min(cell["next_volume"], cell["target_volume"])
-            volume_deviation = 1 - cell.volume() / cell["next_volume"]
-
-            # print(
-            #     f"Target volume: {cell['target_volume']}; "
-            #     f"Volume: {cell.volume()}; "
-            #     f"Next volume: {cell['next_volume']}; "
-            #     f"Volume deviation: {volume_deviation}; "
-            # )
+            volume_deviation = 1 - cell["volume"] / cell["next_volume"]
 
             # Update pressure based on PID output
             error = volume_deviation
@@ -157,59 +157,39 @@ class GrowthPIDHandler(Handler):
             cell["integral"] = integral
             cell["previous_pressure"] = cell.pressure
 
-            # print(f"New pressure for {cell.name}: {cell.pressure}")
-
 
 ForceDist = Enum("ForceDist", ["UNIFORM", "GAUSSIAN"])
 
 
 class MotionHandler(Handler):
     def __init__(
-        self, distribution: ForceDist = ForceDist.UNIFORM, distribution_size=0.5
+        self,
+        distribution: ForceDist = ForceDist.UNIFORM,
     ):
         self.distribution = distribution
-        self.distribution_size = distribution_size
 
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
         super(MotionHandler, self).setup(get_cells, dt)
-        for cell in self.get_cells():
-            self.initialize_motion(cell)
-
-    def initialize_motion(self, cell: Cell):
-        if not cell.motion_force.enabled:
-            cell.motion_force.enable()
-        cell.motion_force.loc = cell.COM()
-        cell["current_position"] = cell.COM()
-        cell["previous_position"] = cell.COM()
 
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             if not cell.physics_enabled:
                 continue
-            if "current_position" not in cell:
-                self.initalize_motion(cell)
-            cell["current_position"] = cell.COM()
-            disp = Vector(cell["current_position"]) - Vector(cell["previous_position"])
-            dist = disp.length
+            if not cell.motion_force.enabled:
+                cell.motion_force.enable()
 
             match self.distribution:
                 case ForceDist.UNIFORM:
-                    noise = Vector(
-                        np.random.uniform(
-                            low=-self.distribution_size,
-                            high=self.distribution_size,
-                            size=(3,),
-                        )
-                    )
+                    dir = Vector(np.random.uniform(low=-1, high=1, size=(3,)))
                 case ForceDist.GAUSSIAN:
-                    noise = Vector(
-                        np.random.normal(loc=0, scale=self.distribution_size, size=(3,))
+                    raise NotImplementedError(
+                        "Gaussian distribution not yet implemented"
                     )
                 case _:
                     raise ValueError(
                         "Motion noise distribution must be one of UNIFORM or GAUSSIAN."
                     )
-            cell.motion_force.loc = cell.COM() + noise
+            cell.move_towards(dir)
 
 
 Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM"])
@@ -252,9 +232,117 @@ class SceneExtensionHandler(Handler):
                 cell.cloth_mod.point_cache.frame_end = self.end
 
 
-class TimingHandler(Handler):
-    def __init__(self, start_time):
-        self.start_time = start_time
+def get_divisions(cells: list[Cell]):
+    divisions = set()
+    for cell in cells:
+        if "divided" in cell and cell["divided"]:
+            divisions.add(
+                (cell.name[:-2], cell.name[:-2] + ".0", cell.name[:-2] + ".1")
+            )
+    return list(divisions)
 
-    def run(self):
-        pass
+
+def contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
+    faces1 = cell1.obj.data.polygons
+    faces2 = cell2.obj.data.polygons
+
+    centers1 = [cell1.obj.matrix_world @ f.center for f in faces1]
+    centers2 = [cell2.obj.matrix_world @ f.center for f in faces2]
+
+    dists = np.array(cdist(centers1, centers2, "euclidean"))
+
+    contact_faces1 = np.any(dists < threshold, axis=1)
+    contact_faces2 = np.any(dists < threshold, axis=0)
+
+    areas1 = np.array([f.area for f in faces1])
+    areas2 = np.array([f.area for f in faces2])
+
+    contact_areas1 = np.sum(areas1[contact_faces1])
+    contact_areas2 = np.sum(areas2[contact_faces2])
+
+    ratio1 = contact_areas1 / np.sum(areas1)
+    ratio2 = contact_areas2 / np.sum(areas2)
+
+    return contact_areas1, contact_areas2, ratio1, ratio2
+
+
+def contact_areas(cells, threshold):
+    coms = [cell.COM() for cell in cells]
+    dists = squareform(pdist(coms, "euclidean"))
+    print(dists)
+
+    mask = dists < threshold
+    mask = np.triu(mask, k=1)
+
+    pairs = np.where(mask)
+
+    areas = {cell.name: [] for cell in cells}
+    ratios = {cell.name: [] for cell in cells}
+    for i, j in zip(pairs[0], pairs[1]):
+        contact_area_i, contact_area_j, ratio_i, ratio_j = contact_area(
+            cells[i], cells[j]
+        )
+        areas[cells[i].name].append((cells[j].name, contact_area_i))
+        areas[cells[j].name].append((cells[i].name, contact_area_j))
+        ratios[cells[i].name].append((cells[j].name, ratio_i))
+        ratios[cells[j].name].append((cells[i].name, ratio_j))
+
+    return areas, ratios
+
+
+class _all:
+    def __get__(self, instance, cls):
+        return ~cls(0)
+
+
+class DataFlag(Flag):
+    TIMES = auto()
+    DIVISIONS = auto()
+    MOTION_PATH = auto()
+    FORCE_PATH = auto()
+    VOLUMES = auto()
+    PRESSURES = auto()
+    CONTACT_AREAS = auto()
+
+    ALL = _all()
+
+
+class DataExporter(Handler):
+    def __init__(self, path, options: DataFlag):
+        self.path = path
+        self.options = options
+
+    def setup(self, get_cells: Callable[[], list[Cell]], dt):
+        super(DataExporter, self).setup(get_cells, dt)
+        self.time_start = datetime.now()
+        self.out = {"seed": bpy.context.scene["seed"], "frames": []}
+
+    def run(self, scene, depsgraph):
+        frame_out = {}
+        self.out["frames"].append(frame_out)
+
+        if self.options & DataFlag.TIMES:
+            frame_out["time"] = datetime.now() - self.time_start
+        if self.options & DataFlag.DIVISIONS:
+            frame_out["divisions"] = get_divisions(self.get_cells())
+
+        frame_out["cells"] = []
+        for cell in self.get_cells():
+            cell_out = {"name": cell.name}
+            frame_out["cells"].append(cell_out)
+
+            if self.options & DataFlag.MOTION_PATH:
+                cell_out["loc"] = cell.loc
+            if self.options & DataFlag.FORCE_PATH:
+                cell_out["motion_loc"] = cell.motion_force.loc
+            if self.options & DataFlag.VOLUMES:
+                cell_out["volume"] = cell.volume()
+            if self.options & DataFlag.PRESSURES:
+                cell_out["pressure"] = cell.pressure
+
+        if self.options & DataFlag.CONTACT_AREAS:
+            areas, ratios = contact_areas(self.get_cells())
+            frame_out["contact_areas"] = areas
+            frame_out["contact_ratios"] = ratios
+
+        print(self.out)

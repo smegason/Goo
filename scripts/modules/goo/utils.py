@@ -14,19 +14,19 @@ class BlenderObject:
 
     @property
     def name(self):
-        return self._obj.name
+        return self.obj.name
 
     @name.setter
     def name(self, name):
-        self._obj.name = name
+        self.obj.name = name
 
     @property
     def loc(self):
-        return self._obj.location
+        return self.obj.location
 
     @loc.setter
     def loc(self, loc):
-        self._obj.location = loc
+        self.obj.location = loc
 
 
 class Axis:
@@ -59,6 +59,7 @@ class Axis:
         return (end - start).length
 
 
+# ----- BLENDER FUNCTIONS -----
 def create_mesh(
     name,
     loc,
@@ -76,14 +77,23 @@ def create_mesh(
     elif isinstance(rotation, Quaternion):
         rotation = rotation.to_euler()
 
-    if mesh == "icosphere":
-        bmesh.ops.create_icosphere(bm, subdivisions=subdivisions, radius=size, **kwargs)
-    elif mesh == "plane":
-        bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=size / 2, **kwargs)
-    elif mesh == "monkey":
-        bmesh.ops.create_monkey(bm, **kwargs)
-    else:
-        raise ValueError("""mesh must be one of "icosphere", "plane", or "monkey".""")
+    match mesh:
+        case "icosphere":
+            bmesh.ops.create_icosphere(
+                bm, subdivisions=subdivisions, radius=size, **kwargs
+            )
+        case "plane":
+            bmesh.ops.create_grid(
+                bm, x_segments=1, y_segments=1, size=size / 2, **kwargs
+            )
+        case "monkey":
+            bmesh.ops.create_monkey(bm, **kwargs)
+        case "cube":
+            bmesh.ops.create_cube(bm, size=size, **kwargs)
+        case _:
+            raise ValueError(
+                """mesh must be one of "icosphere", "plane", or "monkey"."""
+            )
 
     me = bpy.data.meshes.new(f"{name}_mesh")
     bm.to_mesh(me)
@@ -95,59 +105,6 @@ def create_mesh(
     obj.scale = scale
 
     return obj
-
-
-# ----- CELL DEFAULTS ------
-# --- Physics Modifier Utilities ---
-def setup_cloth_defaults(mod: bpy.types.ClothModifier, stiffness=1, pressure=5):
-    mod.settings.quality = 10
-    mod.settings.air_damping = 10
-    mod.settings.bending_model = "ANGULAR"
-    mod.settings.mass = 1
-    mod.settings.time_scale = 1
-    # Cloth > Stiffness
-    mod.settings.tension_stiffness = stiffness
-    mod.settings.compression_stiffness = stiffness
-    mod.settings.shear_stiffness = stiffness
-    mod.settings.bending_stiffness = 1
-    # Cloth > Damping
-    mod.settings.tension_damping = 50
-    mod.settings.compression_damping = 50
-    mod.settings.shear_damping = 50
-    mod.settings.bending_damping = 0.5
-    # Cloth > Internal Springs
-    mod.settings.use_internal_springs = False
-    mod.settings.internal_spring_max_length = 1
-    mod.settings.internal_spring_max_diversion = 0.785398
-    mod.settings.internal_spring_normal_check = False
-    mod.settings.internal_tension_stiffness = 10
-    mod.settings.internal_compression_stiffness = 10
-    mod.settings.internal_tension_stiffness_max = 10000
-    mod.settings.internal_compression_stiffness_max = 10000
-    # Cloth > Pressure
-    mod.settings.use_pressure = True
-    mod.settings.uniform_pressure_force = pressure
-    mod.settings.use_pressure_volume = True
-    mod.settings.target_volume = 1
-    mod.settings.pressure_factor = 2
-    mod.settings.fluid_density = 1.05
-    # Cloth > Collisions
-    mod.collision_settings.collision_quality = 5
-    mod.collision_settings.use_collision = True
-    mod.collision_settings.use_self_collision = True
-    mod.collision_settings.self_friction = 0
-    mod.collision_settings.friction = 0
-    mod.collision_settings.self_distance_min = 0.005
-    mod.collision_settings.distance_min = 0.005
-    mod.collision_settings.self_impulse_clamp = 0
-
-
-def setup_collision_defaults(mod: bpy.types.CollisionModifier):
-    mod.settings.use_culling = True
-    mod.settings.damping = 1
-    mod.settings.thickness_outer = 0.025
-    mod.settings.thickness_inner = 0.25
-    mod.settings.cloth_friction = 0
 
 
 def create_material(name, color):
@@ -233,45 +190,155 @@ def create_material(name, color):
     return mat
 
 
-# ----- YOLK DEFAULTS -----
-def setup_cloth_yolk(mod: bpy.types.ClothModifier, stiffness=1, pressure=5):
-    mod.settings.quality = 10
-    mod.settings.air_damping = 10
-    mod.settings.bending_model = "ANGULAR"
-    mod.settings.mass = 2
-    mod.settings.time_scale = 1
-    # Cloth > Stiffness
-    mod.settings.tension_stiffness = stiffness
-    mod.settings.compression_stiffness = stiffness
-    mod.settings.shear_stiffness = stiffness
-    mod.settings.bending_stiffness = stiffness
-    # Cloth > Damping
-    mod.settings.tension_damping = 50
-    mod.settings.compression_damping = 50
-    mod.settings.shear_damping = 50
-    mod.settings.bending_damping = 0.5
-    # Cloth > Internal Springs
-    mod.settings.use_internal_springs = True
-    mod.settings.internal_spring_max_length = 1
-    mod.settings.internal_spring_max_diversion = 0.785398
-    mod.settings.internal_spring_normal_check = False
-    mod.settings.internal_tension_stiffness = 10000
-    mod.settings.internal_compression_stiffness = 10000
-    mod.settings.internal_tension_stiffness_max = 10000
-    mod.settings.internal_compression_stiffness_max = 10000
-    # Cloth > Pressure
-    mod.settings.use_pressure = True
-    mod.settings.uniform_pressure_force = 5.2
-    mod.settings.use_pressure_volume = True
-    mod.settings.target_volume = 1
-    mod.settings.pressure_factor = 2
-    mod.settings.fluid_density = 1.15
-    # Cloth > Collisions
-    mod.collision_settings.collision_quality = 6
-    mod.collision_settings.use_collision = True
-    mod.collision_settings.use_self_collision = True
-    mod.collision_settings.self_friction = 0
-    mod.collision_settings.friction = 0
-    mod.collision_settings.self_distance_min = 0.005
-    mod.collision_settings.distance_min = 0.005
-    mod.collision_settings.self_impulse_clamp = 0
+# --- PHYSICS MODIFIER CONSTRUCTORS ---
+class PhysicsConstructor:
+    def __init__(self, *mod_contructors: "ModConstructor"):
+        self.mod_constructors = [*mod_contructors]
+
+    def __call__(self, obj: bpy.types.Object):
+        for mod_constructor in self.mod_constructors:
+            mod_constructor().construct(obj)
+
+
+class ModConstructor:
+    name = ""
+    type = ""
+
+    def construct(self, obj):
+        mod = obj.modifiers.new(name=self.name, type=self.type)
+        self.setup_mod(mod)
+
+    def setup_mod(self, mod: bpy.types.Modifier):
+        pass
+
+
+class ClothConstructor(ModConstructor):
+    name = "Cloth"
+    type = "CLOTH"
+
+    def setup_mod(self, mod: bpy.types.ClothModifier):
+        stiffness = 1
+        pressure = 0.01
+
+        mod.settings.quality = 10
+        mod.settings.air_damping = 10
+        mod.settings.bending_model = "ANGULAR"
+        mod.settings.mass = 1
+        mod.settings.time_scale = 1
+        # Cloth > Stiffness
+        mod.settings.tension_stiffness = stiffness
+        mod.settings.compression_stiffness = stiffness
+        mod.settings.shear_stiffness = stiffness
+        mod.settings.bending_stiffness = 1
+        # Cloth > Damping
+        mod.settings.tension_damping = 50
+        mod.settings.compression_damping = 50
+        mod.settings.shear_damping = 50
+        mod.settings.bending_damping = 0.5
+        # Cloth > Internal Springs
+        mod.settings.use_internal_springs = False
+        mod.settings.internal_spring_max_length = 1
+        mod.settings.internal_spring_max_diversion = 0.785398
+        mod.settings.internal_spring_normal_check = False
+        mod.settings.internal_tension_stiffness = 10
+        mod.settings.internal_compression_stiffness = 10
+        mod.settings.internal_tension_stiffness_max = 10000
+        mod.settings.internal_compression_stiffness_max = 10000
+        # Cloth > Pressure
+        mod.settings.use_pressure = True
+        mod.settings.uniform_pressure_force = pressure
+        mod.settings.use_pressure_volume = True
+        mod.settings.target_volume = 1
+        mod.settings.pressure_factor = 2
+        mod.settings.fluid_density = 1.05
+        # Cloth > Collisions
+        mod.collision_settings.collision_quality = 5
+        mod.collision_settings.use_collision = True
+        mod.collision_settings.use_self_collision = True
+        mod.collision_settings.self_friction = 0
+        mod.collision_settings.friction = 0
+        mod.collision_settings.self_distance_min = 0.005
+        mod.collision_settings.distance_min = 0.005
+        mod.collision_settings.self_impulse_clamp = 0
+
+
+class YolkClothConstructor(ClothConstructor):
+    def setup_mod(self, mod: bpy.types.ClothModifier):
+        stiffness = 5
+        pressure = 5.2
+
+        mod.settings.quality = 10
+        mod.settings.air_damping = 10
+        mod.settings.bending_model = "ANGULAR"
+        mod.settings.mass = 2
+        mod.settings.time_scale = 1
+        # Cloth > Stiffness
+        mod.settings.tension_stiffness = stiffness
+        mod.settings.compression_stiffness = stiffness
+        mod.settings.shear_stiffness = stiffness
+        mod.settings.bending_stiffness = stiffness
+        # Cloth > Damping
+        mod.settings.tension_damping = 50
+        mod.settings.compression_damping = 50
+        mod.settings.shear_damping = 50
+        mod.settings.bending_damping = 0.5
+        # Cloth > Internal Springs
+        mod.settings.use_internal_springs = True
+        mod.settings.internal_spring_max_length = 1
+        mod.settings.internal_spring_max_diversion = 0.785398
+        mod.settings.internal_spring_normal_check = False
+        mod.settings.internal_tension_stiffness = 10000
+        mod.settings.internal_compression_stiffness = 10000
+        mod.settings.internal_tension_stiffness_max = 10000
+        mod.settings.internal_compression_stiffness_max = 10000
+        # Cloth > Pressure
+        mod.settings.use_pressure = True
+        mod.settings.uniform_pressure_force = pressure
+        mod.settings.use_pressure_volume = True
+        mod.settings.target_volume = 1
+        mod.settings.pressure_factor = 2
+        mod.settings.fluid_density = 1.15
+        # Cloth > Collisions
+        mod.collision_settings.collision_quality = 6
+        mod.collision_settings.use_collision = True
+        mod.collision_settings.use_self_collision = True
+        mod.collision_settings.self_friction = 0
+        mod.collision_settings.friction = 0
+        mod.collision_settings.self_distance_min = 0.005
+        mod.collision_settings.distance_min = 0.005
+        mod.collision_settings.self_impulse_clamp = 0
+
+
+class CollisionConstructor(ModConstructor):
+    name = "Collision"
+    type = "COLLISION"
+
+    def setup_mod(self, mod: bpy.types.CollisionModifier):
+        mod.settings.use_culling = True
+        mod.settings.damping = 1
+        mod.settings.thickness_outer = 0.025
+        mod.settings.thickness_inner = 0.25
+        mod.settings.cloth_friction = 0
+
+
+class SubsurfConstructor(ModConstructor):
+    name = "Subdivision"
+    type = "SUBSURF"
+
+    def setup_mod(self, mod: bpy.types.SubsurfModifier):
+        mod.subdivision_type = "CATMULL_CLARK"
+        mod.levels = 1
+        mod.render_levels = 1
+
+
+class RemeshConstructor(ModConstructor):
+    name = "Remesh"
+    type = "REMESH"
+
+    def setup_mod(self, mod: bpy.types.RemeshModifier):
+        mod.mode = "VOXEL"
+        mod.voxel_size = 0.25
+        mod.adaptivity = 0
+        mod.use_remove_disconnected = True
+        mod.use_smooth_shade = True
+        mod.show_in_editmode = True

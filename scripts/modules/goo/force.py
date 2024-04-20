@@ -8,64 +8,64 @@ class Force(BlenderObject):
         self.type = type
 
         # Instantiate force field object
-        if not self._obj.field:
-            with bpy.context.temp_override(active_object=self._obj, object=self._obj):
+        if not self.obj.field:
+            with bpy.context.temp_override(active_object=self.obj, object=self.obj):
                 bpy.ops.object.forcefield_toggle()
         self.enable()
 
     def enable(self):
-        self._obj.field.type = self.type
+        self.obj.field.type = self.type
 
     def disable(self):
-        if self._obj.field:
-            self._obj.field.type = "NONE"
+        if self.obj.field:
+            self.obj.field.type = "NONE"
 
     def enabled(self):
-        return self._obj.field and self._obj.field.type == self.type
+        return self.obj.field and self.obj.field.type == self.type
 
     @property
     def strength(self):
-        return self._obj.field.strength
+        return self.obj.field.strength
 
     @strength.setter
     def strength(self, strength):
-        self._obj.field.strength = strength
+        self.obj.field.strength = strength
 
     @property
     def falloff(self):
-        return self._obj.field.falloff
+        return self.obj.field.falloff
 
     @falloff.setter
     def falloff(self, falloff):
-        self._obj.field.falloff_power = falloff
+        self.obj.field.falloff_power = falloff
 
     @property
     def min_dist(self):
-        if self._obj.field.use_min_distance:
-            return self._obj.field.min_dist
+        if self.obj.field.use_min_distance:
+            return self.obj.field.min_dist
         return None
 
     @min_dist.setter
     def min_dist(self, min_dist):
         if min_dist is None:
-            self._obj.field.use_min_distance = False
+            self.obj.field.use_min_distance = False
         else:
-            self._obj.field.use_min_distance = True
-            self._obj.field.distance_min = min_dist
+            self.obj.field.use_min_distance = True
+            self.obj.field.distance_min = min_dist
 
     @property
     def max_dist(self):
-        if self._obj.field.use_max_distance:
-            return self._obj.field.max_dist
+        if self.obj.field.use_max_distance:
+            return self.obj.field.max_dist
         return None
 
     @max_dist.setter
     def max_dist(self, max_dist):
         if max_dist is None:
-            self._obj.field.use_max_distance = False
+            self.obj.field.use_max_distance = False
         else:
-            self._obj.field.use_max_distance = True
-            self._obj.field.distance_max = max_dist
+            self.obj.field.use_max_distance = True
+            self.obj.field.distance_max = max_dist
 
 
 class AdhesionForce(Force):
@@ -74,11 +74,31 @@ class AdhesionForce(Force):
 
     @property
     def strength(self):
-        return -self._obj.field.strength
+        return -self.obj.field.strength
 
     @strength.setter
     def strength(self, strength):
-        self._obj.field.strength = -strength
+        self.obj.field.strength = -strength
+
+
+class MotionForce(Force):
+    def __init__(self, obj):
+        super(MotionForce, self).__init__(obj, "FORCE")
+        self.obj.field.shape = "PLANE"
+        self.obj.field.apply_to_rotation = False
+
+    @property
+    def strength(self):
+        return -self.obj.field.strength
+
+    @strength.setter
+    def strength(self, strength):
+        self.obj.field.strength = -strength
+
+    def set_loc(self, new_loc, target_loc):
+        dir = target_loc - new_loc
+        self.loc = new_loc
+        self.obj.rotation_euler = dir.to_track_quat("Z", "X").to_euler()
 
 
 def create_force(
@@ -86,7 +106,7 @@ def create_force(
 ) -> Force:
     obj = bpy.data.objects.new(name, None)
     obj.location = loc
-    force = Force(obj)
+    force = Force(obj, type)
 
     force.strength = strength
     force.falloff = falloff
@@ -119,13 +139,12 @@ def get_adhesion(strength, obj=None, name=None, loc=(0, 0, 0)) -> AdhesionForce:
     return adhesion_force
 
 
-def get_motion(name, loc, strength) -> Force:
+def get_motion(name, loc, strength) -> MotionForce:
     obj = bpy.data.objects.new(name, None)
     obj.location = loc
-    force = Force(obj)
+    force = MotionForce(obj)
 
     force.strength = strength
-    force.falloff = 2
     return force
 
 
@@ -164,3 +183,15 @@ class ForceCollection:
                 ForceCollection._global_forces.collection
             )
         return ForceCollection._global_forces
+
+
+class Boundary(BlenderObject):
+    def setup_physics(self):
+        CollisionConstructor().construct(self.obj)
+
+
+def create_boundary(name, loc, size):
+    mesh = create_mesh(name, loc, "cube", size)
+    boundary = Boundary(mesh)
+    boundary.setup_physics()
+    return boundary
