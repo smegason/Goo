@@ -1949,7 +1949,8 @@ def add_motion(effector_name,
                            falloff=0,
                            motion=True,
                            min_dist=0,
-                           max_dist=4)
+                           max_dist=10)
+
         force = bpy.data.objects[force.name]
         print(force)
 
@@ -2124,7 +2125,7 @@ def make_force(force_name,
 
     elif motion:
 
-        rand_coord = tuple(np.random.uniform(low=-0.05, high=0.05, size=(3,)))
+        rand_coord = tuple(np.random.normal(loc=0, scale=0, size=(3,)))
         cell_com = get_centerofmass(bpy.data.objects[cell])
         bpy.ops.object.effector_add(type='FORCE',
                                     enter_editmode=False,
@@ -2792,6 +2793,9 @@ class handler_class:
         self.msd = defaultdict(list)
         self.speed = defaultdict(list)
         self.motion_path = defaultdict(list)
+        self.motion_force_path = defaultdict(list)
+        self.tethas = defaultdict(list)
+        self.phis = defaultdict(list)
 
         # Data handler: flag in launch simulation
         self.data_flag = None
@@ -2810,6 +2814,9 @@ class handler_class:
         self.dt_physics = float()  # in minutes
         self.dt_biocircuits = float()  # in minutes
 
+        # Parameter scan with Blender
+        self.headless = False
+
         return
 
     def launch_simulation(
@@ -2820,7 +2827,6 @@ class handler_class:
             cell_cycle_var=0,
             start=1,
             end=250,
-            motion_strength=-500,
             division_type='time',
             growth_type='linear',
             growth_rate=1,
@@ -2833,7 +2839,8 @@ class handler_class:
             motility=False,
             boundary=False, 
             test=False, 
-            colorize='pressure'):
+            colorize='random', 
+            headless=True):
         
         """
         Launches the simulation with specified parameters. 
@@ -2868,8 +2875,8 @@ class handler_class:
 
         self.data_file_path = filepath
         bpy.context.scene.render.filepath = filepath
+        self.headless = headless
         
-        self.motion_strength = motion_strength
         self.data_flag = data  # used to decide if data are computed
         self.growth = growth
 
@@ -2883,6 +2890,7 @@ class handler_class:
         self.growth_rate = growth_rate
         self.dt_physics = dt_physics
         self.dt_biocircuits = dt_biorcircuits
+        
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after the default 250 frames
@@ -2900,6 +2908,7 @@ class handler_class:
 
         if motility:
             bpy.app.handlers.frame_change_post.append(self.motion_handler)
+            # bpy.app.handlers.frame_change_post.append(self.motion_handler_diffusive)
         if adhesion:
             bpy.app.handlers.frame_change_post.append(self.adhesion_handler)
         if growth == 'embryo':
@@ -2939,7 +2948,8 @@ class handler_class:
         bpy.app.handlers.frame_change_post.append(self.timing_elapsed_handler)
         bpy.app.handlers.frame_change_post.append(self.stop_simulation)
 
-        # bpy.ops.screen.animation_play()
+        if headless: 
+            bpy.ops.screen.animation_play()
 
         return 
 
@@ -3009,9 +3019,9 @@ class handler_class:
         cells = [obj for obj in bpy.context.scene.objects if obj.get('object') == 'cell']
 
         # Find min and max pressure
-        pressures = [cell.get('previous_pressure', 0) for cell in cells]
-        min_p = min(pressures)
-        max_p = max(pressures)
+        # pressures = [cell.get('previous_pressure', 0) for cell in cells]
+        min_p = 0
+        max_p = 100
         range_p = max_p - min_p
 
         # Define red and blue colors
@@ -3044,7 +3054,7 @@ class handler_class:
         # Find min and max pressure
         # volumes = [cell.get('volume', 0) for cell in cells]
         min_p = 0
-        max_p = 100
+        max_p = 50
         range_p = max_p - min_p
 
         # Define red and blue colors
@@ -3105,15 +3115,27 @@ class handler_class:
 
         for cell in cells: 
             com = get_centerofmass(cell)
-            cell['current position'] = com
+            # cell['current position'] = com
             self.motion_path[f'{cell.name}'].append(tuple(com)[:3])
 
             # Calculate speed as displacement per unit of time
-            disp = (Vector(cell.get('current position')) - 
+            '''disp = (Vector(cell.get('current position')) - 
                     Vector(cell.get('past position'))).length
-            self.speed[f'{cell.name}'].append(disp)
+            self.speed[f'{cell.name}'].append(disp)'''
 
-            cell['past position'] = com
+            # cell['past position'] = com
+
+        motion_forces = [
+            obj for obj in bpy.context.scene.objects
+            if (
+                obj.get('object') == 'force'
+                and obj.get('motion') == 1
+            )
+        ]
+
+        for motion in motion_forces: 
+            loc = motion.location
+            self.motion_force_path[f'{motion.name}'].append(tuple(loc)[:3])
 
     # not used
     def remeshing_handler(self, scene, depsgraph): 
@@ -3973,42 +3995,36 @@ class handler_class:
 
             # Calculate current volume
             volume = calculate_volume(cell)
-            target_volume = self.target_volume
-            cell['target_volume'] = target_volume
             cell['volume'] = volume
             dt = self.dt_physics
             division_frame = self.daugthers_division_frame.get(cell.name)
             current_time = scene.frame_current * dt
-
-            '''if current_time <= self.cell_cycle_time: 
-                i_th_cycle = 1
-                cell['target_volume'] = self.target_volume
-                print(f"Cycle number: {i_th_cycle}")
-            else: '''
-
             i_th_cycle = (current_time // self.cell_cycle_time)
-            cell['post_division_volume'] = self.target_volume / 2**i_th_cycle
+            target_volume = self.target_volume / 2**i_th_cycle
+            cell['target_volume'] = target_volume
+            # cell['post_division_volume'] = target_volume
             print(f"Cycle number: {i_th_cycle}")
 
             # Supports linear and exponential growth
-            if properties['next_volume'] < target_volume / 2**i_th_cycle:
+            if properties['next_volume'] < target_volume:
                 print("Selected linear volume growth and control!")
 
                 if self.growth_type == 'linear': 
-                    if (
+                    '''if (
                         self.daugthers_division_frame.get(cell.name)
                         # +1 depends on the delay imposed on physics after division 
                         and (division_frame + 1) * dt == current_time
                     ): 
                         properties['next_volume'] = target_volume / 2
 
-                    else: 
-                        # Update volume with growth rate
-                        properties['next_volume'] \
-                            += (properties['growth_rate'] * self.dt_physics)
-                        # Clip next_volume to target_volume
-                        properties['next_volume'] = min(properties['next_volume'], 
-                                                        target_volume)
+                    else:''' 
+                    # Update volume with growth rate
+                    properties['next_volume'] \
+                        += ((properties['growth_rate'] / (2**(i_th_cycle * 0.2))) 
+                            * self.dt_physics)
+                    # Clip next_volume to target_volume
+                    properties['next_volume'] = min(properties['next_volume'], 
+                                                    target_volume)
                     
                 elif self.growth_type == 'exp': 
                     print("Selected exponential volume growth and control!")
@@ -4120,7 +4136,7 @@ class handler_class:
             current_time = scene.frame_current * dt
 
             # Batch updates for volumes and pressures
-            self.volumes[cell_name].append(volume)
+            # self.volumes[cell_name].append(volume)
             self.pressures[cell_name].append(
                 cell.modifiers["Cloth"].settings.uniform_pressure_force
             )
@@ -4468,7 +4484,6 @@ class handler_class:
             self.sorting_scores.update({scene.frame_current: sorting_scores_same_type})
 
     def motion_handler(self, scene, depsgraph): 
-        
         motion_forces = [
             obj for obj in bpy.context.scene.objects
             if (
@@ -4477,61 +4492,65 @@ class handler_class:
             )
         ]
 
+        print(f"All motion forces: {motion_forces}")
+
+        # dt = self.dt_physics
+        # t = dt * scene.frame_current
+
         if not motion_forces: 
             print('No motion forces detected')
-        
-        for force in motion_forces: 
-            cell_obj = bpy.data.objects[force.get('cell')]
-            com = get_centerofmass(cell_obj)
-            cell_obj['current position'] = com
-            disp = (Vector(cell_obj.get('current position')) - 
-                    Vector(cell_obj.get('past position'))).length
-            # cell['speed'] = disp
-            self.motion_path[f'{cell_obj.name}'].append(tuple(com)[:3])
-            self.motion_path[f'{force.name}'].append(tuple(force.location)[:3])
-            self.speed[f'{cell_obj.name}'].append(disp)
-            # Mean Squared Displacement for single particle
-            sq_displacement_cell = (
-                Vector(self.motion_path.get(cell_obj.name)[-1]) - 
-                Vector(self.motion_path.get(cell_obj.name)[0])
-                ).length_squared
-            sq_displacement_force = (
-                Vector(self.motion_path.get(force.name)[-1]) - 
-                Vector(self.motion_path.get(force.name)[0])
-                ).length_squared
-            self.msd[f'{cell_obj.name}'].append(sq_displacement_cell)
-            self.msd[f'{force.name}'].append(sq_displacement_force)
-            # cell['MSD'] = msd
-            # force['MSD'] = msd
 
-            if force.get('distribution') == 'uniform': 
-                # print('Distribution is uniform')
-                rand_coord = Vector(np.random.uniform(
-                    low=-force['distribution size'],
-                    high=force['distribution size'], 
-                    size=(3,)
-                ))
-                new_loc = Vector(com) + rand_coord
-            elif force.get('distribution') == 'gaussian': 
-                rand_coord = Vector(np.random.normal(
-                    loc=0, 
-                    scale=force['distribution size'], 
-                    size=(3,)
-                ))
-                new_loc = Vector(com) + rand_coord
+        for force in motion_forces: 
+            cell_name = force.get('cell')
+            cell_obj = bpy.data.objects.get(cell_name)
+            print(cell_obj)
+            com = Vector(get_centerofmass(cell_obj))  
+            cell_radius = cell_obj.dimensions.length / 2.0
+
+            # Initialize the first motion direction 
+            if not self.tethas[cell_name] or not self.phis[cell_name]:
+                self.tethas[cell_name].append(np.random.uniform(0, 2*np.pi))
+                self.phis[cell_name].append(np.random.uniform(0, np.pi))
+
             else: 
-                print(f'{force.get("distribution")} '
-                      f'is not a supported distribution')
-                continue
-            
-            force.location = new_loc
-            # cells will only adhere with other cells 
-            # that are in the same collection
-            cloth_modifier = cell_obj.modifiers["Cloth"]
-            collection = cell_obj.users_collection[0]
-            cloth_modifier.settings.effector_weights.collection = collection
-            # update position of cell
-            cell_obj['past position'] = com
+                # Calculate direction correlation based on time (exponential decay)
+                # lambda_decay = 0.0025  # Decay rate
+                # initial_corr = 1.0  # Initial correlation value
+                # corr = initial_corr * np.exp(-lambda_decay * t)
+                corr = 0
+                print(corr)
+
+                # Generate random spherical coordinates
+                theta = (
+                    (1-corr) * np.random.uniform(0, 2*np.pi) 
+                    + (corr) * self.tethas.get(cell_obj.name)[-1]
+                    )
+                
+                phi = (
+                    (1-corr) * np.random.uniform(0, np.pi) 
+                    + (corr) * self.phis.get(cell_obj.name)[-1]
+                    )
+
+                # Convert to cartesian coordinates
+                rand_x = com.x + cell_radius * np.sin(phi) * np.cos(theta)
+                rand_y = com.y + cell_radius * np.sin(phi) * np.sin(theta)
+                rand_z = com.z + cell_radius * np.cos(phi)
+                new_loc = Vector((rand_x, rand_y, rand_z))
+
+                self.tethas[f"{cell_obj.name}"].append(theta)
+                self.phis[f"{cell_obj.name}"].append(phi)
+
+                force.location = new_loc
+                # cells will only adhere with other cells 
+                # that are in the same collection
+                cloth_modifier = cell_obj.modifiers.get("Cloth")
+                if cloth_modifier:
+                    collection = cell_obj.users_collection[0]
+                    cloth_modifier.settings.effector_weights.collection = collection
+                
+                # update position of cell
+                # cell_obj.location = com
+                cell_obj["past position"] = com
 
     def contact_area_handler(self, scene, depsgraph): 
 
@@ -4599,7 +4618,8 @@ class handler_class:
 
             if cell_obj.get('object') == 'cell': 
                 force.field.distance_max = (len_long_axis / 2) + 0.4
-                force.field.distance_min = (len_long_axis / 2) - 0.4
+                # force.field.distance_min = (len_long_axis / 2) - 0.4
+                force.field.distance_min = 0
 
                 # cell type: 
                 # cells will only adhere with cells from the same collection
@@ -4648,6 +4668,9 @@ class handler_class:
             if bool(self.motion_path): 
                 with open(f"{self.data_file_path}_motion_path.json", 'w') as file:
                     file.write(json.dumps(self.motion_path))
+            if bool(self.motion_force_path): 
+                with open(f"{self.data_file_path}_motion_force_path.json", 'w') as file:
+                    file.write(json.dumps(self.motion_force_path))
             if bool(self.contact_areas): 
                 with open(f"{self.data_file_path}_contact_areas.json", 'w') as file:
                     file.write(json.dumps(self.contact_areas))
@@ -4838,5 +4861,7 @@ class handler_class:
             # True enables the last frame not to be repeated
             bpy.ops.screen.animation_play()
             bpy.ops.screen.animation_cancel(restore_frame=True) 
-            # closes Blender then
-            # bpy.ops.wm.quit_blender()
+            
+            if self.headless: 
+                # closes Blender then
+                bpy.ops.wm.quit_blender()

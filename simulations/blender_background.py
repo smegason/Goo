@@ -1,35 +1,29 @@
 import subprocess
 import numpy as np
-
-# multiple = False
-
-'''if multiple: 
-
-    for adhesion in [*range(-900, -1100, -5)]: 
-        for tension in [*np.arange(0, 10, 0.2)]: 
-            subprocess.run(
-                ["C:\\Program Files\\Blender Foundation\\Blender 3.3\\blender.exe",
-                "--python",
-                "C:\\Users\\anr9744\\Projects\\Goo\\simulations\\three_cells_benchmark copy.py",
-                "--",
-                "--adhesion", f"{adhesion}", 
-                "--tension", f"{tension}"])
-
-else: '''
-
-for seed in range(1, 101, 1): 
-    subprocess.run(
-        ["C:\\Program Files\\Blender Foundation\\Blender 3.3\\blender.exe",
-         "--python",
-         "C:\\Users\\anr9744\\Projects\\Goo\\simulations\\motion_MSD.py",
-         "--",
-         "--seed", f"{seed}"])
+from enum import Enum
+import random
 
 
-# additional "--" is required to separate the arguments used by blender and python
-# "--falloff", f"{falloff}"])
+# Define Blender path enumeration
+class BlenderPath(Enum):
+    GPU_COMP_ROOM = "C:\\Program Files\\Blender Foundation\\Blender 3.3\\blender.exe"
+    PERSONAL_MACOS = "/Applications/Blender.app/Contents/MacOS/Blender"
+    WINDOWS_PATH = "C:\\Program Files\\Blender Foundation\\Blender 3.3\\blender.exe"
 
-# for i in range(1): 
-#    subprocess.run(["C:\\Program Files\\Blender Foundation\\Blender 3.3\\blender.exe", "--python", "C:\\Users\\anr9744\\Projects\\Goo\\simulations\\benchmark_two_cells.py"])
 
-# subprocess.run(["C:\\Program Files\\Blender Foundation\\Blender 3.3\\blender.exe", "--python", "C:\\Users\\anr9744\\Projects\\Goo\\simulations\\benchmark_two_cells.py"])
+# Set the desired Blender path
+blender_path = BlenderPath.PERSONAL_MACOS.value  # Change this to choose the desired path
+
+# Rest of your code
+for adhesion in [0, 1000]: # 2000, 4000, 6000, 8000, 10000]:
+    for motion in [5000]: #, 1000, 2000, 3000, 4000, 5000]: 
+
+        seed = int(np.random.uniform(0, 1000))
+            
+        subprocess.run(
+            [blender_path,
+             "--python", "simulations/scan_sorting.py", 
+             "--", 
+             "--seed", f"{seed}", 
+             "--adhesion", f"{adhesion}", 
+             "--motion", f"{motion}"])
