@@ -11,12 +11,6 @@ goo.make_cell("cell_A3", loc=(5, -3, -3), type="cellsA")
 goo.make_cell("cell_A4", loc=(-5, -3, 3), type="cellsA")
 goo.make_cell("cell_A5", loc=(0, -3, 3), type="cellsA")
 goo.make_cell("cell_A6", loc=(5, -3, 3), type="cellsA")
-goo.make_cell("cell_A7", loc=(-5, 3, -3), type="cellsA")
-goo.make_cell("cell_A8", loc=(0, 3, -3), type="cellsA")
-goo.make_cell("cell_A9", loc=(5, 3, -3), type="cellsA")
-goo.make_cell("cell_A10", loc=(-5, 3, 3), type="cellsA")
-goo.make_cell("cell_A11", loc=(0, 3, 3), type="cellsA")
-goo.make_cell("cell_A12", loc=(5, 3, 3), type="cellsA")
 
 # Force A
 homoA = -10000
@@ -26,12 +20,6 @@ goo.add_homo_adhesion('cell_A3', -homoA)
 goo.add_homo_adhesion('cell_A4', -homoA)
 goo.add_homo_adhesion('cell_A5', -homoA)
 goo.add_homo_adhesion('cell_A6', -homoA)
-goo.add_homo_adhesion('cell_A7', -homoA)
-goo.add_homo_adhesion('cell_A8', -homoA)
-goo.add_homo_adhesion('cell_A9', -homoA)
-goo.add_homo_adhesion('cell_A10', -homoA)
-goo.add_homo_adhesion('cell_A11', -homoA)
-goo.add_homo_adhesion('cell_A12', -homoA)
 
 motionA = 2500
 goo.add_motion('cell_A1', -motionA)
@@ -40,10 +28,6 @@ goo.add_motion('cell_A3', -motionA)
 goo.add_motion('cell_A4', -motionA)
 goo.add_motion('cell_A5', -motionA)
 goo.add_motion('cell_A6', -motionA)
-goo.add_motion('cell_A7', -motionA)
-goo.add_motion('cell_A8', -motionA)
-goo.add_motion('cell_A9', -motionA)
-goo.add_motion('cell_A10', -motionA)
 
 goo.add_sphere_boundaries(loc=(0, 0, 0), radius=10)
 

@@ -2890,7 +2890,6 @@ class handler_class:
         self.growth_rate = growth_rate
         self.dt_physics = dt_physics
         self.dt_biocircuits = dt_biorcircuits
-        
 
         # Set the end frame for all cloth simulation caches in the scene
         # To keep simulations running after the default 250 frames

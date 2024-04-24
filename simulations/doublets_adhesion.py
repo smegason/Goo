@@ -22,9 +22,9 @@ goo.make_cell("cell_C6", loc=(10, 1.85, 0), material=('red', .5, 0, 0), type="ce
 
 # Forces 
 
-homoA = 1000
-homoB = 3000
-homoC = 5000
+homoA = 2500
+homoB = 5000
+homoC = 7500
 
 # Define force A1
 goo.add_homo_adhesion('cell_A1', -homoA)
@@ -51,5 +51,5 @@ handlers.launch_simulation(start=1,  # default, 1
                            division=False, 
                            motility=False, 
                            target_volume=30, 
-                           colorize=False
+                           colorize='type'
                            )
