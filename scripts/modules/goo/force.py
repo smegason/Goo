@@ -82,10 +82,10 @@ class AdhesionForce(Force):
 
 
 class MotionForce(Force):
-    def __init__(self, obj):
+    def __init__(self, obj: bpy.types.Object):
         super(MotionForce, self).__init__(obj, "FORCE")
-        self.obj.field.shape = "PLANE"
-        self.obj.field.apply_to_rotation = False
+        obj.field.shape = "PLANE"
+        obj.field.apply_to_rotation = False
 
     @property
     def strength(self):
@@ -187,11 +187,14 @@ class ForceCollection:
 
 class Boundary(BlenderObject):
     def setup_physics(self):
-        CollisionConstructor().construct(self.obj)
+        BoundaryCollisionConstructor().construct(self.obj)
 
 
-def create_boundary(name, loc, size):
-    mesh = create_mesh(name, loc, "cube", size)
-    boundary = Boundary(mesh)
+def create_boundary(loc, size, mesh="icosphere"):
+    obj = create_mesh("Boundary", loc, mesh=mesh, size=size)
+    bpy.context.scene.collection.objects.link(obj)
+
+    boundary = Boundary(obj)
     boundary.setup_physics()
+    boundary.hide()
     return boundary

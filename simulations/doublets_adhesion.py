@@ -1,59 +1,42 @@
-from goo import goo
 from importlib import reload
+import goo
+from goo import *
 
 reload(goo)
-goo.setup_world()
+reset_modules()
+reset_scene()
 
-# Cells A 
-# Define cell A1
-goo.make_cell("cell_A1", loc=(-1, 0, 0), type="cellsA")
-# Define cell A2
-goo.make_cell("cell_A2", loc=(1, 0, 0), type="cellsA")
+cellsA = SimpleType("A")
+cellsB = SimpleType("B")
+cellsC = SimpleType("C")
 
-# Define cell B1
-goo.make_cell("cell_B3", loc=(-1, 2.2, 0), material=('green', 0, .1, 0), type="cellsB")
-# Define cell B2
-goo.make_cell("cell_B4", loc=(1, 2.2, 0), material=('green', 0, .1, 0), type="cellsB")
+cellsA.homo_adhesion_strength = 2500
+cellsB.homo_adhesion_strength = 5000
+cellsC.homo_adhesion_strength = 7500
 
-# Define cell C1
-goo.make_cell("cell_C5", loc=(-1, 4.4, 0), material=('red', .1, 0, 0), type="cellsC")
-# Define cell C2
-goo.make_cell("cell_C6", loc=(1, 4.4, 0), material=('red', .1, 0, 0), type="cellsC")
+# Uncomment for heteroadhesions
+# cellsA.set_hetero_adhesion(cellsB, 10000)
+# cellsA.set_hetero_adhesion(cellsC, 10000)
+# cellsB.set_hetero_adhesion(cellsC, 10000)
 
-# Forces 
+cellsA.create_cell("A1", (+1.75, -5, 0), color=(0.5, 0, 0), size=1.6)
+cellsA.create_cell("A2", (-1.75, -5, 0), color=(0.5, 0, 0), size=1.6)
 
-homoA = 750
-homoB = 1500
-homoC = 3000
+cellsB.create_cell("B1", (+1.75, 0, 0), color=(0, 0.5, 0), size=1.6)
+cellsB.create_cell("B2", (-1.75, 0, 0), color=(0, 0.5, 0), size=1.6)
 
-# Define force A1
-goo.add_homo_adhesion('cell_A1', -homoA)
-# goo.add_hetero_adhesion('cell_A1', 'cellsB', -heteroAB)
-# Define force A2
-goo.add_homo_adhesion('cell_A2', -homoA)
-# goo.add_hetero_adhesion('cell_A2', 'cellsB', -heteroAB)
-# Define force B1
-goo.add_homo_adhesion('cell_B3', -homoB)
-# goo.add_hetero_adhesion('cell_A3', 'cellsB', -heteroAB)
-# Define force B2
-goo.add_homo_adhesion('cell_B4', -homoB)
-# goo.add_hetero_adhesion('cell_A4', 'cellsB', -heteroAB)
-# Define force C1
-goo.add_homo_adhesion('cell_C5', -homoC)
-# goo.add_hetero_adhesion('cell_B5', 'cellsA', -heteroAB)
-# Define force C2
-goo.add_homo_adhesion('cell_C6', -homoC)
-# goo.add_hetero_adhesion('cell_B6', 'cellsA', -heteroAB)
+cellsC.create_cell("C1", (+1.75, 5, 0), color=(0, 0, 0.5), size=1.6)
+cellsC.create_cell("C2", (-1.75, 5, 0), color=(0, 0, 0.5), size=1.6)
 
-
-# Simulation setup
-handlers = goo.handler_class()
-handlers.launch_simulation(start=1,  # default, 1
-                           end=500,  # default, 250
-                           filepath="C:\\tmp\\sorting_test_rendering\\data5", 
-                           adhesion=True,  # default, True
-                           data=False,  # default, False
-                           growth=True, 
-                           division=False, 
-                           motility=False
-                           )
+sim = Simulator([cellsA, cellsB, cellsC])
+sim.setup_world()
+sim.add_handlers(
+    [
+        GrowthPIDHandler(target_volume=30),
+        AdhesionLocationHandler(),
+        DataExporter(
+            path="/tmp/out.json", options=DataFlag.TIMES | DataFlag.CONTACT_AREAS
+        ),
+    ]
+)
+sim.run(20)

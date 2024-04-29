@@ -1,6 +1,7 @@
 from typing import Callable
 from enum import Enum, Flag, auto
 from datetime import datetime
+import json
 
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
@@ -20,8 +21,9 @@ class Handler:
 
 # TODO: remeshing seems to interfere with motion
 class RemeshHandler(Handler):
-    def __init__(self, freq=1, voxel_size=0.25, sphere_factor=0):
+    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.25, sphere_factor=0):
         self.freq = freq
+        self.smooth_factor = smooth_factor
         self.voxel_size = voxel_size
         self.sphere_factor = sphere_factor
 
@@ -36,17 +38,26 @@ class RemeshHandler(Handler):
             bm = bmesh.new()
             bm.from_mesh(cell.obj_eval.to_mesh())
             cell.disable_physics()
+            if self.smooth_factor:
+                bmesh.ops.smooth_vert(
+                    bm,
+                    verts=bm.verts,
+                    factor=self.smooth_factor,
+                )
             bm.to_mesh(cell.obj.data)
             bm.free()
+            cell.recenter()
+
+            if self.voxel_size:
+                cell.remesh(self.voxel_size)
+                cell.recenter()
 
             # Perform remeshing operations
             if self.sphere_factor:
                 self.cast_to_sphere(cell, self.sphere_factor)
-            if self.voxel_size:
-                cell.remesh(self.voxel_size)
+                cell.recenter()
 
             # Recenter and re-enable physics
-            cell.recenter()
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
 
@@ -158,18 +169,20 @@ class GrowthPIDHandler(Handler):
             cell["previous_pressure"] = cell.pressure
 
 
-ForceDist = Enum("ForceDist", ["UNIFORM", "GAUSSIAN"])
+ForceDist = Enum("ForceDist", ["CONSTANT", "UNIFORM", "GAUSSIAN"])
 
 
-class MotionHandler(Handler):
+class RandomMotionHandler(Handler):
     def __init__(
         self,
         distribution: ForceDist = ForceDist.UNIFORM,
+        max_strength: int = 0,
     ):
         self.distribution = distribution
+        self.max_strength = max_strength
 
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
-        super(MotionHandler, self).setup(get_cells, dt)
+        super(RandomMotionHandler, self).setup(get_cells, dt)
 
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
@@ -178,17 +191,19 @@ class MotionHandler(Handler):
             if not cell.motion_force.enabled:
                 cell.motion_force.enable()
 
+            dir = Vector(np.random.uniform(low=-1, high=1, size=(3,)))
             match self.distribution:
+                case ForceDist.CONSTANT:
+                    strength = self.max_strength
                 case ForceDist.UNIFORM:
-                    dir = Vector(np.random.uniform(low=-1, high=1, size=(3,)))
+                    strength = np.random.random_sample() * self.max_strength
                 case ForceDist.GAUSSIAN:
-                    raise NotImplementedError(
-                        "Gaussian distribution not yet implemented"
-                    )
+                    strength = np.random.normal() * self.max_strength
                 case _:
                     raise ValueError(
                         "Motion noise distribution must be one of UNIFORM or GAUSSIAN."
                     )
+            cell.motion_force.strength = strength
             cell.move_towards(dir)
 
 
@@ -243,11 +258,11 @@ def get_divisions(cells: list[Cell]):
 
 
 def contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
-    faces1 = cell1.obj.data.polygons
-    faces2 = cell2.obj.data.polygons
+    faces1 = cell1.obj_eval.data.polygons
+    faces2 = cell2.obj_eval.data.polygons
 
-    centers1 = [cell1.obj.matrix_world @ f.center for f in faces1]
-    centers2 = [cell2.obj.matrix_world @ f.center for f in faces2]
+    centers1 = [cell1.obj_eval.matrix_world @ f.center for f in faces1]
+    centers2 = [cell2.obj_eval.matrix_world @ f.center for f in faces2]
 
     dists = np.array(cdist(centers1, centers2, "euclidean"))
 
@@ -266,10 +281,9 @@ def contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
     return contact_areas1, contact_areas2, ratio1, ratio2
 
 
-def contact_areas(cells, threshold):
+def contact_areas(cells, threshold=4):
     coms = [cell.COM() for cell in cells]
     dists = squareform(pdist(coms, "euclidean"))
-    print(dists)
 
     mask = dists < threshold
     mask = np.triu(mask, k=1)
@@ -308,21 +322,27 @@ class DataFlag(Flag):
 
 
 class DataExporter(Handler):
-    def __init__(self, path, options: DataFlag):
+    def __init__(self, path="", options: DataFlag = DataFlag.ALL):
         self.path = path
         self.options = options
 
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
         super(DataExporter, self).setup(get_cells, dt)
         self.time_start = datetime.now()
-        self.out = {"seed": bpy.context.scene["seed"], "frames": []}
+        out = {"seed": bpy.context.scene["seed"], "frames": []}
+
+        if self.path:
+            with open(self.path, "w") as f:
+                f.write(json.dumps(out))
+        else:
+            print(out)
+        self.run(bpy.context.scene, bpy.context.evaluated_depsgraph_get())
 
     def run(self, scene, depsgraph):
-        frame_out = {}
-        self.out["frames"].append(frame_out)
+        frame_out = {"frame": scene.frame_current}
 
         if self.options & DataFlag.TIMES:
-            frame_out["time"] = datetime.now() - self.time_start
+            frame_out["time"] = (datetime.now() - self.time_start).total_seconds()
         if self.options & DataFlag.DIVISIONS:
             frame_out["divisions"] = get_divisions(self.get_cells())
 
@@ -332,12 +352,12 @@ class DataExporter(Handler):
             frame_out["cells"].append(cell_out)
 
             if self.options & DataFlag.MOTION_PATH:
-                cell_out["loc"] = cell.loc
+                cell_out["loc"] = tuple(cell.loc)
             if self.options & DataFlag.FORCE_PATH:
-                cell_out["motion_loc"] = cell.motion_force.loc
+                cell_out["motion_loc"] = tuple(cell.motion_force.loc)
             if self.options & DataFlag.VOLUMES:
                 cell_out["volume"] = cell.volume()
-            if self.options & DataFlag.PRESSURES:
+            if self.options & DataFlag.PRESSURES and cell.physics_enabled:
                 cell_out["pressure"] = cell.pressure
 
         if self.options & DataFlag.CONTACT_AREAS:
@@ -345,4 +365,11 @@ class DataExporter(Handler):
             frame_out["contact_areas"] = areas
             frame_out["contact_ratios"] = ratios
 
-        print(self.out)
+        if self.path:
+            with open(self.path, "r") as f:
+                out = json.load(f)
+                out["frames"].append(frame_out)
+            with open(self.path, "w") as f:
+                f.write(json.dumps(out))
+        else:
+            print(frame_out)

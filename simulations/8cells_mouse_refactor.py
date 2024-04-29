@@ -32,7 +32,7 @@ sim.add_handlers(
     [
         GrowthPIDHandler(),
         AdhesionLocationHandler(),
-        MotionHandler(),
+        RandomMotionHandler(),
         SceneExtensionHandler(end=500),
     ]
 )

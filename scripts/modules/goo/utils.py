@@ -28,6 +28,9 @@ class BlenderObject:
     def loc(self, loc):
         self.obj.location = loc
 
+    def hide(self):
+        self.obj.hide_set(True)
+
 
 class Axis:
     def __init__(self, axis, start, end, world_matrix):
@@ -319,6 +322,12 @@ class CollisionConstructor(ModConstructor):
         mod.settings.thickness_outer = 0.025
         mod.settings.thickness_inner = 0.25
         mod.settings.cloth_friction = 0
+
+
+class BoundaryCollisionConstructor(CollisionConstructor):
+    def setup_mod(self, mod: bpy.types.CollisionModifier):
+        super(BoundaryCollisionConstructor, self).setup_mod(mod)
+        mod.settings.use_culling = False
 
 
 class SubsurfConstructor(ModConstructor):

@@ -109,6 +109,7 @@ class Simulator:
         elif path and not save:
             print("Save path set but render will not be saved!")
 
+        print("----- SIMULATION START -----")
         for i in range(1, end + 1):
             bpy.context.scene.frame_set(i)
             bpy.context.scene.render.filepath = os.path.join(path, f"{i:04d}")
@@ -117,7 +118,11 @@ class Simulator:
             else:
                 bpy.ops.render.opengl(write_still=save)
         bpy.context.scene.render.filepath = path
+        print("\n----- SIMULATION END -----")
 
     def run(self, end=250):
+        print("----- SIMULATION START -----")
         for i in range(1, end + 1):
+            print(i, end=" ")
             bpy.context.scene.frame_set(i)
+        print("\n----- SIMULATION END -----")

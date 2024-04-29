@@ -17,7 +17,7 @@ class Cell(BlenderObject):
         # Set up effector collections
         self._effectors = bpy.data.collections.new(f"{obj.name}_effectors")
         bpy.context.scene.collection.children.link(self._effectors)
-        self.add_effector(ForceCollection.global_forces())  # link global forces
+        # self.add_effector(ForceCollection.global_forces())  # link global forces
 
         self._mat = mat
         self.obj.data.materials.append(mat)
@@ -399,6 +399,7 @@ class CellType:
             strength=self.motion_strength,
         )
         cell.motion_force = motion
+        motion.hide()
 
     # TODO: implement correctly
     def _remove_cell(self, cell: Cell):
