@@ -1,8 +1,5 @@
 {
-    "esbonio.sphinx.confDir": "",
-    "python.analysis.extraPaths": [
-        "./scripts/modules/goo", 
-        "/opt/homebrew/anaconda3/envs/goo/lib/python3.11/site-packages",
-    ],
-    "julia.environmentPath": "/Users/antoine/Harvard/MegasonLab/github/Goo"
+  "esbonio.sphinx.confDir": "",
+  "python.analysis.extraPaths": ["./scripts/modules/goo"]
 }
+
