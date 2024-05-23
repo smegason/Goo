@@ -72,3 +72,8 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_logo = "_static/goo_logo_fun.png"  # Specify the path to your logo file
+
+# -- Options for Python code display ------------------------------------------------
+
+highlight_language = 'python'
+pygments_style = 'emacs'  # Or choose any other style you prefer

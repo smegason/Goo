@@ -1,8 +1,5 @@
 Documentation
-=============
-
-Submodules
-----------
+---------------
 
 .. toctree::
    :maxdepth: 1
@@ -14,8 +11,3 @@ Submodules
    goo.reloader
    goo.simulator
    goo.utils
-
-Module contents
----------------
-
-.. automodule:: goo

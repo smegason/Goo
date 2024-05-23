@@ -14,16 +14,13 @@ Once you have Blender installed:
 
 Dependencies
 ------------
-
-Goo has the following dependencies.
-
 - python 3.7 or newer
 - numpy_
 - matplotlib_
+- scipy_
 - bpy_
 - bmesh_
 - mathutils_
-- scipy_
 
 .. _numpy: http://www.numpy.org/
 .. _bpy: https://docs.blender.org/api/current/info_advanced_blender_as_bpy.html
@@ -33,7 +30,6 @@ Goo has the following dependencies.
 .. _json: https://docs.python.org/3/library/json.html
 .. _mathutils: https://pypi.org/project/mathutils/
 .. _scipy: https://pypi.org/project/scipy/
-
 
 Install dependencies in Blender
 ------------------------------------
