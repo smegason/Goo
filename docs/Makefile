@@ -4,7 +4,8 @@
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
+# SPHINXBUILD   ?= sphinx-build
+SPHINXBUILD = /Applications/Blender.app/Contents/MacOS/Blender --background --python blender_sphinx.py --
 SOURCEDIR     = source
 BUILDDIR      = build
 

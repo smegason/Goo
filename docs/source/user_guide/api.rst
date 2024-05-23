@@ -1,5 +1,5 @@
-API
-===========
+Documentation
+=============
 
 Submodules
 ----------
@@ -19,6 +19,3 @@ Module contents
 ---------------
 
 .. automodule:: goo
-   :members:
-   :undoc-members:
-   :show-inheritance:
