@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/551079563.svg)](https://zenodo.org/doi/10.5281/zenodo.10296202)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10296203.svg)](https://doi.org/10.5281/zenodo.10296203)
 
 
 # Goo is a Python-based Blender extension for modeling biological cells, tissues, and embryos
@@ -17,12 +17,12 @@ Our grand Driving Biological Problem is to simulate the first <a href= "https://
 ### User-interface
 
 The library uses the Blender interface to launch simulations and visualize them in real-time.
-![Goo UI](img/goo-GUI.png)
+![Goo UI](docs/source/_static/goo-GUI.png)
 
 ### Examples
 
 Simulation of a growing and cleaving clump of cells, for 150 minutes at a time step of 1 minute.
-![Division example](img/20240227_division_frame150_targetvolume300001-0150.gif)
+![Division example](docs/source/_static/20240304_desynchronized_division_10001-0130.gif)
 
 
 ### Contributors (in order of appearance)
