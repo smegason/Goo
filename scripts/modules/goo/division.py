@@ -1,6 +1,7 @@
 from typing import Callable
 
-import bpy, bmesh
+import bpy
+import bmesh
 from mathutils import Vector
 import numpy as np
 

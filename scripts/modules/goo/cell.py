@@ -1,12 +1,13 @@
 from typing import Optional, Union
 import numpy as np
 
-import bpy, bmesh
+import bpy
+import bmesh
 from bpy.types import Modifier, ClothModifier, CollisionModifier
-from mathutils import *
+from mathutils import Vector
 
-from goo.force import *
-from goo.utils import *
+from goo.force import * 
+from goo.utils import * 
 
 
 class Cell(BlenderObject):
@@ -112,8 +113,10 @@ class Cell(BlenderObject):
 
         Note:
             `Blender API Documentation > evaluated_get(depsgraph)`__
-
-        __ https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get
+        
+        __ 
+        https://docs.blender.org/api/current/bpy.types.ID.html?
+        highlight=evaluated_get#bpy.types.ID.evaluated_get
         """
         dg = bpy.context.evaluated_depsgraph_get()
         obj_eval = self.obj.evaluated_get(dg)
@@ -123,7 +126,8 @@ class Cell(BlenderObject):
         """Returns the vertices of the mesh representation of the cell.
 
         Args:
-            local_coords: if `True`, coordinates are returned in local object space rather than world space.
+            local_coords: if `True`, coordinates are returned in local object space 
+            rather than world space.
 
         Returns:
             List of coordinates of vertices.
@@ -216,8 +220,8 @@ class Cell(BlenderObject):
             A tuple of two daughter cells, resulting from the division of the
             mother cell.
         """
-        # TODO: rewrite code to make it clearer that there are two daughter cells splitting
-        # from a mother cell.
+        # TODO: rewrite code to make it clearer that there are two daughter 
+        # cells splitting from a mother cell.
         mother, daughter = division_logic.make_divide(self)
         if mother.celltype:
             mother.celltype.add_cell(daughter)

@@ -197,7 +197,8 @@ def get_adhesion(
 
     Args:
         strength: Strength of the adhesion force.
-        obj: Cell to use as origin of the adhesion force. If None, a new object is created.
+        obj: Cell to use as origin of the adhesion force. 
+            If None, a new object is created.
         name: Name of the adhesion force.
         loc: Initial location of the adhesion force.
     """
