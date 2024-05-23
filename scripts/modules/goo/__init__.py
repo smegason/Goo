@@ -1,7 +1,10 @@
 import sys
 
 sys.path.append(
-    "/Users/charlesdai/dev/goo_project/Goo/.venv/lib/python3.10/site-packages"
+    "/Applications/Blender.app/Contents/Resources/3.3/python/lib/python3.10/site-packages"
+)
+sys.path.append(
+    "/Users/antoine/.local/lib/python3.10/site-packages"
 )
 
 from .cell import create_cell, CellType, YolkType, SimpleType

@@ -1,5 +1,4 @@
-from functools import reduce
-from typing import Optional, Union, Callable
+from typing import Optional, Union
 import numpy as np
 
 import bpy, bmesh

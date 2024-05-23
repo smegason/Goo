@@ -1,6 +1,8 @@
 from functools import reduce
 
-import bpy, bmesh
+import bpy
+import bmesh
+from bpy.types import Modifier
 from mathutils import *
 
 
