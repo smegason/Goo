@@ -1,4 +1,6 @@
 from typing import Callable
+from typing_extensions import override
+
 from enum import Enum, Flag, auto
 from datetime import datetime
 import json
@@ -11,22 +13,47 @@ from goo.cell import Cell
 
 
 class Handler:
-    def setup(self, get_cells: Callable[[], list[Cell]], dt):
+    def setup(self, get_cells: Callable[[], list[Cell]], dt: float):
+        """Set up the handler.
+
+        Args:
+            get_cells: A function that, when called, retrieves the list of cells that may divide.
+            dt: The time step for the simulation.
+        """
         self.get_cells = get_cells
         self.dt = dt
 
-    def run(self, scene, depsgraph):
+    def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
+        """Run the handler.
+
+        This is the function that gets passed to Blender, to be called
+        upon specified events (e.g. post-frame change).
+
+        Args:
+            scene: The Blender scene.
+            depsgraph: The dependency graph.
+        """
         raise NotImplementedError("Subclasses must implement run() method.")
 
 
 # TODO: remeshing seems to interfere with motion
 class RemeshHandler(Handler):
+    """Handler for remeshing cells at given frequencies.
+
+    Attributes:
+        freq (int): Number of frames between remeshes.
+        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`. Disabled if set to 0.
+        voxel_size (float): Factor to pass to `voxel_remesh()`. Disabled if set to 0.
+        sphere_factor (float): Factor to pass to Cast to sphere modifier. Disabled if set to 0.
+    """
+
     def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.25, sphere_factor=0):
         self.freq = freq
         self.smooth_factor = smooth_factor
         self.voxel_size = voxel_size
         self.sphere_factor = sphere_factor
 
+    @override
     def run(self, scene, depsgraph):
         if scene.frame_current % self.freq != 0:
             return
@@ -54,14 +81,14 @@ class RemeshHandler(Handler):
 
             # Perform remeshing operations
             if self.sphere_factor:
-                self.cast_to_sphere(cell, self.sphere_factor)
+                self._cast_to_sphere(cell, self.sphere_factor)
                 cell.recenter()
 
             # Recenter and re-enable physics
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
 
-    def cast_to_sphere(self, cell, factor):
+    def _cast_to_sphere(self, cell, factor):
         with bpy.context.temp_override(active_object=cell.obj, object=cell.obj):
             cast_modifier = cell.obj.modifiers.new(name="Cast", type="CAST")
             cast_modifier.factor = factor
@@ -69,6 +96,9 @@ class RemeshHandler(Handler):
 
 
 class AdhesionLocationHandler(Handler):
+    """Handler for updating cell-associated adhesion locations every frame."""
+
+    @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             cell_size = cell.major_axis().length() / 2
@@ -81,10 +111,26 @@ class AdhesionLocationHandler(Handler):
                 force.max_dist = cell_size + 0.4
 
 
+"""Possible types of growth."""
 Growth = Enum("Growth", ["LINEAR", "EXPONENTIAL", "LOGISTIC"])
 
 
 class GrowthPIDHandler(Handler):
+    """Handler for simulating cell growth based off of internal pressure.
+
+    Growth is determined by a PID controller, in which changes to a cell's
+    internal pressure governs how much it grows in the next frame.
+
+    Attributes:
+        growth_type (Growth): Type of growth exhibited by cells.
+        growth_rate (float): Rate of growth of cells.
+        initial_pressure (float): Initial pressure of cells.
+        target_volume (float): Target volume of cells.
+        Kp (float): P variable of the PID controller.
+        Ki (float): I variable of the PID controller.
+        Kd (float): D variable of the PID controller.
+    """
+
     def __init__(
         self,
         growth_type: Growth = Growth.LINEAR,
@@ -104,12 +150,18 @@ class GrowthPIDHandler(Handler):
         self.initial_pressure = initial_pressure
         self.target_volume = target_volume
 
+    @override
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
         super(GrowthPIDHandler, self).setup(get_cells, dt)
         for cell in self.get_cells():
             self.initialize_PID(cell)
 
     def initialize_PID(self, cell: Cell):
+        """Initialize PID controller for a cell.
+
+        Args:
+            cell: Cell to initialize PID controller.
+        """
         cell["Kp"] = self.Kp
         cell["Ki"] = self.Ki
         cell["Kd"] = self.Kd
@@ -123,6 +175,7 @@ class GrowthPIDHandler(Handler):
         cell["next_volume"] = cell.volume()
         cell["target_volume"] = self.target_volume
 
+    @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             if "target_volume" not in cell:
@@ -169,10 +222,21 @@ class GrowthPIDHandler(Handler):
             cell["previous_pressure"] = cell.pressure
 
 
+"""Possible distributions of random motion."""
 ForceDist = Enum("ForceDist", ["CONSTANT", "UNIFORM", "GAUSSIAN"])
 
 
 class RandomMotionHandler(Handler):
+    """Handler for simulating random cell motion.
+
+    At every frame, the direction of motion is randomized, and the strength
+    of the motion force is randomly selected from a specified distribution.
+
+    Attributes:
+        distribution (ForceDist): Distribution of random strength of motion force.
+        max_strength (int): Maximum strength motion force.
+    """
+
     def __init__(
         self,
         distribution: ForceDist = ForceDist.UNIFORM,
@@ -181,9 +245,7 @@ class RandomMotionHandler(Handler):
         self.distribution = distribution
         self.max_strength = max_strength
 
-    def setup(self, get_cells: Callable[[], list[Cell]], dt):
-        super(RandomMotionHandler, self).setup(get_cells, dt)
-
+    @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             if not cell.physics_enabled:
@@ -207,13 +269,26 @@ class RandomMotionHandler(Handler):
             cell.move_towards(dir)
 
 
+"""Possible properties by which cells are colored."""
 Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM"])
 
 
 class ColorizeHandler(Handler):
+    """Handler for coloring cells based off of a specified property.
+
+    Cells are colored on a blue-red spectrum, based on the relative value
+    of the specified property to all other cells. For example, the cell with
+    the highest pressure is colored red, while the cell with an average
+    pressure is colored purple.
+
+    Attributes:
+        colorizer (Colorizer): the property by which cells are colored.
+    """
+
     def __init__(self, colorizer: Colorizer = Colorizer.PRESSURE):
         self.colorizer = colorizer
 
+    @override
     def run(self, scene, depsgraph):
         red = Vector((1.0, 0.0, 0.0))
         blue = Vector((0.0, 0.0, 1.0))
@@ -238,16 +313,29 @@ class ColorizeHandler(Handler):
 
 
 class SceneExtensionHandler(Handler):
+    """Handler for extending the calculation of physics beyond the default 250
+    frames.
+    """
+
     def __init__(self, end):
         self.end = end
 
+    @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.end:
                 cell.cloth_mod.point_cache.frame_end = self.end
 
 
-def get_divisions(cells: list[Cell]):
+def _get_divisions(cells: list[Cell]):
+    """Calculate a list of cells that have divided in the past frame.
+
+    Each element of the list contains a tuple of three names: that of the mother
+    cell, and then the two daughter cells.
+
+    Returns:
+        List of tuples of mother and daughter cell names.
+    """
     divisions = set()
     for cell in cells:
         if "divided" in cell and cell["divided"]:
@@ -257,7 +345,25 @@ def get_divisions(cells: list[Cell]):
     return list(divisions)
 
 
-def contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
+def _contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
+    """Calculate the contact areas between two cells.
+
+    Contact is defined as two faces that are within a set threshold distance
+    from each other.
+
+    Args:
+        cell1: First cell to calculate contact.
+        cell2: Second cell to calculate contact.
+        threshold: Maximum distance between two faces of either cell to consider
+            as contact.
+
+    Returns:
+        A tuple containing for elements:
+            - Total area of cell1 in contact with cell2
+            - Total area of cell2 in contact with cell1
+            - Ratio of area of cell1 in contact with cell2
+            - Ratio of area of cell2 in contact with cell1
+    """
     faces1 = cell1.obj_eval.data.polygons
     faces2 = cell2.obj_eval.data.polygons
 
@@ -281,7 +387,20 @@ def contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
     return contact_areas1, contact_areas2, ratio1, ratio2
 
 
-def contact_areas(cells, threshold=4):
+def _contact_areas(cells, threshold=4):
+    """Calculate the pairwise contact areas between a list of cells.
+
+    Contact is calculated heuristically by first screening cells that are within
+    a certain threshold distance between each other.
+
+    Args:
+        cells: The list of cells to calculate contact areas over.
+        threshold: The maximum distance between cells to consider them for contact.
+
+    Returns:
+        A list of tuples containing pairwise contact areas and contact ratios.
+            See :func:`_contact_area`.
+    """
     coms = [cell.COM() for cell in cells]
     dists = squareform(pdist(coms, "euclidean"))
 
@@ -293,7 +412,7 @@ def contact_areas(cells, threshold=4):
     areas = {cell.name: [] for cell in cells}
     ratios = {cell.name: [] for cell in cells}
     for i, j in zip(pairs[0], pairs[1]):
-        contact_area_i, contact_area_j, ratio_i, ratio_j = contact_area(
+        contact_area_i, contact_area_j, ratio_i, ratio_j = _contact_area(
             cells[i], cells[j]
         )
         areas[cells[i].name].append((cells[j].name, contact_area_i))
@@ -310,6 +429,18 @@ class _all:
 
 
 class DataFlag(Flag):
+    """Enum of data flags used by the :func:`DataExporter` handler.
+
+    Attributes:
+        TIMES: time elapsed since beginning of simulation.
+        DIVISIONS: list of cells that have divided and their daughter cells.
+        MOTION_PATH: list of the current position of each cell.
+        FORCE_PATH: list of the current positions of the associated motion force of each cell.
+        VOLUMES: list of the current volumes of each cell.
+        PRESSURES: list of the current pressures of each cell.
+        CONTACT_AREAS: list of contact areas between each pair of cells.
+    """
+
     TIMES = auto()
     DIVISIONS = auto()
     MOTION_PATH = auto()
@@ -322,10 +453,21 @@ class DataFlag(Flag):
 
 
 class DataExporter(Handler):
+    """Handler for the reporting and saving of data generated during
+    the simulation.
+
+    Attributes:
+        path (str): Path to save .json file of calculated metrics. If empty, statistics
+            are printed instead.
+        options: (DataFlag): Flags of which metrics to calculated and save/print. Flags can be combined by
+            binary OR operation, i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.
+    """
+
     def __init__(self, path="", options: DataFlag = DataFlag.ALL):
         self.path = path
         self.options = options
 
+    @override
     def setup(self, get_cells: Callable[[], list[Cell]], dt):
         super(DataExporter, self).setup(get_cells, dt)
         self.time_start = datetime.now()
@@ -338,13 +480,14 @@ class DataExporter(Handler):
             print(out)
         self.run(bpy.context.scene, bpy.context.evaluated_depsgraph_get())
 
+    @override
     def run(self, scene, depsgraph):
         frame_out = {"frame": scene.frame_current}
 
         if self.options & DataFlag.TIMES:
             frame_out["time"] = (datetime.now() - self.time_start).total_seconds()
         if self.options & DataFlag.DIVISIONS:
-            frame_out["divisions"] = get_divisions(self.get_cells())
+            frame_out["divisions"] = _get_divisions(self.get_cells())
 
         frame_out["cells"] = []
         for cell in self.get_cells():
@@ -361,7 +504,7 @@ class DataExporter(Handler):
                 cell_out["pressure"] = cell.pressure
 
         if self.options & DataFlag.CONTACT_AREAS:
-            areas, ratios = contact_areas(self.get_cells())
+            areas, ratios = _contact_areas(self.get_cells())
             frame_out["contact_areas"] = areas
             frame_out["contact_ratios"] = ratios
 

@@ -1,7 +1,7 @@
-goo.cell
-===============
+goo.utils
+================
 
-.. automodule:: goo.cell
+.. automodule:: goo.utils
    :members:
    :undoc-members:
    :show-inheritance:

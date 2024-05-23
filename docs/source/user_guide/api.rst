@@ -1,0 +1,24 @@
+API
+===========
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   goo.cell
+   goo.division
+   goo.force
+   goo.handler
+   goo.reloader
+   goo.simulator
+   goo.utils
+
+Module contents
+---------------
+
+.. automodule:: goo
+   :members:
+   :undoc-members:
+   :show-inheritance:

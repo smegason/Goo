@@ -38,7 +38,7 @@ for i in range(10):
 # mother.data = model_obj.evaluated_get(dg).copy()
 
 
-def contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
+def _contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
     fs1 = cell1.obj.data.polygons
     fs2 = cell2.obj.data.polygons
 
@@ -59,7 +59,7 @@ def contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
     return ratio1, ratio2
 
 
-def contact_areas(cells, threshold):
+def _contact_areas(cells, threshold):
     coms = [cell.COM() for cell in cells]
     dists = squareform(pdist(coms, "euclidean"))
     print(dists)
@@ -71,12 +71,12 @@ def contact_areas(cells, threshold):
 
     areas = {cell.name: [] for cell in cells}
     for i, j in zip(pairs[0], pairs[1]):
-        ratio_i, ratio_j = contact_area(cells[i], cells[j])
+        ratio_i, ratio_j = _contact_area(cells[i], cells[j])
         areas[cells[i].name].append((cells[j].name, ratio_i))
         areas[cells[j].name].append((cells[i].name, ratio_j))
 
     return areas
 
 
-out = contact_areas(celltype.cells, 2)
+out = _contact_areas(celltype.cells, 2)
 print(out)

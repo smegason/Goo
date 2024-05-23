@@ -8,20 +8,47 @@ from goo.cell import Cell
 from goo.utils import *
 from goo.handler import Handler
 
+from typing_extensions import override
+
 
 class DivisionLogic:
+    """Base class for defining division logic for cells."""
+
     def make_divide(self, mother: Cell) -> tuple[Cell, Cell]:
+        """Divide a mother cell into two daughter cells.
+
+        Args:
+            mother: The mother cell to divide.
+
+        Returns:
+            A tuple containing the two daughter cells that will result from the
+            division.
+
+        Note:
+            The meshes of the daughter should not be updated at this stage.
+            `flush()` must be called to update all cells at once so that they do
+            not interfere with each other.
+        """
         pass
 
     def flush(self):
+        """Finish performing all stored divisions."""
         pass
 
 
 class BisectDivisionLogic(DivisionLogic):
+    """Division logic that uses low-level `bmesh` operations, i.e.
+    `bmesh.ops.bisect_plane` to divide a cell along its major axis.
+
+    Attributes:
+        margin (float): Distance of margin between divided cells.
+    """
+
     def __init__(self, margin=0.025):
         self.margin = margin
         self.to_flush = []
 
+    @override
     def make_divide(self, mother):
         com = mother.COM(local_coords=True)
         axis = mother.major_axis().axis(local_coords=True)
@@ -40,7 +67,26 @@ class BisectDivisionLogic(DivisionLogic):
 
         return mother, daughter
 
-    def _bisect(self, obj_eval, com, axis, inner, margin):
+    def _bisect(
+        self,
+        obj_eval: bpy.types.Object,
+        com: Vector,
+        axis: Axis,
+        inner: bool,
+        margin: float,
+    ):
+        """Bisect a mesh along a plane defined by center of mass and axis.
+
+        Args:
+            obj_eval: The evaluated object.
+            com: The center of mass of the mesh.
+            axis: The major axis of the mesh.
+            inner: Whether to clear inner or outer part of the bisection.
+            margin: The margin used for bisection.
+
+        Returns:
+            The `bmesh` object containing the resulting bisection.
+        """
         bm = bmesh.new()
         bm.from_mesh(obj_eval.to_mesh())
 
@@ -65,6 +111,7 @@ class BisectDivisionLogic(DivisionLogic):
 
         return bm
 
+    @override
     def flush(self):
         for bm, cell in self.to_flush:
             bm.to_mesh(cell.obj.data)
@@ -75,9 +122,14 @@ class BisectDivisionLogic(DivisionLogic):
 
 
 class BooleanDivisionLogic(DivisionLogic):
+    """Division logic that creates a plane of division and applies the Boolean
+    modifier to create a division."""
+
+    # TODO: Update to work with physics.
     def __init__(self):
         pass
 
+    @override
     def make_divide(self, mother: Cell):
 
         plane = self._create_division_plane(
@@ -114,6 +166,7 @@ class BooleanDivisionLogic(DivisionLogic):
 
         return mother, daughter
 
+    @override
     def flush(self):
         pass
 
@@ -142,21 +195,52 @@ class BooleanDivisionLogic(DivisionLogic):
 
 
 class DivisionHandler(Handler):
-    def __init__(self, divider_logic):
-        self.divider_logic = divider_logic()
+    """Handler for managing cell division processes.
 
-    def setup(self, get_cells: Callable[[], list[Cell]], dt):
+    This handler is responsible for managing the division of cells based on the
+    provided division logic. It determines which cells are eligible for division
+    and performs the division process.
+
+    Attributes:
+        division_logic (DivisionLogic): The division logic used to execute cell
+            division.
+    """
+
+    def __init__(self, division_logic):
+        self.division_logic = division_logic()
+
+    @override
+    def setup(self, get_cells: Callable[[], list[Cell]], dt: float):
         super(DivisionHandler, self).setup(get_cells, dt)
         for cell in self.get_cells():
             cell["divided"] = False
         self._cells_to_update = []
 
     def can_divide(self, cell: Cell) -> bool:
+        """Check if a cell is eligible for division.
+
+        This method must be implemented by all subclasses.
+
+        Args:
+            cell: The cell to check.
+
+        Returns:
+            True if the cell can divide, False otherwise.
+        """
         raise NotImplementedError("Subclasses must implement can_divide() method.")
 
     def update_on_divide(self, cell: Cell):
+        """Perform updates after a cell has divided.
+
+        This method can be overridden by subclasses to perform additional updates
+        (e.g. set a property) after a cell has divided.
+
+        Args:
+            cell: The cell that has divided.
+        """
         pass
 
+    @override
     def run(self, scene, depsgraph):
         for cell in self._cells_to_update:
             cell.enable_physics()
@@ -166,7 +250,7 @@ class DivisionHandler(Handler):
 
         for cell in self.get_cells():
             if self.can_divide(cell):
-                mother, daughter = cell.divide(self.divider_logic)
+                mother, daughter = cell.divide(self.division_logic)
                 self.update_on_divide(mother)
                 self.update_on_divide(daughter)
 
@@ -176,21 +260,32 @@ class DivisionHandler(Handler):
         for cell in self._cells_to_update:
             cell.disable_physics()
             cell["divided"] = True
-        self.divider_logic.flush()
+        self.division_logic.flush()
 
 
 class TimeDivisionHandler(DivisionHandler):
-    def __init__(self, divider_logic, mu=10, var=0):
-        super(TimeDivisionHandler, self).__init__(divider_logic)
+    """Division handler that determines eligibility based on
+    time from last divsion.
+
+    Attributes:
+        division_logic (DivisionLogic): see base class.
+        mu (float): Time interval between cell divisions.
+        var (float): Variance in the time interval.
+    """
+
+    def __init__(self, division_logic, mu=10, var=0):
+        super(TimeDivisionHandler, self).__init__(division_logic)
         self.mu = mu
         self.var = var
 
+    @override
     def setup(self, get_cells, dt):
         super(TimeDivisionHandler, self).setup(get_cells, dt)
         for cell in self.get_cells():
             cell["last_division_time"] = 0
 
     # TODO: implement variance
+    @override
     def can_divide(self, cell: Cell):
         time = bpy.context.scene.frame_current * self.dt
         if "last_division_time" not in cell:
@@ -198,15 +293,25 @@ class TimeDivisionHandler(DivisionHandler):
             return False
         return time - cell["last_division_time"] >= self.mu
 
+    @override
     def update_on_divide(self, cell: Cell):
         time = bpy.context.scene.frame_current * self.dt
         cell["last_division_time"] = time
 
 
 class SizeDivisionHandler(DivisionHandler):
-    def __init__(self, divider_logic, threshold=30):
-        super(SizeDivisionHandler, self).__init__(divider_logic)
+    """Division handler that determines eligibility based on
+    size of cell.
+
+    Attributes:
+        division_logic (DivisionLogic): see base class.
+        threshold (float): minimum size of cell able to divide.
+    """
+
+    def __init__(self, division_logic, threshold=30):
+        super(SizeDivisionHandler, self).__init__(division_logic)
         self.threshold = threshold
 
+    @override
     def can_divide(self, cell: Cell):
         return cell.volume() >= self.threshold

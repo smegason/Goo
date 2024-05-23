@@ -108,7 +108,7 @@ class Cell(BlenderObject):
 
     # ----- BASIC FUNCTIONS -----
     @property
-    def obj_eval(self) -> bpy.types.ID.evaluated_get:
+    def obj_eval(self) -> bpy.types.ID:
         """The evaluated object.
 
         Note:

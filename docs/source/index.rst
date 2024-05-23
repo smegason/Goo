@@ -31,7 +31,7 @@ User guide
 .. toctree::
    :maxdepth: 1
    
-   user_guide/modules
+   user_guide/api
 
 Credits and citation
 ======================

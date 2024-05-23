@@ -19,7 +19,7 @@ We would also like to think all the contributors who made Goo possible (in order
 - Charles Dai, Harvard Medical School
 
 Citing goo
-===========
+----------
 
 .. code-block:: bibtex
 
