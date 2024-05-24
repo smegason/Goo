@@ -12,7 +12,9 @@ setup(
     packages=['goo'],
     install_requires=['bpy',
                       'numpy',                     
-                      ],
+                      'scipy', 
+                      'matplotlib', 
+                      'sphinx'],
 
     classifiers=[
         'Development Status :: 1 - Planning',

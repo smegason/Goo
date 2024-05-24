@@ -278,7 +278,8 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span><span class="p">,</span> <span class="n">pdist</span><span class="p">,</span> <span class="n">squareform</span>
-<span class="kn">import</span> <span class="nn">bpy</span><span class="o">,</span> <span class="nn">bmesh</span>
+<span class="kn">import</span> <span class="nn">bpy</span>
+<span class="kn">import</span> <span class="nn">bmesh</span>
 <span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="n">Vector</span>
 <span class="kn">from</span> <span class="nn">goo.cell</span> <span class="kn">import</span> <span class="n">Cell</span>
 
@@ -292,7 +293,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set up the handler.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            get_cells: A function that, when called, retrieves the list of cells that may divide.</span>
+<span class="sd">            get_cells: A function that, when called, </span>
+<span class="sd">                retrieves the list of cells that may divide.</span>
 <span class="sd">            dt: The time step for the simulation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span> <span class="o">=</span> <span class="n">get_cells</span>
@@ -324,9 +326,11 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        freq (int): Number of frames between remeshes.</span>
-<span class="sd">        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`. Disabled if set to 0.</span>
+<span class="sd">        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`. </span>
+<span class="sd">            Disabled if set to 0.</span>
 <span class="sd">        voxel_size (float): Factor to pass to `voxel_remesh()`. Disabled if set to 0.</span>
-<span class="sd">        sphere_factor (float): Factor to pass to Cast to sphere modifier. Disabled if set to 0.</span>
+<span class="sd">        sphere_factor (float): Factor to pass to Cast to sphere modifier. </span>
+<span class="sd">            Disabled if set to 0.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">smooth_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">voxel_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">sphere_factor</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
@@ -759,7 +763,8 @@
 <span class="sd">        TIMES: time elapsed since beginning of simulation.</span>
 <span class="sd">        DIVISIONS: list of cells that have divided and their daughter cells.</span>
 <span class="sd">        MOTION_PATH: list of the current position of each cell.</span>
-<span class="sd">        FORCE_PATH: list of the current positions of the associated motion force of each cell.</span>
+<span class="sd">        FORCE_PATH: list of the current positions of the associated </span>
+<span class="sd">            motion force of each cell.</span>
 <span class="sd">        VOLUMES: list of the current volumes of each cell.</span>
 <span class="sd">        PRESSURES: list of the current pressures of each cell.</span>
 <span class="sd">        CONTACT_AREAS: list of contact areas between each pair of cells.</span>
@@ -786,8 +791,9 @@
 <span class="sd">    Attributes:</span>
 <span class="sd">        path (str): Path to save .json file of calculated metrics. If empty, statistics</span>
 <span class="sd">            are printed instead.</span>
-<span class="sd">        options: (DataFlag): Flags of which metrics to calculated and save/print. Flags can be combined by</span>
-<span class="sd">            binary OR operation, i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.</span>
+<span class="sd">        options: (DataFlag): Flags of which metrics to calculated and save/print. </span>
+<span class="sd">            Flags can be combined by binary OR operation, </span>
+<span class="sd">            i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">DataFlag</span> <span class="o">=</span> <span class="n">DataFlag</span><span class="o">.</span><span class="n">ALL</span><span class="p">):</span>

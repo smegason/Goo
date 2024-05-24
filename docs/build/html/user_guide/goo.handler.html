@@ -368,8 +368,9 @@ the simulation.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>path</strong> (<em>str</em>) – Path to save .json file of calculated metrics. If empty, statistics
 are printed instead.</p></li>
-<li><p><strong>options</strong> – (DataFlag): Flags of which metrics to calculated and save/print. Flags can be combined by
-binary OR operation, i.e. <cite>DataFlag.TIMES | DataFlag.DIVISIONS</cite>.</p></li>
+<li><p><strong>options</strong> – (DataFlag): Flags of which metrics to calculated and save/print.
+Flags can be combined by binary OR operation,
+i.e. <cite>DataFlag.TIMES | DataFlag.DIVISIONS</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
@@ -399,7 +400,8 @@ upon specified events (e.g. post-frame change).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>get_cells</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><em>Cell</em></a><em>]</em><em>]</em>) – A function that, when called, retrieves the list of cells that may divide.</p></li>
+<li><p><strong>get_cells</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><em>Cell</em></a><em>]</em><em>]</em>) – A function that, when called,
+retrieves the list of cells that may divide.</p></li>
 <li><p><strong>dt</strong> – The time step for the simulation.</p></li>
 </ul>
 </dd>
@@ -419,7 +421,8 @@ upon specified events (e.g. post-frame change).</p>
 <li><p><strong>TIMES</strong> – time elapsed since beginning of simulation.</p></li>
 <li><p><strong>DIVISIONS</strong> – list of cells that have divided and their daughter cells.</p></li>
 <li><p><strong>MOTION_PATH</strong> – list of the current position of each cell.</p></li>
-<li><p><strong>FORCE_PATH</strong> – list of the current positions of the associated motion force of each cell.</p></li>
+<li><p><strong>FORCE_PATH</strong> – list of the current positions of the associated
+motion force of each cell.</p></li>
 <li><p><strong>VOLUMES</strong> – list of the current volumes of each cell.</p></li>
 <li><p><strong>PRESSURES</strong> – list of the current pressures of each cell.</p></li>
 <li><p><strong>CONTACT_AREAS</strong> – list of contact areas between each pair of cells.</p></li>
@@ -572,7 +575,8 @@ upon specified events (e.g. post-frame change).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>get_cells</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><em>Cell</em></a><em>]</em><em>]</em>) – A function that, when called, retrieves the list of cells that may divide.</p></li>
+<li><p><strong>get_cells</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><em>Cell</em></a><em>]</em><em>]</em>) – A function that, when called,
+retrieves the list of cells that may divide.</p></li>
 <li><p><strong>dt</strong> – The time step for the simulation.</p></li>
 </ul>
 </dd>
@@ -608,7 +612,8 @@ upon specified events (e.g. post-frame change).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>get_cells</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><em>Cell</em></a><em>]</em><em>]</em>) – A function that, when called, retrieves the list of cells that may divide.</p></li>
+<li><p><strong>get_cells</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><em>Cell</em></a><em>]</em><em>]</em>) – A function that, when called,
+retrieves the list of cells that may divide.</p></li>
 <li><p><strong>dt</strong> (<em>float</em>) – The time step for the simulation.</p></li>
 </ul>
 </dd>
@@ -665,9 +670,11 @@ upon specified events (e.g. post-frame change).</p>
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>freq</strong> (<em>int</em>) – Number of frames between remeshes.</p></li>
-<li><p><strong>smooth_factor</strong> (<em>float</em>) – Factor to pass to <cite>bmesh.ops.smooth_vert</cite>. Disabled if set to 0.</p></li>
+<li><p><strong>smooth_factor</strong> (<em>float</em>) – Factor to pass to <cite>bmesh.ops.smooth_vert</cite>.
+Disabled if set to 0.</p></li>
 <li><p><strong>voxel_size</strong> (<em>float</em>) – Factor to pass to <cite>voxel_remesh()</cite>. Disabled if set to 0.</p></li>
-<li><p><strong>sphere_factor</strong> (<em>float</em>) – Factor to pass to Cast to sphere modifier. Disabled if set to 0.</p></li>
+<li><p><strong>sphere_factor</strong> (<em>float</em>) – Factor to pass to Cast to sphere modifier.
+Disabled if set to 0.</p></li>
 </ul>
 </dd>
 </dl>

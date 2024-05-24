@@ -303,35 +303,57 @@ Goo requires a few additional Python packages that need to be installed directly
 Replace the Blender executable path in the sript and run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">install_dependencies_blender.py</span></code> to install the dependencies.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">site</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="c1"># Define the Blender Python path as a global variable</span>
-<span class="n">BLENDER_PYTHON_PATH</span> <span class="o">=</span> <span class="s2">&quot;/Applications/Blender.app/Contents/Resources/3.3/python/bin/python3.10&quot;</span>  <span class="c1"># here for MacOS</span>
+<span class="n">BL_PYTHON_PATH</span> <span class="o">=</span> <span class="s2">&quot;/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10&quot;</span>
 
 
 <span class="k">def</span> <span class="nf">get_blender_python_path</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">BL_PYTHON_PATH</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;Python interpreter not found at: &quot;</span> <span class="o">+</span> <span class="n">BL_PYTHON_PATH</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">BL_PYTHON_PATH</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">BLENDER_PYTHON_PATH</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;Blender&#39;s Python interpreter not found at: &quot;</span> <span class="o">+</span> <span class="n">BLENDER_PYTHON_PATH</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">BLENDER_PYTHON_PATH</span>
+
+<span class="k">def</span> <span class="nf">list_installed_packages</span><span class="p">(</span><span class="n">python_executable</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;list&quot;</span><span class="p">],</span> 
+                                <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Currently installed packages:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error listing installed packages:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">raise</span>
 
 
 <span class="k">def</span> <span class="nf">install_package</span><span class="p">(</span><span class="n">python_executable</span><span class="p">,</span> <span class="n">package</span><span class="p">):</span>
     <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;ensurepip&quot;</span><span class="p">])</span>
     <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;--upgrade&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">])</span>
-    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">package</span><span class="p">])</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">package</span><span class="p">,</span> <span class="s2">&quot;--user&quot;</span><span class="p">])</span>
 
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">blender_python</span> <span class="o">=</span> <span class="n">get_blender_python_path</span><span class="p">()</span>
-        <span class="n">packages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;scipy&quot;</span><span class="p">,</span> <span class="s2">&quot;numpy&quot;</span><span class="p">,</span> <span class="s2">&quot;pandas&quot;</span><span class="p">,</span> <span class="s2">&quot;matplotlib&quot;</span><span class="p">,</span> <span class="s2">&quot;sphinx&quot;</span><span class="p">,</span> <span class="s2">&quot;sphinx_rtd_theme&quot;</span><span class="p">,</span> <span class="s2">&quot;sphinx_copybutton&quot;</span><span class="p">,</span> <span class="s2">&quot;furo&quot;</span><span class="p">,</span> <span class="s2">&quot;typing_extensions&quot;</span><span class="p">]</span>
+        <span class="n">list_installed_packages</span><span class="p">(</span><span class="n">blender_python</span><span class="p">)</span>
+
+        <span class="c1"># &quot;numpy&quot;, </span>
+        <span class="c1"># &quot;pandas&quot;, </span>
+        <span class="c1"># &quot;matplotlib&quot;, </span>
+        <span class="c1"># scipy&quot;, </span>
+
+        <span class="n">packages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sphinx&quot;</span><span class="p">,</span> 
+                    <span class="s2">&quot;sphinx_copybutton&quot;</span><span class="p">,</span> 
+                    <span class="s2">&quot;furo&quot;</span><span class="p">,</span> 
+                    <span class="s2">&quot;typing_extensions&quot;</span><span class="p">]</span>
 
         <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Installing </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> using </span><span class="si">{</span><span class="n">blender_python</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">install_package</span><span class="p">(</span><span class="n">blender_python</span><span class="p">,</span> <span class="n">package</span><span class="p">)</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dependencies have been successfully installed in Blender&#39;s Python environment.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dependencies have been successfully installed in&quot;</span>
+              <span class="s2">&quot;Blender&#39;s Python environment.&quot;</span><span class="p">)</span>
 
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;An error occurred: &quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>

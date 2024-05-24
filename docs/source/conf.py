@@ -11,10 +11,9 @@
 #
 import os
 import sys
-import sphinx_rtd_theme
 
 # Blender python interpreter
-BLENDER_PYTHON_PATH = "/Applications/Blender.app/Contents/Resources/3.3/python/bin/python3.10"
+BL_PYTHON_PATH = "/Applications/Blender.app/Contents/Resources/3.3/python/bin/python3.10"
 
 sys.path.insert(0, os.path.abspath("../../scripts/modules"))
 
@@ -56,17 +55,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 #
 # html_theme = "sphinx_rtd_theme"
 html_theme = "furo"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-'''html_theme_options = {
-    # "logo_only": True,
-    # "style_nav_header_background": "#f2f2f2",
-    # "collapse_navigation": False,
-    # "sticky_navigation": True,
-    # "navigation_depth": 3,
-    # "display_version": True,
-    # "prev_next_buttons_location": "bottom",
-    # "style_external_links": True,
-}'''
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

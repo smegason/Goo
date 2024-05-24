@@ -15,18 +15,18 @@ Adhering cell doublets
 ------------------------
 
 
-.. literalinclude:: ../../../simulations/doublets_adhesion.py
+.. literalinclude:: ../examples/doublets_adhesion.py
    :language: python
 
 
 Randomly moving cells
 ------------------------
 
-.. literalinclude:: ../../../simulations/random_cell_mixing.py
+.. literalinclude:: ../examples/random_cell_mixing.py
    :language: python
 
 Developing tissue
 ------------------------
 
-.. literalinclude:: ../../../simulations/2.4 - test_division_physics.py
+.. literalinclude:: ../examples/2.4 - test_division_physics.py
    :language: python

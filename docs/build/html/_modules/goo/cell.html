@@ -272,12 +272,13 @@
 <span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="kn">import</span> <span class="nn">bpy</span><span class="o">,</span> <span class="nn">bmesh</span>
+<span class="kn">import</span> <span class="nn">bpy</span>
+<span class="kn">import</span> <span class="nn">bmesh</span>
 <span class="kn">from</span> <span class="nn">bpy.types</span> <span class="kn">import</span> <span class="n">Modifier</span><span class="p">,</span> <span class="n">ClothModifier</span><span class="p">,</span> <span class="n">CollisionModifier</span>
-<span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="n">Vector</span>
 
-<span class="kn">from</span> <span class="nn">goo.force</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">goo.utils</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">goo.force</span> <span class="kn">import</span> <span class="o">*</span> 
+<span class="kn">from</span> <span class="nn">goo.utils</span> <span class="kn">import</span> <span class="o">*</span> 
 
 
 <div class="viewcode-block" id="Cell">
@@ -387,9 +388,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The evaluated object.</span>
 
 <span class="sd">        Note:</span>
-<span class="sd">            `Blender API Documentation &gt; evaluated_get(depsgraph)`__</span>
-
-<span class="sd">        __ https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get</span>
+<span class="sd">            See the `Blender API Documentation for evaluated_get(depsgraph)</span>
+<span class="sd">            &lt;https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get&gt;`__.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dg</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">evaluated_depsgraph_get</span><span class="p">()</span>
         <span class="n">obj_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">evaluated_get</span><span class="p">(</span><span class="n">dg</span><span class="p">)</span>
@@ -401,7 +401,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the vertices of the mesh representation of the cell.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            local_coords: if `True`, coordinates are returned in local object space rather than world space.</span>
+<span class="sd">            local_coords: if `True`, coordinates are returned in local object space </span>
+<span class="sd">            rather than world space.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of coordinates of vertices.</span>
@@ -509,8 +510,8 @@
 <span class="sd">            A tuple of two daughter cells, resulting from the division of the</span>
 <span class="sd">            mother cell.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># TODO: rewrite code to make it clearer that there are two daughter cells splitting</span>
-        <span class="c1"># from a mother cell.</span>
+        <span class="c1"># TODO: rewrite code to make it clearer that there are two daughter </span>
+        <span class="c1"># cells splitting from a mother cell.</span>
         <span class="n">mother</span><span class="p">,</span> <span class="n">daughter</span> <span class="o">=</span> <span class="n">division_logic</span><span class="o">.</span><span class="n">make_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mother</span><span class="o">.</span><span class="n">celltype</span><span class="p">:</span>
             <span class="n">mother</span><span class="o">.</span><span class="n">celltype</span><span class="o">.</span><span class="n">add_cell</span><span class="p">(</span><span class="n">daughter</span><span class="p">)</span>

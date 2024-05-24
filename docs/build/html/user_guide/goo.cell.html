@@ -504,7 +504,7 @@ collections of effectors.</p>
 <dd><p>The evaluated object.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><a class="reference external" href="https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get">Blender API Documentation &gt; evaluated_get(depsgraph)</a></p>
+<p>See the <a class="reference external" href="https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get">Blender API Documentation for evaluated_get(depsgraph)</a>.</p>
 </div>
 </dd></dl>
 
@@ -593,7 +593,10 @@ properties for the object.</p>
 <dd><p>Returns the vertices of the mesh representation of the cell.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>local_coords</strong> (<em>bool</em>) – if <cite>True</cite>, coordinates are returned in local object space rather than world space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>local_coords</strong> (<em>bool</em>) – if <cite>True</cite>, coordinates are returned in local object space</p></li>
+<li><p><strong>space.</strong> (<em>rather than world</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>List of coordinates of vertices.</p>

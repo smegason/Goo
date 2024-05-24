@@ -112,11 +112,8 @@ class Cell(BlenderObject):
         """The evaluated object.
 
         Note:
-            `Blender API Documentation > evaluated_get(depsgraph)`__
-        
-        __ 
-        https://docs.blender.org/api/current/bpy.types.ID.html?
-        highlight=evaluated_get#bpy.types.ID.evaluated_get
+            See the `Blender API Documentation for evaluated_get(depsgraph)
+            <https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get>`__.
         """
         dg = bpy.context.evaluated_depsgraph_get()
         obj_eval = self.obj.evaluated_get(dg)
