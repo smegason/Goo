@@ -13,7 +13,6 @@ setup(
     install_requires=['bpy',
                       'numpy',                     
                       'scipy', 
-                      'matplotlib', 
                       'sphinx'],
 
     classifiers=[
