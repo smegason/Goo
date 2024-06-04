@@ -280,29 +280,3 @@ class ForceCollection:
                 ForceCollection._global_forces.collection
             )
         return ForceCollection._global_forces
-
-
-class Boundary(BlenderObject):
-    """A boundary for cells."""
-
-    def setup_physics(self):
-        """Set up physics for the boundary."""
-        BoundaryCollisionConstructor().construct(self.obj)
-
-
-def create_boundary(loc: tuple, size: float, mesh: str = "icosphere"):
-    """Create a boundary.
-
-    Args:
-        loc: Center of the boundary.
-        size: Radius of the boundary.
-        mesh: Shape fo the boundary.
-    """
-
-    obj = create_mesh("Boundary", loc, mesh=mesh, size=size)
-    bpy.context.scene.collection.objects.link(obj)
-
-    boundary = Boundary(obj)
-    boundary.setup_physics()
-    boundary.hide()
-    return boundary
