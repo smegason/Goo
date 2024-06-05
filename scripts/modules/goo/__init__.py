@@ -7,6 +7,7 @@ from .force import create_force, create_turbulence
 from .division import *
 from .handler import *
 from .boundary import *
+from .molecule import *
 
 sys.path.append(site.getusersitepackages())
 
