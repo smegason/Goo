@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Example scripts" href="example_scripts.html" /><link rel="prev" title="Goo" href="../index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Learning resources" href="learning_resources.html" /><link rel="prev" title="Goo" href="../index.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
         <title>Installation - Goo documentation</title>
@@ -217,8 +217,9 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.cell.html">goo.cell</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.force.html">goo.force</a></li>
@@ -277,13 +278,23 @@
         <article role="main" id="furo-main-content">
           <section id="installation">
 <span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
+<section id="download-blender">
+<h2>Download Blender<a class="headerlink" href="#download-blender" title="Link to this heading">¶</a></h2>
 <p>Goo runs within Blender, so you will first need to download Blender 3.6 LTS from <a class="reference external" href="https://www.blender.org/download/lts/3-6/">here</a>.
-The package was developed under Blender 3.6 LTS, so we recommend using this version. We aim to maintain Goo for future Blender LTS versions but might have a lag form their releases.</p>
+The package was developed under Blender 3.6 LTS, so we recommend using this version. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases.</p>
 <p>Once you have Blender installed:</p>
-<ol class="arabic simple">
-<li><p>Download the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>.</p></li>
-<li><p>In Blender, Edit &gt; Preferences &gt; File Paths &gt; Scripts: add &lt;your_root_path&gt;/Goo/scripts</p></li>
+<ol class="arabic">
+<li><p>Download the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>. Download the zip file of the <a class="reference external" href="https://github.com/smegason/Goo/releases/latest">latest release</a>, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>Goo
+<span class="nb">cd</span><span class="w"> </span>Goo
+wget<span class="w"> </span>&lt;Goo-latest-release&gt;.tar.gz
+tar<span class="w"> </span>-xvf<span class="w"> </span>&lt;Goo-latest-release&gt;.tar.gz
+</pre></div>
+</div>
+</li>
+<li><p>In Blender, go to <cite>Edit &gt; Preferences &gt; File Paths &gt; Scripts</cite> and add <cite>&lt;your_root_path&gt;/Goo/scripts</cite>.</p></li>
 </ol>
+</section>
 <section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
 <ul class="simple">
@@ -371,12 +382,12 @@ Replace the Blender executable path in the sript and run <code class="docutils l
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="example_scripts.html">
+          <a class="next-page" href="learning_resources.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Example scripts</div>
+                <div class="title">Learning resources</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -422,6 +433,7 @@ Replace the Blender executable path in the sript and run <code class="docutils l
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#download-blender">Download Blender</a></li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#install-dependencies-in-blender">Install dependencies in Blender</a></li>
 </ul>
