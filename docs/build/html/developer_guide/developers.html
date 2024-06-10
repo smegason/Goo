@@ -192,7 +192,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -217,8 +217,9 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.cell.html">goo.cell</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.force.html">goo.force</a></li>
@@ -269,7 +270,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -277,6 +278,8 @@
         <article role="main" id="furo-main-content">
           <section id="developer-s-guide">
 <h1>Developer’s guide<a class="headerlink" href="#developer-s-guide" title="Link to this heading">¶</a></h1>
+<section id="install-libraries">
+<h2>Install libraries<a class="headerlink" href="#install-libraries" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>Fork the github repository</p></li>
 <li><p>Set-up environment</p></li>
@@ -291,6 +294,53 @@
 <li><p>Install the Blender <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development">developer’s extension</a> developed by Jacques Lucke.</p></li>
 <li><p>Blender test suites will be implemented in the future. In the meantime, create a PR and the Goo team wil review it. Feel free to reach out to sean_megason AT hms.harvard.edu to get involved.</p></li>
 </ol>
+</section>
+<section id="update-the-documentation">
+<h2>Update the documentation<a class="headerlink" href="#update-the-documentation" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Install dependencies about outlined above</p></li>
+<li><p>In your local Goo codebase</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Modify source files: make modifications to the source .rst files or to the codebase. Code documentation follows <a class="reference external" href="https://www.sphinx-doc.org/en/master/">sphynx</a> syntax.</p></li>
+</ol>
+<p>4. Running the build
+Due to some dependencies from Blender (eg <cite>bpy</cite>), the build has to be ran from Blender using its Python interpreter. The docs directory contains a modified <cite>Makefile</cite> so that it manually uses Blender executable. It should be ready-to-use for MacOS users. Other platform users should modify the ‘SPHINXBUILD’ variable so that it points towards a Blender executable file path in <cite>Makefile</cite>.</p>
+<div class="highlight-make notranslate"><div class="highlight"><pre><span></span><span class="c"># Minimal makefile for Sphinx documentation</span>
+<span class="c">#</span>
+
+<span class="c"># You can set these variables from the command line, and also</span>
+<span class="c"># from the environment for the first two.</span>
+<span class="nv">SPHINXOPTS</span><span class="w">    </span><span class="o">?=</span>
+<span class="c"># SPHINXBUILD   ?= sphinx-build</span>
+<span class="nv">SPHINXBUILD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/Applications/Blender.app/Contents/MacOS/Blender<span class="w"> </span>--background<span class="w"> </span>--python<span class="w"> </span>blender_sphinx.py<span class="w"> </span>--
+<span class="nv">SOURCEDIR</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nb">source</span>
+<span class="nv">BUILDDIR</span><span class="w">      </span><span class="o">=</span><span class="w"> </span>build
+
+<span class="c"># Put it first so that &quot;make&quot; without argument is like &quot;make help&quot;.</span>
+<span class="nf">help</span><span class="o">:</span>
+<span class="w">	</span>@<span class="k">$(</span>SPHINXBUILD<span class="k">)</span><span class="w"> </span>-M<span class="w"> </span><span class="nb">help</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>SOURCEDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>BUILDDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">$(</span>SPHINXOPTS<span class="k">)</span><span class="w"> </span><span class="k">$(</span>O<span class="k">)</span>
+
+<span class="nf">.PHONY</span><span class="o">:</span><span class="w"> </span><span class="n">help</span> <span class="n">Makefile</span>
+
+<span class="c"># Catch-all target: route all unknown targets to Sphinx using the new</span>
+<span class="c"># &quot;make mode&quot; option.  $(O) is meant as a shortcut for $(SPHINXOPTS).</span>
+<span class="nf">%</span><span class="o">:</span><span class="w"> </span><span class="n">Makefile</span>
+<span class="w">	</span>@<span class="k">$(</span>SPHINXBUILD<span class="k">)</span><span class="w"> </span>-M<span class="w"> </span><span class="nv">$@</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>SOURCEDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>BUILDDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">$(</span>SPHINXOPTS<span class="k">)</span><span class="w"> </span><span class="k">$(</span>O<span class="k">)</span>
+
+<span class="nf">api</span><span class="o">:</span>
+<span class="w">	</span>sphinx-apidoc<span class="w"> </span>-e<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>SOURCEDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>../scripts/modules/
+</pre></div>
+</div>
+<p>Then, running the build will update the documentation in the <cite>/build</cite> directory.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>clean<span class="w"> </span><span class="c1"># clean up the build directory</span>
+make<span class="w"> </span>html<span class="w"> </span><span class="c1"># populate the build directory</span>
+</pre></div>
+</div>
+</section>
 </section>
 
         </article>
@@ -336,8 +386,28 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Developer’s guide</a><ul>
+<li><a class="reference internal" href="#install-libraries">Install libraries</a></li>
+<li><a class="reference internal" href="#update-the-documentation">Update the documentation</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
