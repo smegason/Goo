@@ -6,7 +6,7 @@ from datetime import datetime
 import json
 
 import numpy as np
-from scipy.spatial.distance import cdist, pdist, squareform
+# from scipy.spatial.distance import cdist, pdist, squareform
 import bpy
 import bmesh
 from mathutils import Vector
