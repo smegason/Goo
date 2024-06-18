@@ -1,6 +1,5 @@
 from typing import Optional
 from typing_extensions import override
-
 import numpy as np
 import math
 from scipy.ndimage import convolve
@@ -8,7 +7,7 @@ from goo.utils import *
 
 
 class Molecule(): 
-    """A molecule involved in the reaction-diffusion system.
+    """A molecule involved in the diffusion system. 
 
     Args:
         concentration (float): The initial concentration of the molecule.
