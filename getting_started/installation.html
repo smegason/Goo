@@ -219,7 +219,8 @@
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1"><a class="reference internal" href="blender_on_o2.html">Running Goo on O2</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.cell.html">goo.cell</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.force.html">goo.force</a></li>
@@ -278,13 +279,11 @@
         <article role="main" id="furo-main-content">
           <section id="installation">
 <span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
-<section id="download-blender">
-<h2>Download Blender<a class="headerlink" href="#download-blender" title="Link to this heading">¶</a></h2>
 <p>Goo runs within Blender, so you will first need to download Blender 3.6 LTS from <a class="reference external" href="https://www.blender.org/download/lts/3-6/">here</a>.
 The package was developed under Blender 3.6 LTS, so we recommend using this version. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases.</p>
 <p>Once you have Blender installed:</p>
 <ol class="arabic">
-<li><p>Download the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>. Download the zip file of the <a class="reference external" href="https://github.com/smegason/Goo/releases/latest">latest release</a>, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:</p>
+<li><p>Download the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>. Download the zip file of the latest release, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>Goo
 <span class="nb">cd</span><span class="w"> </span>Goo
 wget<span class="w"> </span>&lt;Goo-latest-release&gt;.tar.gz
@@ -292,9 +291,8 @@ tar<span class="w"> </span>-xvf<span class="w"> </span>&lt;Goo-latest-release&gt
 </pre></div>
 </div>
 </li>
-<li><p>In Blender, go to <cite>Edit &gt; Preferences &gt; File Paths &gt; Scripts</cite> and add <cite>&lt;your_root_path&gt;/Goo/scripts</cite>.</p></li>
+<li><p>In Blender, go to Edit &gt; Preferences &gt; File Paths &gt; Scripts: add <cite>&lt;your_root_path&gt;/Goo/scripts</cite>.</p></li>
 </ol>
-</section>
 <section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
 <ul class="simple">
@@ -308,72 +306,40 @@ tar<span class="w"> </span>-xvf<span class="w"> </span>&lt;Goo-latest-release&gt
 </ul>
 </section>
 <section id="install-dependencies-in-blender">
-<h2>Install dependencies in Blender<a class="headerlink" href="#install-dependencies-in-blender" title="Link to this heading">¶</a></h2>
+<h2>Install Dependencies in Blender<a class="headerlink" href="#install-dependencies-in-blender" title="Link to this heading">¶</a></h2>
 <p>Blender comes with its own Python interpreter, which is isolated from the system’s Python environment.
-Goo requires a few additional Python packages that need to be installed directly into Blender’s Python environment.
-Replace the Blender executable path in the sript and run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">install_dependencies_blender.py</span></code> to install the dependencies.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">subprocess</span>
-<span class="kn">import</span> <span class="nn">site</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-
-<span class="c1"># Define the Blender Python path as a global variable</span>
-<span class="n">BL_PYTHON_PATH</span> <span class="o">=</span> <span class="s2">&quot;/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10&quot;</span>
-
-
-<span class="k">def</span> <span class="nf">get_blender_python_path</span><span class="p">():</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">BL_PYTHON_PATH</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;Python interpreter not found at: &quot;</span> <span class="o">+</span> <span class="n">BL_PYTHON_PATH</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">BL_PYTHON_PATH</span>
-
-
-<span class="k">def</span> <span class="nf">list_installed_packages</span><span class="p">(</span><span class="n">python_executable</span><span class="p">):</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;list&quot;</span><span class="p">],</span> 
-                                <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Currently installed packages:&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error listing installed packages:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
-        <span class="k">raise</span>
-
-
-<span class="k">def</span> <span class="nf">install_package</span><span class="p">(</span><span class="n">python_executable</span><span class="p">,</span> <span class="n">package</span><span class="p">):</span>
-    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;ensurepip&quot;</span><span class="p">])</span>
-    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;--upgrade&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">])</span>
-    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="n">python_executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">package</span><span class="p">,</span> <span class="s2">&quot;--user&quot;</span><span class="p">])</span>
-
-
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">blender_python</span> <span class="o">=</span> <span class="n">get_blender_python_path</span><span class="p">()</span>
-        <span class="n">list_installed_packages</span><span class="p">(</span><span class="n">blender_python</span><span class="p">)</span>
-
-        <span class="c1"># &quot;numpy&quot;, </span>
-        <span class="c1"># &quot;pandas&quot;, </span>
-        <span class="c1"># &quot;matplotlib&quot;, </span>
-        <span class="c1"># scipy&quot;, </span>
-
-        <span class="n">packages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sphinx&quot;</span><span class="p">,</span> 
-                    <span class="s2">&quot;sphinx_copybutton&quot;</span><span class="p">,</span> 
-                    <span class="s2">&quot;furo&quot;</span><span class="p">,</span> 
-                    <span class="s2">&quot;typing_extensions&quot;</span><span class="p">]</span>
-
-        <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">packages</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Installing </span><span class="si">{</span><span class="n">package</span><span class="si">}</span><span class="s2"> using </span><span class="si">{</span><span class="n">blender_python</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">install_package</span><span class="p">(</span><span class="n">blender_python</span><span class="p">,</span> <span class="n">package</span><span class="p">)</span>
-
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dependencies have been successfully installed in&quot;</span>
-              <span class="s2">&quot;Blender&#39;s Python environment.&quot;</span><span class="p">)</span>
-
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;An error occurred: &quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
+Goo requires a few additional Python packages that need to be installed directly into Blender’s Python environment.</p>
+<p>To install Goo’s dependencies:</p>
+<ol class="arabic">
+<li><p>Find the paths of the Blender executable and its Python interpreter.</p>
+<p>For macOS, it is usually in the Applications folder, e.g., <cite>/Applications/Blender.app/Contents/MacOS/Blender</cite> and <cite>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10</cite>. For Windows, it is usually in the Program Files folder.</p>
+</li>
+<li><p>Create a new environment using Blender’s Python interpreter:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>blender_venv
 </pre></div>
 </div>
+</li>
+<li><p>Activate the environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>blender_venv/bin/activate
+</pre></div>
+</div>
+</li>
+<li><p>Install the dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>setuptools<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>sphinx<span class="w"> </span>sphinx_copybutton<span class="w"> </span>furo<span class="w"> </span>typing_extensions
+</pre></div>
+</div>
+</li>
+<li><p>Check that the dependencies are installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>list
+</pre></div>
+</div>
+</li>
+<li><p>Launch Blender:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/MacOS/Blender
+</pre></div>
+</div>
+</li>
+</ol>
 </section>
 </section>
 
@@ -433,9 +399,8 @@ Replace the Blender executable path in the sript and run <code class="docutils l
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
-<li><a class="reference internal" href="#download-blender">Download Blender</a></li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li><a class="reference internal" href="#install-dependencies-in-blender">Install dependencies in Blender</a></li>
+<li><a class="reference internal" href="#install-dependencies-in-blender">Install Dependencies in Blender</a></li>
 </ul>
 </li>
 </ul>
