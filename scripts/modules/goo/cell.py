@@ -236,7 +236,7 @@ class Cell(BlenderObject):
 
         self.loc = com
 
-    def remesh(self, voxel_size: float = 0.25, smooth: bool = True):
+    def remesh(self, voxel_size: float = 0.8, smooth: bool = False):
         """Remesh the underlying mesh representation of the cell.
 
         Remeshing is done using the built-in `voxel_remesh()`.
@@ -677,7 +677,7 @@ class CellType:
 
         mat = create_material(f"{name}_material", color=color) if color else None
         cell = Cell(obj, mat)
-        # cell.remesh()
+        cell.remesh()
 
         # enable physics for cell
         if physics_constructor is None:

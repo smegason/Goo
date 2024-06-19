@@ -56,7 +56,7 @@ class RemeshHandler(Handler):
             Disabled if set to 0.
     """
 
-    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.25, sphere_factor=0):
+    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.8, sphere_factor=0):
         self.freq = freq
         self.smooth_factor = smooth_factor
         self.voxel_size = voxel_size
@@ -97,6 +97,7 @@ class RemeshHandler(Handler):
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
 
+    # TODO: remove this method
     def _cast_to_sphere(self, cell, factor):
         with bpy.context.temp_override(active_object=cell.obj, object=cell.obj):
             cast_modifier = cell.obj.modifiers.new(name="Cast", type="CAST")
