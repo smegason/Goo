@@ -1,4 +1,4 @@
-.. _installation:
+.. _blender_on_O2:
 
 Running Goo on O2
 ====================

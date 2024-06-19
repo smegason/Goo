@@ -219,6 +219,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.cell.html">goo.cell</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.division.html">goo.division</a></li>
@@ -340,6 +341,13 @@ Due to some dependencies from Blender (eg <cite>bpy</cite>), the build has to be
 make<span class="w"> </span>html<span class="w"> </span><span class="c1"># populate the build directory</span>
 </pre></div>
 </div>
+<p>5. Push the <cite>docs/build/html`</cite> directory to the <cite>gh-pages</cite> branch
+<code class="docutils literal notranslate"><span class="pre">`bash</span>
+<span class="pre">cd</span> <span class="pre">docs/build/html</span>
+<span class="pre">git</span> <span class="pre">add</span> <span class="pre">.</span>
+<span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-m</span> <span class="pre">&quot;Update</span> <span class="pre">docs&quot;</span>
+<span class="pre">git</span> <span class="pre">push</span> <span class="pre">-f</span> <span class="pre">origin</span> <span class="pre">HEAD:gh-pages</span>
+<span class="pre">`</span></code></p>
 </section>
 </section>
 

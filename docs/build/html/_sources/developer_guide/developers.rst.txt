@@ -45,3 +45,11 @@ Then, running the build will update the documentation in the `/build` directory.
 
     make clean # clean up the build directory
     make html # populate the build directory 
+
+5. Push the `docs/build/html`` directory to the `gh-pages` branch
+```bash
+cd docs/build/html
+git add .
+git commit -m "Update docs"
+git push -f origin HEAD:gh-pages
+```
