@@ -51,6 +51,5 @@ Then, running the build will update the documentation in the `/build` directory.
 cd docs/build/html
 git add .
 git commit -m "Update docs"
-git remote add origin
-git push -f origin gh-pages
+git push -f origin HEAD:gh-pages
 ```
