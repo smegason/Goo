@@ -11,14 +11,10 @@ import bpy
 import bmesh
 from mathutils import Vector
 from goo.cell import Cell
-from goo.molecule import Voxel
 
 
 class Handler:
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_voxels: Callable[[], list[Voxel]], 
-              dt: float):
+    def setup(self, get_cells: Callable[[], list[Cell]], dt: float):
         """Set up the handler.
 
         Args:
@@ -27,7 +23,6 @@ class Handler:
             dt: The time step for the simulation.
         """
         self.get_cells = get_cells
-        self.get_voxels = get_voxels
         self.dt = dt
 
     def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
@@ -42,7 +37,7 @@ class Handler:
         """
         raise NotImplementedError("Subclasses must implement run() method.")
 
-
+# TODO: make voxel_size the same for remesh function and remesh handler
 # TODO: remeshing seems to interfere with motion
 class RemeshHandler(Handler):
     """Handler for remeshing cells at given frequencies.
@@ -56,7 +51,7 @@ class RemeshHandler(Handler):
             Disabled if set to 0.
     """
 
-    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.8, sphere_factor=0):
+    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.65, sphere_factor=0):
         self.freq = freq
         self.smooth_factor = smooth_factor
         self.voxel_size = voxel_size
@@ -97,7 +92,6 @@ class RemeshHandler(Handler):
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
 
-    # TODO: remove this method
     def _cast_to_sphere(self, cell, factor):
         with bpy.context.temp_override(active_object=cell.obj, object=cell.obj):
             cast_modifier = cell.obj.modifiers.new(name="Cast", type="CAST")
@@ -161,11 +155,8 @@ class GrowthPIDHandler(Handler):
         self.target_volume = target_volume
 
     @override
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_voxels: Callable[[], list[Voxel]], 
-              dt):
-        super(GrowthPIDHandler, self).setup(get_cells, get_voxels, dt)
+    def setup(self, get_cells: Callable[[], list[Cell]], dt):
+        super(GrowthPIDHandler, self).setup(get_cells, dt)
         for cell in self.get_cells():
             self.initialize_PID(cell)
 
@@ -282,41 +273,6 @@ class RandomMotionHandler(Handler):
             cell.move_towards(dir)
 
 
-"""Possible molecules by which to color voxels."""
-ColorizerVoxel = Enum("ColorizerVoxel", ["MOL_A", "MOL_B", "MIXED"])
-
-
-class ReactionDiffusionHandler(Handler): 
-    def __init__(self, colorizer: ColorizerVoxel = ColorizerVoxel.MOL_A):
-        self.colorizer = colorizer
-
-    @override
-    def run(self, scene, depsgraph):
-
-        if self.get_voxels(): 
-            # Retrieve concentration values based on the chosen colorizer
-            if self.colorizer == ColorizerVoxel.MOL_A:
-                conc_values = [voxel.conc[0] for voxel in self.get_voxels()]
-            elif self.colorizer == ColorizerVoxel.MOL_B:
-                conc_values = [voxel.conc[1] for voxel in self.get_voxels()]
-            elif self.colorizer == ColorizerVoxel.MIXED:
-                conc_values = [(voxel.conc[0] + voxel.conc[1]) / 2 for voxel in self.get_voxels()]
-            else:
-                raise ValueError("Colorizer must be one of MOL_A, MOL_B, or MIXED.")
-
-            # Normalize concentration values
-            conc_values = np.array(conc_values)
-            conc_values = (conc_values - np.min(conc_values)) / max(np.max(conc_values) - np.min(conc_values), 1)
-
-            # Recolor voxels based on concentration values
-            red = Vector((1.0, 0.0, 0.0))
-            blue = Vector((0.0, 0.0, 1.0))
-
-            for voxel, conc in zip(self.get_voxels(), conc_values):
-                color = blue.lerp(red, conc)
-                voxel.recolor(color)
-
-
 """Possible properties by which cells are colored."""
 Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM"])
 
@@ -357,7 +313,7 @@ class ColorizeHandler(Handler):
 
         for cell, p in zip(self.get_cells(), ps):
             color = blue.lerp(red, p)
-            cell.recolor(color)
+            cell.recolor(tuple(color))
 
 
 class SceneExtensionHandler(Handler):
@@ -469,7 +425,7 @@ def _contact_areas(cells, threshold=4):
         ratios[cells[j].name].append((cells[i].name, ratio_j))
 
     return areas, ratios
-    
+
 
 class _all:
     def __get__(self, instance, cls):
