@@ -69,7 +69,7 @@ def create_mesh(
     name,
     loc,
     mesh="icosphere",
-    size=1,
+    size=1.5,
     rotation=(0, 0, 0),
     scale=(1, 1, 1),
     subdivisions=2,
@@ -257,13 +257,13 @@ class ClothConstructor(ModConstructor):
         mod.settings.pressure_factor = 2
         mod.settings.fluid_density = 1.05
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 5
+        mod.collision_settings.collision_quality = 6
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
         mod.collision_settings.friction = 0
-        mod.collision_settings.self_distance_min = 0.005
-        mod.collision_settings.distance_min = 0.005
+        mod.collision_settings.self_distance_min = 0.01
+        mod.collision_settings.distance_min = 0.01
         mod.collision_settings.self_impulse_clamp = 0
 
 
@@ -342,13 +342,14 @@ class SubsurfConstructor(ModConstructor):
         mod.render_levels = 1
 
 
+# not stable
 class RemeshConstructor(ModConstructor):
     name = "Remesh"
     type = "REMESH"
 
     def setup_mod(self, mod: bpy.types.RemeshModifier):
         mod.mode = "VOXEL"
-        mod.voxel_size = 0.25
+        mod.voxel_size = 0.5
         mod.adaptivity = 0
         mod.use_remove_disconnected = True
         mod.use_smooth_shade = True

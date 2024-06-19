@@ -5,13 +5,11 @@ import bpy
 
 from goo.handler import Handler
 from goo.cell import CellType
-from goo.molecule import ReactionDiffusionSystem
 
 
 class Simulator:
-    def __init__(self, celltypes=[], systems=[], physics_dt=1):
+    def __init__(self, celltypes=[], physics_dt=1):
         self.celltypes = celltypes
-        self.systems = systems
         self.physics_dt = physics_dt
         self.addons = ["add_mesh_extra_objects"]
 
@@ -84,12 +82,6 @@ class Simulator:
     def add_celltypes(self, celltypes):
         self.celltypes.extend(celltypes)
 
-    def add_system(self, system):
-        self.systems.append(system)
-
-    def add_systems(self, systems):
-        self.systems.extend(systems)
-
     def get_cells_func(self, celltypes=None):
         celltypes = celltypes if celltypes is not None else self.celltypes
 
@@ -97,31 +89,14 @@ class Simulator:
             return [cell for celltype in celltypes for cell in celltype.cells]
 
         return get_cells
-    
-    def get_voxels_func(self, systems=None):
-        # Assign self.systems if systems is None
-        systems = systems if systems is not None else self.systems 
 
-        def get_voxels():
-            return [voxel for system in systems for voxel in system.voxels]
-
-        return get_voxels
-
-    def add_handler(self, 
-                    handler: Handler, 
-                    celltypes: list[CellType] = None, 
-                    systems: list[ReactionDiffusionSystem] = None):
-        handler.setup(self.get_cells_func(celltypes), 
-                      self.get_voxels_func(systems), 
-                      self.physics_dt)
+    def add_handler(self, handler: Handler, celltypes: list[CellType] = None):
+        handler.setup(self.get_cells_func(celltypes), self.physics_dt)
         bpy.app.handlers.frame_change_post.append(handler.run)
 
-    def add_handlers(self, 
-                     handlers: list[Handler], 
-                     celltypes: list[CellType] = None,
-                     systems: list[ReactionDiffusionSystem] = None):
+    def add_handlers(self, handlers: list[Handler], celltypes: list[CellType] = None):
         for handler in handlers:
-            self.add_handler(handler, celltypes, systems)
+            self.add_handler(handler, celltypes)
 
     def render(self, start=1, end=250, save=True, path=None, camera=False):
         bpy.context.scene.frame_start = start

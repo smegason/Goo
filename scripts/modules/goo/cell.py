@@ -26,7 +26,6 @@ class Cell(BlenderObject):
 
     def __init__(self, obj: bpy.types.Object, mat=None):
         super(Cell, self).__init__(obj)
-        self.celltype: CellType = None
 
         # Set up effector collections
         self._effectors = bpy.data.collections.new(f"{obj.name}_effectors")
@@ -35,6 +34,8 @@ class Cell(BlenderObject):
 
         self._mat = mat
         self.obj.data.materials.append(mat)
+
+        self.celltype: CellType = None
 
         self._physics_enabled = False
         self.mod_settings = []
@@ -236,7 +237,7 @@ class Cell(BlenderObject):
 
         self.loc = com
 
-    def remesh(self, voxel_size: float = 0.8, smooth: bool = False):
+    def remesh(self, voxel_size: float = 0.65, smooth: bool = True):
         """Remesh the underlying mesh representation of the cell.
 
         Remeshing is done using the built-in `voxel_remesh()`.
@@ -561,8 +562,8 @@ class CellType:
         SubsurfConstructor,
         ClothConstructor,
         CollisionConstructor,
+        # RemeshConstructor,
     )
-    # RemeshConstructor
     color = (0.007, 0.021, 0.3)
     _default_celltype = None
 

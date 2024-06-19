@@ -36,8 +36,27 @@ Install dependencies in Blender
 
 Blender comes with its own Python interpreter, which is isolated from the system's Python environment. 
 Goo requires a few additional Python packages that need to be installed directly into Blender's Python environment. 
-Replace the Blender executable path in the sript and run ``python install_dependencies_blender.py`` to install the dependencies. 
 
+To install Goo's dependencies: 
 
-.. literalinclude:: ../../install_dependencies_blender.py
-   :language: python
+1. Find the paths of the Blender executable and its Python interpreter. For MacOS, it is usually in the Applications folder e.g., `/Applications/Blender.app/Contents/MacOS/Blender` and `/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10`. For Windows, it is usually in the Program Files folder.
+2. Create a new environment using Blender's Python interpreter: 
+   ```bash
+      /Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10 -m venv blender_venv
+   ```
+3. Activate the environment:
+   ```bash
+      source blender_venv/bin/activate
+   ```
+4. Install the dependencies:
+   ```bash
+      pip install setuptools numpy scipy sphinx sphinx_copybutton furo typing_extensions
+   ```
+5. Check that the dependencies are installed:
+   ```bash
+      /Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10 -m pip list
+   ```
+6. Launch Blender: 
+   ```bash
+      /Applications/Blender.app/Contents/MacOS/Blender  
+   ```

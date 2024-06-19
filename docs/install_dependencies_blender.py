@@ -27,7 +27,7 @@ def list_installed_packages(python_executable):
 def install_package(python_executable, package):
     subprocess.check_call([python_executable, "-m", "ensurepip"])
     subprocess.check_call([python_executable, "-m", "pip", "install", "--upgrade", "pip"])
-    subprocess.check_call([python_executable, "-m", "pip", "install", package, "--user"])
+    subprocess.check_call([python_executable, "-m", "pip", "install", package])
 
 
 def main():
@@ -35,12 +35,9 @@ def main():
         blender_python = get_blender_python_path()
         list_installed_packages(blender_python)
 
-        # "numpy", 
-        # "pandas", 
-        # "matplotlib", 
-        # scipy", 
-
-        packages = ["sphinx", 
+        packages = ["numpy", 
+                    "scipy",
+                    "sphinx", 
                     "sphinx_copybutton", 
                     "furo", 
                     "typing_extensions"]
