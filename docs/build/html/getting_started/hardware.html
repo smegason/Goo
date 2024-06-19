@@ -217,6 +217,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_scripts.html">Example scripts</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.cell.html">goo.cell</a></li>
@@ -279,8 +280,8 @@
 <span id="hardware"></span><h1>Hardware recommendations<a class="headerlink" href="#hardware-recommendations" title="Link to this heading">¶</a></h1>
 <p>Goo has been developed with two main machines in hands:</p>
 <ol class="arabic simple">
-<li><p>M2 Max MacBook Pro 32GB RAM</p></li>
-<li><p>RTX 3080 GPU and Intel i9 CPU</p></li>
+<li><p>M2 Max MacBook Pro 32GB Unified Memory</p></li>
+<li><p>RTX 3080 GPU, Intel i9 CPU and 64GB RAM</p></li>
 </ol>
 <p>Goo exhibits a sub-quadratic time complexity on the number of cells, typically around <span class="math notranslate nohighlight">\(O(N^{1.5})\)</span> where <span class="math notranslate nohighlight">\(N\)</span> is the number of cells in the simulations. This is achieved because Blender restrict the computation of interations to a maximum distance. In other words, a force that is 3 cell diameter away from a certain cell will not affect it, and the calculation of the interaction is ignored by Blender engines.</p>
 <section id="gpu">
@@ -291,6 +292,50 @@
 <section id="running-goo-on-computing-clusters">
 <h2>Running Goo on computing clusters<a class="headerlink" href="#running-goo-on-computing-clusters" title="Link to this heading">¶</a></h2>
 <p>Goo will be supported to run in background mode on computing clusters in the future. Building Blender from source on computing clusters is the limiting factor at the moment.</p>
+<p>conda config –add channels conda-forge</p>
+<p>libxi-devel-cos6-x86_64 gcc_linux-64 gxx_linux-64 subversion make cmake mesa-libgl-devel-cos6-x86_64 mesa-libegl-devel-cos6-x86_64 libx11-devel-cos6-x86_64 libxxf86vm-devel-cos7-x86_64 libxi-devel-cos6-x86_64 xorg-libxcursor xorg-libxrandr xorg-libxinerama libstdcxx-ng</p>
+<p>conda install</p>
+<p>gcc
+gcc-c++
+git-lfs
+subversion
+make
+cmake
+mesa-libGL-devel
+mesa-libEGL-devel
+libX11-devel
+libXxf86vm-devel
+libXi-devel
+libXcursor-devel
+libXrandr-devel
+libXinerama-devel
+libstdc++-static</p>
+<p>qt-wayland wayland-protocols libxkbcommon dbus kernel-headers_linux-64</p>
+<p>wayland-devel
+wayland-protocols-devel
+libxkbcommon-devel
+dbus-devel
+kernel-headers</p>
+<p>Additional package asked when running <cite>make</cite>
+- vulkan-tools</p>
+<p>Prompted to install the following packages:</p>
+<blockquote>
+<div><p>libexpat           conda-forge/linux-64::libexpat-2.6.2-h59595ed_0
+libvulkan-loader   conda-forge/linux-64::libvulkan-loader-1.3.250.0-h1fe2b44_0
+libxcb             conda-forge/linux-64::libxcb-1.15-h0b41bf4_0
+pthread-stubs      conda-forge/linux-64::pthread-stubs-0.4-h36c2ea0_1001
+vulkan-tools       conda-forge/linux-64::vulkan-tools-1.3.250-hac7e632_1
+wayland            conda-forge/linux-64::wayland-1.23.0-h5291e77_0
+xorg-kbproto       conda-forge/linux-64::xorg-kbproto-1.0.7-h7f98852_1002
+xorg-libx11        conda-forge/linux-64::xorg-libx11-1.8.9-h8ee46fc_0
+xorg-libxau        conda-forge/linux-64::xorg-libxau-1.0.11-hd590300_0
+xorg-libxdmcp      conda-forge/linux-64::xorg-libxdmcp-1.1.3-h7f98852_0
+xorg-xextproto     conda-forge/linux-64::xorg-xextproto-7.3.0-h0b41bf4_1003
+xorg-xproto        conda-forge/linux-64::xorg-xproto-7.0.31-h7f98852_1007</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>shaderc</p></li>
+</ul>
 </section>
 </section>
 

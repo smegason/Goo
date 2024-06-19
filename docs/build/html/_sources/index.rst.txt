@@ -5,7 +5,7 @@
 
 
 Goo
-===============================
+=======
     
 **Goo is an open-source Python library to simulate cells, tissues and embryos in Blender.**
 
@@ -24,9 +24,10 @@ Getting started
    :maxdepth: 1
    
    getting_started/installation.rst
+   getting_started/learning_resources.rst
    getting_started/example_scripts.rst
+   getting_started/blender_on_o2.rst
    user_guide/api.rst
-
    getting_started/hardware.rst
 
 Contributing
@@ -44,3 +45,11 @@ How to cite Goo
    
    credits/credits_and_citation.rst
 
+
+News
+==================
+
+Goo v1.0 is here! This is the first stable release after refactoring the codebase to be more efficient and close to Python. `More information. <https://github.com/smegason/Goo/releases/tag/v1.0.0>`__
+
+
+Goo was presented at the 2023 Blender Conference in Amsterdam! `More information. <https://www.youtube.com/watch?v=FoMv7MnLFPc>`__
