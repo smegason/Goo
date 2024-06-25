@@ -164,7 +164,7 @@ def create_force(
     falloff: float = 0,
     min_dist: float = None,
     max_dist: float = None,
-    shape: str = "POINTS",
+    shape: str = "SURFACE",
 ) -> Force:
     """Creates a new force field.
 
@@ -176,6 +176,7 @@ def create_force(
         falloff: The falloff power of the force field.
         min_dist: The minimum distance for the force field.
         max_dist: The maximum distance for the force field.
+        shape: The shape of the force field. Defaults to "SURFACE".
 
     Returns:
         Force: The created force field object.
@@ -214,6 +215,7 @@ def create_adhesion(
             If None, a new object is created.
         name: Name of the adhesion force.
         loc: Initial location of the adhesion force.
+        shape: Shape of the adhesion force.
     """
     if obj is None:
         obj = bpy.data.objects.new(name, None)
@@ -225,7 +227,6 @@ def create_adhesion(
     adhesion_force.min_dist = 0.6
     adhesion_force.max_dist = 1.4
     adhesion_force.falloff = 0.5
-    # adhesion_force.impulse_clamp = 100
     return adhesion_force
 
 
