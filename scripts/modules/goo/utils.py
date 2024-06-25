@@ -127,19 +127,13 @@ def create_material(name, color):
     node_main = nodes.new(type="ShaderNodeBsdfPrincipled")
     node_main.location = -200, 100
     node_main.inputs["Base Color"].default_value = (r, g, b, 0.8)
-    node_main.inputs["Metallic"].default_value = 0.136
-    node_main.inputs["Specular"].default_value = 0.500
-    node_main.inputs["Specular Tint"].default_value = 0.555
+    node_main.inputs["Metallic"].default_value = 0.036
     node_main.inputs["Roughness"].default_value = 0.318
+    node_main.inputs["IOR"].default_value = 1.450
+
+    # specular
     node_main.inputs["Anisotropic"].default_value = 0.041
     node_main.inputs["Anisotropic Rotation"].default_value = 0.048
-    node_main.inputs["Sheen"].default_value = 0.052
-    node_main.inputs["Sheen Tint"].default_value = 0.030
-    node_main.inputs["Clearcoat"].default_value = 0.114
-    node_main.inputs["Clearcoat Roughness"].default_value = 0.123
-    node_main.inputs["IOR"].default_value = 1.450
-    node_main.inputs["Transmission"].default_value = 0.882
-    node_main.inputs["Transmission Roughness"].default_value = 0.0
     node_main.inputs["Alpha"].default_value = 0.414
 
     # create noise texture source
@@ -161,18 +155,11 @@ def create_material(name, color):
     node_random.location = -200, -100
     node_random.inputs["Base Color"].default_value = (r, g, b, 1)
     node_random.inputs["Metallic"].default_value = 0.0
-    node_random.inputs["Specular"].default_value = 0.500
-    node_random.inputs["Specular Tint"].default_value = 0.0
+
     node_random.inputs["Roughness"].default_value = 0.482
     node_random.inputs["Anisotropic"].default_value = 0.0
     node_random.inputs["Anisotropic Rotation"].default_value = 0.0
-    node_random.inputs["Sheen"].default_value = 0.0
-    node_random.inputs["Sheen Tint"].default_value = 0.0
-    node_random.inputs["Clearcoat"].default_value = 0.0
-    node_random.inputs["Clearcoat Roughness"].default_value = 0.0
     node_random.inputs["IOR"].default_value = 1.450
-    node_random.inputs["Transmission"].default_value = 1.0
-    node_random.inputs["Transmission Roughness"].default_value = 0.0
     node_random.inputs["Alpha"].default_value = 0.555
 
     # create mix shader node
