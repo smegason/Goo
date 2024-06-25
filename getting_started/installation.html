@@ -220,7 +220,7 @@
 <li class="toctree-l1"><a class="reference internal" href="learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_scripts.html">Example scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.cell.html">goo.cell</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/goo.force.html">goo.force</a></li>
@@ -279,11 +279,13 @@
         <article role="main" id="furo-main-content">
           <section id="installation">
 <span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
-<p>Goo runs within Blender, so you will first need to download Blender 3.6 LTS from <a class="reference external" href="https://www.blender.org/download/lts/3-6/">here</a>.
-The package was developed under Blender 3.6 LTS, so we recommend using this version. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases.</p>
+<section id="download-blender">
+<h2>Download Blender<a class="headerlink" href="#download-blender" title="Link to this heading">¶</a></h2>
+<p>Goo runs within Blender, so you will first need to download Blender from <a class="reference external" href="https://www.blender.org/download/">here</a>.
+The package was developed under Blender 3.6 LTS and tested for Blender 4.1. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases.</p>
 <p>Once you have Blender installed:</p>
 <ol class="arabic">
-<li><p>Download the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>. Download the zip file of the latest release, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:</p>
+<li><p>Download the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>. Download the zip file of the <a class="reference external" href="https://github.com/smegason/Goo/releases/latest">latest release</a>, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>Goo
 <span class="nb">cd</span><span class="w"> </span>Goo
 wget<span class="w"> </span>&lt;Goo-latest-release&gt;.tar.gz
@@ -291,8 +293,9 @@ tar<span class="w"> </span>-xvf<span class="w"> </span>&lt;Goo-latest-release&gt
 </pre></div>
 </div>
 </li>
-<li><p>In Blender, go to Edit &gt; Preferences &gt; File Paths &gt; Scripts: add <cite>&lt;your_root_path&gt;/Goo/scripts</cite>.</p></li>
+<li><p>In Blender, go to <cite>Edit &gt; Preferences &gt; File Paths &gt; Scripts</cite> and add <cite>&lt;your_root_path&gt;/Goo/scripts</cite>.</p></li>
 </ol>
+</section>
 <section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
 <ul class="simple">
@@ -315,7 +318,7 @@ Goo requires a few additional Python packages that need to be installed directly
 <p>For macOS, it is usually in the Applications folder, e.g., <cite>/Applications/Blender.app/Contents/MacOS/Blender</cite> and <cite>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10</cite>. For Windows, it is usually in the Program Files folder.</p>
 </li>
 <li><p>Create a new environment using Blender’s Python interpreter:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>blender_venv
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>blender_venv
 </pre></div>
 </div>
 </li>
@@ -330,7 +333,7 @@ Goo requires a few additional Python packages that need to be installed directly
 </div>
 </li>
 <li><p>Check that the dependencies are installed:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>list
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>list
 </pre></div>
 </div>
 </li>
@@ -399,6 +402,7 @@ Goo requires a few additional Python packages that need to be installed directly
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#download-blender">Download Blender</a></li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#install-dependencies-in-blender">Install Dependencies in Blender</a></li>
 </ul>
