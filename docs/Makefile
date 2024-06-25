@@ -5,7 +5,7 @@
 # from the environment for the first two.
 SPHINXOPTS    ?=
 # SPHINXBUILD   ?= sphinx-build
-SPHINXBUILD = /Applications/Blender.app/Contents/MacOS/Blender --background --python blender_sphinx.py --
+SPHINXBUILD = /Applications/Blender-4.1.app/Contents/MacOS/Blender --background --python blender_sphinx.py --
 SOURCEDIR     = source
 BUILDDIR      = build
 

@@ -4,7 +4,7 @@ import site
 import sys
 
 # Define the Blender Python path as a global variable
-BL_PYTHON_PATH = "/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10"
+BL_PYTHON_PATH = "/Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11"
 
 
 def get_blender_python_path():

@@ -3,12 +3,16 @@
 Installation
 ============
 
-Goo runs within Blender, so you will first need to download Blender 3.6 LTS from `here <https://www.blender.org/download/lts/3-6/>`__.
-The package was developed under Blender 3.6 LTS, so we recommend using this version. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases. 
+
+Download Blender
+-----------------
+
+Goo runs within Blender, so you will first need to download Blender from `here <https://www.blender.org/download/>`__.
+The package was developed under Blender 3.6 LTS and tested for Blender 4.1. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases.
 
 Once you have Blender installed:
 
-1. Download the Goo library from `GitHub <https://github.com/smegason/Goo>`__. Download the zip file of the latest release, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:
+1. Download the Goo library from `GitHub <https://github.com/smegason/Goo>`__. Download the zip file of the `latest release <https://github.com/smegason/Goo/releases/latest>`__, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:
 
    .. code-block:: bash
 
@@ -17,7 +21,7 @@ Once you have Blender installed:
       wget <Goo-latest-release>.tar.gz
       tar -xvf <Goo-latest-release>.tar.gz
 
-2. In Blender, go to Edit > Preferences > File Paths > Scripts: add `<your_root_path>/Goo/scripts`.
+2. In Blender, go to `Edit > Preferences > File Paths > Scripts` and add `<your_root_path>/Goo/scripts`.
 
 Dependencies
 ------------
@@ -55,7 +59,7 @@ To install Goo's dependencies:
 
    .. code-block:: bash
 
-      /Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10 -m venv blender_venv
+      /Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11 -m venv blender_venv
 
 3. Activate the environment:
 
@@ -73,7 +77,7 @@ To install Goo's dependencies:
 
    .. code-block:: bash
 
-      /Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10 -m pip list
+      /Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11 -m pip list
 
 6. Launch Blender:
 
