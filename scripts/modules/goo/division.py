@@ -92,15 +92,13 @@ class BisectDivisionLogic(DivisionLogic):
         bm.from_mesh(obj_eval.to_mesh())
 
         # bisect with plane
-        verts = [v for v in bm.verts]
-        edges = [e for e in bm.edges]
-        faces = [f for f in bm.faces]
-        geom = verts + edges + faces
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        plane_co = com + axis * margin / 2 if inner else com - axis * margin / 2
 
         result = bmesh.ops.bisect_plane(
             bm,
             geom=geom,
-            plane_co=com + axis * margin / 2 if inner else com - axis * margin / 2,
+            plane_co=plane_co,
             plane_no=axis,
             clear_inner=inner,
             clear_outer=not inner,

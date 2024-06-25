@@ -227,15 +227,6 @@ class ClothConstructor(ModConstructor):
         mod.settings.compression_damping = 50
         mod.settings.shear_damping = 50
         mod.settings.bending_damping = 0.5
-        # Cloth > Internal Springs
-        mod.settings.use_internal_springs = False
-        mod.settings.internal_spring_max_length = 1
-        mod.settings.internal_spring_max_diversion = 0.785398
-        mod.settings.internal_spring_normal_check = False
-        mod.settings.internal_tension_stiffness = 10
-        mod.settings.internal_compression_stiffness = 10
-        mod.settings.internal_tension_stiffness_max = 10000
-        mod.settings.internal_compression_stiffness_max = 10000
         # Cloth > Pressure
         mod.settings.use_pressure = True
         mod.settings.uniform_pressure_force = pressure
@@ -249,9 +240,13 @@ class ClothConstructor(ModConstructor):
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
         mod.collision_settings.friction = 0
-        mod.collision_settings.self_distance_min = 0.01
-        mod.collision_settings.distance_min = 0.01
-        mod.collision_settings.self_impulse_clamp = 0
+        mod.collision_settings.self_distance_min = 0.02
+        mod.collision_settings.distance_min = 0.02
+        mod.collision_settings.self_impulse_clamp = 100
+        mod.collision_settings.impulse_clamp = 100
+
+        # Cloth > Field Weights
+        mod.settings.effector_weights.gravity = 0
 
 
 class YolkClothConstructor(ClothConstructor):
@@ -311,6 +306,7 @@ class CollisionConstructor(ModConstructor):
         mod.settings.thickness_outer = 0.025
         mod.settings.thickness_inner = 0.25
         mod.settings.cloth_friction = 0
+        mod.settings.use_normal = True
 
 
 class BoundaryCollisionConstructor(CollisionConstructor):

@@ -131,9 +131,10 @@ class Cell(BlenderObject):
         """
         verts = self.obj_eval.data.vertices
         if local_coords:
-            return [v.co for v in verts]
+            return [v.co.copy() for v in verts]
         else:
-            return [self.obj_eval.matrix_world @ v.co for v in verts]
+            matrix_world = self.obj_eval.matrix_world
+            return [matrix_world @ v.co for v in verts]
 
     def volume(self) -> float:
         """Calculates the volume of the cell.
@@ -187,10 +188,11 @@ class Cell(BlenderObject):
         eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
         axis = eigenvectors[:, n]
 
-        # sort indices by distance
-        vert_indices = np.argsort(np.asarray(verts).dot(axis))
-        first_vertex = verts[vert_indices[0]]
-        last_vertex = verts[vert_indices[-1]]
+        projections = verts @ axis
+        min_index = np.argmin(projections)
+        max_index = np.argmax(projections)
+        first_vertex = Vector(verts[min_index])
+        last_vertex = Vector(verts[max_index])
 
         return Axis(Vector(axis), first_vertex, last_vertex, self.obj_eval.matrix_world)
 
@@ -608,7 +610,7 @@ class CellType:
             return
 
         # add homotypic adhesion force
-        homo_adhesion = get_adhesion(self.homo_adhesion_strength, obj=cell.obj)
+        homo_adhesion = create_adhesion(self.homo_adhesion_strength, obj=cell.obj)
         cell.homo_adhesion = homo_adhesion
 
         self._homo_adhesions.add_force(homo_adhesion)
@@ -617,7 +619,7 @@ class CellType:
         # add heterotypic adhesion forces
         for celltype, item in self._hetero_adhesions.items():
             outgoing_forces, incoming_forces, strength = item
-            hetero_adhesion = get_adhesion(
+            hetero_adhesion = create_adhesion(
                 strength, name=f"{cell.name}_to_{celltype.name}", loc=cell.loc
             )
             cell.add_effector(incoming_forces)
@@ -626,7 +628,7 @@ class CellType:
             cell.link_adhesion_force(hetero_adhesion)
 
         # add motion force
-        motion = get_motion(
+        motion = create_motion(
             name=f"{cell.name}_motion",
             loc=(0, 0, 0),
             strength=self.motion_strength,
