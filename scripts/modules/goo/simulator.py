@@ -3,6 +3,7 @@ import os
 import numpy as np
 import bpy
 from enum import Enum, Flag, auto
+from typing import Union, List, Optional
 
 from goo.handler import Handler
 from goo.cell import CellType
@@ -11,11 +12,25 @@ Render = Enum("Render", ["PNG", "TIFF", "MP4"])
 
 
 class Simulator:
-    def __init__(self, celltypes: list = [], physics_dt: int = 1):
+    """A simulator for cell-based simulations in Blender.
+
+    Args:
+        celltypes (List[CellType]): List of cell types.
+        time (List[int]): Start and end frames.
+        physics_dt (int): Time step for physics simulation.
+
+    """
+    def __init__(
+        self,
+        celltypes: List[CellType] = [],
+        time: int = 250,
+        physics_dt: int = 1,
+    ): 
         self.celltypes = celltypes
         self.physics_dt = physics_dt
         self.addons = ["add_mesh_extra_objects"]
         self.render_format: Render = Render.PNG
+        self.time = time
 
     def setup_world(self, seed=1):
         # Enable addons
@@ -25,6 +40,10 @@ class Simulator:
         # Set random seed
         np.random.seed(seed)
         bpy.context.scene["seed"] = seed
+
+        # Set up simulation time interval
+        bpy.context.scene.frame_start = 1
+        bpy.context.scene.frame_end = self.time
 
         # Set units to the metric system
         bpy.context.scene.unit_settings.system = "METRIC"
@@ -70,6 +89,9 @@ class Simulator:
         # # set film to transparent to hide background
         bpy.context.scene.render.film_transparent = True
 
+        # Allow cloth physics pass 250 frames
+        self.extend_scene()
+
     def enable_addon(self, addon):
         if addon not in bpy.context.preferences.addons:
             bpy.ops.preferences.addon_enable(module=addon)
@@ -94,18 +116,28 @@ class Simulator:
 
         return get_cells
 
+    def get_cells(self, celltypes=None):
+        celltypes = celltypes if celltypes is not None else self.celltypes
+        return [cell for celltype in celltypes for cell in celltype.cells]
+    
+    def extend_scene(self):
+        cells = self.get_cells()
+        for cell in cells:
+            if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.time:
+                cell.cloth_mod.point_cache.frame_end = self.time
+
     def add_handler(self, handler: Handler, celltypes: list[CellType] = None):
         handler.setup(self.get_cells_func(celltypes), self.physics_dt)
         bpy.app.handlers.frame_change_post.append(handler.run)
 
     def add_handlers(self, handlers: list[Handler], celltypes: list[CellType] = None):
+        # handlers.append(SceneExtensionHandler(bpy.context.scene.frame_end))
         for handler in handlers:
             self.add_handler(handler, celltypes)
 
     def render(
         self, 
-        start: int = 1, 
-        end: int = 250,
+        frames: Optional[Union[List[int], range]] = None,
         path: str = None,
         camera=False,
         format: Render = Render.PNG
@@ -124,9 +156,6 @@ class Simulator:
             camera (bool): Render with the camera.
             format (Render): Render format: PNG (default), TIFF, MP4. 
         """
-        bpy.context.scene.frame_start = start
-        bpy.context.scene.frame_end = end
-
         match self.render_format:
             case Render.PNG:
                 bpy.context.scene.render.image_settings.file_format = "PNG"
@@ -141,16 +170,28 @@ class Simulator:
         else: 
             print("Save path not provided. Falling back on default path.")
 
-        print("----- SIMULATION START -----")
-        for i in range(1, end + 1):
+        print("----- RENDERING... -----")
+        match frames:
+            case None:
+                start = 1
+                end = self.time
+                frame_list = list(range(start, end + 1))
+            case range():
+                frame_list = list(frames)
+            case list():
+                frame_list = frames
+
+        for i in range(1, max(frame_list) + 1):
             bpy.context.scene.frame_set(i)
             bpy.context.scene.render.filepath = os.path.join(path, f"{i:04d}")
-            if camera:
-                bpy.ops.render.render(write_still=True)
-            else:
-                bpy.ops.render.opengl(write_still=True)
+            if i in frame_list: 
+                if camera:
+                    bpy.ops.render.render(write_still=True)
+                else:
+                    bpy.ops.render.opengl(write_still=True)
+
         bpy.context.scene.render.filepath = path
-        print("\n----- SIMULATION END -----")
+        print("\n----- RENDERING COMPLETED! -----")
 
     def run(self, end=250):
         """

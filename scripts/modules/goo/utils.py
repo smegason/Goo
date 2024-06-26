@@ -217,6 +217,8 @@ class ClothConstructor(ModConstructor):
         mod.settings.bending_model = "ANGULAR"
         mod.settings.mass = 1
         mod.settings.time_scale = 1
+        mod.point_cache.frame_start = bpy.context.scene.frame_start
+        mod.point_cache.frame_end = bpy.context.scene.frame_end
         # Cloth > Stiffness
         mod.settings.tension_stiffness = stiffness
         mod.settings.compression_stiffness = stiffness
@@ -306,7 +308,7 @@ class CollisionConstructor(ModConstructor):
         mod.settings.thickness_outer = 0.025
         mod.settings.thickness_inner = 0.25
         mod.settings.cloth_friction = 0
-        mod.settings.use_normal = True
+        mod.settings.use_normal = False
 
 
 class BoundaryCollisionConstructor(CollisionConstructor):

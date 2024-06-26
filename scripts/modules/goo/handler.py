@@ -37,6 +37,7 @@ class Handler:
         """
         raise NotImplementedError("Subclasses must implement run() method.")
 
+
 # TODO: make voxel_size the same for remesh function and remesh handler
 # TODO: remeshing seems to interfere with motion
 class RemeshHandler(Handler):
@@ -83,20 +84,9 @@ class RemeshHandler(Handler):
                 cell.remesh(self.voxel_size)
                 cell.recenter()
 
-            # Perform remeshing operations
-            if self.sphere_factor:
-                self._cast_to_sphere(cell, self.sphere_factor)
-                cell.recenter()
-
             # Recenter and re-enable physics
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
-
-    def _cast_to_sphere(self, cell, factor):
-        with bpy.context.temp_override(active_object=cell.obj, object=cell.obj):
-            cast_modifier = cell.obj.modifiers.new(name="Cast", type="CAST")
-            cast_modifier.factor = factor
-            bpy.ops.object.modifier_apply(modifier=cast_modifier.name)
 
 
 class AdhesionLocationHandler(Handler):
@@ -316,7 +306,8 @@ class ColorizeHandler(Handler):
             cell.recolor(tuple(color))
 
 
-class SceneExtensionHandler(Handler):
+# TODO: remove because not used
+'''class SceneExtensionHandler(Handler):
     """Handler for extending the calculation of physics beyond the default 250
     frames.
     """
@@ -328,7 +319,7 @@ class SceneExtensionHandler(Handler):
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.end:
-                cell.cloth_mod.point_cache.frame_end = self.end
+                cell.cloth_mod.point_cache.frame_end = self.end'''
 
 
 def _get_divisions(cells: list[Cell]):
