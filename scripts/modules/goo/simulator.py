@@ -2,16 +2,20 @@ import sys
 import os
 import numpy as np
 import bpy
+from enum import Enum, Flag, auto
 
 from goo.handler import Handler
 from goo.cell import CellType
 
+Render = Enum("Render", ["PNG", "TIFF", "MP4"])
+
 
 class Simulator:
-    def __init__(self, celltypes=[], physics_dt=1):
+    def __init__(self, celltypes: list = [], physics_dt: int = 1):
         self.celltypes = celltypes
         self.physics_dt = physics_dt
         self.addons = ["add_mesh_extra_objects"]
+        self.render_format: Render = Render.PNG
 
     def setup_world(self, seed=1):
         # Enable addons
@@ -98,30 +102,64 @@ class Simulator:
         for handler in handlers:
             self.add_handler(handler, celltypes)
 
-    def render(self, start=1, end=250, save=True, path=None, camera=False):
+    def render(
+        self, 
+        start: int = 1, 
+        end: int = 250,
+        path: str = None,
+        camera=False,
+        format: Render = Render.PNG
+    ): 
+        """
+        Render the simulation in the background without 
+        updating the 3D Viewport in real time.
+        If a camera is specified, the frames will be rendered with it, 
+        otherwise the frames will be rendered in the 3D Viewport. 
+        It will updated the scene at the end of the simulation.      
+
+        Args:
+            start (int): Start frame.
+            end (int): End frame.
+            path (str): Path to save the frames.
+            camera (bool): Render with the camera.
+            format (Render): Render format: PNG (default), TIFF, MP4. 
+        """
         bpy.context.scene.frame_start = start
         bpy.context.scene.frame_end = end
 
-        bpy.context.scene.render.image_settings.file_format = "PNG"
-        bpy.context.scene.render.ffmpeg.format = "MPEG4"
+        match self.render_format:
+            case Render.PNG:
+                bpy.context.scene.render.image_settings.file_format = "PNG"
+            case Render.TIFF:
+                bpy.context.scene.render.image_settings.file_format = "TIFF"
+            case Render.MP4:
+                bpy.context.scene.render.image_settings.file_format = "FFMPEG"
+                bpy.context.scene.render.ffmpeg.format = "MPEG4"
 
         if not path:
             path = os.path.dirname(bpy.context.scene.render.filepath)
-        elif path and not save:
-            print("Save path set but render will not be saved!")
+        else: 
+            print("Save path not provided. Falling back on default path.")
 
         print("----- SIMULATION START -----")
         for i in range(1, end + 1):
             bpy.context.scene.frame_set(i)
             bpy.context.scene.render.filepath = os.path.join(path, f"{i:04d}")
             if camera:
-                bpy.ops.render.render(write_still=save)
+                bpy.ops.render.render(write_still=True)
             else:
-                bpy.ops.render.opengl(write_still=save)
+                bpy.ops.render.opengl(write_still=True)
         bpy.context.scene.render.filepath = path
         print("\n----- SIMULATION END -----")
 
     def run(self, end=250):
+        """
+        Run the simulation in the background without 
+        updating the 3D Viewport in real time.
+
+        Args:
+            end (int): End frame.
+        """
         print("----- SIMULATION START -----")
         for i in range(1, end + 1):
             print(i, end=" ")
