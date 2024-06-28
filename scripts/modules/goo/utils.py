@@ -246,8 +246,8 @@ class ClothConstructor(ModConstructor):
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
         mod.collision_settings.friction = 0
-        mod.collision_settings.self_distance_min = 0.02
-        mod.collision_settings.distance_min = 0.02
+        mod.collision_settings.self_distance_min = 0.01
+        mod.collision_settings.distance_min = 0.01
         mod.collision_settings.self_impulse_clamp = 100
         mod.collision_settings.impulse_clamp = 100
 

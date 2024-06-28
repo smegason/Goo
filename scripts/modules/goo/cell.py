@@ -239,7 +239,7 @@ class Cell(BlenderObject):
 
         self.loc = com
 
-    def remesh(self, voxel_size: float = 0.85, smooth: bool = False):
+    def remesh(self, voxel_size: float = 0.55, smooth: bool = False):
         """Remesh the underlying mesh representation of the cell.
 
         Remeshing is done using the built-in `voxel_remesh()`.
@@ -254,16 +254,6 @@ class Cell(BlenderObject):
         self.obj.data.remesh_voxel_size = voxel_size
         with bpy.context.temp_override(active_object=self.obj, object=self.obj):
             bpy.ops.object.voxel_remesh()
-            # get bmesh object from remeshed mesh
-            '''bm = bmesh.new()
-            bm.from_mesh(self.obj.data)
-            bmesh.ops.triangulate(bm, faces=bm.faces[:])
-            bm.to_mesh(self.obj.data)
-            bm.free()'''
-        
-            '''bpy.ops.object.editmode_toggle()    
-            bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
-            bpy.ops.object.editmode_toggle()'''
 
         for f in self.obj.data.polygons:
             f.use_smooth = smooth

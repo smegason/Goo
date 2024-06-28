@@ -7,6 +7,7 @@ from .force import create_force
 from .division import *
 from .handler import *
 from .molecule import * 
+from .boundary import * 
 
 __version__ = "1.0.0"
 __author__ = 'Antoine A. Ruzette, Charles Dai, Sean Megason'

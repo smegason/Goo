@@ -61,10 +61,10 @@ class RemeshHandler(Handler):
             Disabled if set to 0.
     """
 
-    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.65, sphere_factor=0):
+    def __init__(self, freq=1, voxel_size=None, smooth_factor=0.1, sphere_factor=0):
         self.freq = freq
-        self.smooth_factor = smooth_factor
         self.voxel_size = voxel_size
+        self.smooth_factor = smooth_factor
         self.sphere_factor = sphere_factor
 
     @override
@@ -89,8 +89,11 @@ class RemeshHandler(Handler):
             bm.free()
             cell.recenter()
 
-            if self.voxel_size:
+            if self.voxel_size is not None:
                 cell.remesh(self.voxel_size)
+                cell.recenter()
+            else: 
+                cell.remesh()
                 cell.recenter()
 
             # Recenter and re-enable physics

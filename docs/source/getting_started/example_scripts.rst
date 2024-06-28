@@ -11,22 +11,22 @@ Once you get a good grasp of the library, you will be able to write your own Goo
 
 Goo scripts typically get ran from Blender's scripting tab, though they can be ran from Visual Studio Code directly using the `developer's extension <https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development>`__ developed by Jacques Lucke. 
 
-Adhering cell doublets
+Adherent cell doublets
 ------------------------
 
-
-.. literalinclude:: ../examples/doublets_adhesion.py
+.. literalinclude:: ../examples/2_randomly_moving_doublets.py
    :language: python
 
 
-Randomly moving cells
-------------------------
+Random cell mixing inside a spherical volume
+------------------------------------------------
 
-.. literalinclude:: ../examples/random_cell_mixing.py
+.. literalinclude:: ../examples/3_volume_dividing_cells.py
    :language: python
 
-Developing tissue
-------------------------
 
-.. literalinclude:: ../examples/2.4 - test_division_physics.py
+Dividing cells based on volume
+-----------------------------------
+
+.. literalinclude:: ../examples/5_random_cell_mixing.py
    :language: python

@@ -78,7 +78,7 @@ class DiffusionSystem:
         self, 
         molecules: list[Molecule], 
         cells: list[Cell] = None,
-        grid_size: tuple = (25, 25, 25), 
+        grid_size: tuple = (10, 10, 10), 
         grid_center: tuple = (0, 0, 0),
         time_step: float = 0.1, 
         total_time: int = 10

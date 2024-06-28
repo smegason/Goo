@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
+    "sphinxcontrib.video",
 ]
 autodoc_typehints = "both"
 napoleon_use_ivar = True
