@@ -7,6 +7,7 @@ from typing import Union, List, Optional
 
 from goo.handler import Handler
 from goo.cell import CellType
+from goo.molecule import DiffusionSystem
 
 Render = Enum("Render", ["PNG", "TIFF", "MP4"])
 
@@ -23,14 +24,21 @@ class Simulator:
     def __init__(
         self,
         celltypes: List[CellType] = [],
+        diffsystems: List[DiffusionSystem] = [],
         time: int = 250,
         physics_dt: int = 1,
     ): 
         self.celltypes = celltypes
+        self.diffsystems = diffsystems
         self.physics_dt = physics_dt
         self.addons = ["add_mesh_extra_objects"]
         self.render_format: Render = Render.PNG
         self.time = time
+
+        # Set up simulation parameters for diffusion system
+        for diff_sys in diffsystems: 
+            diff_sys._time_step = physics_dt / 10 
+            diff_sys._total_time = physics_dt
 
     def setup_world(self, seed=1):
         # Enable addons
@@ -47,7 +55,7 @@ class Simulator:
 
         # Set units to the metric system
         bpy.context.scene.unit_settings.system = "METRIC"
-        bpy.context.scene.unit_settings.scale_length = 0.0001
+        bpy.context.scene.unit_settings.scale_length = 1e-6
         bpy.context.scene.unit_settings.system_rotation = "DEGREES"
         bpy.context.scene.unit_settings.length_unit = "MICROMETERS"
         bpy.context.scene.unit_settings.mass_unit = "MILLIGRAMS"
@@ -115,6 +123,14 @@ class Simulator:
             return [cell for celltype in celltypes for cell in celltype.cells]
 
         return get_cells
+    
+    def get_diffsystems_func(self, diffsystems=None):
+        diffsystems = diffsystems if diffsystems is not None else self.diffsystems
+
+        def get_diffsystems():
+            return diffsystems
+
+        return get_diffsystems
 
     def get_cells(self, celltypes=None):
         celltypes = celltypes if celltypes is not None else self.celltypes
@@ -126,8 +142,12 @@ class Simulator:
             if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.time:
                 cell.cloth_mod.point_cache.frame_end = self.time
 
-    def add_handler(self, handler: Handler, celltypes: list[CellType] = None):
-        handler.setup(self.get_cells_func(celltypes), self.physics_dt)
+    def add_handler(self, 
+                    handler: Handler, celltypes: list[CellType] = None, 
+                    diffsystems: list[DiffusionSystem] = None):
+        handler.setup(self.get_cells_func(celltypes), 
+                      self.get_diffsystems_func(diffsystems), 
+                      self.physics_dt)
         bpy.app.handlers.frame_change_post.append(handler.run)
 
     def add_handlers(self, handlers: list[Handler], celltypes: list[CellType] = None):

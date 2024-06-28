@@ -7,14 +7,22 @@ import json
 
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.spatial import KDTree
+
 import bpy
 import bmesh
 from mathutils import Vector
 from goo.cell import Cell
+from goo.molecule import Molecule, DiffusionSystem
 
 
 class Handler:
-    def setup(self, get_cells: Callable[[], list[Cell]], dt: float):
+    def setup(
+        self, 
+        get_cells: Callable[[], list[Cell]], 
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt: float
+    ):
         """Set up the handler.
 
         Args:
@@ -23,6 +31,7 @@ class Handler:
             dt: The time step for the simulation.
         """
         self.get_cells = get_cells
+        self.get_diff_systems = get_diffsystems
         self.dt = dt
 
     def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
@@ -89,6 +98,41 @@ class RemeshHandler(Handler):
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
 
 
+class DiffusionHandler(Handler):
+    """Handler for simulating diffusion of a substance in the grid in the scene.
+
+    Args:
+        diffusionSystem: The reaction-diffusion system to simulate.
+
+    """
+
+    def __init__(self, diffusionSystem: DiffusionSystem) -> None:
+        self.diffusionSystem = diffusionSystem
+        self.kd_tree = None
+        self.grid_coord = None
+        self.flat_grid_coord = None
+
+    def build_kd_tree(self):
+        """Build the KD-Tree from the grid coordinates if not already built."""
+        self.kd_tree = self.diffusionSystem._build_kdtree()
+
+    @override
+    def run(self, scene, depsgraph):
+        if self.kd_tree is None:
+            self.build_kd_tree()
+        
+        cell_coords = [cell.COM() for cell in self.get_cells()]
+        cell_coords_array = np.array(cell_coords)
+
+        distances, indices = self.kd_tree.query(cell_coords_array, k=15, distance_upper_bound=2)
+        print(distances, indices)
+
+        for idx, data in enumerate(indices[0]):
+            add_conc = ((distances[0][idx]**2))
+            new_val = self.diffusionSystem.update_concentration(data, add_conc)
+            print("new_val", new_val)
+
+
 class AdhesionLocationHandler(Handler):
     """Handler for updating cell-associated adhesion locations every frame."""
 
@@ -145,8 +189,11 @@ class GrowthPIDHandler(Handler):
         self.target_volume = target_volume
 
     @override
-    def setup(self, get_cells: Callable[[], list[Cell]], dt):
-        super(GrowthPIDHandler, self).setup(get_cells, dt)
+    def setup(self, 
+              get_cells: Callable[[], list[Cell]], 
+              get_diffsystems: Callable[[], list[DiffusionSystem]], 
+              dt):
+        super(GrowthPIDHandler, self).setup(get_cells, get_diffsystems, dt)
         for cell in self.get_cells():
             self.initialize_PID(cell)
 
@@ -435,6 +482,7 @@ class DataFlag(Flag):
         VOLUMES: list of the current volumes of each cell.
         PRESSURES: list of the current pressures of each cell.
         CONTACT_AREAS: list of contact areas between each pair of cells.
+        CONCENTRATIONS: concentrations of each molecule in the grid system.
     """
 
     TIMES = auto()
@@ -444,6 +492,7 @@ class DataFlag(Flag):
     VOLUMES = auto()
     PRESSURES = auto()
     CONTACT_AREAS = auto()
+    CONCENTRATIONS = auto()
 
     ALL = _all()
 
@@ -465,8 +514,11 @@ class DataExporter(Handler):
         self.options = options
 
     @override
-    def setup(self, get_cells: Callable[[], list[Cell]], dt):
-        super(DataExporter, self).setup(get_cells, dt)
+    def setup(self, 
+              get_cells: Callable[[], list[Cell]], 
+              get_diffsystems: Callable[[], list[DiffusionSystem]],
+              dt):
+        super(DataExporter, self).setup(get_cells, get_diffsystems, dt)
         self.time_start = datetime.now()
         out = {"seed": bpy.context.scene["seed"], "frames": []}
 
@@ -505,6 +557,11 @@ class DataExporter(Handler):
             frame_out["contact_areas"] = areas
             frame_out["contact_ratios"] = ratios
 
+        for diff_sys in self.get_diff_systems():
+            if self.options & DataFlag.CONCENTRATIONS:
+                conc_grid = self._convert_numpy_to_list(diff_sys._grid_concentrations)
+                frame_out["concentrations"] = conc_grid
+                
         if self.path:
             with open(self.path, "r") as f:
                 out = json.load(f)
@@ -513,3 +570,15 @@ class DataExporter(Handler):
                 f.write(json.dumps(out))
         else:
             print(frame_out)
+
+    def _convert_numpy_to_list(self, obj):
+        """Convert numpy arrays to lists for JSON serialization."""
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {k: self._convert_numpy_to_list(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._convert_numpy_to_list(i) for i in obj]
+        else:
+            return obj
+        

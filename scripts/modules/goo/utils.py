@@ -87,6 +87,8 @@ def create_mesh(
             bmesh.ops.create_icosphere(
                 bm, subdivisions=subdivisions, radius=size, **kwargs
             )
+            # bmesh.ops.beautify_fill(bm, faces=bm.faces, edges=bm.edges)
+            bmesh.ops.triangulate(bm, faces=bm.faces[:])
         case "plane":
             bmesh.ops.create_grid(
                 bm, x_segments=1, y_segments=1, size=size / 2, **kwargs
@@ -95,9 +97,11 @@ def create_mesh(
             bmesh.ops.create_monkey(bm, **kwargs)
         case "cube":
             bmesh.ops.create_cube(bm, size=size, **kwargs)
+            # bmesh.ops.beautify_fill(bm, faces=bm.faces, edges=bm.edges)
+            # bmesh.ops.triangulate(bm, faces=bm.faces[:])
         case _:
             raise ValueError(
-                """mesh must be one of "icosphere", "plane", or "monkey"."""
+                """mesh must be one of "icosphere", "plane", "monkey" or "cube"."""
             )
 
     me = bpy.data.meshes.new(f"{name}_mesh")
@@ -237,7 +241,7 @@ class ClothConstructor(ModConstructor):
         mod.settings.pressure_factor = 2
         mod.settings.fluid_density = 1.05
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 6
+        mod.collision_settings.collision_quality = 4
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
@@ -288,7 +292,7 @@ class YolkClothConstructor(ClothConstructor):
         mod.settings.pressure_factor = 2
         mod.settings.fluid_density = 1.15
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 6
+        mod.collision_settings.collision_quality = 10
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
