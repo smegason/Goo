@@ -285,8 +285,8 @@
 Once you get a good grasp of the library, you will be able to write your own Goo scripts and specify lots of initial conditions for your simulations of cells.</p>
 <p>Goo scripts typically get ran from Blender’s scripting tab, though they can be ran from Visual Studio Code directly using the <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development">developer’s extension</a> developed by Jacques Lucke.</p>
 </section>
-<section id="adhering-cell-doublets">
-<h2>Adhering cell doublets<a class="headerlink" href="#adhering-cell-doublets" title="Link to this heading">¶</a></h2>
+<section id="adherent-cell-doublets">
+<h2>Adherent cell doublets<a class="headerlink" href="#adherent-cell-doublets" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
 <span class="kn">import</span> <span class="nn">goo</span>
 <span class="kn">from</span> <span class="nn">goo</span> <span class="kn">import</span> <span class="o">*</span> 
@@ -299,14 +299,9 @@ Once you get a good grasp of the library, you will be able to write your own Goo
 <span class="n">cellsB</span> <span class="o">=</span> <span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">)</span>
 <span class="n">cellsC</span> <span class="o">=</span> <span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>
 
-<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">2500</span>
-<span class="n">cellsB</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">5000</span>
-<span class="n">cellsC</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">7500</span>
-
-<span class="c1"># Uncomment for heteroadhesions</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">set_hetero_adhesion</span><span class="p">(</span><span class="n">cellsB</span><span class="p">,</span> <span class="mi">5000</span><span class="p">)</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">set_hetero_adhesion</span><span class="p">(</span><span class="n">cellsC</span><span class="p">,</span> <span class="mi">5000</span><span class="p">)</span>
-<span class="n">cellsB</span><span class="o">.</span><span class="n">set_hetero_adhesion</span><span class="p">(</span><span class="n">cellsC</span><span class="p">,</span> <span class="mi">5000</span><span class="p">)</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">cellsB</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">250</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
 
 <span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 <span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
@@ -317,31 +312,60 @@ Once you get a good grasp of the library, you will be able to write your own Goo
 <span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 <span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 
-<span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">,</span> <span class="n">cellsB</span><span class="p">,</span> <span class="n">cellsC</span><span class="p">])</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">,</span> <span class="n">cellsB</span><span class="p">,</span> <span class="n">cellsC</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
     <span class="p">[</span>
-        <span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">20</span><span class="p">),</span>
+        <span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">25</span><span class="p">),</span>
         <span class="n">AdhesionLocationHandler</span><span class="p">(),</span>
-        <span class="c1"># RemeshHandler(),</span>
-        <span class="n">DataExporter</span><span class="p">(</span>
-            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/tmp/out.json&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">DataFlag</span><span class="o">.</span><span class="n">TIMES</span> <span class="o">|</span> <span class="n">DataFlag</span><span class="o">.</span><span class="n">CONTACT_AREAS</span>
-        <span class="p">),</span>
+        <span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">GAUSSIAN</span><span class="p">,</span> <span class="n">max_strength</span><span class="o">=</span><span class="mi">750</span><span class="p">)</span>
     <span class="p">]</span>
 <span class="p">)</span>
-<span class="c1"># sim.run(20)</span>
 </pre></div>
 </div>
 </section>
-<section id="randomly-moving-cells">
-<h2>Randomly moving cells<a class="headerlink" href="#randomly-moving-cells" title="Link to this heading">¶</a></h2>
+<section id="random-cell-mixing-inside-a-spherical-volume">
+<h2>Random cell mixing inside a spherical volume<a class="headerlink" href="#random-cell-mixing-inside-a-spherical-volume" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
 <span class="kn">import</span> <span class="nn">goo</span>
-<span class="kn">from</span> <span class="nn">goo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">goo.division</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">goo.handler</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
-<span class="n">reset_modules</span><span class="p">()</span>
-<span class="n">reset_scene</span><span class="p">()</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">reset_modules</span><span class="p">()</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
+
+<span class="c1"># Defining cells</span>
+<span class="n">celltype</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;cellA&quot;</span><span class="p">)</span>
+<span class="n">celltype</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">celltype</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;cell&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">pressure</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">(</span><span class="n">celltypes</span><span class="o">=</span><span class="p">[</span><span class="n">celltype</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">70</span><span class="p">),</span>
+        <span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+        <span class="n">AdhesionLocationHandler</span><span class="p">(),</span>
+        <span class="n">RemeshHandler</span><span class="p">(),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="dividing-cells-based-on-volume">
+<h2>Dividing cells based on volume<a class="headerlink" href="#dividing-cells-based-on-volume" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
+<span class="kn">import</span> <span class="nn">goo</span>
+<span class="kn">from</span> <span class="nn">goo.division</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">goo.handler</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">goo.boundary</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">reset_modules</span><span class="p">()</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">random_point_inside_sphere</span><span class="p">(</span><span class="n">radius</span><span class="p">):</span>
@@ -366,13 +390,13 @@ Once you get a good grasp of the library, you will be able to write your own Goo
 
 <span class="c1"># Create cells within the sphere with minimum distance constraint</span>
 <span class="n">num_cells</span> <span class="o">=</span> <span class="mi">6</span>  <span class="c1"># Number of cells</span>
-<span class="n">radius</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># Sphere radius</span>
-<span class="n">min_distance</span> <span class="o">=</span> <span class="mf">2.5</span>  <span class="c1"># Minimum distance between cells</span>
+<span class="n">radius</span> <span class="o">=</span> <span class="mi">15</span>  <span class="c1"># Sphere radius</span>
+<span class="n">min_distance</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># Minimum distance between cells</span>
 
-<span class="n">create_boundary</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">radius</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">radius</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">)</span>
 
-<span class="n">cellsA</span> <span class="o">=</span> <span class="n">SimpleType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">2500</span>
+<span class="n">cellsA</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">SimpleType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
 <span class="n">cells</span> <span class="o">=</span> <span class="p">[]</span>
 
 <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_cells</span><span class="p">:</span>
@@ -381,53 +405,18 @@ Once you get a good grasp of the library, you will be able to write your own Goo
         <span class="n">cells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_point</span><span class="p">)</span>
         <span class="n">cell_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cell_A</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">color</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random_sample</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-        <span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">cell_name</span><span class="p">,</span> <span class="n">new_point</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+        <span class="n">cell</span> <span class="o">=</span> <span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">cell_name</span><span class="p">,</span> <span class="n">new_point</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+        <span class="n">cell</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">cell</span><span class="o">.</span><span class="n">pressure</span> <span class="o">=</span> <span class="mi">5</span>
 
-<span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">])</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">toggle_gravity</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
     <span class="p">[</span>
-        <span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+        <span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span>
         <span class="n">AdhesionLocationHandler</span><span class="p">(),</span>
         <span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">,</span> <span class="n">max_strength</span><span class="o">=</span><span class="mi">2500</span><span class="p">),</span>
-        <span class="n">DataExporter</span><span class="p">(</span>
-            <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/tmp/out.json&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">DataFlag</span><span class="o">.</span><span class="n">TIMES</span> <span class="o">|</span> <span class="n">DataFlag</span><span class="o">.</span><span class="n">CONTACT_AREAS</span>
-        <span class="p">),</span>
-        <span class="n">SceneExtensionHandler</span><span class="p">(</span><span class="mi">300</span><span class="p">),</span>
-    <span class="p">]</span>
-<span class="p">)</span>
-<span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="mi">300</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="developing-tissue">
-<h2>Developing tissue<a class="headerlink" href="#developing-tissue" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
-<span class="kn">import</span> <span class="nn">goo</span>
-<span class="kn">from</span> <span class="nn">goo.division</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">goo.handler</span> <span class="kn">import</span> <span class="o">*</span>
-
-<span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
-<span class="n">goo</span><span class="o">.</span><span class="n">reset_modules</span><span class="p">()</span>
-<span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
-
-<span class="n">force</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">create_force</span><span class="p">(</span><span class="s2">&quot;Force&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">5000</span><span class="p">)</span>
-<span class="n">force</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="s2">&quot;PLANE&quot;</span>
-
-<span class="n">celltype</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">SimpleType</span><span class="p">(</span><span class="s2">&quot;cellA&quot;</span><span class="p">)</span>
-<span class="n">celltype</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">5000</span>
-<span class="n">cell</span> <span class="o">=</span> <span class="n">celltype</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;cell&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="n">cell</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">15</span>
-<span class="n">cell</span><span class="o">.</span><span class="n">pressure</span> <span class="o">=</span> <span class="mi">5</span>
-
-<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">(</span><span class="n">celltypes</span><span class="o">=</span><span class="p">[</span><span class="n">celltype</span><span class="p">])</span>
-<span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
-<span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="n">TimeDivisionHandler</span><span class="p">(</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">20</span><span class="p">),</span>
-        <span class="n">AdhesionLocationHandler</span><span class="p">(),</span>
-        <span class="n">RemeshHandler</span><span class="p">(),</span>
     <span class="p">]</span>
 <span class="p">)</span>
 </pre></div>
@@ -492,9 +481,9 @@ Once you get a good grasp of the library, you will be able to write your own Goo
             <ul>
 <li><a class="reference internal" href="#">Example scripts</a><ul>
 <li><a class="reference internal" href="#simulation-scripts">Simulation scripts</a></li>
-<li><a class="reference internal" href="#adhering-cell-doublets">Adhering cell doublets</a></li>
-<li><a class="reference internal" href="#randomly-moving-cells">Randomly moving cells</a></li>
-<li><a class="reference internal" href="#developing-tissue">Developing tissue</a></li>
+<li><a class="reference internal" href="#adherent-cell-doublets">Adherent cell doublets</a></li>
+<li><a class="reference internal" href="#random-cell-mixing-inside-a-spherical-volume">Random cell mixing inside a spherical volume</a></li>
+<li><a class="reference internal" href="#dividing-cells-based-on-volume">Dividing cells based on volume</a></li>
 </ul>
 </li>
 </ul>

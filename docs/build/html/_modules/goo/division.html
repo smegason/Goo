@@ -281,6 +281,7 @@
 <span class="kn">from</span> <span class="nn">goo.cell</span> <span class="kn">import</span> <span class="n">Cell</span>
 <span class="kn">from</span> <span class="nn">goo.utils</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">goo.handler</span> <span class="kn">import</span> <span class="n">Handler</span>
+<span class="kn">from</span> <span class="nn">goo.molecule</span> <span class="kn">import</span> <span class="n">DiffusionSystem</span>
 
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
@@ -379,15 +380,13 @@
         <span class="n">bm</span><span class="o">.</span><span class="n">from_mesh</span><span class="p">(</span><span class="n">obj_eval</span><span class="o">.</span><span class="n">to_mesh</span><span class="p">())</span>
 
         <span class="c1"># bisect with plane</span>
-        <span class="n">verts</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">bm</span><span class="o">.</span><span class="n">verts</span><span class="p">]</span>
-        <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">bm</span><span class="o">.</span><span class="n">edges</span><span class="p">]</span>
-        <span class="n">faces</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="p">]</span>
-        <span class="n">geom</span> <span class="o">=</span> <span class="n">verts</span> <span class="o">+</span> <span class="n">edges</span> <span class="o">+</span> <span class="n">faces</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">bm</span><span class="o">.</span><span class="n">verts</span><span class="p">[:]</span> <span class="o">+</span> <span class="n">bm</span><span class="o">.</span><span class="n">edges</span><span class="p">[:]</span> <span class="o">+</span> <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="p">[:]</span>
+        <span class="n">plane_co</span> <span class="o">=</span> <span class="n">com</span> <span class="o">+</span> <span class="n">axis</span> <span class="o">*</span> <span class="n">margin</span> <span class="o">/</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">inner</span> <span class="k">else</span> <span class="n">com</span> <span class="o">-</span> <span class="n">axis</span> <span class="o">*</span> <span class="n">margin</span> <span class="o">/</span> <span class="mi">2</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">bmesh</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">bisect_plane</span><span class="p">(</span>
             <span class="n">bm</span><span class="p">,</span>
             <span class="n">geom</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span>
-            <span class="n">plane_co</span><span class="o">=</span><span class="n">com</span> <span class="o">+</span> <span class="n">axis</span> <span class="o">*</span> <span class="n">margin</span> <span class="o">/</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">inner</span> <span class="k">else</span> <span class="n">com</span> <span class="o">-</span> <span class="n">axis</span> <span class="o">*</span> <span class="n">margin</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="n">plane_co</span><span class="o">=</span><span class="n">plane_co</span><span class="p">,</span>
             <span class="n">plane_no</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span>
             <span class="n">clear_inner</span><span class="o">=</span><span class="n">inner</span><span class="p">,</span>
             <span class="n">clear_outer</span><span class="o">=</span><span class="ow">not</span> <span class="n">inner</span><span class="p">,</span>
@@ -517,8 +516,11 @@
 <div class="viewcode-block" id="DivisionHandler.setup">
 <a class="viewcode-back" href="../../user_guide/goo.division.html#goo.division.DivisionHandler.setup">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">DivisionHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">get_cells</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+              <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> 
+              <span class="n">get_diffsystems</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiffusionSystem</span><span class="p">]],</span> 
+              <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DivisionHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">get_cells</span><span class="p">,</span> <span class="n">get_diffsystems</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span><span class="p">():</span>
             <span class="n">cell</span><span class="p">[</span><span class="s2">&quot;divided&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cells_to_update</span> <span class="o">=</span> <span class="p">[]</span></div>

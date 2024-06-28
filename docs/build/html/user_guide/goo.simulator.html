@@ -280,9 +280,41 @@
           <section id="module-goo.simulator">
 <span id="goo-simulator"></span><h1>goo.simulator<a class="headerlink" href="#module-goo.simulator" title="Link to this heading">¶</a></h1>
 <dl class="py class">
+<dt class="sig sig-object py" id="goo.simulator.Render">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.simulator.</span></span><span class="sig-name descname"><span class="pre">Render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#goo.simulator.Render" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="goo.simulator.Render.MP4">
+<span class="sig-name descname"><span class="pre">MP4</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#goo.simulator.Render.MP4" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="goo.simulator.Render.PNG">
+<span class="sig-name descname"><span class="pre">PNG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#goo.simulator.Render.PNG" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="goo.simulator.Render.TIFF">
+<span class="sig-name descname"><span class="pre">TIFF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#goo.simulator.Render.TIFF" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="goo.simulator.Simulator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.simulator.</span></span><span class="sig-name descname"><span class="pre">Simulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">physics_dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.simulator.</span></span><span class="sig-name descname"><span class="pre">Simulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><span class="pre">CellType</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diffsystems</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">DiffusionSystem</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">physics_dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A simulator for cell-based simulations in Blender.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>celltypes</strong> (<em>List</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><em>CellType</em></a><em>]</em>) – List of cell types.</p></li>
+<li><p><strong>time</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – Start and end frames.</p></li>
+<li><p><strong>physics_dt</strong> (<em>int</em>) – Time step for physics simulation.</p></li>
+<li><p><strong>diffsystems</strong> (<em>List</em><em>[</em><em>DiffusionSystem</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.simulator.Simulator.add_celltype">
 <span class="sig-name descname"><span class="pre">add_celltype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">celltype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.add_celltype"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.add_celltype" title="Link to this definition">¶</a></dt>
@@ -295,12 +327,13 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.simulator.Simulator.add_handler">
-<span class="sig-name descname"><span class="pre">add_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="goo.handler.html#goo.handler.Handler" title="goo.handler.Handler"><span class="pre">Handler</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><span class="pre">CellType</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.add_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.add_handler" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="goo.handler.html#goo.handler.Handler" title="goo.handler.Handler"><span class="pre">Handler</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><span class="pre">CellType</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diffsystems</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">DiffusionSystem</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.add_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.add_handler" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>handler</strong> (<a class="reference internal" href="goo.handler.html#goo.handler.Handler" title="goo.handler.Handler"><em>Handler</em></a>)</p></li>
-<li><p><strong>celltypes</strong> (<em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><em>CellType</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>celltypes</strong> (<em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><em>CellType</em></a><em>]</em>)</p></li>
+<li><p><strong>diffsystems</strong> (<em>list</em><em>[</em><em>DiffusionSystem</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -308,12 +341,12 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.simulator.Simulator.add_handlers">
-<span class="sig-name descname"><span class="pre">add_handlers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handlers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="goo.handler.html#goo.handler.Handler" title="goo.handler.Handler"><span class="pre">Handler</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><span class="pre">CellType</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.add_handlers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.add_handlers" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_handlers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handlers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="goo.handler.html#goo.handler.Handler" title="goo.handler.Handler"><span class="pre">Handler</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><span class="pre">CellType</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.add_handlers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.add_handlers" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>handlers</strong> (<em>list</em><em>[</em><a class="reference internal" href="goo.handler.html#goo.handler.Handler" title="goo.handler.Handler"><em>Handler</em></a><em>]</em>)</p></li>
-<li><p><strong>celltypes</strong> (<em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><em>CellType</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>celltypes</strong> (<em>list</em><em>[</em><a class="reference internal" href="goo.cell.html#goo.cell.CellType" title="goo.cell.CellType"><em>CellType</em></a><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -325,19 +358,58 @@
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="goo.simulator.Simulator.extend_scene">
+<span class="sig-name descname"><span class="pre">extend_scene</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.extend_scene"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.extend_scene" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.simulator.Simulator.get_cells">
+<span class="sig-name descname"><span class="pre">get_cells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.get_cells"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.get_cells" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="goo.simulator.Simulator.get_cells_func">
 <span class="sig-name descname"><span class="pre">get_cells_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.get_cells_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.get_cells_func" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="goo.simulator.Simulator.render">
-<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.render" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.simulator.Simulator.get_diffsystems_func">
+<span class="sig-name descname"><span class="pre">get_diffsystems_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diffsystems</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.get_diffsystems_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.get_diffsystems_func" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.simulator.Simulator.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">range</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#goo.simulator.Render" title="goo.simulator.Render"><span class="pre">Render</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Render.PNG</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.render" title="Link to this definition">¶</a></dt>
+<dd><p>Render the simulation in the background without
+updating the 3D Viewport in real time.
+If a camera is specified, the frames will be rendered with it,
+otherwise the frames will be rendered in the 3D Viewport.
+It will updated the scene at the end of the simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> (<em>int</em>) – Start frame.</p></li>
+<li><p><strong>end</strong> (<em>int</em>) – End frame.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – Path to save the frames.</p></li>
+<li><p><strong>camera</strong> (<em>bool</em>) – Render with the camera.</p></li>
+<li><p><strong>format</strong> (<a class="reference internal" href="#goo.simulator.Render" title="goo.simulator.Render"><em>Render</em></a>) – Render format: PNG (default), TIFF, MP4.</p></li>
+<li><p><strong>frames</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>range</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.simulator.Simulator.run">
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/simulator.html#Simulator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.simulator.Simulator.run" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Run the simulation in the background without
+updating the 3D Viewport in real time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>end</strong> (<em>int</em>) – End frame.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.simulator.Simulator.setup_world">
@@ -409,13 +481,22 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">goo.simulator</a><ul>
+<li><a class="reference internal" href="#goo.simulator.Render"><code class="docutils literal notranslate"><span class="pre">Render</span></code></a><ul>
+<li><a class="reference internal" href="#goo.simulator.Render.MP4"><code class="docutils literal notranslate"><span class="pre">Render.MP4</span></code></a></li>
+<li><a class="reference internal" href="#goo.simulator.Render.PNG"><code class="docutils literal notranslate"><span class="pre">Render.PNG</span></code></a></li>
+<li><a class="reference internal" href="#goo.simulator.Render.TIFF"><code class="docutils literal notranslate"><span class="pre">Render.TIFF</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#goo.simulator.Simulator"><code class="docutils literal notranslate"><span class="pre">Simulator</span></code></a><ul>
 <li><a class="reference internal" href="#goo.simulator.Simulator.add_celltype"><code class="docutils literal notranslate"><span class="pre">Simulator.add_celltype()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.add_celltypes"><code class="docutils literal notranslate"><span class="pre">Simulator.add_celltypes()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.add_handler"><code class="docutils literal notranslate"><span class="pre">Simulator.add_handler()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.add_handlers"><code class="docutils literal notranslate"><span class="pre">Simulator.add_handlers()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.enable_addon"><code class="docutils literal notranslate"><span class="pre">Simulator.enable_addon()</span></code></a></li>
+<li><a class="reference internal" href="#goo.simulator.Simulator.extend_scene"><code class="docutils literal notranslate"><span class="pre">Simulator.extend_scene()</span></code></a></li>
+<li><a class="reference internal" href="#goo.simulator.Simulator.get_cells"><code class="docutils literal notranslate"><span class="pre">Simulator.get_cells()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.get_cells_func"><code class="docutils literal notranslate"><span class="pre">Simulator.get_cells_func()</span></code></a></li>
+<li><a class="reference internal" href="#goo.simulator.Simulator.get_diffsystems_func"><code class="docutils literal notranslate"><span class="pre">Simulator.get_diffsystems_func()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.render"><code class="docutils literal notranslate"><span class="pre">Simulator.render()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.run"><code class="docutils literal notranslate"><span class="pre">Simulator.run()</span></code></a></li>
 <li><a class="reference internal" href="#goo.simulator.Simulator.setup_world"><code class="docutils literal notranslate"><span class="pre">Simulator.setup_world()</span></code></a></li>

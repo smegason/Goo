@@ -411,9 +411,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">verts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_eval</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">vertices</span>
         <span class="k">if</span> <span class="n">local_coords</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">co</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verts</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">co</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verts</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">obj_eval</span><span class="o">.</span><span class="n">matrix_world</span> <span class="o">@</span> <span class="n">v</span><span class="o">.</span><span class="n">co</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verts</span><span class="p">]</span></div>
+            <span class="n">matrix_world</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_eval</span><span class="o">.</span><span class="n">matrix_world</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">matrix_world</span> <span class="o">@</span> <span class="n">v</span><span class="o">.</span><span class="n">co</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verts</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="Cell.volume">
@@ -474,10 +475,11 @@
         <span class="n">eigenvectors</span> <span class="o">=</span> <span class="n">eigenvectors</span><span class="p">[:,</span> <span class="n">eigenvalues</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
         <span class="n">axis</span> <span class="o">=</span> <span class="n">eigenvectors</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span>
 
-        <span class="c1"># sort indices by distance</span>
-        <span class="n">vert_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">verts</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">axis</span><span class="p">))</span>
-        <span class="n">first_vertex</span> <span class="o">=</span> <span class="n">verts</span><span class="p">[</span><span class="n">vert_indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-        <span class="n">last_vertex</span> <span class="o">=</span> <span class="n">verts</span><span class="p">[</span><span class="n">vert_indices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">projections</span> <span class="o">=</span> <span class="n">verts</span> <span class="o">@</span> <span class="n">axis</span>
+        <span class="n">min_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">projections</span><span class="p">)</span>
+        <span class="n">max_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">projections</span><span class="p">)</span>
+        <span class="n">first_vertex</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="n">verts</span><span class="p">[</span><span class="n">min_index</span><span class="p">])</span>
+        <span class="n">last_vertex</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="n">verts</span><span class="p">[</span><span class="n">max_index</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">Axis</span><span class="p">(</span><span class="n">Vector</span><span class="p">(</span><span class="n">axis</span><span class="p">),</span> <span class="n">first_vertex</span><span class="p">,</span> <span class="n">last_vertex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_eval</span><span class="o">.</span><span class="n">matrix_world</span><span class="p">)</span>
 
@@ -538,7 +540,7 @@
 
 <div class="viewcode-block" id="Cell.remesh">
 <a class="viewcode-back" href="../../user_guide/goo.cell.html#goo.cell.Cell.remesh">[docs]</a>
-    <span class="k">def</span> <span class="nf">remesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">voxel_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.65</span><span class="p">,</span> <span class="n">smooth</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">remesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">voxel_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.55</span><span class="p">,</span> <span class="n">smooth</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remesh the underlying mesh representation of the cell.</span>
 
 <span class="sd">        Remeshing is done using the built-in `voxel_remesh()`.</span>
@@ -579,6 +581,18 @@
                 <span class="k">if</span> <span class="s2">&quot;Base Color&quot;</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
                     <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Base Color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span>
                     <span class="n">node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Base Color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span></div>
+
+
+<div class="viewcode-block" id="Cell.calculate_dist_to_voxel">
+<a class="viewcode-back" href="../../user_guide/goo.cell.html#goo.cell.Cell.calculate_dist_to_voxel">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_dist_to_voxel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">voxel_loc</span><span class="p">:</span> <span class="n">Vector</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the distance from a cell to a voxel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            voxel_loc: The location of the voxel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">com</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">COM</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">com</span> <span class="o">-</span> <span class="n">voxel_loc</span><span class="p">)</span><span class="o">.</span><span class="n">length</span></div>
 
 
     <span class="c1"># ----- PHYSICS -----</span>
@@ -954,7 +968,7 @@
             <span class="k">return</span>
 
         <span class="c1"># add homotypic adhesion force</span>
-        <span class="n">homo_adhesion</span> <span class="o">=</span> <span class="n">get_adhesion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">homo_adhesion_strength</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">obj</span><span class="p">)</span>
+        <span class="n">homo_adhesion</span> <span class="o">=</span> <span class="n">create_adhesion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">homo_adhesion_strength</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">obj</span><span class="p">)</span>
         <span class="n">cell</span><span class="o">.</span><span class="n">homo_adhesion</span> <span class="o">=</span> <span class="n">homo_adhesion</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_homo_adhesions</span><span class="o">.</span><span class="n">add_force</span><span class="p">(</span><span class="n">homo_adhesion</span><span class="p">)</span>
@@ -963,7 +977,7 @@
         <span class="c1"># add heterotypic adhesion forces</span>
         <span class="k">for</span> <span class="n">celltype</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hetero_adhesions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">outgoing_forces</span><span class="p">,</span> <span class="n">incoming_forces</span><span class="p">,</span> <span class="n">strength</span> <span class="o">=</span> <span class="n">item</span>
-            <span class="n">hetero_adhesion</span> <span class="o">=</span> <span class="n">get_adhesion</span><span class="p">(</span>
+            <span class="n">hetero_adhesion</span> <span class="o">=</span> <span class="n">create_adhesion</span><span class="p">(</span>
                 <span class="n">strength</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_to_</span><span class="si">{</span><span class="n">celltype</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">loc</span>
             <span class="p">)</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">add_effector</span><span class="p">(</span><span class="n">incoming_forces</span><span class="p">)</span>
@@ -972,7 +986,7 @@
             <span class="n">cell</span><span class="o">.</span><span class="n">link_adhesion_force</span><span class="p">(</span><span class="n">hetero_adhesion</span><span class="p">)</span>
 
         <span class="c1"># add motion force</span>
-        <span class="n">motion</span> <span class="o">=</span> <span class="n">get_motion</span><span class="p">(</span>
+        <span class="n">motion</span> <span class="o">=</span> <span class="n">create_motion</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_motion&quot;</span><span class="p">,</span>
             <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
             <span class="n">strength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">motion_strength</span><span class="p">,</span>

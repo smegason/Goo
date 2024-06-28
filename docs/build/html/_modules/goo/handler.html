@@ -280,10 +280,13 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span><span class="p">,</span> <span class="n">pdist</span><span class="p">,</span> <span class="n">squareform</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">KDTree</span>
+
 <span class="kn">import</span> <span class="nn">bpy</span>
 <span class="kn">import</span> <span class="nn">bmesh</span>
 <span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="n">Vector</span>
 <span class="kn">from</span> <span class="nn">goo.cell</span> <span class="kn">import</span> <span class="n">Cell</span>
+<span class="kn">from</span> <span class="nn">goo.molecule</span> <span class="kn">import</span> <span class="n">Molecule</span><span class="p">,</span> <span class="n">DiffusionSystem</span>
 
 
 <div class="viewcode-block" id="Handler">
@@ -291,7 +294,12 @@
 <span class="k">class</span> <span class="nc">Handler</span><span class="p">:</span>
 <div class="viewcode-block" id="Handler.setup">
 <a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.Handler.setup">[docs]</a>
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> 
+        <span class="n">get_diffsystems</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiffusionSystem</span><span class="p">]],</span>
+        <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set up the handler.</span>
 
 <span class="sd">        Args:</span>
@@ -300,6 +308,7 @@
 <span class="sd">            dt: The time step for the simulation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span> <span class="o">=</span> <span class="n">get_cells</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_diff_systems</span> <span class="o">=</span> <span class="n">get_diffsystems</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span></div>
 
 
@@ -319,6 +328,7 @@
 </div>
 
 
+
 <span class="c1"># TODO: make voxel_size the same for remesh function and remesh handler</span>
 <span class="c1"># TODO: remeshing seems to interfere with motion</span>
 <div class="viewcode-block" id="RemeshHandler">
@@ -335,10 +345,10 @@
 <span class="sd">            Disabled if set to 0.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">smooth_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">voxel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span> <span class="n">sphere_factor</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">voxel_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">smooth_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sphere_factor</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">freq</span> <span class="o">=</span> <span class="n">freq</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">smooth_factor</span> <span class="o">=</span> <span class="n">smooth_factor</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">voxel_size</span> <span class="o">=</span> <span class="n">voxel_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smooth_factor</span> <span class="o">=</span> <span class="n">smooth_factor</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sphere_factor</span> <span class="o">=</span> <span class="n">sphere_factor</span>
 
 <div class="viewcode-block" id="RemeshHandler.run">
@@ -365,25 +375,61 @@
             <span class="n">bm</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">recenter</span><span class="p">()</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">voxel_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">cell</span><span class="o">.</span><span class="n">remesh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">)</span>
                 <span class="n">cell</span><span class="o">.</span><span class="n">recenter</span><span class="p">()</span>
-
-            <span class="c1"># Perform remeshing operations</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sphere_factor</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cast_to_sphere</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sphere_factor</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="n">cell</span><span class="o">.</span><span class="n">remesh</span><span class="p">()</span>
                 <span class="n">cell</span><span class="o">.</span><span class="n">recenter</span><span class="p">()</span>
 
             <span class="c1"># Recenter and re-enable physics</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">enable_physics</span><span class="p">()</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">cloth_mod</span><span class="o">.</span><span class="n">point_cache</span><span class="o">.</span><span class="n">frame_start</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">frame_current</span></div>
+</div>
 
 
-    <span class="k">def</span> <span class="nf">_cast_to_sphere</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">factor</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">temp_override</span><span class="p">(</span><span class="n">active_object</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">obj</span><span class="p">):</span>
-            <span class="n">cast_modifier</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">modifiers</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Cast&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;CAST&quot;</span><span class="p">)</span>
-            <span class="n">cast_modifier</span><span class="o">.</span><span class="n">factor</span> <span class="o">=</span> <span class="n">factor</span>
-            <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">modifier_apply</span><span class="p">(</span><span class="n">modifier</span><span class="o">=</span><span class="n">cast_modifier</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DiffusionHandler">
+<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.DiffusionHandler">[docs]</a>
+<span class="k">class</span> <span class="nc">DiffusionHandler</span><span class="p">(</span><span class="n">Handler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handler for simulating diffusion of a substance in the grid in the scene.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        diffusionSystem: The reaction-diffusion system to simulate.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">diffusionSystem</span><span class="p">:</span> <span class="n">DiffusionSystem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span> <span class="o">=</span> <span class="n">diffusionSystem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kd_tree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_coord</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flat_grid_coord</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DiffusionHandler.build_kd_tree">
+<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.DiffusionHandler.build_kd_tree">[docs]</a>
+    <span class="k">def</span> <span class="nf">build_kd_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the KD-Tree from the grid coordinates if not already built.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kd_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">_build_kdtree</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DiffusionHandler.run">
+<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.DiffusionHandler.run">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scene</span><span class="p">,</span> <span class="n">depsgraph</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd_tree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_kd_tree</span><span class="p">()</span>
+        
+        <span class="n">cell_coords</span> <span class="o">=</span> <span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">COM</span><span class="p">()</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span><span class="p">()]</span>
+        <span class="n">cell_coords_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cell_coords</span><span class="p">)</span>
+
+        <span class="n">distances</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd_tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">cell_coords_array</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">distance_upper_bound</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">add_conc</span> <span class="o">=</span> <span class="p">((</span><span class="n">distances</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">new_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">update_concentration</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">add_conc</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;new_val&quot;</span><span class="p">,</span> <span class="n">new_val</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -453,8 +499,11 @@
 <div class="viewcode-block" id="GrowthPIDHandler.setup">
 <a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.GrowthPIDHandler.setup">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> <span class="n">dt</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">GrowthPIDHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">get_cells</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+              <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> 
+              <span class="n">get_diffsystems</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiffusionSystem</span><span class="p">]],</span> 
+              <span class="n">dt</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GrowthPIDHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">get_cells</span><span class="p">,</span> <span class="n">get_diffsystems</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">initialize_PID</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span></div>
 
@@ -634,25 +683,20 @@
 
 
 
-<div class="viewcode-block" id="SceneExtensionHandler">
-<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.SceneExtensionHandler">[docs]</a>
-<span class="k">class</span> <span class="nc">SceneExtensionHandler</span><span class="p">(</span><span class="n">Handler</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handler for extending the calculation of physics beyond the default 250</span>
+<span class="c1"># TODO: remove because not used</span>
+<span class="sd">&#39;&#39;&#39;class SceneExtensionHandler(Handler):</span>
+<span class="sd">    &quot;&quot;&quot;Handler for extending the calculation of physics beyond the default 250</span>
 <span class="sd">    frames.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span>
+<span class="sd">    def __init__(self, end):</span>
+<span class="sd">        self.end = end</span>
 
-<div class="viewcode-block" id="SceneExtensionHandler.run">
-<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.SceneExtensionHandler.run">[docs]</a>
-    <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scene</span><span class="p">,</span> <span class="n">depsgraph</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">cloth_mod</span> <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">cloth_mod</span><span class="o">.</span><span class="n">point_cache</span><span class="o">.</span><span class="n">frame_end</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
-                <span class="n">cell</span><span class="o">.</span><span class="n">cloth_mod</span><span class="o">.</span><span class="n">point_cache</span><span class="o">.</span><span class="n">frame_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span></div>
-</div>
-
+<span class="sd">    @override</span>
+<span class="sd">    def run(self, scene, depsgraph):</span>
+<span class="sd">        for cell in self.get_cells():</span>
+<span class="sd">            if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end &lt; self.end:</span>
+<span class="sd">                cell.cloth_mod.point_cache.frame_end = self.end&#39;&#39;&#39;</span>
 
 
 <span class="k">def</span> <span class="nf">_get_divisions</span><span class="p">(</span><span class="n">cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]):</span>
@@ -770,6 +814,7 @@
 <span class="sd">        VOLUMES: list of the current volumes of each cell.</span>
 <span class="sd">        PRESSURES: list of the current pressures of each cell.</span>
 <span class="sd">        CONTACT_AREAS: list of contact areas between each pair of cells.</span>
+<span class="sd">        CONCENTRATIONS: concentrations of each molecule in the grid system.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">TIMES</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
@@ -779,6 +824,7 @@
     <span class="n">VOLUMES</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
     <span class="n">PRESSURES</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
     <span class="n">CONTACT_AREAS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">CONCENTRATIONS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
 
     <span class="n">ALL</span> <span class="o">=</span> <span class="n">_all</span><span class="p">()</span></div>
 
@@ -805,8 +851,11 @@
 <div class="viewcode-block" id="DataExporter.setup">
 <a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.DataExporter.setup">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> <span class="n">dt</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">DataExporter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">get_cells</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+              <span class="n">get_cells</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]],</span> 
+              <span class="n">get_diffsystems</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiffusionSystem</span><span class="p">]],</span>
+              <span class="n">dt</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DataExporter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">get_cells</span><span class="p">,</span> <span class="n">get_diffsystems</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">time_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;seed&quot;</span><span class="p">],</span> <span class="s2">&quot;frames&quot;</span><span class="p">:</span> <span class="p">[]}</span>
 
@@ -848,6 +897,11 @@
             <span class="n">frame_out</span><span class="p">[</span><span class="s2">&quot;contact_areas&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">areas</span>
             <span class="n">frame_out</span><span class="p">[</span><span class="s2">&quot;contact_ratios&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ratios</span>
 
+        <span class="k">for</span> <span class="n">diff_sys</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_diff_systems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">&amp;</span> <span class="n">DataFlag</span><span class="o">.</span><span class="n">CONCENTRATIONS</span><span class="p">:</span>
+                <span class="n">conc_grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_numpy_to_list</span><span class="p">(</span><span class="n">diff_sys</span><span class="o">.</span><span class="n">_grid_concentrations</span><span class="p">)</span>
+                <span class="n">frame_out</span><span class="p">[</span><span class="s2">&quot;concentrations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conc_grid</span>
+                
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">out</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
@@ -856,8 +910,20 @@
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">out</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">frame_out</span><span class="p">)</span></div>
-</div>
 
+
+    <span class="k">def</span> <span class="nf">_convert_numpy_to_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert numpy arrays to lists for JSON serialization.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_numpy_to_list</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_convert_numpy_to_list</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">obj</span></div>
+
+        
 </pre></div>
         </article>
       </div>

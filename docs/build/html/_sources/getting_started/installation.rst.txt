@@ -3,12 +3,12 @@
 Installation
 ============
 
-Goo runs within Blender, so you will first need to download Blender 3.6 LTS from `here <https://www.blender.org/download/lts/3-6/>`__.
-The package was developed under Blender 3.6 LTS, so we recommend using this version. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases. 
+Goo runs within Blender, so you will first need to download Blender 4.1 from `here <https://www.blender.org/download/lts/4-1/>`__.
+We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases. Currently, we support Blender 3.3 and above.  
 
 Once you have Blender installed:
 
-1. Download the Goo library from `GitHub <https://github.com/smegason/Goo>`__. Download the zip file of the latest release, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:
+1. Download the Goo library from `GitHub <https://github.com/smegason/Goo>`__. Download the zip file of the latest release, and unzip it in an empty folder. \n Alternatively, it can be downloaded from the command line as follows:
 
    .. code-block:: bash
 
@@ -24,7 +24,6 @@ Dependencies
 
 - python 3.7 or newer
 - numpy_
-- matplotlib_
 - scipy_
 - bpy_
 - bmesh_
@@ -67,7 +66,7 @@ To install Goo's dependencies:
 
    .. code-block:: bash
 
-      pip install setuptools numpy scipy sphinx sphinx_copybutton furo typing_extensions
+      /Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10 -m pip install setuptools numpy scipy sphinx sphinx_copybutton furo typing_extensions
 
 5. Check that the dependencies are installed:
 
