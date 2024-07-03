@@ -12,7 +12,7 @@ HOOK_PACKAGES = $(HOOK_DIR)/scripts/modules
 .PHONY: setup create_venv install_requirements
 
 # --- Use these targets ---
-setup: create_venv install_requirements create_hook update_modules
+setup: create_venv install_requirements create_hook
 
 update_modules:
 	@if [ -d "$(HOOK_PACKAGES)" ]; then \
