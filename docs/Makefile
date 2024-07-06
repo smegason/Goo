@@ -20,5 +20,8 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+clean:
+	rm -rf $(BUILDDIR)
+
 api:
 	sphinx-apidoc -e -o "$(SOURCEDIR)" ../scripts/modules/

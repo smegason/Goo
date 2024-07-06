@@ -144,6 +144,9 @@ hook/
 # mkdocs documentation
 /site
 
+# Sphinx documentation
+docs/build/
+
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -176,7 +179,7 @@ poetry.toml
 pyrightconfig.json
 
 ### VisualStudioCode ###
-.vscode/*
+.vscode/
 
 # Local History for Visual Studio Code
 .history/
