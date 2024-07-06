@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/551079563.svg)](https://zenodo.org/doi/10.5281/zenodo.10296202)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10296203.svg)](https://doi.org/10.5281/zenodo.10296203) [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
 
 # Goo is a Python-based Blender extension for modeling biological cells, tissues, and embryos
@@ -12,17 +12,17 @@ Goo was started by the <a href="http://www.digitalfish.org">Megason lab at Harva
 Our grand Driving Biological Problem is to simulate the first <a href= "https://www.youtube.com/watch?v=RQ6vkDr_Dec">24 hours of zebrafish development</a>. Our initial efforts are focussed on cleavage stage. We hope that Goo will be useful for simulating other biological tissues for understanding morphogenesis, embryonic development, growth of organoids, tissue engineering, and artificial life.
 
 ## Documentation
-  Full documentation available on <a href="https://antoineruzette.github.io/goo_gallery/">Goo's website</a>. 
+  Full documentation available on <a href="https://smegason.github.io/Goo/">Goo's website</a>. 
 
 ### User-interface
 
 The library uses the Blender interface to launch simulations and visualize them in real-time.
-![Goo UI](img/goo-GUI.png)
+![Goo UI](docs/source/_static/goo-GUI.png)
 
 ### Examples
 
 Simulation of a growing and cleaving clump of cells, for 150 minutes at a time step of 1 minute.
-![Division example](img/20240227_division_frame150_targetvolume300001-0150.gif)
+![Division example](docs/source/_static/20240304_desynchronized_division_10001-0130.gif)
 
 
 ### Contributors (in order of appearance)
@@ -39,3 +39,4 @@ ___
 <li>Nenghan Lin, KU Leuven
 <li>Jiangli Gui, KU Leuven
 <li>Rifa Gowani, Texas Academy of Mathematics and Science (TAMS) at the University of North Texas (UNT)
+<li>Charles Dai, Harvard Medical School

@@ -4,11 +4,10 @@
    contain the root `toctree` directive.
 
 
-Welcome. 
-===============================
+Goo
+=======
     
-Goo is an open-source modular software to model cells, tissues and early embryos in Blender. 
----------------------------------------------------------------------------------------------
+**Goo is an open-source Python library to simulate cells, tissues and embryos in Blender.**
 
 It allows for the simulation of a collection of growing, self-replicating, autonomous and interacting agents in order to simulate biological tissues. 
 Goo currently supports mechanical interactions of cells by adapting and extending the physics engine built into Blender, 
@@ -25,23 +24,32 @@ Getting started
    :maxdepth: 1
    
    getting_started/installation.rst
+   getting_started/learning_resources.rst
+   getting_started/example_scripts.rst
+   getting_started/blender_on_o2.rst
+   user_guide/api.rst
+   getting_started/hardware.rst
 
-User guide
+Contributing
 ==================
+
 .. toctree::
    :maxdepth: 1
    
-   user_guide/api
+   developer_guide/developers.rst
 
-Credits and citation
-======================
+How to cite Goo
+------------------
 .. toctree::
    :maxdepth: 1
    
    credits/credits_and_citation.rst
 
-Indices and tables
+
+News
 ==================
 
-* :ref:`genindex`
-* :ref:`search`
+Goo v1.0 is here! This is the first stable release after refactoring the codebase to be more efficient and close to Python. `More information. <https://github.com/smegason/Goo/releases/tag/v1.0.0>`__
+
+
+Goo was presented at the 2023 Blender Conference in Amsterdam! `More information. <https://www.youtube.com/watch?v=FoMv7MnLFPc>`__

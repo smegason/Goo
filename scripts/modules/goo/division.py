@@ -1,6 +1,7 @@
 from typing import Callable
 
-import bpy, bmesh
+import bpy
+import bmesh
 from mathutils import Vector
 import numpy as np
 
@@ -91,15 +92,13 @@ class BisectDivisionLogic(DivisionLogic):
         bm.from_mesh(obj_eval.to_mesh())
 
         # bisect with plane
-        verts = [v for v in bm.verts]
-        edges = [e for e in bm.edges]
-        faces = [f for f in bm.faces]
-        geom = verts + edges + faces
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        plane_co = com + axis * margin / 2 if inner else com - axis * margin / 2
 
         result = bmesh.ops.bisect_plane(
             bm,
             geom=geom,
-            plane_co=com + axis * margin / 2 if inner else com - axis * margin / 2,
+            plane_co=plane_co,
             plane_no=axis,
             clear_inner=inner,
             clear_outer=not inner,
@@ -206,8 +205,10 @@ class DivisionHandler(Handler):
             division.
     """
 
-    def __init__(self, division_logic):
+    def __init__(self, division_logic, mu, sigma):
         self.division_logic = division_logic()
+        self.mu = mu
+        self.sigma = sigma
 
     @override
     def setup(self, get_cells: Callable[[], list[Cell]], dt: float):
@@ -273,10 +274,8 @@ class TimeDivisionHandler(DivisionHandler):
         var (float): Variance in the time interval.
     """
 
-    def __init__(self, division_logic, mu=10, var=0):
-        super(TimeDivisionHandler, self).__init__(division_logic)
-        self.mu = mu
-        self.var = var
+    def __init__(self, division_logic, mu=20, sigma=0):
+        super(TimeDivisionHandler, self).__init__(division_logic, mu, sigma)
 
     @override
     def setup(self, get_cells, dt):
@@ -284,14 +283,15 @@ class TimeDivisionHandler(DivisionHandler):
         for cell in self.get_cells():
             cell["last_division_time"] = 0
 
-    # TODO: implement variance
     @override
     def can_divide(self, cell: Cell):
         time = bpy.context.scene.frame_current * self.dt
         if "last_division_time" not in cell:
             cell["last_division_time"] = time
             return False
-        return time - cell["last_division_time"] >= self.mu
+        # implement variance too
+        div_time = int(np.random.normal(self.mu, self.sigma))
+        return time - cell["last_division_time"] >= div_time
 
     @override
     def update_on_divide(self, cell: Cell):
@@ -308,10 +308,10 @@ class SizeDivisionHandler(DivisionHandler):
         threshold (float): minimum size of cell able to divide.
     """
 
-    def __init__(self, division_logic, threshold=30):
-        super(SizeDivisionHandler, self).__init__(division_logic)
-        self.threshold = threshold
+    def __init__(self, division_logic, mu=30, sigma=0):
+        super(SizeDivisionHandler, self).__init__(division_logic, mu, sigma)
 
     @override
     def can_divide(self, cell: Cell):
-        return cell.volume() >= self.threshold
+        div_volume = np.random.normal(self.mu, self.sigma)
+        return cell.volume() >= div_volume

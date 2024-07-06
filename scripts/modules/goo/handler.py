@@ -7,7 +7,8 @@ import json
 
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
-import bpy, bmesh
+import bpy
+import bmesh
 from mathutils import Vector
 from goo.cell import Cell
 
@@ -17,7 +18,8 @@ class Handler:
         """Set up the handler.
 
         Args:
-            get_cells: A function that, when called, retrieves the list of cells that may divide.
+            get_cells: A function that, when called, 
+                retrieves the list of cells that may divide.
             dt: The time step for the simulation.
         """
         self.get_cells = get_cells
@@ -35,19 +37,21 @@ class Handler:
         """
         raise NotImplementedError("Subclasses must implement run() method.")
 
-
+# TODO: make voxel_size the same for remesh function and remesh handler
 # TODO: remeshing seems to interfere with motion
 class RemeshHandler(Handler):
     """Handler for remeshing cells at given frequencies.
 
     Attributes:
         freq (int): Number of frames between remeshes.
-        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`. Disabled if set to 0.
+        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`. 
+            Disabled if set to 0.
         voxel_size (float): Factor to pass to `voxel_remesh()`. Disabled if set to 0.
-        sphere_factor (float): Factor to pass to Cast to sphere modifier. Disabled if set to 0.
+        sphere_factor (float): Factor to pass to Cast to sphere modifier. 
+            Disabled if set to 0.
     """
 
-    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.25, sphere_factor=0):
+    def __init__(self, freq=1, smooth_factor=0.1, voxel_size=0.65, sphere_factor=0):
         self.freq = freq
         self.smooth_factor = smooth_factor
         self.voxel_size = voxel_size
@@ -309,7 +313,7 @@ class ColorizeHandler(Handler):
 
         for cell, p in zip(self.get_cells(), ps):
             color = blue.lerp(red, p)
-            cell.recolor(color)
+            cell.recolor(tuple(color))
 
 
 class SceneExtensionHandler(Handler):
@@ -435,7 +439,8 @@ class DataFlag(Flag):
         TIMES: time elapsed since beginning of simulation.
         DIVISIONS: list of cells that have divided and their daughter cells.
         MOTION_PATH: list of the current position of each cell.
-        FORCE_PATH: list of the current positions of the associated motion force of each cell.
+        FORCE_PATH: list of the current positions of the associated 
+            motion force of each cell.
         VOLUMES: list of the current volumes of each cell.
         PRESSURES: list of the current pressures of each cell.
         CONTACT_AREAS: list of contact areas between each pair of cells.
@@ -459,8 +464,9 @@ class DataExporter(Handler):
     Attributes:
         path (str): Path to save .json file of calculated metrics. If empty, statistics
             are printed instead.
-        options: (DataFlag): Flags of which metrics to calculated and save/print. Flags can be combined by
-            binary OR operation, i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.
+        options: (DataFlag): Flags of which metrics to calculated and save/print. 
+            Flags can be combined by binary OR operation, 
+            i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.
     """
 
     def __init__(self, path="", options: DataFlag = DataFlag.ALL):

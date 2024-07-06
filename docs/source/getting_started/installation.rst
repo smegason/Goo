@@ -3,32 +3,33 @@
 Installation
 ============
 
-Goo runs within Blender, so you will first need to download Blender 3.6 LTS from `here <https://www.blender.org/download/lts/3-6/>`__.
-The package was developed under Blender 3.6 LTS, so we recommend using this version. We aim to maintain Goo for future Blender LTS versions but might have a lag form their releases. 
+
+Download Blender
+-----------------
+
+Goo runs within Blender, so you will first need to download Blender from `here <https://www.blender.org/download/>`__.
+The package was developed under Blender 3.6 LTS and tested for Blender 4.1. We aim to maintain Goo for future Blender LTS versions but might have a lag from their releases.
 
 Once you have Blender installed:
 
-1. Download the Goo library from `GitHub <https://github.com/smegason/Goo>`__. 
+1. Download the Goo library from `GitHub <https://github.com/smegason/Goo>`__. Download the zip file of the `latest release <https://github.com/smegason/Goo/releases/latest>`__, and unzip it in an empty folder. Alternatively, it can be downloaded from the command line as follows:
 
-2. In Blender, Edit > Preferences > File Paths > Scripts: add <your_root_path>/Goo/scripts
+   .. code-block:: bash
 
+      mkdir Goo
+      cd Goo
+      wget <Goo-latest-release>.tar.gz
+      tar -xvf <Goo-latest-release>.tar.gz
 
-Simulation scripts
-------------------
-
-Examples of simulation script can be found in the /simulations folder, located `here <https://github.com/smegason/Goo/tree/main/simulations>`__. 
-Once you get a good grasp of the library, you will be able to write your own Goo scripts and specify lots of initial conditions for your simulations of cells. 
-
-Goo scripts typically get ran from Blender's scripting tab, though they can be ran from Visual Studio Code directly using the `developer's extension <https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development>`__ developed by Jacques Lucke. 
+2. In Blender, go to `Edit > Preferences > File Paths > Scripts` and add `<your_root_path>/Goo/scripts`.
 
 Dependencies
 ------------
 
-Goo has the following dependencies.
-
 - python 3.7 or newer
 - numpy_
 - matplotlib_
+- scipy_
 - bpy_
 - bmesh_
 - mathutils_
@@ -40,3 +41,46 @@ Goo has the following dependencies.
 .. _matplotlib: https://matplotlib.org/
 .. _json: https://docs.python.org/3/library/json.html
 .. _mathutils: https://pypi.org/project/mathutils/
+.. _scipy: https://pypi.org/project/scipy/
+
+Install Dependencies in Blender
+-------------------------------
+
+Blender comes with its own Python interpreter, which is isolated from the system's Python environment. 
+Goo requires a few additional Python packages that need to be installed directly into Blender's Python environment. 
+
+To install Goo's dependencies: 
+
+1. Find the paths of the Blender executable and its Python interpreter.
+
+   For macOS, it is usually in the Applications folder, e.g., `/Applications/Blender.app/Contents/MacOS/Blender` and `/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10`. For Windows, it is usually in the Program Files folder.
+
+2. Create a new environment using Blender's Python interpreter:
+
+   .. code-block:: bash
+
+      /Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11 -m venv blender_venv
+
+3. Activate the environment:
+
+   .. code-block:: bash
+
+      source blender_venv/bin/activate
+
+4. Install the dependencies:
+
+   .. code-block:: bash
+
+      pip install setuptools numpy scipy sphinx sphinx_copybutton furo typing_extensions
+
+5. Check that the dependencies are installed:
+
+   .. code-block:: bash
+
+      /Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11 -m pip list
+
+6. Launch Blender:
+
+   .. code-block:: bash
+
+      /Applications/Blender.app/Contents/MacOS/Blender

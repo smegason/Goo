@@ -1,13 +1,13 @@
-from functools import reduce
-from typing import Optional, Union, Callable
+from typing import Optional, Union
 import numpy as np
 
-import bpy, bmesh
+import bpy
+import bmesh
 from bpy.types import Modifier, ClothModifier, CollisionModifier
-from mathutils import *
+from mathutils import Vector
 
-from goo.force import *
-from goo.utils import *
+from goo.force import * 
+from goo.utils import * 
 
 
 class Cell(BlenderObject):
@@ -112,9 +112,8 @@ class Cell(BlenderObject):
         """The evaluated object.
 
         Note:
-            `Blender API Documentation > evaluated_get(depsgraph)`__
-
-        __ https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get
+            See the `Blender API Documentation for evaluated_get(depsgraph)
+            <https://docs.blender.org/api/current/bpy.types.ID.html?highlight=evaluated_get#bpy.types.ID.evaluated_get>`__.
         """
         dg = bpy.context.evaluated_depsgraph_get()
         obj_eval = self.obj.evaluated_get(dg)
@@ -124,16 +123,18 @@ class Cell(BlenderObject):
         """Returns the vertices of the mesh representation of the cell.
 
         Args:
-            local_coords: if `True`, coordinates are returned in local object space rather than world space.
+            local_coords: if `True`, coordinates are returned in local object space 
+            rather than world space.
 
         Returns:
             List of coordinates of vertices.
         """
         verts = self.obj_eval.data.vertices
         if local_coords:
-            return [v.co for v in verts]
+            return [v.co.copy() for v in verts]
         else:
-            return [self.obj_eval.matrix_world @ v.co for v in verts]
+            matrix_world = self.obj_eval.matrix_world
+            return [matrix_world @ v.co for v in verts]
 
     def volume(self) -> float:
         """Calculates the volume of the cell.
@@ -187,10 +188,11 @@ class Cell(BlenderObject):
         eigenvectors = eigenvectors[:, eigenvalues.argsort()[::-1]]
         axis = eigenvectors[:, n]
 
-        # sort indices by distance
-        vert_indices = np.argsort(np.asarray(verts).dot(axis))
-        first_vertex = verts[vert_indices[0]]
-        last_vertex = verts[vert_indices[-1]]
+        projections = verts @ axis
+        min_index = np.argmin(projections)
+        max_index = np.argmax(projections)
+        first_vertex = Vector(verts[min_index])
+        last_vertex = Vector(verts[max_index])
 
         return Axis(Vector(axis), first_vertex, last_vertex, self.obj_eval.matrix_world)
 
@@ -217,8 +219,8 @@ class Cell(BlenderObject):
             A tuple of two daughter cells, resulting from the division of the
             mother cell.
         """
-        # TODO: rewrite code to make it clearer that there are two daughter cells splitting
-        # from a mother cell.
+        # TODO: rewrite code to make it clearer that there are two daughter 
+        # cells splitting from a mother cell.
         mother, daughter = division_logic.make_divide(self)
         if mother.celltype:
             mother.celltype.add_cell(daughter)
@@ -237,7 +239,7 @@ class Cell(BlenderObject):
 
         self.loc = com
 
-    def remesh(self, voxel_size: float = 0.25, smooth: bool = True):
+    def remesh(self, voxel_size: float = 0.65, smooth: bool = True):
         """Remesh the underlying mesh representation of the cell.
 
         Remeshing is done using the built-in `voxel_remesh()`.
@@ -608,7 +610,7 @@ class CellType:
             return
 
         # add homotypic adhesion force
-        homo_adhesion = get_adhesion(self.homo_adhesion_strength, obj=cell.obj)
+        homo_adhesion = create_adhesion(self.homo_adhesion_strength, obj=cell.obj)
         cell.homo_adhesion = homo_adhesion
 
         self._homo_adhesions.add_force(homo_adhesion)
@@ -617,7 +619,7 @@ class CellType:
         # add heterotypic adhesion forces
         for celltype, item in self._hetero_adhesions.items():
             outgoing_forces, incoming_forces, strength = item
-            hetero_adhesion = get_adhesion(
+            hetero_adhesion = create_adhesion(
                 strength, name=f"{cell.name}_to_{celltype.name}", loc=cell.loc
             )
             cell.add_effector(incoming_forces)
@@ -626,7 +628,7 @@ class CellType:
             cell.link_adhesion_force(hetero_adhesion)
 
         # add motion force
-        motion = get_motion(
+        motion = create_motion(
             name=f"{cell.name}_motion",
             loc=(0, 0, 0),
             strength=self.motion_strength,
@@ -678,7 +680,7 @@ class CellType:
 
         mat = create_material(f"{name}_material", color=color) if color else None
         cell = Cell(obj, mat)
-        # cell.remesh()
+        cell.remesh()
 
         # enable physics for cell
         if physics_constructor is None:

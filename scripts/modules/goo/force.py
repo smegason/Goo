@@ -90,6 +90,25 @@ class Force(BlenderObject):
             self.obj.field.use_max_distance = True
             self.obj.field.distance_max = max_dist
 
+    @property
+    def shape(self) -> int:
+        """Shape of the force field."""
+        return self.obj.field.shape
+
+    @shape.setter
+    def shape(self, shape: int):
+        self.obj.field.shape = shape
+
+    @property
+    def impulse_clamp(self) -> int:
+        """Shape of the force field."""
+        return self.obj.modifiers["Cloth"].collision_settings.impulse_clamp
+
+    @impulse_clamp.setter
+    def impulse_clamp(self, impulse_clamp: int):
+        self.obj.modifiers["Cloth"].collision_settings.impulse_clamp = impulse_clamp
+        self.obj.modifiers["Cloth"].collision_settings.self_impulse_clamp = impulse_clamp
+
 
 class AdhesionForce(Force):
     """An adhesion force."""
@@ -136,6 +155,7 @@ class MotionForce(Force):
         self.obj.rotation_euler = dir.to_track_quat("Z", "X").to_euler()
 
 
+# TODO: remove because not used
 def create_force(
     name: str,
     loc: tuple,
@@ -144,6 +164,7 @@ def create_force(
     falloff: float = 0,
     min_dist: float = None,
     max_dist: float = None,
+    shape: str = "SURFACE",
 ) -> Force:
     """Creates a new force field.
 
@@ -155,6 +176,7 @@ def create_force(
         falloff: The falloff power of the force field.
         min_dist: The minimum distance for the force field.
         max_dist: The maximum distance for the force field.
+        shape: The shape of the force field. Defaults to "SURFACE".
 
     Returns:
         Force: The created force field object.
@@ -167,26 +189,18 @@ def create_force(
     force.falloff = falloff
     force.min_dist = min_dist
     force.max_dist = max_dist
+    force.shape = shape
 
     ForceCollection.global_forces().add_force(force)
     return force
 
 
-def create_turbulence(name: str, loc: tuple, strength: int) -> Force:
-    """Creates a new turbulence force. See :func:`create_force`."""
-    force = create_force(name, loc, strength, max_dist=10, type="TURBULENCE")
-
-    force.obj.field.size = 7
-    force.obj.field.noise = 0
-    force.obj.field.seed = 1
-    return force
-
-
-def get_adhesion(
+def create_adhesion(
     strength: int,
     obj: Optional[bpy.types.Object] = None,
     name: str = None,
     loc: tuple = (0, 0, 0),
+    shape: str = "SURFACE",
 ) -> AdhesionForce:
     """Creates a new adhesion force.
 
@@ -197,9 +211,11 @@ def get_adhesion(
 
     Args:
         strength: Strength of the adhesion force.
-        obj: Cell to use as origin of the adhesion force. If None, a new object is created.
+        obj: Cell to use as origin of the adhesion force. 
+            If None, a new object is created.
         name: Name of the adhesion force.
         loc: Initial location of the adhesion force.
+        shape: Shape of the adhesion force.
     """
     if obj is None:
         obj = bpy.data.objects.new(name, None)
@@ -207,13 +223,14 @@ def get_adhesion(
     adhesion_force = AdhesionForce(obj)
 
     adhesion_force.strength = strength
+    adhesion_force.shape = shape
     adhesion_force.min_dist = 0.6
     adhesion_force.max_dist = 1.4
     adhesion_force.falloff = 0.5
     return adhesion_force
 
 
-def get_motion(name: str, loc: tuple, strength: int) -> MotionForce:
+def create_motion(name: str, loc: tuple, strength: int) -> MotionForce:
     """Creates a new motion force.
 
     Args:

@@ -1,6 +1,8 @@
 from functools import reduce
 
-import bpy, bmesh
+import bpy
+import bmesh
+from bpy.types import Modifier
 from mathutils import *
 
 
@@ -67,7 +69,7 @@ def create_mesh(
     name,
     loc,
     mesh="icosphere",
-    size=1,
+    size=1.5,
     rotation=(0, 0, 0),
     scale=(1, 1, 1),
     subdivisions=2,
@@ -125,19 +127,13 @@ def create_material(name, color):
     node_main = nodes.new(type="ShaderNodeBsdfPrincipled")
     node_main.location = -200, 100
     node_main.inputs["Base Color"].default_value = (r, g, b, 0.8)
-    node_main.inputs["Metallic"].default_value = 0.136
-    node_main.inputs["Specular"].default_value = 0.500
-    node_main.inputs["Specular Tint"].default_value = 0.555
+    node_main.inputs["Metallic"].default_value = 0.036
     node_main.inputs["Roughness"].default_value = 0.318
+    node_main.inputs["IOR"].default_value = 1.450
+
+    # specular
     node_main.inputs["Anisotropic"].default_value = 0.041
     node_main.inputs["Anisotropic Rotation"].default_value = 0.048
-    node_main.inputs["Sheen"].default_value = 0.052
-    node_main.inputs["Sheen Tint"].default_value = 0.030
-    node_main.inputs["Clearcoat"].default_value = 0.114
-    node_main.inputs["Clearcoat Roughness"].default_value = 0.123
-    node_main.inputs["IOR"].default_value = 1.450
-    node_main.inputs["Transmission"].default_value = 0.882
-    node_main.inputs["Transmission Roughness"].default_value = 0.0
     node_main.inputs["Alpha"].default_value = 0.414
 
     # create noise texture source
@@ -159,18 +155,11 @@ def create_material(name, color):
     node_random.location = -200, -100
     node_random.inputs["Base Color"].default_value = (r, g, b, 1)
     node_random.inputs["Metallic"].default_value = 0.0
-    node_random.inputs["Specular"].default_value = 0.500
-    node_random.inputs["Specular Tint"].default_value = 0.0
+
     node_random.inputs["Roughness"].default_value = 0.482
     node_random.inputs["Anisotropic"].default_value = 0.0
     node_random.inputs["Anisotropic Rotation"].default_value = 0.0
-    node_random.inputs["Sheen"].default_value = 0.0
-    node_random.inputs["Sheen Tint"].default_value = 0.0
-    node_random.inputs["Clearcoat"].default_value = 0.0
-    node_random.inputs["Clearcoat Roughness"].default_value = 0.0
     node_random.inputs["IOR"].default_value = 1.450
-    node_random.inputs["Transmission"].default_value = 1.0
-    node_random.inputs["Transmission Roughness"].default_value = 0.0
     node_random.inputs["Alpha"].default_value = 0.555
 
     # create mix shader node
@@ -238,15 +227,6 @@ class ClothConstructor(ModConstructor):
         mod.settings.compression_damping = 50
         mod.settings.shear_damping = 50
         mod.settings.bending_damping = 0.5
-        # Cloth > Internal Springs
-        mod.settings.use_internal_springs = False
-        mod.settings.internal_spring_max_length = 1
-        mod.settings.internal_spring_max_diversion = 0.785398
-        mod.settings.internal_spring_normal_check = False
-        mod.settings.internal_tension_stiffness = 10
-        mod.settings.internal_compression_stiffness = 10
-        mod.settings.internal_tension_stiffness_max = 10000
-        mod.settings.internal_compression_stiffness_max = 10000
         # Cloth > Pressure
         mod.settings.use_pressure = True
         mod.settings.uniform_pressure_force = pressure
@@ -255,14 +235,18 @@ class ClothConstructor(ModConstructor):
         mod.settings.pressure_factor = 2
         mod.settings.fluid_density = 1.05
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 5
+        mod.collision_settings.collision_quality = 6
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
         mod.collision_settings.friction = 0
-        mod.collision_settings.self_distance_min = 0.005
-        mod.collision_settings.distance_min = 0.005
-        mod.collision_settings.self_impulse_clamp = 0
+        mod.collision_settings.self_distance_min = 0.02
+        mod.collision_settings.distance_min = 0.02
+        mod.collision_settings.self_impulse_clamp = 100
+        mod.collision_settings.impulse_clamp = 100
+
+        # Cloth > Field Weights
+        mod.settings.effector_weights.gravity = 0
 
 
 class YolkClothConstructor(ClothConstructor):
@@ -322,6 +306,7 @@ class CollisionConstructor(ModConstructor):
         mod.settings.thickness_outer = 0.025
         mod.settings.thickness_inner = 0.25
         mod.settings.cloth_friction = 0
+        mod.settings.use_normal = True
 
 
 class BoundaryCollisionConstructor(CollisionConstructor):
@@ -340,13 +325,14 @@ class SubsurfConstructor(ModConstructor):
         mod.render_levels = 1
 
 
+# not stable
 class RemeshConstructor(ModConstructor):
     name = "Remesh"
     type = "REMESH"
 
     def setup_mod(self, mod: bpy.types.RemeshModifier):
         mod.mode = "VOXEL"
-        mod.voxel_size = 0.25
+        mod.voxel_size = 0.5
         mod.adaptivity = 0
         mod.use_remove_disconnected = True
         mod.use_smooth_shade = True
