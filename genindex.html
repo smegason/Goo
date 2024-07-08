@@ -220,6 +220,7 @@
 <li class="toctree-l1"><a class="reference internal" href="getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.cell.html">goo.cell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.force.html">goo.force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.handler.html">goo.handler</a></li>
@@ -348,6 +349,8 @@
         </ul></li>
         <li><a href="user_guide/goo.cell.html#goo.cell.Cell">Cell (class in goo.cell)</a>
 </li>
+        <li><a href="user_guide/goo.handler.html#goo.handler.DataFlag.CELL_CONCENTRATIONS">CELL_CONCENTRATIONS (goo.handler.DataFlag attribute)</a>
+</li>
         <li><a href="user_guide/goo.cell.html#goo.cell.CellType.cells">cells (goo.cell.CellType property)</a>
 </li>
         <li><a href="user_guide/goo.cell.html#goo.cell.CellType">CellType (class in goo.cell)</a>
@@ -370,15 +373,15 @@
           <li><a href="user_guide/goo.cell.html#goo.cell.YolkType.color">(goo.cell.YolkType attribute)</a>
 </li>
         </ul></li>
-        <li><a href="user_guide/goo.handler.html#goo.handler.ColorizeHandler">ColorizeHandler (class in goo.handler)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="user_guide/goo.handler.html#goo.handler.ColorizeHandler">ColorizeHandler (class in goo.handler)</a>
+</li>
         <li><a href="user_guide/goo.handler.html#goo.handler.Colorizer">Colorizer (class in goo.handler)</a>
 </li>
         <li><a href="user_guide/goo.cell.html#goo.cell.Cell.COM">COM() (goo.cell.Cell method)</a>
 </li>
-        <li><a href="user_guide/goo.handler.html#goo.handler.DataFlag.CONCENTRATIONS">CONCENTRATIONS (goo.handler.DataFlag attribute)</a>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.Molecule.conc">conc (goo.molecule.Molecule property)</a>
 </li>
         <li><a href="user_guide/goo.handler.html#goo.handler.ForceDist.CONSTANT">CONSTANT (goo.handler.ForceDist attribute)</a>
 </li>
@@ -416,6 +419,8 @@
   <h2>D</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.Molecule.D">D (goo.molecule.Molecule property)</a>
+</li>
         <li><a href="user_guide/goo.handler.html#goo.handler.DataExporter">DataExporter (class in goo.handler)</a>
 </li>
         <li><a href="user_guide/goo.handler.html#goo.handler.DataFlag">DataFlag (class in goo.handler)</a>
@@ -424,10 +429,14 @@
 </li>
         <li><a href="user_guide/goo.cell.html#goo.cell.CellType.default_celltype">default_celltype() (goo.cell.CellType static method)</a>
 </li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.diffuse">diffuse() (goo.molecule.DiffusionSystem method)</a>
+</li>
         <li><a href="user_guide/goo.handler.html#goo.handler.DiffusionHandler">DiffusionHandler (class in goo.handler)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem">DiffusionSystem (class in goo.molecule)</a>
+</li>
         <li><a href="user_guide/goo.force.html#goo.force.Force.disable">disable() (goo.force.Force method)</a>
 </li>
         <li><a href="user_guide/goo.cell.html#goo.cell.Cell.disable_physics">disable_physics() (goo.cell.Cell method)</a>
@@ -508,9 +517,13 @@
 </li>
         <li><a href="user_guide/goo.simulator.html#goo.simulator.Simulator.get_cells_func">get_cells_func() (goo.simulator.Simulator method)</a>
 </li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.get_concentration">get_concentration() (goo.molecule.DiffusionSystem method)</a>
+</li>
         <li><a href="user_guide/goo.simulator.html#goo.simulator.Simulator.get_diffsystems_func">get_diffsystems_func() (goo.simulator.Simulator method)</a>
 </li>
         <li><a href="user_guide/goo.cell.html#goo.cell.Cell.get_modifier">get_modifier() (goo.cell.Cell method)</a>
+</li>
+        <li><a href="user_guide/goo.cell.html#goo.cell.Cell.get_radius">get_radius() (goo.cell.Cell method)</a>
 </li>
         <li><a href="user_guide/goo.force.html#goo.force.ForceCollection.global_forces">global_forces() (goo.force.ForceCollection static method)</a>
 </li>
@@ -535,13 +548,20 @@
           <li><a href="user_guide/goo.force.html#module-goo.force">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     goo.handler
 
         <ul>
           <li><a href="user_guide/goo.handler.html#module-goo.handler">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    goo.molecule
+
+        <ul>
+          <li><a href="user_guide/goo.molecule.html#module-goo.molecule">module</a>
 </li>
         </ul></li>
         <li>
@@ -565,6 +585,16 @@
           <li><a href="user_guide/goo.utils.html#module-goo.utils">module</a>
 </li>
         </ul></li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.gradient">gradient (goo.molecule.DiffusionSystem property)</a>
+
+        <ul>
+          <li><a href="user_guide/goo.molecule.html#goo.molecule.Molecule.gradient">(goo.molecule.Molecule property)</a>
+</li>
+        </ul></li>
+        <li><a href="user_guide/goo.handler.html#goo.handler.DataFlag.GRID">GRID (goo.handler.DataFlag attribute)</a>
+</li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.grid_size">grid_size (goo.molecule.DiffusionSystem property)</a>
+</li>
         <li><a href="user_guide/goo.handler.html#goo.handler.Growth">Growth (class in goo.handler)</a>
 </li>
         <li><a href="user_guide/goo.handler.html#goo.handler.GrowthPIDHandler">GrowthPIDHandler (class in goo.handler)</a>
@@ -659,6 +689,8 @@
 </li>
           <li><a href="user_guide/goo.handler.html#module-goo.handler">goo.handler</a>
 </li>
+          <li><a href="user_guide/goo.molecule.html#module-goo.molecule">goo.molecule</a>
+</li>
           <li><a href="user_guide/goo.reloader.html#module-goo.reloader">goo.reloader</a>
 </li>
           <li><a href="user_guide/goo.simulator.html#module-goo.simulator">goo.simulator</a>
@@ -668,6 +700,14 @@
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="user_guide/goo.handler.html#goo.handler.MolecularSensingHandler">MolecularSensingHandler (class in goo.handler)</a>
+</li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.Molecule">Molecule (class in goo.molecule)</a>
+</li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.molecules">molecules (goo.molecule.DiffusionSystem property)</a>
+</li>
+        <li><a href="user_guide/goo.cell.html#goo.cell.Cell.molecules_conc">molecules_conc (goo.cell.Cell property)</a>
+</li>
         <li><a href="user_guide/goo.cell.html#goo.cell.Cell.motion_force">motion_force (goo.cell.Cell property)</a>
 </li>
         <li><a href="user_guide/goo.handler.html#goo.handler.DataFlag.MOTION_PATH">MOTION_PATH (goo.handler.DataFlag attribute)</a>
@@ -692,6 +732,8 @@
           <li><a href="user_guide/goo.cell.html#goo.cell.CellType.name">(goo.cell.CellType property)</a>
 </li>
           <li><a href="user_guide/goo.force.html#goo.force.ForceCollection.name">(goo.force.ForceCollection property)</a>
+</li>
+          <li><a href="user_guide/goo.molecule.html#goo.molecule.Molecule.name">(goo.molecule.Molecule property)</a>
 </li>
           <li><a href="user_guide/goo.utils.html#goo.utils.BlenderObject.name">(goo.utils.BlenderObject property)</a>
 </li>
@@ -780,10 +822,10 @@
 </li>
         <li><a href="user_guide/goo.reloader.html#goo.reloader.reset_modules">reset_modules() (in module goo.reloader)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="user_guide/goo.reloader.html#goo.reloader.reset_scene">reset_scene() (in module goo.reloader)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="user_guide/goo.division.html#goo.division.DivisionHandler.run">run() (goo.division.DivisionHandler method)</a>
 
         <ul>
@@ -803,9 +845,13 @@
 </li>
           <li><a href="user_guide/goo.handler.html#goo.handler.Handler.run">(goo.handler.Handler method)</a>
 </li>
+          <li><a href="user_guide/goo.handler.html#goo.handler.MolecularSensingHandler.run">(goo.handler.MolecularSensingHandler method)</a>
+</li>
           <li><a href="user_guide/goo.handler.html#goo.handler.RandomMotionHandler.run">(goo.handler.RandomMotionHandler method)</a>
 </li>
           <li><a href="user_guide/goo.handler.html#goo.handler.RemeshHandler.run">(goo.handler.RemeshHandler method)</a>
+</li>
+          <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.run">(goo.molecule.DiffusionSystem method)</a>
 </li>
           <li><a href="user_guide/goo.simulator.html#goo.simulator.Simulator.run">(goo.simulator.Simulator method)</a>
 </li>
@@ -894,6 +940,8 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="user_guide/goo.simulator.html#goo.simulator.Render.TIFF">TIFF (goo.simulator.Render attribute)</a>
 </li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.time_step">time_step (goo.molecule.DiffusionSystem property)</a>
+</li>
         <li><a href="user_guide/goo.division.html#goo.division.TimeDivisionHandler">TimeDivisionHandler (class in goo.division)</a>
 </li>
         <li><a href="user_guide/goo.handler.html#goo.handler.DataFlag.TIMES">TIMES (goo.handler.DataFlag attribute)</a>
@@ -902,6 +950,8 @@
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.total_time">total_time (goo.molecule.DiffusionSystem property)</a>
+</li>
         <li><a href="user_guide/goo.utils.html#goo.utils.ClothConstructor.type">type (goo.utils.ClothConstructor attribute)</a>
 
         <ul>
@@ -924,6 +974,12 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="user_guide/goo.handler.html#goo.handler.ForceDist.UNIFORM">UNIFORM (goo.handler.ForceDist attribute)</a>
 </li>
+        <li><a href="user_guide/goo.handler.html#goo.handler.DiffusionHandler.update_cell_concentration">update_cell_concentration() (goo.handler.DiffusionHandler method)</a>
+</li>
+        <li><a href="user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.update_concentration">update_concentration() (goo.molecule.DiffusionSystem method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="user_guide/goo.division.html#goo.division.DivisionHandler.update_on_divide">update_on_divide() (goo.division.DivisionHandler method)</a>
 
         <ul>
