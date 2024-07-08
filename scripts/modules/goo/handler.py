@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Any, List
 from typing_extensions import override
 
 from enum import Enum, Flag, auto
@@ -106,34 +106,102 @@ class DiffusionHandler(Handler):
 
     Args:
         diffusionSystem: The reaction-diffusion system to simulate.
-
     """
 
     def __init__(self, diffusionSystem: DiffusionSystem) -> None:
         self.diffusionSystem = diffusionSystem
         self.kd_tree = None
-        self.grid_coord = None
-        self.flat_grid_coord = None
 
     def build_kd_tree(self):
         """Build the KD-Tree from the grid coordinates if not already built."""
         self.kd_tree = self.diffusionSystem._build_kdtree()
 
+    def update_cell_concentration(
+        self,
+        cell: Cell,
+        cell_distances: np.ndarray,
+        indices: np.ndarray,
+        radius: float
+    ) -> None: 
+        """Update the concentration of molecules in the cell."""
+        for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
+            total_conc = 0
+            valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
+            for cell_distance, index in zip(cell_distances[valid_indices], 
+                                            indices[valid_indices]):
+                k = 0.1
+                add_conc = k * (cell_distance / radius)
+                self.diffusionSystem.update_concentration(mol_idx, index, add_conc)
+                # total_conc = self.diffusionSystem.get_concentration(mol_idx, index)
+            
+            cell.molecules_conc.update({molecule._name: total_conc})
+            print(cell.molecules_conc)
+            print(f"Total conc of cell {cell.name} for {molecule._name}: {total_conc}")
+    
     @override
-    def run(self, scene, depsgraph):
+    def run(self, scene, depsgraph) -> None:
         if self.kd_tree is None:
             self.build_kd_tree()
         
-        cell_coords = [cell.COM() for cell in self.get_cells()]
-        cell_coords_array = np.array(cell_coords)
+        print("Current frame", scene.frame_current)
+        cells = self.get_cells()
+        
+        for cell in cells:
+            radius = cell.get_radius()
+            com = cell.COM()
+            cell_distances, indices = self.kd_tree.query(com, 
+                                                         k=500, 
+                                                         distance_upper_bound=1.5*radius, 
+                                                         p=2)
 
-        distances, indices = self.kd_tree.query(cell_coords_array, k=15, distance_upper_bound=2)
-        print(distances, indices)
+            if len(cell_distances) > 0 and not np.all(np.isinf(cell_distances)):
+                self.update_cell_concentration(cell, cell_distances, indices, radius)
+            else:
+                # If no valid distances, set concentration to 0
+                for molecule in self.diffusionSystem._molecules:
+                    cell.molecules_conc.update({molecule._name: 0})
+                    print(cell.molecules_conc)
+                    print(f"Total conc of cell {cell.name} for {molecule._name}: 0")
 
-        for idx, data in enumerate(indices[0]):
-            add_conc = ((distances[0][idx]**2))
-            new_val = self.diffusionSystem.update_concentration(data, add_conc)
-            print("new_val", new_val)
+
+class MolecularSensingHandler(Handler):
+    """Handler for simulating cells sensing molecular concentrations at their surfaces.
+
+    Args:
+        diffusionSystem: The reaction-diffusion system to simulate.
+
+    """
+
+    def __init__(self, diffusionSystem: DiffusionSystem) -> None:
+        self.diffusionSystem = diffusionSystem
+
+    @override
+    def run(self, scene, depsgraph):
+        
+        for cell in self.get_cells():
+            major_axis = cell.major_axis()
+            length_major = (major_axis._start - major_axis._end).length
+            minor_axis = cell.minor_axis()
+            length_minor = (minor_axis._start - minor_axis._end).length
+            radius = (length_major + length_minor) / 2
+            com = cell.COM()
+
+            cell_distances, indices = self.kd_tree.query(com, 
+                                                         k=500, 
+                                                         distance_upper_bound=1.5*radius, 
+                                                         p=2)
+            print(cell_distances, indices)
+            print("radius", radius)
+            
+            for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
+                for idx, (cell_distance, index) in enumerate(zip(cell_distances, indices)):
+                    # conservative estimate using the minor axis
+                    if np.isinf(cell_distance):
+                        continue
+                    elif (cell_distance >= radius):
+                        total_conc += self.diffusionSystem.get_concentration(mol_idx, 
+                                                                             index)
+                        print(f"Total conc of cell for {molecule._name}", total_conc)
 
 
 class AdhesionLocationHandler(Handler):
@@ -495,7 +563,8 @@ class DataFlag(Flag):
     VOLUMES = auto()
     PRESSURES = auto()
     CONTACT_AREAS = auto()
-    CONCENTRATIONS = auto()
+    GRID = auto()
+    CELL_CONCENTRATIONS = auto()
 
     ALL = _all()
 
@@ -554,17 +623,23 @@ class DataExporter(Handler):
                 cell_out["volume"] = cell.volume()
             if self.options & DataFlag.PRESSURES and cell.physics_enabled:
                 cell_out["pressure"] = cell.pressure
+            if self.options & DataFlag.CELL_CONCENTRATIONS:
+                cell_out["concentrations"] = cell.molecules_conc
 
         if self.options & DataFlag.CONTACT_AREAS:
             areas, ratios = _contact_areas(self.get_cells())
             frame_out["contact_areas"] = areas
             frame_out["contact_ratios"] = ratios
 
-        for diff_sys in self.get_diff_systems():
-            if self.options & DataFlag.CONCENTRATIONS:
-                conc_grid = self._convert_numpy_to_list(diff_sys._grid_concentrations)
-                frame_out["concentrations"] = conc_grid
-                
+        if self.options & DataFlag.GRID:
+            for diff_system in self.get_diff_systems():
+                grid_conc = diff_system._grid_concentrations
+                mol = diff_system._molecules[0]
+                if mol._name not in frame_out:
+                    frame_out[mol._name] = {
+                        "concentrations": self._convert_numpy_to_list(grid_conc)
+                    }
+
         if self.path:
             with open(self.path, "r") as f:
                 out = json.load(f)

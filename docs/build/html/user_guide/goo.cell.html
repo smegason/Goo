@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="goo.division" href="goo.division.html" /><link rel="prev" title="Documentation" href="api.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="goo.molecule" href="goo.molecule.html" /><link rel="prev" title="Documentation" href="api.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
         <title>goo.cell - Goo documentation</title>
@@ -222,6 +222,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">Documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">goo.cell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.force.html">goo.force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.handler.html">goo.handler</a></li>
@@ -445,6 +446,12 @@ underlying object representation of the cell.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.cell.Cell.get_radius">
+<span class="sig-name descname"><span class="pre">get_radius</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/cell.html#Cell.get_radius"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.cell.Cell.get_radius" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the radius based on the major and minor axes of the cell.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="goo.cell.Cell.homo_adhesion">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">homo_adhesion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="goo.force.html#goo.force.AdhesionForce" title="goo.force.AdhesionForce"><span class="pre">AdhesionForce</span></a></em><a class="headerlink" href="#goo.cell.Cell.homo_adhesion" title="Link to this definition">¶</a></dt>
@@ -483,6 +490,11 @@ underlying object representation of the cell.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="goo.cell.Cell.molecules_conc">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">molecules_conc</span></span><a class="headerlink" href="#goo.cell.Cell.molecules_conc" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="goo.cell.Cell.motion_force">
@@ -892,12 +904,12 @@ adhesion forces will be defined.</p></li>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="goo.division.html">
+          <a class="next-page" href="goo.molecule.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">goo.division</div>
+                <div class="title">goo.molecule</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -955,10 +967,12 @@ adhesion forces will be defined.</p></li>
 <li><a class="reference internal" href="#goo.cell.Cell.divide"><code class="docutils literal notranslate"><span class="pre">Cell.divide()</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.enable_physics"><code class="docutils literal notranslate"><span class="pre">Cell.enable_physics()</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.get_modifier"><code class="docutils literal notranslate"><span class="pre">Cell.get_modifier()</span></code></a></li>
+<li><a class="reference internal" href="#goo.cell.Cell.get_radius"><code class="docutils literal notranslate"><span class="pre">Cell.get_radius()</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.homo_adhesion"><code class="docutils literal notranslate"><span class="pre">Cell.homo_adhesion</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.link_adhesion_force"><code class="docutils literal notranslate"><span class="pre">Cell.link_adhesion_force()</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.major_axis"><code class="docutils literal notranslate"><span class="pre">Cell.major_axis()</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.minor_axis"><code class="docutils literal notranslate"><span class="pre">Cell.minor_axis()</span></code></a></li>
+<li><a class="reference internal" href="#goo.cell.Cell.molecules_conc"><code class="docutils literal notranslate"><span class="pre">Cell.molecules_conc</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.motion_force"><code class="docutils literal notranslate"><span class="pre">Cell.motion_force</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.move_towards"><code class="docutils literal notranslate"><span class="pre">Cell.move_towards()</span></code></a></li>
 <li><a class="reference internal" href="#goo.cell.Cell.name"><code class="docutils literal notranslate"><span class="pre">Cell.name</span></code></a></li>

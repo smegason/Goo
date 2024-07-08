@@ -26,7 +26,7 @@ sim.add_handlers(
         RandomMotionHandler(distribution=ForceDist.UNIFORM, max_strength=250),
         DataExporter(
             path="tmp/out.json", 
-            options=DataFlag.CONTACT_AREAS | DataFlag.MOTION_PATH  # or ALL flag
+            options=DataFlag.CONCENTRATIONS | DataFlag.MOTION_PATH  # or ALL flag
         ),
     ]
 )
