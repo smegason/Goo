@@ -87,6 +87,8 @@ def create_mesh(
             bmesh.ops.create_icosphere(
                 bm, subdivisions=subdivisions, radius=size, **kwargs
             )
+            # bmesh.ops.beautify_fill(bm, faces=bm.faces, edges=bm.edges)
+            bmesh.ops.triangulate(bm, faces=bm.faces[:])
         case "plane":
             bmesh.ops.create_grid(
                 bm, x_segments=1, y_segments=1, size=size / 2, **kwargs
@@ -95,9 +97,11 @@ def create_mesh(
             bmesh.ops.create_monkey(bm, **kwargs)
         case "cube":
             bmesh.ops.create_cube(bm, size=size, **kwargs)
+            # bmesh.ops.beautify_fill(bm, faces=bm.faces, edges=bm.edges)
+            # bmesh.ops.triangulate(bm, faces=bm.faces[:])
         case _:
             raise ValueError(
-                """mesh must be one of "icosphere", "plane", or "monkey"."""
+                """mesh must be one of "icosphere", "plane", "monkey" or "cube"."""
             )
 
     me = bpy.data.meshes.new(f"{name}_mesh")
@@ -217,6 +221,8 @@ class ClothConstructor(ModConstructor):
         mod.settings.bending_model = "ANGULAR"
         mod.settings.mass = 1
         mod.settings.time_scale = 1
+        mod.point_cache.frame_start = bpy.context.scene.frame_start
+        mod.point_cache.frame_end = bpy.context.scene.frame_end
         # Cloth > Stiffness
         mod.settings.tension_stiffness = stiffness
         mod.settings.compression_stiffness = stiffness
@@ -235,13 +241,13 @@ class ClothConstructor(ModConstructor):
         mod.settings.pressure_factor = 2
         mod.settings.fluid_density = 1.05
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 6
+        mod.collision_settings.collision_quality = 4
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
         mod.collision_settings.friction = 0
-        mod.collision_settings.self_distance_min = 0.02
-        mod.collision_settings.distance_min = 0.02
+        mod.collision_settings.self_distance_min = 0.01
+        mod.collision_settings.distance_min = 0.01
         mod.collision_settings.self_impulse_clamp = 100
         mod.collision_settings.impulse_clamp = 100
 
@@ -286,7 +292,7 @@ class YolkClothConstructor(ClothConstructor):
         mod.settings.pressure_factor = 2
         mod.settings.fluid_density = 1.15
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 6
+        mod.collision_settings.collision_quality = 10
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
@@ -306,7 +312,7 @@ class CollisionConstructor(ModConstructor):
         mod.settings.thickness_outer = 0.025
         mod.settings.thickness_inner = 0.25
         mod.settings.cloth_friction = 0
-        mod.settings.use_normal = True
+        mod.settings.use_normal = False
 
 
 class BoundaryCollisionConstructor(CollisionConstructor):

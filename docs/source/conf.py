@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
+    "sphinxcontrib.video",
 ]
 autodoc_typehints = "both"
 napoleon_use_ivar = True
@@ -46,7 +47,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "Goo-v1.0"]
 
 # -- Options for HTML output -------------------------------------------------
 

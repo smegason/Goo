@@ -1,5 +1,6 @@
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 import numpy as np
+from collections import defaultdict
 
 import bpy
 import bmesh
@@ -8,6 +9,8 @@ from mathutils import Vector
 
 from goo.force import * 
 from goo.utils import * 
+
+from goo.molecule import Molecule
 
 
 class Cell(BlenderObject):
@@ -43,6 +46,9 @@ class Cell(BlenderObject):
         self._homo_adhesion: AdhesionForce = None
         self._hetero_adhesions: list[AdhesionForce] = []
         self._motion_force: MotionForce = None
+
+        # concentrations of molecules in interstitial space
+        self._molecules_conc: Dict[str, float] = {}
 
     @property
     def name(self) -> str:
@@ -204,6 +210,14 @@ class Cell(BlenderObject):
         """Returns the minor axis of the cell."""
         return self._get_eigenvector(1)
 
+    def get_radius(self):
+        """Calculate the radius based on the major and minor axes of the cell."""
+        major_axis = self.major_axis()
+        length_major = np.linalg.norm(major_axis._start - major_axis._end)
+        minor_axis = self.minor_axis()
+        length_minor = np.linalg.norm(minor_axis._start - minor_axis._end)
+        return (length_major + length_minor) / 2
+    
     def divide(self, division_logic) -> tuple["Cell", "Cell"]:
         """Cause the cell to divide into two daughter cells.
 
@@ -239,7 +253,7 @@ class Cell(BlenderObject):
 
         self.loc = com
 
-    def remesh(self, voxel_size: float = 0.65, smooth: bool = True):
+    def remesh(self, voxel_size: float = 0.55, smooth: bool = False):
         """Remesh the underlying mesh representation of the cell.
 
         Remeshing is done using the built-in `voxel_remesh()`.
@@ -277,6 +291,15 @@ class Cell(BlenderObject):
                 if "Base Color" in node.inputs:
                     _, _, _, a = node.inputs["Base Color"].default_value
                     node.inputs["Base Color"].default_value = r, g, b, a
+
+    def calculate_dist_to_voxel(self, voxel_loc: Vector) -> float:
+        """Calculate the distance from a cell to a voxel.
+
+        Args:
+            voxel_loc: The location of the voxel.
+        """
+        com = self.COM()
+        return (com - voxel_loc).length
 
     # ----- PHYSICS -----
     def get_modifier(self, type) -> Optional[Modifier]:
@@ -475,6 +498,15 @@ class Cell(BlenderObject):
             )
         motion_loc = self.loc + dir.normalized() * (2 + self.major_axis().length())
         self._motion_force.set_loc(motion_loc, self.loc)
+
+    # ----- MOLECULES -----
+    @property
+    def molecules_conc(self): 
+        return self._molecules_conc
+    
+    @molecules_conc.setter
+    def molecules_conc(self, conc: defaultdict[float]):
+        self._molecules_conc.update(conc)
 
 
 def create_cell(

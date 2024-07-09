@@ -1,33 +1,41 @@
-from typing import Optional
+from typing import Optional, Tuple
 from typing_extensions import override
 import numpy as np
 import math
-from scipy.ndimage import convolve
+
+from scipy.ndimage import laplace
+from scipy.integrate import solve_ivp
+from scipy.spatial import KDTree
+
 from goo.utils import *
 
 
-class Molecule(): 
+class Molecule:
     """A molecule involved in the diffusion system. 
 
     Args:
-        concentration (float): The initial concentration of the molecule.
-        diffusion_rate (float): The diffusion rate of the molecule.
-
-    Attributes:
-        concentration (float): The concentration of the molecule.
-        diffusion_rate (float): The diffusion rate of the molecule.
+        name (str): The name of the molecule.
+        conc (float): The initial concentration of the molecule.
+        D (float): The diffusion rate of the molecule.
+        gradient (str, optional): The gradient of the molecule. Defaults to None.
     """
-
-    def __init__(self, name: str, conc: float, D: float, mat=None):
-        self.conc = conc
-        self.D = D
-        self._mat = mat
-
+    def __init__(
+        self,
+        name: str,
+        conc: float,
+        D: float,
+        gradient: Optional[str] = None
+    ):
+        self._name = name
+        self._D = D
+        self._conc = conc
+        self._gradient = gradient
+        
     def __repr__(self):
         str = (f"Molecule(concentration={self.conc}"
-               "diffusion_rate={self.diffusion_rate})")
+               f"diffusion_rate={self.D})")
         return str
-
+    
     @property
     def name(self) -> str:
         """Name of the cell. Also defines the name of related forces and
@@ -39,153 +47,227 @@ class Molecule():
     def name(self, name: str):
         self.name = name
 
-
-class Voxel(BlenderObject):
-
-    def __init__(self, obj: bpy.types.Object, loc: tuple, conc: tuple, mat=None):
-        super(Voxel, self).__init__(obj)
-        self.location = loc
+    @property
+    def conc(self) -> float:
+        """The concentration of the molecule."""
+        return self.conc
+    
+    @conc.setter
+    def conc(self, conc: float):
         self.conc = conc
-        self._mat = mat
-        if self._mat:
-            self.obj.data.materials.append(mat)   
-
-    def recolor(self, color: tuple[float, float, float]):
-        """Recolors the material of the cell.
-
-        This function changes the diffuse color of the cell's material to the
-        specified color while preserving the alpha value. If the material uses
-        nodes, it also updates the 'Base Color' input of any nodes that have it.
-
-        Args:
-            color: A tuple (r, g, b) representing the new color to apply.
-        """
-        r, g, b = color
-        self._mat.diffuse_color = (r, g, b, 1)
-
-        if self._mat.use_nodes:
-            for node in self._mat.node_tree.nodes:
-                if "Base Color" in node.inputs:
-                    _, _, _, a = node.inputs["Base Color"].default_value
-                    node.inputs["Base Color"].default_value = r, g, b, a
-
-
-class ReactionDiffusionSystem:
-    """A reaction-diffusion system simulation.
-
-    Args:
-        width (int): The width of the 2D grid.
-        height (int): The height of the 2D grid.
-        molecule_a (Molecule): The first type of molecule in the system.
-        diffusion_rate_a (float): The diffusion rate of molecule A.
-
-    Attributes:
-        width (int): The width of the boundary.
-        height (int): The height of the boundary.
-        molecule_a (Molecule): The first type of molecule in the system.
-        diffusion_rate_a (float): The diffusion rate of molecule A.
-        grid_a (numpy.ndarray): The concentration grid. 
-    """
-    color = (0.07, 0.21, 0.3)
-
-    def __init__(self, loc: tuple, size: tuple, voxel_size: int, mol_a: Molecule):
-        self.size = size
-        self.loc = loc
-        self.voxel_size = voxel_size
-        self.mol_a = mol_a
-        self.grid = np.zeros((size[0], size[1], size[2]))
-        self._voxel_data = []
-        self._voxels = set()
 
     @property
-    def voxels(self) -> list[Voxel]:
-        """The list of cells associated with this cell type."""
-        return list(self._voxels)
+    def D(self) -> float:
+        """The diffusion rate of the molecule."""
+        return self.D
     
-    def initialize(self, initial_concentration: Optional[float] = None):
-        num_x, num_y, num_z = self.size
+    @D.setter
+    def D(self, D: float):
+        self.D = D
 
-        min_x = self.loc[0] - self.size[0] / 2
-        min_y = self.loc[1] - self.size[1] / 2
-        min_z = self.loc[2] - self.size[2] / 2
-
-        # Create voxels
-        for i in range(num_x):
-            for j in range(num_y):
-                for k in range(num_z):
-                    # Calculate the position of each voxel
-                    x = min_x + i * self.voxel_size + self.voxel_size / 2
-                    y = min_y + j * self.voxel_size + self.voxel_size / 2
-                    z = min_z + k * self.voxel_size + self.voxel_size / 2
-                    voxel_location = (x, y, z)
-
-                    # linear gradient along x-axis
-                    if initial_concentration is not None:
-                        concentration = initial_concentration * (i / (num_x - 1))
-                    else:
-                        # Otherwise, use default concentration
-                        concentration = self.default_concentration
-
-                    # Store the voxel information with the calculated concentration
-                    self._voxel_data.append((voxel_location, concentration))
-
-    def update(self):
-        # Define the 3D diffusion kernel
-        diffusion_kernel = np.array([[[0, 0.125, 0],
-                                    [0.125, 0.25, 0.125],
-                                    [0, 0.125, 0]],
-
-                                    [[0.125, 0.25, 0.125],
-                                     [0.25, 1, 0.25],
-                                     [0.125, 0.25, 0.125]],
-
-                                    [[0, 0.125, 0],
-                                     [0.125, 0.25, 0.125],
-                                     [0, 0.125, 0]]])
-
-        # Perform diffusion using convolution
-        da = self.mol_a.D * convolve(self.grid, diffusion_kernel, mode='wrap')
-
-        # Update the concentration grid
-        self.grid += da
-
-        # Normalize values to a reasonable range
-        max_val = np.max(self.grid)
-        if max_val > 0:
-            self.grid /= max_val
-
-    def is_converged(self, threshold=0.1):
-        """Check if the concentration grid has converged."""
-        change = np.max(np.abs(self.grid - np.mean(self.grid)))
-        return change < threshold
+    @property
+    def gradient(self) -> str:
+        """The gradient of the molecule."""
+        return self.gradient
     
-    def toggle_voxel_grid(self):
-        """Create a 3D grid in Blender.
+    @gradient.setter
+    def gradient(self, gradient: str):
+        self.gradient = gradient
 
-        Args:
-            loc: Center of the grid.
-            size: Dimensions of the grid (width, height, depth).
-            voxel_size: Size of a voxel in the grid.
-        """
 
-        for idx, loc in enumerate(self._voxel_data):      
-            # Create an empty cube at the voxel position
-            name = f"voxel_{idx}"
-            obj = create_mesh(name, 
-                              loc[0], 
-                              mesh="cube", 
-                              size=self.voxel_size, 
-                              subdivisions=1)
-            bpy.context.scene.collection.objects.link(obj)  
+class DiffusionSystem:
+    """A diffusion system that simulates the diffusion of molecules in a 3D grid. 
+    It also handles the secretion and sensing of molecular signals by cells. 
 
-            # Add concentrations vector
-            concentration_vector = np.random.rand(5)
-            for idx, conc in enumerate(concentration_vector):
-                obj[f"conc_{idx}"] = float(conc)
+    Args:
+        molecules (list[Molecule]): The list of molecules in the system.
+        grid_size (Tuple[int, int, int], optional): The size of the 3D grid. Defaults to (25, 25, 25).
+        grid_center (Tuple[int, int, int], optional): The center of the 3D grid. Defaults to (0, 0, 0).
+        time_step (float, optional): The time step of the simulation. Defaults to 0.1.
+        total_time (int, optional): The total time of the simulation. Defaults to 10.
+        element_size (Tuple[float, float, float], optional): The size of each element in the grid. Defaults to (1.0, 1.0, 1.0).
+    """
+    def __init__(
+        self, 
+        molecules: list[Molecule], 
+        grid_size: Tuple[int, int, int] = (25, 25, 25), 
+        grid_center: Tuple[int, int, int] = (0, 0, 0),
+        time_step: float = 0.1, 
+        total_time: int = 10, 
+        element_size=(1.0, 1.0, 1.0)
+    ) -> None: 
+        self._molecules = molecules
+        self._grid_size = grid_size
+        self._time_step = time_step
+        self._total_time = total_time
+        self._grid_center = grid_center
+        self._grid_concentrations = None
+        self._kd_tree = None
+        self._element_size = element_size
+        self._laplacian_kernel = np.array([
+            [[1,  1,  1], [1,  1,  1], [1,  1,  1]],
+            [[1,  1,  1], [1, -26, 1], [1,  1,  1]],
+            [[1,  1,  1], [1,  1, 1], [1,  1,  1]]
+        ]) / 26.0
+        
+    def _build_kdtree(self):
+        """Initialize the grid and build its corresponding KD-Tree."""
+        x = np.linspace(
+            -(self._grid_size[0] - 1) / 2, 
+            (self._grid_size[0] - 1) / 2, 
+            self._grid_size[0]
+        ) * self._element_size[0]
+        
+        y = np.linspace(
+            -(self._grid_size[1] - 1) / 2, 
+            (self._grid_size[1] - 1) / 2,
+            self._grid_size[1]
+        ) * self._element_size[1]
 
-            color = self.__class__.color
+        z = np.linspace(
+            -(self._grid_size[2] - 1) / 2, 
+            (self._grid_size[2] - 1) / 2, 
+            self._grid_size[2]
+            ) * self._element_size[2]
+        
+        grid_points = np.array(np.meshgrid(x, y, z)).T.reshape(-1, 3)
+        grid_points += np.array(self._grid_center)
+        self._kd_tree = KDTree(grid_points)
+        
+        # initialize the grid to store concentrations for each molecule
+        self._grid_concentrations = np.zeros((len(self._molecules), *self._grid_size))
 
-            mat = create_material(f"{name}_material", color=color) if color else None
-            # Store the voxel information
-            voxel = Voxel(obj=obj, loc=loc, conc=concentration_vector, mat=mat)
-            self._voxels.add(voxel)
+        for idx, mol in enumerate(self._molecules): 
+            match mol._gradient:
+                case None:
+                    continue
+                case "random":
+                    variation = 0.1  # 10% variation
+                    noise = np.random.normal(0, 
+                                             variation * mol._conc, 
+                                             size=self._grid_size)
+                    rand_conc = mol._conc + noise
+                    # conc is always positive
+                    rand_conc = np.clip(rand_conc, 0, None)
+                    self._grid_concentrations[idx] = rand_conc
+                case "center":
+                    center_index = self._get_nearest_grid_index(self._grid_center)
+                    self._grid_concentrations[idx][center_index] += mol._conc
+                case "linear":
+                    x_grad = np.linspace(
+                        0, 
+                        mol._conc, 
+                        self._grid_size[0]
+                    ).reshape(-1, 1, 1)
+
+                    self._grid_concentrations[idx] = np.tile(
+                        x_grad, 
+                        (1, self._grid_size[1], self._grid_size[2])
+                    )
+
+        # add 8 empty points at the corners of the grid in Blender
+        corner_offsets = [
+            (-1, -1, -1), (-1, -1, 1), (-1, 1, -1), (-1, 1, 1),
+            (1, -1, -1), (1, -1, 1), (1, 1, -1), (1, 1, 1)
+        ]
+        for offset in corner_offsets:
+            corner_position = (
+                self._grid_center[0] + offset[0] * (self._grid_size[0] - 1) / 2 * self._element_size[0],
+                self._grid_center[1] + offset[1] * (self._grid_size[1] - 1) / 2 * self._element_size[1],
+                self._grid_center[2] + offset[2] * (self._grid_size[2] - 1) / 2 * self._element_size[2]
+            )
+            bpy.ops.object.empty_add(type='PLAIN_AXES', location=corner_position)
+
+        return self._kd_tree
+    
+    def _get_nearest_grid_index(self, point):   
+        """Get the nearest grid index for the given point."""
+        return self._kd_tree.query(point)[1]
+    
+    def update_concentration(self, mol_idx, index, value):
+        """Update the concentration value of a molecule at a given voxel in the grid."""
+        # Convert flat index to 3D index
+        z_index, y_index, x_index = np.unravel_index(index, self._grid_size)
+        self._grid_concentrations[mol_idx, z_index, y_index, x_index] += value
+        return self._grid_concentrations[mol_idx, z_index, y_index, x_index]
+    
+    def get_concentration(self, mol_idx, index): 
+        """Get the concentration value of a molecule at a given voxel in the grid."""
+        z_index, y_index, x_index = np.unravel_index(index, self._grid_size)
+        return self._grid_concentrations[mol_idx, z_index, y_index, x_index]
+    
+    @property
+    def molecules(self) -> list[Molecule]:
+        """The list of molecules in the system."""
+        return self.molecules
+    
+    @molecules.setter
+    def molecules(self, molecules: list[Molecule]):
+        self.molecules = molecules
+
+    @property
+    def gradient(self) -> list[(Molecule, str)]:
+        """The gradient of the molecules in the system."""
+        return self.gradient
+    
+    @gradient.setter
+    def gradient(self, gradient: list[(Molecule, str)]):
+        self.gradient = gradient
+
+    @property
+    def grid_size(self) -> tuple:
+        """The size of the 3D grid."""
+        return self.grid_size
+    
+    @grid_size.setter
+    def grid_size(self, grid_size: tuple):
+        self.grid_size = grid_size
+
+    @property
+    def time_step(self) -> float:
+        """The time step of the simulation."""
+        return self.time_step
+    
+    @time_step.setter
+    def time_step(self, time_step: float):
+        self.time_step = time_step
+
+    @property
+    def total_time(self) -> int:
+        """The total time of the simulation."""
+        return self.total_time
+    
+    @total_time.setter
+    def total_time(self, total_time: int):
+        self.total_time = total_time
+
+    def diffuse(self, t, y):
+        concentrations = []
+        offset = 0
+        for i, molecule in enumerate(self.molecules):
+            C = y[offset:offset + self.grid_size_prod].reshape(self.grid_size)
+            dC_dt = self.diffusion_rates[i] * laplace(C)
+            concentrations.append(dC_dt.ravel())
+            offset += self.grid_size_prod
+        return np.concatenate(concentrations)
+
+    def run(self):
+        # Initialize the combined state for all molecules
+        y0 = np.concatenate(
+            [molecule.concentration.flatten() for molecule in self.molecules]
+        )
+        t_span = (0, self.total_time)
+        t_eval = np.arange(0, self.total_time, self.time_step)
+        
+        # Solve the diffusion system
+        solution = solve_ivp(self.diffuse(), t_span, y0, method='RK45', t_eval=t_eval)
+
+        # Reshape the solution for each molecule
+        results = []
+        offset = 0
+        for molecule in self.molecules:
+            concentration_sol = solution.y[offset:offset + np.prod(self.grid_size)]
+            concentration_sol = concentration_sol.reshape(self.grid_size + (len(t_eval),))
+            results.append(concentration_sol)
+            offset += np.prod(self.grid_size)
+        return results

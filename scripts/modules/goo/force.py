@@ -72,7 +72,7 @@ class Force(BlenderObject):
         if min_dist is None:
             self.obj.field.use_min_distance = False
         else:
-            self.obj.field.use_min_distance = True
+            self.obj.field.use_min_distance = False
             self.obj.field.distance_min = min_dist
 
     @property
@@ -87,7 +87,7 @@ class Force(BlenderObject):
         if max_dist is None:
             self.obj.field.use_max_distance = False
         else:
-            self.obj.field.use_max_distance = True
+            self.obj.field.use_max_distance = False
             self.obj.field.distance_max = max_dist
 
     @property
@@ -101,7 +101,7 @@ class Force(BlenderObject):
 
     @property
     def impulse_clamp(self) -> int:
-        """Shape of the force field."""
+        """Impulse clamp of the force field."""
         return self.obj.modifiers["Cloth"].collision_settings.impulse_clamp
 
     @impulse_clamp.setter
@@ -164,7 +164,7 @@ def create_force(
     falloff: float = 0,
     min_dist: float = None,
     max_dist: float = None,
-    shape: str = "SURFACE",
+    shape: str = "POINTS",  # POINTS
 ) -> Force:
     """Creates a new force field.
 
@@ -226,7 +226,7 @@ def create_adhesion(
     adhesion_force.shape = shape
     adhesion_force.min_dist = 0.6
     adhesion_force.max_dist = 1.4
-    adhesion_force.falloff = 0.5
+    adhesion_force.falloff = 1
     return adhesion_force
 
 
