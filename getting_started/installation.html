@@ -217,6 +217,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#install-dependencies-in-blender">Install dependencies in Blender</a></li>
 <li class="toctree-l1"><a class="reference internal" href="learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_scripts.html">Example scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="blender_on_o2.html">Running Goo on O2</a></li>
@@ -305,14 +306,17 @@ tar<span class="w"> </span>-xvf<span class="w"> </span>&lt;Goo-latest-release&gt
 <li><p><a class="reference external" href="https://pypi.org/project/mathutils/">mathutils</a></p></li>
 </ul>
 </section>
+</section>
 <section id="install-dependencies-in-blender">
-<h2>Install Dependencies in Blender<a class="headerlink" href="#install-dependencies-in-blender" title="Link to this heading">¶</a></h2>
+<h1>Install dependencies in Blender<a class="headerlink" href="#install-dependencies-in-blender" title="Link to this heading">¶</a></h1>
+<section id="macos-linux">
+<h2>MacOS/Linux<a class="headerlink" href="#macos-linux" title="Link to this heading">¶</a></h2>
 <p>Blender comes with its own Python interpreter, which is isolated from the system’s Python environment.
 Goo requires a few additional Python packages that need to be installed directly into Blender’s Python environment.</p>
-<p>To install Goo’s dependencies:</p>
+<p>To install Goo’s dependencies from the terminal:</p>
 <ol class="arabic">
 <li><p>Find the paths of the Blender executable and its Python interpreter.</p>
-<p>For macOS, it is usually in the Applications folder, e.g., <cite>/Applications/Blender.app/Contents/MacOS/Blender</cite> and <cite>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10</cite>. For Windows, it is usually in the Program Files folder.</p>
+<p>For macOS, it is usually in the Applications folder, e.g., <cite>/Applications/Blender.app/Contents/MacOS/Blender</cite> and <cite>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10</cite>.</p>
 </li>
 <li><p>Create a new environment using Blender’s Python interpreter:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>blender_venv
@@ -340,6 +344,43 @@ Goo requires a few additional Python packages that need to be installed directly
 </div>
 </li>
 </ol>
+</section>
+<section id="windows">
+<h2>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h2>
+<p>Blender comes with its own Python interpreter, which is isolated from the system’s Python environment.
+Goo requires a few additional Python packages that need to be installed directly into Blender’s Python environment.</p>
+<p>To install Goo’s dependencies from a terminal:</p>
+<ol class="arabic">
+<li><p>Find the paths of the Blender executable and its Python interpreter.</p>
+<p>For Windows, it is usually in the Program Files, e.g., <cite>C:\Program Files\Blender Foundation\Blender 4.1\Blender.exe</cite> and <cite>C:\Program Files\Blender Foundation\Blender 4.1\4.1python\bin\python.exe</cite>.</p>
+</li>
+<li><p>Create a new virtual environment using Blender’s Python interpreter:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">4</span>.1<span class="se">\\</span><span class="m">4</span>.1<span class="se">\\</span>python<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.blender_env
+</pre></div>
+</div>
+</li>
+<li><p>Activate the environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.blender_env<span class="se">\\</span>Scripts<span class="se">\\</span>activate
+</pre></div>
+</div>
+</li>
+<li><p>Install the dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">4</span>.1<span class="se">\\</span><span class="m">4</span>.1<span class="se">\\</span>python<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>setuptools<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>sphinx<span class="w"> </span>sphinx_copybutton<span class="w"> </span>furo<span class="w"> </span>typing_extensions
+</pre></div>
+</div>
+</li>
+<li><p>Check that the dependencies are installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">4</span>.1<span class="se">\\</span><span class="m">4</span>.1<span class="se">\\</span>python<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>list
+</pre></div>
+</div>
+</li>
+<li><p>Launch Blender from within the activated virtual environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">3</span>.3<span class="se">\\</span>Blender.exe
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Blender supports virtual environment and the installed packages will be available to use for scripting in Blender.</p>
 </section>
 </section>
 
@@ -400,7 +441,11 @@ Goo requires a few additional Python packages that need to be installed directly
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li><a class="reference internal" href="#install-dependencies-in-blender">Install Dependencies in Blender</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#install-dependencies-in-blender">Install dependencies in Blender</a><ul>
+<li><a class="reference internal" href="#macos-linux">MacOS/Linux</a></li>
+<li><a class="reference internal" href="#windows">Windows</a></li>
 </ul>
 </li>
 </ul>

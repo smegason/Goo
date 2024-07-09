@@ -217,6 +217,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/example_scripts.html">Example scripts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
@@ -502,6 +503,36 @@ motion force of each cell.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="goo.handler.DiffusionHandler.diffuse">
+<span class="sig-name descname"><span class="pre">diffuse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mol_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#DiffusionHandler.diffuse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.DiffusionHandler.diffuse" title="Link to this definition">¶</a></dt>
+<dd><p>Update the concentration of molecules based on diffusion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mol_idx</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler.DiffusionHandler.read_molecular_signal">
+<span class="sig-name descname"><span class="pre">read_molecular_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><span class="pre">Cell</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_distances</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/goo/handler.html#DiffusionHandler.read_molecular_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.DiffusionHandler.read_molecular_signal" title="Link to this definition">¶</a></dt>
+<dd><p>Read the concentration of molecules in the cell.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><em>Cell</em></a>)</p></li>
+<li><p><strong>cell_distances</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>indices</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>radius</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="goo.handler.DiffusionHandler.run">
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depsgraph</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/goo/handler.html#DiffusionHandler.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.DiffusionHandler.run" title="Link to this definition">¶</a></dt>
 <dd><p>Run the handler.</p>
@@ -521,8 +552,14 @@ upon specified events (e.g. post-frame change).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="goo.handler.DiffusionHandler.update_cell_concentration">
-<span class="sig-name descname"><span class="pre">update_cell_concentration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><span class="pre">Cell</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_distances</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/goo/handler.html#DiffusionHandler.update_cell_concentration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.DiffusionHandler.update_cell_concentration" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="goo.handler.DiffusionHandler.simulate_diffusion">
+<span class="sig-name descname"><span class="pre">simulate_diffusion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#DiffusionHandler.simulate_diffusion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.DiffusionHandler.simulate_diffusion" title="Link to this definition">¶</a></dt>
+<dd><p>Run the diffusion simulation over the total time.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler.DiffusionHandler.update_molecular_signal">
+<span class="sig-name descname"><span class="pre">update_molecular_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="goo.cell.html#goo.cell.Cell" title="goo.cell.Cell"><span class="pre">Cell</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_distances</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/goo/handler.html#DiffusionHandler.update_molecular_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.DiffusionHandler.update_molecular_signal" title="Link to this definition">¶</a></dt>
 <dd><p>Update the concentration of molecules in the cell.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -685,34 +722,6 @@ upon specified events (e.g. post-frame change).</p>
 retrieves the list of cells that may divide.</p></li>
 <li><p><strong>dt</strong> (<em>float</em>) – The time step for the simulation.</p></li>
 <li><p><strong>get_diffsystems</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>list</em><em>[</em><a class="reference internal" href="goo.molecule.html#goo.molecule.DiffusionSystem" title="goo.molecule.DiffusionSystem"><em>DiffusionSystem</em></a><em>]</em><em>]</em>)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="goo.handler.MolecularSensingHandler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.handler.</span></span><span class="sig-name descname"><span class="pre">MolecularSensingHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diffusionSystem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="goo.molecule.html#goo.molecule.DiffusionSystem" title="goo.molecule.DiffusionSystem"><span class="pre">DiffusionSystem</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#MolecularSensingHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.MolecularSensingHandler" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#goo.handler.Handler" title="goo.handler.Handler"><code class="xref py py-class docutils literal notranslate"><span class="pre">Handler</span></code></a></p>
-<p>Handler for simulating cells sensing molecular concentrations at their surfaces.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>diffusionSystem</strong> (<a class="reference internal" href="goo.molecule.html#goo.molecule.DiffusionSystem" title="goo.molecule.DiffusionSystem"><em>DiffusionSystem</em></a>) – The reaction-diffusion system to simulate.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="goo.handler.MolecularSensingHandler.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depsgraph</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#MolecularSensingHandler.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.MolecularSensingHandler.run" title="Link to this definition">¶</a></dt>
-<dd><p>Run the handler.</p>
-<p>This is the function that gets passed to Blender, to be called
-upon specified events (e.g. post-frame change).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>scene</strong> – The Blender scene.</p></li>
-<li><p><strong>depsgraph</strong> – The dependency graph.</p></li>
 </ul>
 </dd>
 </dl>
@@ -886,8 +895,11 @@ upon specified events (e.g. post-frame change).</p>
 </li>
 <li><a class="reference internal" href="#goo.handler.DiffusionHandler"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler</span></code></a><ul>
 <li><a class="reference internal" href="#goo.handler.DiffusionHandler.build_kd_tree"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler.build_kd_tree()</span></code></a></li>
+<li><a class="reference internal" href="#goo.handler.DiffusionHandler.diffuse"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler.diffuse()</span></code></a></li>
+<li><a class="reference internal" href="#goo.handler.DiffusionHandler.read_molecular_signal"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler.read_molecular_signal()</span></code></a></li>
 <li><a class="reference internal" href="#goo.handler.DiffusionHandler.run"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler.run()</span></code></a></li>
-<li><a class="reference internal" href="#goo.handler.DiffusionHandler.update_cell_concentration"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler.update_cell_concentration()</span></code></a></li>
+<li><a class="reference internal" href="#goo.handler.DiffusionHandler.simulate_diffusion"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler.simulate_diffusion()</span></code></a></li>
+<li><a class="reference internal" href="#goo.handler.DiffusionHandler.update_molecular_signal"><code class="docutils literal notranslate"><span class="pre">DiffusionHandler.update_molecular_signal()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#goo.handler.ForceDist"><code class="docutils literal notranslate"><span class="pre">ForceDist</span></code></a><ul>
@@ -911,10 +923,6 @@ upon specified events (e.g. post-frame change).</p>
 <li><a class="reference internal" href="#goo.handler.Handler"><code class="docutils literal notranslate"><span class="pre">Handler</span></code></a><ul>
 <li><a class="reference internal" href="#goo.handler.Handler.run"><code class="docutils literal notranslate"><span class="pre">Handler.run()</span></code></a></li>
 <li><a class="reference internal" href="#goo.handler.Handler.setup"><code class="docutils literal notranslate"><span class="pre">Handler.setup()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#goo.handler.MolecularSensingHandler"><code class="docutils literal notranslate"><span class="pre">MolecularSensingHandler</span></code></a><ul>
-<li><a class="reference internal" href="#goo.handler.MolecularSensingHandler.run"><code class="docutils literal notranslate"><span class="pre">MolecularSensingHandler.run()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#goo.handler.RandomMotionHandler"><code class="docutils literal notranslate"><span class="pre">RandomMotionHandler</span></code></a><ul>
