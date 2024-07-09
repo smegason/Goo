@@ -8,6 +8,7 @@ import json
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.spatial import KDTree
+from scipy.ndimage import laplace
 
 import bpy
 import bmesh
@@ -116,7 +117,23 @@ class DiffusionHandler(Handler):
         """Build the KD-Tree from the grid coordinates if not already built."""
         self.kd_tree = self.diffusionSystem._build_kdtree()
 
-    def update_cell_concentration(
+    def read_molecular_signal(
+        self,
+        cell: Cell,
+        cell_distances: np.ndarray,
+        indices: np.ndarray,
+        radius: float
+    ) -> None: 
+        """Read the concentration of molecules in the cell."""
+        for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
+            valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
+            if valid_indices.any():
+                index = indices[valid_indices][0]
+                total_conc = self.diffusionSystem.get_concentration(mol_idx, index)
+                print(f"Conc of cell {cell.name} for {molecule._name}: {total_conc}")
+                cell.molecules_conc.update({molecule._name: total_conc})
+
+    def update_molecular_signal(
         self,
         cell: Cell,
         cell_distances: np.ndarray,
@@ -124,84 +141,69 @@ class DiffusionHandler(Handler):
         radius: float
     ) -> None: 
         """Update the concentration of molecules in the cell."""
+                        
+        k = 0.1
         for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
             total_conc = 0
             valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
-            for cell_distance, index in zip(cell_distances[valid_indices], 
-                                            indices[valid_indices]):
-                k = 0.1
+            valid_distances = cell_distances[valid_indices]
+            valid_indices = indices[valid_indices]
+
+            for cell_distance, index in zip(valid_distances, valid_indices):
                 add_conc = k * (cell_distance / radius)
                 self.diffusionSystem.update_concentration(mol_idx, index, add_conc)
-                # total_conc = self.diffusionSystem.get_concentration(mol_idx, index)
             
             cell.molecules_conc.update({molecule._name: total_conc})
-            print(cell.molecules_conc)
-            print(f"Total conc of cell {cell.name} for {molecule._name}: {total_conc}")
+            print(f"Molecular concentrations: {cell.molecules_conc}")
     
+    def diffuse(self, mol_idx: int):
+        """Update the concentration of molecules based on diffusion."""
+        conc = self.diffusionSystem._grid_concentrations[mol_idx]
+        laplacian = laplace(conc, mode='wrap')
+        diff_coeff = self.diffusionSystem._molecules[mol_idx]._D
+        conc += self.diffusionSystem._time_step * diff_coeff * laplacian
+        conc = np.clip(conc, 0, None)
+        self.diffusionSystem._grid_concentrations[mol_idx] = conc
+
+    def simulate_diffusion(self):
+        """Run the diffusion simulation over the total time."""
+        tot_time = self.diffusionSystem._total_time
+        t_step = self.diffusionSystem._time_step
+        num_steps = int(tot_time / t_step)
+        for _ in range(num_steps):
+            for mol_idx in range(len(self.diffusionSystem._molecules)):
+                self.diffuse(mol_idx)
+
     @override
     def run(self, scene, depsgraph) -> None:
         if self.kd_tree is None:
             self.build_kd_tree()
         
         print("Current frame", scene.frame_current)
+
+        # diffuse molecules on grid
+        self.simulate_diffusion()
+
         cells = self.get_cells()
         
         for cell in cells:
             radius = cell.get_radius()
             com = cell.COM()
+            scaling_factor = 1 / self.diffusionSystem._element_size[0]
             cell_distances, indices = self.kd_tree.query(com, 
-                                                         k=500, 
+                                                         k=500 * scaling_factor**2, 
                                                          distance_upper_bound=1.5*radius, 
                                                          p=2)
 
             if len(cell_distances) > 0 and not np.all(np.isinf(cell_distances)):
-                self.update_cell_concentration(cell, cell_distances, indices, radius)
+                self.update_molecular_signal(cell, cell_distances, indices, radius)
+                self.read_molecular_signal(cell, cell_distances, indices, radius)
             else:
                 # If no valid distances, set concentration to 0
                 for molecule in self.diffusionSystem._molecules:
                     cell.molecules_conc.update({molecule._name: 0})
                     print(cell.molecules_conc)
                     print(f"Total conc of cell {cell.name} for {molecule._name}: 0")
-
-
-class MolecularSensingHandler(Handler):
-    """Handler for simulating cells sensing molecular concentrations at their surfaces.
-
-    Args:
-        diffusionSystem: The reaction-diffusion system to simulate.
-
-    """
-
-    def __init__(self, diffusionSystem: DiffusionSystem) -> None:
-        self.diffusionSystem = diffusionSystem
-
-    @override
-    def run(self, scene, depsgraph):
-        
-        for cell in self.get_cells():
-            major_axis = cell.major_axis()
-            length_major = (major_axis._start - major_axis._end).length
-            minor_axis = cell.minor_axis()
-            length_minor = (minor_axis._start - minor_axis._end).length
-            radius = (length_major + length_minor) / 2
-            com = cell.COM()
-
-            cell_distances, indices = self.kd_tree.query(com, 
-                                                         k=500, 
-                                                         distance_upper_bound=1.5*radius, 
-                                                         p=2)
-            print(cell_distances, indices)
-            print("radius", radius)
-            
-            for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
-                for idx, (cell_distance, index) in enumerate(zip(cell_distances, indices)):
-                    # conservative estimate using the minor axis
-                    if np.isinf(cell_distance):
-                        continue
-                    elif (cell_distance >= radius):
-                        total_conc += self.diffusionSystem.get_concentration(mol_idx, 
-                                                                             index)
-                        print(f"Total conc of cell for {molecule._name}", total_conc)
 
 
 class AdhesionLocationHandler(Handler):

@@ -90,11 +90,11 @@ class DiffusionSystem:
     def __init__(
         self, 
         molecules: list[Molecule], 
-        grid_size: Tuple[int, int, int] = (25, 25, 25), 
+        grid_size: Tuple[int, int, int] = (50, 50, 50), 
         grid_center: Tuple[int, int, int] = (0, 0, 0),
         time_step: float = 0.1, 
         total_time: int = 10, 
-        element_size=(1.0, 1.0, 1.0)
+        element_size=(0.5, 0.5, 0.5)
     ) -> None: 
         self._molecules = molecules
         self._grid_size = grid_size
@@ -104,11 +104,6 @@ class DiffusionSystem:
         self._grid_concentrations = None
         self._kd_tree = None
         self._element_size = element_size
-        self._laplacian_kernel = np.array([
-            [[1,  1,  1], [1,  1,  1], [1,  1,  1]],
-            [[1,  1,  1], [1, -26, 1], [1,  1,  1]],
-            [[1,  1,  1], [1,  1, 1], [1,  1,  1]]
-        ]) / 26.0
         
     def _build_kdtree(self):
         """Initialize the grid and build its corresponding KD-Tree."""
@@ -196,6 +191,22 @@ class DiffusionSystem:
         z_index, y_index, x_index = np.unravel_index(index, self._grid_size)
         return self._grid_concentrations[mol_idx, z_index, y_index, x_index]
     
+    def diffuse(self, mol_idx):
+        """Update the concentration of molecules based on diffusion."""
+        # get grid 
+        grid = self._grid_concentrations
+        conc = grid[mol_idx]
+        laplacian = laplace(conc, mode='wrap')
+        conc += self._time_step * self._molecules[mol_idx]._D * laplacian
+        conc = np.clip(conc, 0, None)
+        grid[mol_idx] = conc
+
+    def simulate(self):
+        """Run the diffusion simulation over the total time."""
+        num_steps = int(self._total_time / self._time_step)
+        for _ in range(num_steps):
+            self.diffuse()
+
     @property
     def molecules(self) -> list[Molecule]:
         """The list of molecules in the system."""
@@ -240,34 +251,3 @@ class DiffusionSystem:
     @total_time.setter
     def total_time(self, total_time: int):
         self.total_time = total_time
-
-    def diffuse(self, t, y):
-        concentrations = []
-        offset = 0
-        for i, molecule in enumerate(self.molecules):
-            C = y[offset:offset + self.grid_size_prod].reshape(self.grid_size)
-            dC_dt = self.diffusion_rates[i] * laplace(C)
-            concentrations.append(dC_dt.ravel())
-            offset += self.grid_size_prod
-        return np.concatenate(concentrations)
-
-    def run(self):
-        # Initialize the combined state for all molecules
-        y0 = np.concatenate(
-            [molecule.concentration.flatten() for molecule in self.molecules]
-        )
-        t_span = (0, self.total_time)
-        t_eval = np.arange(0, self.total_time, self.time_step)
-        
-        # Solve the diffusion system
-        solution = solve_ivp(self.diffuse(), t_span, y0, method='RK45', t_eval=t_eval)
-
-        # Reshape the solution for each molecule
-        results = []
-        offset = 0
-        for molecule in self.molecules:
-            concentration_sol = solution.y[offset:offset + np.prod(self.grid_size)]
-            concentration_sol = concentration_sol.reshape(self.grid_size + (len(t_eval),))
-            results.append(concentration_sol)
-            offset += np.prod(self.grid_size)
-        return results

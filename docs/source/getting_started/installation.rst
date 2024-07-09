@@ -38,13 +38,17 @@ Dependencies
 .. _mathutils: https://pypi.org/project/mathutils/
 .. _scipy: https://pypi.org/project/scipy/
 
-Install Dependencies in Blender
--------------------------------
+
+Install dependencies in Blender
+================================
+
+MacOS/Linux
+------------
 
 Blender comes with its own Python interpreter, which is isolated from the system's Python environment. 
 Goo requires a few additional Python packages that need to be installed directly into Blender's Python environment. 
 
-To install Goo's dependencies: 
+To install Goo's dependencies from the terminal: 
 
 1. Find the paths of the Blender executable and its Python interpreter.
 
@@ -79,3 +83,49 @@ To install Goo's dependencies:
    .. code-block:: bash
 
       /Applications/Blender.app/Contents/MacOS/Blender
+
+
+Windows
+------------
+
+Blender comes with its own Python interpreter, which is isolated from the system's Python environment. 
+Goo requires a few additional Python packages that need to be installed directly into Blender's Python environment. 
+
+To install Goo's dependencies from a terminal: 
+
+1. Find the paths of the Blender executable and its Python interpreter.
+
+   For Windows, it is usually in the Program Files, e.g., `C:\Program Files\Blender Foundation\Blender 4.1\Blender.exe` and `C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe`.
+
+2. Create a new virtual environment using Blender's Python interpreter:
+
+   .. code-block:: bash
+
+      "C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe" -m venv .blender_env
+
+goo_environment
+
+3. Activate the environment:
+
+   .. code-block:: bash
+
+      ".blender_env\Scripts\activate"
+
+4. Install the dependencies:
+
+   .. code-block:: bash
+
+      "C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe" -m pip install setuptools numpy scipy sphinx sphinx_copybutton furo typing_extensions
+
+5. Check that the dependencies are installed:
+
+   .. code-block:: bash
+
+      "C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe" -m pip list
+
+6. Launch Blender:
+
+   .. code-block:: bash
+
+       "C:\Program Files\Blender Foundation\Blender 3.3\Blender.exe"
+
