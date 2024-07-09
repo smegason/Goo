@@ -52,7 +52,7 @@ To install Goo's dependencies from the terminal:
 
 1. Find the paths of the Blender executable and its Python interpreter.
 
-   For macOS, it is usually in the Applications folder, e.g., `/Applications/Blender.app/Contents/MacOS/Blender` and `/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10`. For Windows, it is usually in the Program Files folder.
+   For macOS, it is usually in the Applications folder, e.g., `/Applications/Blender.app/Contents/MacOS/Blender` and `/Applications/Blender.app/Contents/Resources/3.6/python/bin/python3.10`.
 
 2. Create a new environment using Blender's Python interpreter:
 
@@ -95,37 +95,38 @@ To install Goo's dependencies from a terminal:
 
 1. Find the paths of the Blender executable and its Python interpreter.
 
-   For Windows, it is usually in the Program Files, e.g., `C:\Program Files\Blender Foundation\Blender 4.1\Blender.exe` and `C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe`.
+   For Windows, it is usually in the Program Files, e.g., `C:\\Program Files\\Blender Foundation\\Blender 4.1\\Blender.exe` and `C:\\Program Files\\Blender Foundation\\Blender 4.1\\4.1\python\\bin\\python.exe`.
 
 2. Create a new virtual environment using Blender's Python interpreter:
 
    .. code-block:: bash
 
-      "C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe" -m venv .blender_env
+      C:\\Program Files\\Blender Foundation\\Blender 4.1\\4.1\\python\\bin\\python.exe -m venv .blender_env
 
-goo_environment
 
 3. Activate the environment:
 
    .. code-block:: bash
 
-      ".blender_env\Scripts\activate"
+      .blender_env\\Scripts\\activate
 
 4. Install the dependencies:
 
    .. code-block:: bash
 
-      "C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe" -m pip install setuptools numpy scipy sphinx sphinx_copybutton furo typing_extensions
+      C:\\Program Files\\Blender Foundation\\Blender 4.1\\4.1\\python\\bin\\python.exe -m pip install setuptools numpy scipy sphinx sphinx_copybutton furo typing_extensions
 
 5. Check that the dependencies are installed:
 
    .. code-block:: bash
 
-      "C:\Program Files\Blender Foundation\Blender 4.1\4.1\python\bin\python.exe" -m pip list
+      C:\\Program Files\\Blender Foundation\\Blender 4.1\\4.1\\python\\bin\\python.exe -m pip list
 
-6. Launch Blender:
+6. Launch Blender from within the activated virtual environment:
 
    .. code-block:: bash
 
-       "C:\Program Files\Blender Foundation\Blender 3.3\Blender.exe"
+       C:\\Program Files\\Blender Foundation\\Blender 3.3\\Blender.exe
 
+
+Blender supports virtual environment and the installed packages will be available to use for scripting in Blender. 
