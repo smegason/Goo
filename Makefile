@@ -2,10 +2,10 @@
 
 # Change the following options:
 VENV_DIR = .blender_venv
-BPY_PATH = /Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11
+BPY_PATH = /Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10
 HOOK_DIR = hook
 
-VENV_PACKAGES = $(VENV_DIR)/lib/python3.11/site-packages
+VENV_PACKAGES = $(VENV_DIR)/lib/python3.10/site-packages
 VENV_PYTHON = $(VENV_DIR)/bin/python
 HOOK_PACKAGES = $(HOOK_DIR)/scripts/modules
 

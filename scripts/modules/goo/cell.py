@@ -7,10 +7,11 @@ import bmesh
 from bpy.types import Modifier, ClothModifier, CollisionModifier
 from mathutils import Vector
 
-from goo.force import * 
-from goo.utils import * 
+from goo.force import *
+from goo.utils import *
 
 from goo.molecule import Molecule
+from goo.circuits import Circuit
 
 
 class Cell(BlenderObject):
@@ -27,7 +28,7 @@ class Cell(BlenderObject):
         celltype (CellType): The cell type to which the cell belongs.
     """
 
-    def __init__(self, obj: bpy.types.Object, mat=None):
+    def __init__(self, obj: bpy.types.Object, mat: bpy.types.Material = None):
         super(Cell, self).__init__(obj)
 
         # Set up effector collections
@@ -47,8 +48,10 @@ class Cell(BlenderObject):
         self._hetero_adhesions: list[AdhesionForce] = []
         self._motion_force: MotionForce = None
 
-        # concentrations of molecules in interstitial space
-        self._molecules_conc: Dict[str, float] = {}
+        # Initalize signaling molecule and gene information
+        self.grn = None
+        self["molecules"] = {}
+        self["genes"] = {}
 
     @property
     def name(self) -> str:
@@ -102,17 +105,7 @@ class Cell(BlenderObject):
 
         return cell_copy
 
-    # ----- CUSTOM PROPERTIES -----
-    def __setitem__(self, k: str, v: Union[float, list[float], int, list[int], str]):
-        self.obj.data[k] = v
-
-    def __contains__(self, k: str):
-        return k in self.obj.data.keys()
-
-    def __getitem__(self, k):
-        return self.obj.data[k]
-
-    # ----- BASIC FUNCTIONS -----
+    # ===== BASIC MESH PROPERTIES =====
     @property
     def obj_eval(self) -> bpy.types.ID:
         """The evaluated object.
@@ -129,7 +122,7 @@ class Cell(BlenderObject):
         """Returns the vertices of the mesh representation of the cell.
 
         Args:
-            local_coords: if `True`, coordinates are returned in local object space 
+            local_coords: if `True`, coordinates are returned in local object space
             rather than world space.
 
         Returns:
@@ -210,36 +203,13 @@ class Cell(BlenderObject):
         """Returns the minor axis of the cell."""
         return self._get_eigenvector(1)
 
-    def get_radius(self):
+    def radius(self):
         """Calculate the radius based on the major and minor axes of the cell."""
         major_axis = self.major_axis()
-        length_major = np.linalg.norm(major_axis._start - major_axis._end)
         minor_axis = self.minor_axis()
-        length_minor = np.linalg.norm(minor_axis._start - minor_axis._end)
-        return (length_major + length_minor) / 2
-    
-    def divide(self, division_logic) -> tuple["Cell", "Cell"]:
-        """Cause the cell to divide into two daughter cells.
+        return (major_axis.length() + minor_axis.length()) / 2
 
-        This function causes the cell to divide into two daughter cells according
-        to the provided division logic. The daughter cells inherit the cell type
-        of the mother cell.
-
-        Args:
-            division_logic: The division logic to use, which handles the
-                creation of two cells from the original cell.
-
-        Returns:
-            A tuple of two daughter cells, resulting from the division of the
-            mother cell.
-        """
-        # TODO: rewrite code to make it clearer that there are two daughter 
-        # cells splitting from a mother cell.
-        mother, daughter = division_logic.make_divide(self)
-        if mother.celltype:
-            mother.celltype.add_cell(daughter)
-        return mother, daughter
-
+    # ----- BASIC MESH FUNCTIONS -----
     def recenter(self):
         """Recenter the cell origin to the center of mass of the cell."""
         bm = bmesh.new()
@@ -292,16 +262,7 @@ class Cell(BlenderObject):
                     _, _, _, a = node.inputs["Base Color"].default_value
                     node.inputs["Base Color"].default_value = r, g, b, a
 
-    def calculate_dist_to_voxel(self, voxel_loc: Vector) -> float:
-        """Calculate the distance from a cell to a voxel.
-
-        Args:
-            voxel_loc: The location of the voxel.
-        """
-        com = self.COM()
-        return (com - voxel_loc).length
-
-    # ----- PHYSICS -----
+    # ===== PHYSICS =====
     def get_modifier(self, type) -> Optional[Modifier]:
         """Retrieves the first modifier of the specified type from the
         underlying object representation of the cell.
@@ -324,17 +285,17 @@ class Cell(BlenderObject):
         """The collision modifier of the cell if it exists, otherwise None."""
         return self.get_modifier("COLLISION")
 
-    @property
-    def physics_enabled(self) -> bool:
-        """Whether physics is enabled for this cell."""
-        return self._physics_enabled
-
     def _update_cloth(self):
         """Update the cloth modifier is correctly set to be affected by forces
         acting upon the cell.
         """
         if self.cloth_mod:
             self.cloth_mod.settings.effector_weights.collection = self._effectors
+
+    @property
+    def physics_enabled(self) -> bool:
+        """Whether physics is enabled for this cell."""
+        return self._physics_enabled
 
     def setup_physics(self, physics_constructor: PhysicsConstructor):
         """Set up the physics properties for the cell.
@@ -402,6 +363,7 @@ class Cell(BlenderObject):
             force.disable()
         self._physics_enabled = False
 
+    # ----- PHYSICS PROPERTIES -----
     @property
     def stiffness(self) -> float:
         """Stiffness of the membrane of the cell."""
@@ -453,6 +415,7 @@ class Cell(BlenderObject):
         """
         self._hetero_adhesions.append(force)
 
+    # ----- FORCE PROPERTIES -----
     @property
     def homo_adhesion(self) -> AdhesionForce:
         """Homotypic adhesion force of the cell."""
@@ -479,6 +442,31 @@ class Cell(BlenderObject):
         self.add_effector(force)
         self._motion_force = force
 
+    # ===== CELL ACTIONS =====
+    def divide(self, division_logic) -> tuple["Cell", "Cell"]:
+        """Cause the cell to divide into two daughter cells.
+
+        This function causes the cell to divide into two daughter cells according
+        to the provided division logic. The daughter cells inherit the cell type
+        of the mother cell.
+
+        Args:
+            division_logic: The division logic to use, which handles the
+                creation of two cells from the original cell.
+
+        Returns:
+            A tuple of two daughter cells, resulting from the division of the
+            mother cell.
+        """
+        if self.physics_enabled:
+            raise RuntimeError(
+                f"Cell {self.name} should not have physics enabled while dividing!"
+            )
+        mother, daughter = division_logic.make_divide(self)
+        if mother.celltype:
+            mother.celltype.add_cell(daughter)
+        return mother, daughter
+
     def move_towards(self, dir: Vector):
         """Sets the motion force to move the cell in a specified direction.
 
@@ -499,14 +487,32 @@ class Cell(BlenderObject):
         motion_loc = self.loc + dir.normalized() * (2 + self.major_axis().length())
         self._motion_force.set_loc(motion_loc, self.loc)
 
-    # ----- MOLECULES -----
+    # ===== SIGNALING MOLECULES =====
     @property
-    def molecules_conc(self): 
-        return self._molecules_conc
-    
+    def molecules_conc(self):
+        return self["molecules"]
+
     @molecules_conc.setter
     def molecules_conc(self, conc: defaultdict[float]):
-        self._molecules_conc.update(conc)
+        self["molecules"].update(conc)
+
+    # ===== GENES =====
+    @property
+    def genes_conc(self):
+        return self["genes"]
+
+    @genes_conc.setter
+    def genes_conc(self, gene_levels: defaultdict[float]):
+        self["genes"].update(gene_levels)
+
+    @property
+    def circuit_tellurium(self):
+        prefix = f"model {self.name}"
+        suffix = "end"
+        gene_levels = "\n".join(
+            [f"{gene} = {level}" for gene, level in self["genes"].items()]
+        )
+        return "\n".join([prefix, str(self.grn), gene_levels, suffix])
 
 
 def create_cell(
@@ -570,6 +576,8 @@ def declare_settings(mod: bpy.types.bpy_struct, settings: dict):
             setattr(mod, id, setting)
 
 
+# TODO: this is both a factory and a container. Keep factory, rename, container move to
+# Scene-extended class
 class CellType:
     """A cell type.
 
@@ -601,7 +609,7 @@ class CellType:
     color = (0.007, 0.021, 0.3)
     _default_celltype = None
 
-    def __init__(self, name: str, physics_enabled: bool = True):
+    def __init__(self, name: str, physics_enabled: bool = True, grn: Circuit = None):
         self._homo_adhesions = ForceCollection(name)
         self._cells = set()
 
@@ -610,6 +618,8 @@ class CellType:
 
         self.homo_adhesion_strength: int = 2000
         self.motion_strength: int = 0
+
+        self.grn = grn
 
     @staticmethod
     def default_celltype() -> "CellType":
@@ -637,6 +647,9 @@ class CellType:
         """
         cell.celltype = self
         self._cells.add(cell)
+
+        # add GRN
+        cell.grn = self.grn
 
         if not self._physics_enabled:
             return

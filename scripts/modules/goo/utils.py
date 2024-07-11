@@ -1,4 +1,5 @@
 from functools import reduce
+from typing import Union
 
 import bpy
 import bmesh
@@ -32,6 +33,16 @@ class BlenderObject:
 
     def hide(self):
         self.obj.hide_set(True)
+
+    # ----- CUSTOM PROPERTIES -----
+    def __setitem__(self, k: str, v: Union[float, list[float], int, list[int], str]):
+        self.obj[k] = v
+
+    def __contains__(self, k: str):
+        return k in self.obj.keys()
+
+    def __getitem__(self, k):
+        return self.obj[k]
 
 
 class Axis:

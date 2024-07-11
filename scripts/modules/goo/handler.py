@@ -8,6 +8,7 @@ import json
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.spatial import KDTree
+import tellurium as te
 
 import bpy
 import bmesh
@@ -18,15 +19,15 @@ from goo.molecule import Molecule, DiffusionSystem
 
 class Handler:
     def setup(
-        self, 
-        get_cells: Callable[[], list[Cell]], 
+        self,
+        get_cells: Callable[[], list[Cell]],
         get_diffsystems: Callable[[], list[DiffusionSystem]],
-        dt: float
+        dt: float,
     ):
         """Set up the handler.
 
         Args:
-            get_cells: A function that, when called, 
+            get_cells: A function that, when called,
                 retrieves the list of cells that may divide.
             dt: The time step for the simulation.
         """
@@ -54,10 +55,10 @@ class RemeshHandler(Handler):
 
     Attributes:
         freq (int): Number of frames between remeshes.
-        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`. 
+        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`.
             Disabled if set to 0.
         voxel_size (float): Factor to pass to `voxel_remesh()`. Disabled if set to 0.
-        sphere_factor (float): Factor to pass to Cast to sphere modifier. 
+        sphere_factor (float): Factor to pass to Cast to sphere modifier.
             Disabled if set to 0.
     """
 
@@ -92,7 +93,7 @@ class RemeshHandler(Handler):
             if self.voxel_size is not None:
                 cell.remesh(self.voxel_size)
                 cell.recenter()
-            else: 
+            else:
                 cell.remesh()
                 cell.recenter()
 
@@ -117,42 +118,38 @@ class DiffusionHandler(Handler):
         self.kd_tree = self.diffusionSystem._build_kdtree()
 
     def update_cell_concentration(
-        self,
-        cell: Cell,
-        cell_distances: np.ndarray,
-        indices: np.ndarray,
-        radius: float
-    ) -> None: 
+        self, cell: Cell, cell_distances: np.ndarray, indices: np.ndarray, radius: float
+    ) -> None:
         """Update the concentration of molecules in the cell."""
         for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
             total_conc = 0
             valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
-            for cell_distance, index in zip(cell_distances[valid_indices], 
-                                            indices[valid_indices]):
+            for cell_distance, index in zip(
+                cell_distances[valid_indices], indices[valid_indices]
+            ):
                 k = 0.1
                 add_conc = k * (cell_distance / radius)
                 self.diffusionSystem.update_concentration(mol_idx, index, add_conc)
                 # total_conc = self.diffusionSystem.get_concentration(mol_idx, index)
-            
+
             cell.molecules_conc.update({molecule._name: total_conc})
             print(cell.molecules_conc)
             print(f"Total conc of cell {cell.name} for {molecule._name}: {total_conc}")
-    
+
     @override
     def run(self, scene, depsgraph) -> None:
         if self.kd_tree is None:
             self.build_kd_tree()
-        
+
         print("Current frame", scene.frame_current)
         cells = self.get_cells()
-        
+
         for cell in cells:
-            radius = cell.get_radius()
+            radius = cell.radius()
             com = cell.COM()
-            cell_distances, indices = self.kd_tree.query(com, 
-                                                         k=500, 
-                                                         distance_upper_bound=1.5*radius, 
-                                                         p=2)
+            cell_distances, indices = self.kd_tree.query(
+                com, k=500, distance_upper_bound=1.5 * radius, p=2
+            )
 
             if len(cell_distances) > 0 and not np.all(np.isinf(cell_distances)):
                 self.update_cell_concentration(cell, cell_distances, indices, radius)
@@ -177,7 +174,7 @@ class MolecularSensingHandler(Handler):
 
     @override
     def run(self, scene, depsgraph):
-        
+
         for cell in self.get_cells():
             major_axis = cell.major_axis()
             length_major = (major_axis._start - major_axis._end).length
@@ -186,21 +183,23 @@ class MolecularSensingHandler(Handler):
             radius = (length_major + length_minor) / 2
             com = cell.COM()
 
-            cell_distances, indices = self.kd_tree.query(com, 
-                                                         k=500, 
-                                                         distance_upper_bound=1.5*radius, 
-                                                         p=2)
+            cell_distances, indices = self.kd_tree.query(
+                com, k=500, distance_upper_bound=1.5 * radius, p=2
+            )
             print(cell_distances, indices)
             print("radius", radius)
-            
+
             for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
-                for idx, (cell_distance, index) in enumerate(zip(cell_distances, indices)):
+                for idx, (cell_distance, index) in enumerate(
+                    zip(cell_distances, indices)
+                ):
                     # conservative estimate using the minor axis
                     if np.isinf(cell_distance):
                         continue
-                    elif (cell_distance >= radius):
-                        total_conc += self.diffusionSystem.get_concentration(mol_idx, 
-                                                                             index)
+                    elif cell_distance >= radius:
+                        total_conc += self.diffusionSystem.get_concentration(
+                            mol_idx, index
+                        )
                         print(f"Total conc of cell for {molecule._name}", total_conc)
 
 
@@ -260,10 +259,12 @@ class GrowthPIDHandler(Handler):
         self.target_volume = target_volume
 
     @override
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_diffsystems: Callable[[], list[DiffusionSystem]], 
-              dt):
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt,
+    ):
         super(GrowthPIDHandler, self).setup(get_cells, get_diffsystems, dt)
         for cell in self.get_cells():
             self.initialize_PID(cell)
@@ -382,7 +383,7 @@ class RandomMotionHandler(Handler):
 
 
 """Possible properties by which cells are colored."""
-Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM"])
+Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM", "GENE"])
 
 
 class ColorizeHandler(Handler):
@@ -395,10 +396,12 @@ class ColorizeHandler(Handler):
 
     Attributes:
         colorizer (Colorizer): the property by which cells are colored.
+        gene (str): optional, the gene off of which cell color is based.
     """
 
-    def __init__(self, colorizer: Colorizer = Colorizer.PRESSURE):
+    def __init__(self, colorizer: Colorizer = Colorizer.PRESSURE, gene=None):
         self.colorizer = colorizer
+        self.gene = gene
 
     @override
     def run(self, scene, depsgraph):
@@ -412,6 +415,9 @@ class ColorizeHandler(Handler):
             case Colorizer.VOLUME:
                 ps = np.array([cell.volume() for cell in self.get_cells()])
                 ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+            case Colorizer.GENE:
+                ps = np.array([cell.genes_conc[self.gene] for cell in self.get_cells()])
+                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
             case Colorizer.RANDOM:
                 ps = np.random.rand(len(self.get_cells()))
             case _:
@@ -422,6 +428,21 @@ class ColorizeHandler(Handler):
         for cell, p in zip(self.get_cells(), ps):
             color = blue.lerp(red, p)
             cell.recolor(tuple(color))
+
+
+class GeneHandler(Handler):
+    def __init__(self, iterations=5):
+        self.iterations = iterations
+
+    @override
+    def run(self, scene, depsgraph):
+        for cell in self.get_cells():
+            rr = te.loada(cell.circuit_tellurium)
+            result = rr.simulate(0, 1, 5)
+
+            colnames = map(lambda name: name[1:-1], result.colnames[1:])
+            new_concs = dict(zip(colnames,result[-1][1:]))
+            cell.genes_conc.update(new_concs)
 
 
 # TODO: remove because not used
@@ -548,7 +569,7 @@ class DataFlag(Flag):
         TIMES: time elapsed since beginning of simulation.
         DIVISIONS: list of cells that have divided and their daughter cells.
         MOTION_PATH: list of the current position of each cell.
-        FORCE_PATH: list of the current positions of the associated 
+        FORCE_PATH: list of the current positions of the associated
             motion force of each cell.
         VOLUMES: list of the current volumes of each cell.
         PRESSURES: list of the current pressures of each cell.
@@ -576,8 +597,8 @@ class DataExporter(Handler):
     Attributes:
         path (str): Path to save .json file of calculated metrics. If empty, statistics
             are printed instead.
-        options: (DataFlag): Flags of which metrics to calculated and save/print. 
-            Flags can be combined by binary OR operation, 
+        options: (DataFlag): Flags of which metrics to calculated and save/print.
+            Flags can be combined by binary OR operation,
             i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.
     """
 
@@ -586,10 +607,12 @@ class DataExporter(Handler):
         self.options = options
 
     @override
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_diffsystems: Callable[[], list[DiffusionSystem]],
-              dt):
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt,
+    ):
         super(DataExporter, self).setup(get_cells, get_diffsystems, dt)
         self.time_start = datetime.now()
         out = {"seed": bpy.context.scene["seed"], "frames": []}
@@ -659,4 +682,3 @@ class DataExporter(Handler):
             return [self._convert_numpy_to_list(i) for i in obj]
         else:
             return obj
-        
