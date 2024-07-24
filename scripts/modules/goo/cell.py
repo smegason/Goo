@@ -10,6 +10,7 @@ from mathutils import Vector
 from goo.force import *
 from goo.utils import *
 
+from goo.circuits import GeneRegulatoryNetwork
 from goo.molecule import Molecule
 from goo.circuits import Circuit
 
@@ -49,8 +50,7 @@ class Cell(BlenderObject):
         self._motion_force: MotionForce = None
 
         # Initalize signaling molecule and gene information
-        self.grn = None
-        self["molecules"] = {}
+        self.grn: GeneRegulatoryNetwork = None
         self["genes"] = {}
 
     @property
@@ -498,21 +498,20 @@ class Cell(BlenderObject):
 
     # ===== GENES =====
     @property
-    def genes_conc(self):
+    def gene_concs(self):
         return self["genes"]
 
-    @genes_conc.setter
-    def genes_conc(self, gene_levels: defaultdict[float]):
-        self["genes"].update(gene_levels)
+    @gene_concs.setter
+    def gene_concs(self, gene_levels: defaultdict[float]):
+        self["genes"].update({str(k): v for k, v in gene_levels.items()})
+        self.grn.concs = gene_levels
 
-    @property
-    def circuit_tellurium(self):
-        prefix = f"model {self.name}"
-        suffix = "end"
-        gene_levels = "\n".join(
-            [f"{gene} = {level}" for gene, level in self["genes"].items()]
-        )
-        return "\n".join([prefix, str(self.grn), gene_levels, suffix])
+    def update_grn(self):
+        com = self.COM()
+        radius = self.radius()
+
+        self.grn.update_concs(com, radius)
+        self.gene_concs = self.grn.concs
 
 
 def create_cell(

@@ -10,15 +10,24 @@ goo.reset_scene()
 
 # Defining cells
 x = Gene("x")
+y = Gene("y")
+z = Gene("z")
 
 
 celltype = goo.SimpleType("cellA", physics_enabled=False)
 
 cell1 = celltype.create_cell(name="cell", loc=(0, -1.5, 0), color=(0, 0, 0))
 network1 = GeneRegulatoryNetwork()
-network1.load_circuits(DegFirstOrder(x, 0.08))
+network1.load_circuits(
+    DegFirstOrder(x, 0.1),
+    DegFirstOrder(y, 0.1),
+    DegFirstOrder(z, 0.1),
+    ProdRepression(y, x, kcat=0.4, n=3),
+    ProdRepression(z, y, kcat=0.4, n=3),
+    ProdRepression(x, z, kcat=0.4, n=3),
+)
 cell1.grn = network1
-cell1.gene_concs = {x: 2}
+cell1.gene_concs = {x: 2, y: 0.1, z: 0.1}
 
 cell2 = celltype.create_cell(name="cell", loc=(0, 1.5, 0), color=(0, 0, 0))
 network2 = GeneRegulatoryNetwork()

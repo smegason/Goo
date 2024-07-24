@@ -1,5 +1,5 @@
 from typing import Callable, Any, List
-from typing_extensions import override
+from typing_extensions import override, Optional
 
 from enum import Enum, Flag, auto
 from datetime import datetime
@@ -8,7 +8,6 @@ import json
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.spatial import KDTree
-import tellurium as te
 
 import bpy
 import bmesh
@@ -165,42 +164,25 @@ class MolecularSensingHandler(Handler):
     """Handler for simulating cells sensing molecular concentrations at their surfaces.
 
     Args:
-        diffusionSystem: The reaction-diffusion system to simulate.
+        diffusion_system: The reaction-diffusion system to simulate.
 
     """
 
-    def __init__(self, diffusionSystem: DiffusionSystem) -> None:
-        self.diffusionSystem = diffusionSystem
+    def __init__(self, diffusion_system: DiffusionSystem) -> None:
+        self.diffusion_system = diffusion_system
 
     @override
     def run(self, scene, depsgraph):
+        self.diffusion_system.run()
 
+
+class NetworkHandler(Handler):
+    """Handler for gene regulatory networks."""
+
+    @override
+    def run(self, scene, despgraph):
         for cell in self.get_cells():
-            major_axis = cell.major_axis()
-            length_major = (major_axis._start - major_axis._end).length
-            minor_axis = cell.minor_axis()
-            length_minor = (minor_axis._start - minor_axis._end).length
-            radius = (length_major + length_minor) / 2
-            com = cell.COM()
-
-            cell_distances, indices = self.kd_tree.query(
-                com, k=500, distance_upper_bound=1.5 * radius, p=2
-            )
-            print(cell_distances, indices)
-            print("radius", radius)
-
-            for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
-                for idx, (cell_distance, index) in enumerate(
-                    zip(cell_distances, indices)
-                ):
-                    # conservative estimate using the minor axis
-                    if np.isinf(cell_distance):
-                        continue
-                    elif cell_distance >= radius:
-                        total_conc += self.diffusionSystem.get_concentration(
-                            mol_idx, index
-                        )
-                        print(f"Total conc of cell for {molecule._name}", total_conc)
+            cell.update_grn()
 
 
 class AdhesionLocationHandler(Handler):
@@ -399,50 +381,52 @@ class ColorizeHandler(Handler):
         gene (str): optional, the gene off of which cell color is based.
     """
 
-    def __init__(self, colorizer: Colorizer = Colorizer.PRESSURE, gene=None):
+    def __init__(
+        self,
+        colorizer: Colorizer = Colorizer.PRESSURE,
+        gene=None,
+        range: Optional[tuple] = None,
+    ):
         self.colorizer = colorizer
-        self.gene = gene
+        self.gene = str(gene)
+        self.range = range
+
+    def _scale(self, values):
+        if self.range is None:
+            # Scaled based on min and max
+            return (values - np.min(values)) / max(np.max(values) - np.min(values), 1)
+        if self.range is not None:
+            # Truncate numbers into specific range, then scale based on max of range.
+            min, max = self.range
+            values = np.minimum(values, max)
+            values = np.maximum(values, min)
+            return (values - min) / (max - min)
 
     @override
     def run(self, scene, depsgraph):
-        red = Vector((1.0, 0.0, 0.0))
-        blue = Vector((0.0, 0.0, 1.0))
-
         match self.colorizer:
             case Colorizer.PRESSURE:
                 ps = np.array([cell.pressure for cell in self.get_cells()])
-                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+                values = self._scale(ps)
             case Colorizer.VOLUME:
-                ps = np.array([cell.volume() for cell in self.get_cells()])
-                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+                vs = np.array([cell.volume() for cell in self.get_cells()])
+                values = self._scale(vs)
             case Colorizer.GENE:
-                ps = np.array([cell.genes_conc[self.gene] for cell in self.get_cells()])
-                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+                gs = np.array([cell.gene_concs[self.gene] for cell in self.get_cells()])
+                values = self._scale(gs)
             case Colorizer.RANDOM:
-                ps = np.random.rand(len(self.get_cells()))
+                values = np.random.rand(len(self.get_cells()))
             case _:
                 raise ValueError(
-                    "Colorizer must be one of PRESSURE, VOLUME, or RANDOM."
+                    "Colorizer must be one of PRESSURE, VOLUME, GENE, or RANDOM."
                 )
 
-        for cell, p in zip(self.get_cells(), ps):
+        red = Vector((1.0, 0.0, 0.0))
+        blue = Vector((0.0, 0.0, 1.0))
+
+        for cell, p in zip(self.get_cells(), values):
             color = blue.lerp(red, p)
             cell.recolor(tuple(color))
-
-
-class GeneHandler(Handler):
-    def __init__(self, iterations=5):
-        self.iterations = iterations
-
-    @override
-    def run(self, scene, depsgraph):
-        for cell in self.get_cells():
-            rr = te.loada(cell.circuit_tellurium)
-            result = rr.simulate(0, 1, 5)
-
-            colnames = map(lambda name: name[1:-1], result.colnames[1:])
-            new_concs = dict(zip(colnames,result[-1][1:]))
-            cell.genes_conc.update(new_concs)
 
 
 # TODO: remove because not used
