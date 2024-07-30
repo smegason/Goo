@@ -100,7 +100,7 @@ class Cell(BlenderObject):
             mat_copy = None
 
         cell_copy = Cell(obj_copy, mat_copy)
-        cell_copy._physics_enabled = self.physics_enabled
+        cell_copy._physics_enabled = self.is_physics_enabled
         cell_copy._update_cloth()
 
         return cell_copy
@@ -293,7 +293,7 @@ class Cell(BlenderObject):
             self.cloth_mod.settings.effector_weights.collection = self._effectors
 
     @property
-    def physics_enabled(self) -> bool:
+    def is_physics_enabled(self) -> bool:
         """Whether physics is enabled for this cell."""
         return self._physics_enabled
 
@@ -458,7 +458,7 @@ class Cell(BlenderObject):
             A tuple of two daughter cells, resulting from the division of the
             mother cell.
         """
-        if self.physics_enabled:
+        if self.is_physics_enabled:
             raise RuntimeError(
                 f"Cell {self.name} should not have physics enabled while dividing!"
             )
@@ -487,31 +487,24 @@ class Cell(BlenderObject):
         motion_loc = self.loc + dir.normalized() * (2 + self.major_axis().length())
         self._motion_force.set_loc(motion_loc, self.loc)
 
-    # ===== SIGNALING MOLECULES =====
-    @property
-    def molecules_conc(self):
-        return self["molecules"]
-
-    @molecules_conc.setter
-    def molecules_conc(self, conc: defaultdict[float]):
-        self["molecules"].update(conc)
-
     # ===== GENES =====
     @property
-    def gene_concs(self):
-        return self["genes"]
+    def metabolite_concs(self):
+        return self.grn.concs
 
-    @gene_concs.setter
-    def gene_concs(self, gene_levels: defaultdict[float]):
-        self["genes"].update({str(k): v for k, v in gene_levels.items()})
+    @metabolite_concs.setter
+    def metabolite_concs(self, gene_levels: defaultdict[float]):
         self.grn.concs = gene_levels
+        # for viewing in Blender
+        self["genes"].update({str(k): v for k, v in gene_levels.items()})
 
-    def update_grn(self):
+    def step_grn(self):
+        """Calculate and update the metabolite concentrations of the gene regulatory network after 1 time step."""
         com = self.COM()
         radius = self.radius()
 
         self.grn.update_concs(com, radius)
-        self.gene_concs = self.grn.concs
+        self.metabolite_concs = self.grn.concs
 
 
 def create_cell(

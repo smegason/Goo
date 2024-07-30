@@ -212,10 +212,12 @@ class DivisionHandler(Handler):
         self.sigma = sigma
 
     @override
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_diffsystems: Callable[[], list[DiffusionSystem]], 
-              dt: float):
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt: float,
+    ):
         super(DivisionHandler, self).setup(get_cells, get_diffsystems, dt)
         for cell in self.get_cells():
             cell["divided"] = False
@@ -259,7 +261,7 @@ class DivisionHandler(Handler):
                 self.update_on_divide(mother)
                 self.update_on_divide(daughter)
 
-                if mother.physics_enabled:
+                if mother.is_physics_enabled:
                     self._cells_to_update.extend([mother, daughter])
 
         for cell in self._cells_to_update:

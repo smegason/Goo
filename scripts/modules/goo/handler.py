@@ -1,4 +1,4 @@
-from typing import Callable, Any, List
+from typing import Callable, Union
 from typing_extensions import override, Optional
 
 from enum import Enum, Flag, auto
@@ -13,6 +13,7 @@ import bpy
 import bmesh
 from mathutils import Vector
 from goo.cell import Cell
+from goo.circuits import Gene
 from goo.molecule import Molecule, DiffusionSystem
 
 
@@ -72,7 +73,7 @@ class RemeshHandler(Handler):
         if scene.frame_current % self.freq != 0:
             return
         for cell in self.get_cells():
-            if not cell.physics_enabled:
+            if not cell.is_physics_enabled:
                 continue
 
             # Update mesh and disable physics
@@ -182,7 +183,7 @@ class NetworkHandler(Handler):
     @override
     def run(self, scene, despgraph):
         for cell in self.get_cells():
-            cell.update_grn()
+            cell.step_grn()
 
 
 class AdhesionLocationHandler(Handler):
@@ -279,7 +280,7 @@ class GrowthPIDHandler(Handler):
                 # if divided, reset certain values
                 cell["previous_pressure"] = self.initial_pressure
                 cell["next_volume"] = cell.volume()
-            if not cell.physics_enabled:
+            if not cell.is_physics_enabled:
                 continue
 
             cell["volume"] = cell.volume()
@@ -343,7 +344,7 @@ class RandomMotionHandler(Handler):
     @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
-            if not cell.physics_enabled:
+            if not cell.is_physics_enabled:
                 continue
             if not cell.motion_force.enabled:
                 cell.motion_force.enable()
@@ -384,7 +385,7 @@ class ColorizeHandler(Handler):
     def __init__(
         self,
         colorizer: Colorizer = Colorizer.PRESSURE,
-        gene=None,
+        gene: Union[Gene, str] = None,
         range: Optional[tuple] = None,
     ):
         self.colorizer = colorizer
@@ -412,7 +413,9 @@ class ColorizeHandler(Handler):
                 vs = np.array([cell.volume() for cell in self.get_cells()])
                 values = self._scale(vs)
             case Colorizer.GENE:
-                gs = np.array([cell.gene_concs[self.gene] for cell in self.get_cells()])
+                gs = np.array(
+                    [cell.metabolites[self.gene] for cell in self.get_cells()]
+                )
                 values = self._scale(gs)
             case Colorizer.RANDOM:
                 values = np.random.rand(len(self.get_cells()))
@@ -427,22 +430,6 @@ class ColorizeHandler(Handler):
         for cell, p in zip(self.get_cells(), values):
             color = blue.lerp(red, p)
             cell.recolor(tuple(color))
-
-
-# TODO: remove because not used
-'''class SceneExtensionHandler(Handler):
-    """Handler for extending the calculation of physics beyond the default 250
-    frames.
-    """
-
-    def __init__(self, end):
-        self.end = end
-
-    @override
-    def run(self, scene, depsgraph):
-        for cell in self.get_cells():
-            if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.end:
-                cell.cloth_mod.point_cache.frame_end = self.end'''
 
 
 def _get_divisions(cells: list[Cell]):
@@ -628,7 +615,7 @@ class DataExporter(Handler):
                 cell_out["motion_loc"] = tuple(cell.motion_force.loc)
             if self.options & DataFlag.VOLUMES:
                 cell_out["volume"] = cell.volume()
-            if self.options & DataFlag.PRESSURES and cell.physics_enabled:
+            if self.options & DataFlag.PRESSURES and cell.is_physics_enabled:
                 cell_out["pressure"] = cell.pressure
             if self.options & DataFlag.CELL_CONCENTRATIONS:
                 cell_out["concentrations"] = cell.molecules_conc

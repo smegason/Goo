@@ -1,4 +1,4 @@
-from goo.circuits import *
+from circuits import *
 from math import e
 import unittest
 

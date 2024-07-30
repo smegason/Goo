@@ -9,11 +9,7 @@ from mathutils import *
 
 class BlenderObject:
     def __init__(self, obj: bpy.types.Object):
-        self._obj = obj
-
-    @property
-    def obj(self):
-        return self._obj
+        self.obj = obj
 
     @property
     def name(self):
@@ -202,9 +198,9 @@ class PhysicsConstructor:
     def __init__(self, *mod_contructors: "ModConstructor"):
         self.mod_constructors = [*mod_contructors]
 
-    def __call__(self, obj: bpy.types.Object):
+    def __call__(self, bobj: BlenderObject):
         for mod_constructor in self.mod_constructors:
-            mod_constructor().construct(obj)
+            mod_constructor().construct(bobj.obj)
 
 
 class ModConstructor:

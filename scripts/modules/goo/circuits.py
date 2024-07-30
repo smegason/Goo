@@ -1,6 +1,8 @@
+from copy import deepcopy
+from dataclasses import dataclass
+
 import antimony
 import roadrunner
-from dataclasses import dataclass
 
 from .molecule import DiffusionSystem
 
@@ -68,12 +70,16 @@ class CircuitEngine:
     def __init__(self):
         pass
 
+    def copy(self):
+        """Return copy of engine."""
+        pass
+
     def load_circuits(self, *circuits: Circuit):
         """Load engine with model network."""
         pass
 
-    def step(self, metabolite_concs: dict):
-        """Take 1 frame step of circuit calculations to calculate new metabolite concentrations."""
+    def step(self, metabolite_concs: dict, dt: float):
+        """Take 1 frame step of time dt to calculate new metabolite concentrations."""
         pass
 
     def retrieve_concs(self):
@@ -85,6 +91,11 @@ class TelluriumEngine(CircuitEngine):
     def __init__(self):
         self.model = None
         self.result = None
+
+    def copy(self):
+        engine = TelluriumEngine()
+        engine.model = self.model
+        return engine
 
     def load_circuits(self, *circuits):
         model = []
@@ -110,7 +121,7 @@ class TelluriumEngine(CircuitEngine):
     def load_sbml(self, sbml):
         pass
 
-    def step(self, metabolite_concs, iter=5):
+    def step(self, metabolite_concs, iter=5, dt=1):
         if self.model is None:
             return
         model_full = self._get_model_full(metabolite_concs)
@@ -122,7 +133,7 @@ class TelluriumEngine(CircuitEngine):
         mid = antimony.getMainModuleName()
         rr = roadrunner.RoadRunner(antimony.getSBMLString(mid))
 
-        result = rr.simulate(0, 1, iter)
+        result = rr.simulate(0, dt, iter)
         self.result = result
 
     def _get_model_full(self, metabolite_concs):
@@ -145,21 +156,32 @@ class TelluriumEngine(CircuitEngine):
 
 
 class GeneRegulatoryNetwork:
-    def __init__(self):
-        self.metabolite_concs = {}
-        self.diffusion_system: DiffusionSystem = None
-        self.circuit_engine: CircuitEngine = TelluriumEngine()
+    def __init__(
+        self,
+        concs: dict = {},
+        diffusion_system: DiffusionSystem = None,
+        circuit_engine: CircuitEngine = TelluriumEngine(),
+    ):
+        self.concs = concs
+        self.diffusion_system = diffusion_system
+        self.circuit_engine = circuit_engine
 
     def copy(self):
-        pass
+        grn = GeneRegulatoryNetwork(
+            deepcopy(self.concs),
+            self.diffusion_system,
+            self.circuit_engine.copy(),
+        )
+        return grn
 
     @property
     def concs(self):
-        return self.metabolite_concs
+        return self._concs
 
     @concs.setter
     def concs(self, concs):
-        self.metabolite_concs = concs
+        concs = {str(k): v for k, v in concs.items()}
+        self._concs = concs
 
     def set_diffusion_system(self, system):
         self.diffusion_system = system
@@ -167,7 +189,7 @@ class GeneRegulatoryNetwork:
     def load_circuits(self, *circuits):
         self.circuit_engine.load_circuits(*circuits)
 
-    def update_concs(self, center=None, radius=None):
+    def update_concs(self, center=None, radius=None, dt=1):
         """Update network concentrations based on underlying diffusion systems, cell center and radius."""
         if self.diffusion_system is not None:
             if center is None or radius is None:
@@ -175,13 +197,13 @@ class GeneRegulatoryNetwork:
                     "If there is a diffusion system, center or radius must be supplied as arguments."
                 )
             self.update_signaling_concs(center, radius)
-        self.update_metabolite_concs()
+        self.update_metabolite_concs(dt=dt)
 
-    def update_metabolite_concs(self, iter=5):
-        self.circuit_engine.step(self.metabolite_concs, iter=iter)
+    def update_metabolite_concs(self, iter=5, dt=1):
+        self.circuit_engine.step(self._concs, iter=iter, dt=dt)
         new_concs = self.circuit_engine.retrieve_concs()
-        self.metabolite_concs.update(new_concs)
+        self._concs.update(new_concs)
 
     def update_signaling_concs(self, center, radius):
         signaling_concs = self.diffusion_system.get_all_concentrations(center, radius)
-        self.metabolite_concs.update(signaling_concs)
+        self._concs.update(signaling_concs)
