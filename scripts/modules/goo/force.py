@@ -107,7 +107,9 @@ class Force(BlenderObject):
     @impulse_clamp.setter
     def impulse_clamp(self, impulse_clamp: int):
         self.obj.modifiers["Cloth"].collision_settings.impulse_clamp = impulse_clamp
-        self.obj.modifiers["Cloth"].collision_settings.self_impulse_clamp = impulse_clamp
+        self.obj.modifiers["Cloth"].collision_settings.self_impulse_clamp = (
+            impulse_clamp
+        )
 
 
 class AdhesionForce(Force):
@@ -143,15 +145,15 @@ class MotionForce(Force):
     def strength(self, strength):
         self.obj.field.strength = -strength
 
-    def set_loc(self, new_loc: Vector, target_loc: Vector):
+    # TODO: split into just change location and set rotation. "point_towards"
+    def point_towards(self, loc: Vector):
         """Set location of a motion force, towards which a cell will move.
 
         Args:
             new_loc: Location of the motion force.
             target_loc: Location of the cell upon which the motion acts.
         """
-        dir = target_loc - new_loc
-        self.loc = new_loc
+        dir = loc - self.loc
         self.obj.rotation_euler = dir.to_track_quat("Z", "X").to_euler()
 
 
@@ -164,7 +166,7 @@ def create_force(
     falloff: float = 0,
     min_dist: float = None,
     max_dist: float = None,
-    shape: str = "POINTS",  # POINTS
+    shape: str = "POINT",
 ) -> Force:
     """Creates a new force field.
 
@@ -176,7 +178,7 @@ def create_force(
         falloff: The falloff power of the force field.
         min_dist: The minimum distance for the force field.
         max_dist: The maximum distance for the force field.
-        shape: The shape of the force field. Defaults to "SURFACE".
+        shape: The shape of the force field. Defaults to "POINT".
 
     Returns:
         Force: The created force field object.
@@ -191,7 +193,7 @@ def create_force(
     force.max_dist = max_dist
     force.shape = shape
 
-    ForceCollection.global_forces().add_force(force)
+    ForceCollection.global_forces().add(force)
     return force
 
 
@@ -199,8 +201,8 @@ def create_adhesion(
     strength: int,
     obj: Optional[bpy.types.Object] = None,
     name: str = None,
-    loc: tuple = (0, 0, 0),
-    shape: str = "SURFACE",
+    loc: tuple = None,
+    shape: str = "POINT",
 ) -> AdhesionForce:
     """Creates a new adhesion force.
 
@@ -211,13 +213,17 @@ def create_adhesion(
 
     Args:
         strength: Strength of the adhesion force.
-        obj: Cell to use as origin of the adhesion force. 
+        obj: Cell to use as origin of the adhesion force.
             If None, a new object is created.
         name: Name of the adhesion force.
         loc: Initial location of the adhesion force.
         shape: Shape of the adhesion force.
     """
     if obj is None:
+        if name is None or loc is None:
+            raise ValueError(
+                "If obj is not provided, then both name and loc parameters must be provided."
+            )
         obj = bpy.data.objects.new(name, None)
         obj.location = loc
     adhesion_force = AdhesionForce(obj)
@@ -255,33 +261,50 @@ class ForceCollection:
     _global_forces = None
 
     def __init__(self, name: str):
-        self._col = bpy.data.collections.new(name)
-        self._forces = []
+        self.col = bpy.data.collections.new(name)
+        self.children = []
 
     @property
     def name(self) -> str:
         """Name of the collection of forces."""
-        return self._col.name
+        return self.col.name
 
-    @property
-    def collection(self) -> bpy.types.Collection:
-        """The underlying Blender collection."""
-        return self._col
+    def add(self, force: Union[Force, "ForceCollection"]):
+        """Add a Force or Force Collection to the collection."""
+        self.children.append(force)
+        if isinstance(force, Force):
+            self.col.objects.link(force.obj)
+        elif isinstance(force, ForceCollection):
+            self.col.children.link(force.col)
 
-    def add_force(self, force: Force):
-        """Add a Force to the collection."""
-        self._col.objects.link(force.obj)
-        self._forces.append(force)
-
-    def remove_force(self, force: Force):
-        """Remove a Force from the collection."""
-        self._col.objects.unlink(force.obj)
-        self._forces.remove(force)
+    def remove(self, force: Union[Force, "ForceCollection"]):
+        """Remove a Force or Force Collection from the collection."""
+        self.children.remove(force)
+        if isinstance(force, Force):
+            self.col.objects.unlink(force.obj)
+        elif isinstance(force, ForceCollection):
+            self.col.children.unlink(force.col)
 
     @property
     def forces(self):
-        """List of forces in this collection."""
-        return self._forces
+        """List of all forces contained in this collection and subcollections."""
+        forces = []
+        for child in self.children:
+            if isinstance(child, Force):
+                forces.append(child)
+            elif isinstance(child, ForceCollection):
+                forces.extend(child.forces)
+        return forces
+
+    def show(self):
+        """Add the Force Collection to the scene, making it visible in Blender."""
+        if self.col.name not in bpy.context.scene.collection.children:
+            bpy.context.scene.collection.children.link(self.col)
+
+    def hide(self):
+        """Remove the Force Collection from the scene, making it invisible in Blender."""
+        if self.col.name in bpy.context.scene.collection.children:
+            bpy.context.scene.collection.children.unlink(self.col)
 
     @staticmethod
     def global_forces() -> "ForceCollection":
@@ -292,9 +315,7 @@ class ForceCollection:
         """
         if ForceCollection._global_forces is None:
             ForceCollection._global_forces = ForceCollection("globals")
-            bpy.context.scene.collection.children.link(
-                ForceCollection._global_forces.collection
-            )
+            ForceCollection._global_forces.link_to_scene()
         return ForceCollection._global_forces
 
 

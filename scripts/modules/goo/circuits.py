@@ -178,6 +178,7 @@ class GeneRegulatoryNetwork:
     def concs(self):
         return self._concs
 
+    # TODO: integrate molecule with Gene, get rid of str() func
     @concs.setter
     def concs(self, concs):
         concs = {str(k): v for k, v in concs.items()}
@@ -206,4 +207,5 @@ class GeneRegulatoryNetwork:
 
     def update_signaling_concs(self, center, radius):
         signaling_concs = self.diffusion_system.get_all_concentrations(center, radius)
+        signaling_concs = {str(k): v for k, v in signaling_concs.items()}
         self._concs.update(signaling_concs)

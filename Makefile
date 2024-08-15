@@ -2,6 +2,7 @@
 
 # Change the following options:
 VENV_DIR = .blender_venv
+BLENDER_PATH = /Applications/Blender.app/Contents/MacOS/Blender
 BPY_PATH = /Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10
 HOOK_DIR = hook
 
@@ -9,7 +10,9 @@ VENV_PACKAGES = $(VENV_DIR)/lib/python3.10/site-packages
 VENV_PYTHON = $(VENV_DIR)/bin/python
 HOOK_PACKAGES = $(HOOK_DIR)/scripts/modules
 
-.PHONY: setup create_venv install_requirements
+TEST_DIR = unit_tests
+
+.PHONY: setup update_modules clean create_venv install_requirements create_hook test testone
 
 # --- Use these targets ---
 setup: create_venv install_requirements create_hook
@@ -25,6 +28,9 @@ update_modules:
 clean:
 	rm -rf $(VENV_DIR)
 	rm -rf $(HOOK_DIR)
+
+test:
+	$(BLENDER_PATH) --background --python $f
 
 # --- Don't use these targets ---
 create_venv:

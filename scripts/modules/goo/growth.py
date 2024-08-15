@@ -1,7 +1,7 @@
 from enum import Enum
 
 """Possible types of growth."""
-Growth = Enum("Growth", ["LINEAR", "EXPONENTIAL", "LOGISTIC"])
+GrowthType = Enum("Growth", ["LINEAR", "EXPONENTIAL", "LOGISTIC"])
 
 
 class GrowthController:
@@ -24,7 +24,7 @@ class PIDController(GrowthController):
     def __init__(
         self,
         current_volume,
-        growth_type=Growth.LINEAR,
+        growth_type=GrowthType.LINEAR,
         growth_rate=1,
         initial_pressure=0.01,
         target_volume=30,
@@ -48,11 +48,11 @@ class PIDController(GrowthController):
 
     def step_growth(self, current_volume, dt):
         match self.growth_type:
-            case Growth.LINEAR:
+            case GrowthType.LINEAR:
                 self.next_volume += self.growth_rate * dt
-            case Growth.EXPONENTIAL:
+            case GrowthType.EXPONENTIAL:
                 self.next_volume *= 1 + self.growth_rate * dt
-            case Growth.LOGISTIC:
+            case GrowthType.LOGISTIC:
                 self.next_volume = self.next_volume * (
                     1
                     + self.growth_rate

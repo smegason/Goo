@@ -6,7 +6,7 @@ from enum import Enum, Flag, auto
 from typing import Union, List, Optional
 
 from goo.handler import Handler
-from goo.cell_refactor import Cell
+from goo.cell import Cell, CellType
 from goo.molecule import DiffusionSystem
 
 Render = Enum("Render", ["PNG", "TIFF", "MP4"])
@@ -25,21 +25,27 @@ class Simulator:
     def __init__(
         self,
         cells: List[Cell] = [],
-        diffsystems: List[DiffusionSystem] = [],
+        diffsystem: DiffusionSystem = None,
         time: int = 250,
         physics_dt: int = 1,
     ):
-        self.cells = cells
-        self.diffsystems = diffsystems
+        self.diffsystem = diffsystem
         self.physics_dt = physics_dt
         self.addons = ["add_mesh_extra_objects"]
         self.render_format: Render = Render.PNG
         self.time = time
 
         # Set up simulation parameters for diffusion system
-        for diff_sys in diffsystems:
-            diff_sys._time_step = physics_dt / 10
-            diff_sys._total_time = physics_dt
+        diffsystem._time_step = physics_dt / 10
+        diffsystem._total_time = physics_dt
+
+        self.cells = []
+        for cell in cells:
+            if isinstance(cell, Cell):
+                self.cells.append(cell)
+            elif isinstance(cell, CellType):
+                raise NotImplementedError("Implement!")
+                # self.cells.extend(cell.cells)
 
     def setup_world(self, seed=1):
         # Enable addons
@@ -117,13 +123,13 @@ class Simulator:
 
         return get_cells
 
-    def get_diffsystems_func(self, diffsystems=None):
-        diffsystems = diffsystems if diffsystems is not None else self.diffsystems
+    def get_diffsystem_func(self, diffsystem=None):
+        diffsystem = diffsystem if diffsystem is not None else self.diffsystem
 
-        def get_diffsystems():
-            return diffsystems
+        def get_diffsystem():
+            return diffsystem
 
-        return get_diffsystems
+        return get_diffsystem
 
     def get_cells(self, cells=None):
         return self.cells if cells is None else cells
@@ -138,19 +144,19 @@ class Simulator:
         self,
         handler: Handler,
         cells: list[Cell] = None,
-        diffsystems: list[DiffusionSystem] = None,
+        diffsystem: DiffusionSystem = None,
     ):
         handler.setup(
             self.get_cells_func(cells),
-            self.get_diffsystems_func(diffsystems),
+            self.get_diffsystem_func(diffsystem),
             self.physics_dt,
         )
         bpy.app.handlers.frame_change_post.append(handler.run)
 
-    def add_handlers(self, handlers: list[Handler], cells: list[Cell] = None):
+    def add_handlers(self, handlers: list[Handler]):
         # handlers.append(SceneExtensionHandler(bpy.context.scene.frame_end))
         for handler in handlers:
-            self.add_handler(handler, cells)
+            self.add_handler(handler)
 
     def render(
         self,
@@ -173,7 +179,15 @@ class Simulator:
             camera (bool): Render with the camera.
             format (Render): Render format: PNG (default), TIFF, MP4.
         """
-        match self.render_format:
+        if not path:
+            path = os.path.dirname(bpy.context.scene.render.filepath)
+        else:
+            print("Save path not provided. Falling back on default path.")
+
+        print("----- RENDERING... -----")
+
+        render_format = format if format else self.render_format
+        match render_format:
             case Render.PNG:
                 bpy.context.scene.render.image_settings.file_format = "PNG"
             case Render.TIFF:
@@ -182,12 +196,6 @@ class Simulator:
                 bpy.context.scene.render.image_settings.file_format = "FFMPEG"
                 bpy.context.scene.render.ffmpeg.format = "MPEG4"
 
-        if not path:
-            path = os.path.dirname(bpy.context.scene.render.filepath)
-        else:
-            print("Save path not provided. Falling back on default path.")
-
-        print("----- RENDERING... -----")
         match frames:
             case None:
                 start = 1
@@ -199,6 +207,7 @@ class Simulator:
                 frame_list = frames
 
         for i in range(1, max(frame_list) + 1):
+            print(i, end=" ")
             bpy.context.scene.frame_set(i)
             bpy.context.scene.render.filepath = os.path.join(path, f"{i:04d}")
             if i in frame_list:
@@ -208,6 +217,27 @@ class Simulator:
                     bpy.ops.render.opengl(write_still=True)
 
         bpy.context.scene.render.filepath = path
+        print("\n----- RENDERING COMPLETED! -----")
+
+    def render_animation(self, path=None, end=250, camera=False):
+        if not path:
+            print("Save path not provided. Falling back on default path.")
+            path = os.path.dirname(bpy.context.scene.render.filepath)
+        bpy.context.scene.render.filepath = os.path.join(path, "")
+
+        bpy.context.scene.render.image_settings.file_format = "FFMPEG"
+        bpy.context.scene.render.ffmpeg.format = "MPEG4"
+
+        print("----- RENDERING... -----")
+        print("Rendering to", bpy.context.scene.render.filepath)
+
+        bpy.context.scene.frame_start = 1
+        bpy.context.scene.frame_set(1)
+        bpy.context.scene.frame_end = end
+        if camera:
+            bpy.ops.render.render(animation=True, write_still=True)
+        else:
+            bpy.ops.render.opengl(animation=True, write_still=True)
         print("\n----- RENDERING COMPLETED! -----")
 
     def run(self, end=250):

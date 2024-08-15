@@ -23,52 +23,13 @@ class Molecule:
     def __init__(
         self, name: str, conc: float, D: float, gradient: Optional[str] = None
     ):
-        self._name = name
-        self._D = D
-        self._conc = conc
-        self._gradient = gradient
-
-    def __repr__(self):
-        str = f"Molecule(concentration={self.conc}" f"diffusion_rate={self.D})"
-        return str
-
-    @property
-    def name(self) -> str:
-        """Name of the cell. Also defines the name of related forces and
-        collections of effectors.
-        """
-        return self.name
-
-    @name.setter
-    def name(self, name: str):
         self.name = name
-
-    @property
-    def conc(self) -> float:
-        """The concentration of the molecule."""
-        return self.conc
-
-    @conc.setter
-    def conc(self, conc: float):
-        self.conc = conc
-
-    @property
-    def D(self) -> float:
-        """The diffusion rate of the molecule."""
-        return self.D
-
-    @D.setter
-    def D(self, D: float):
         self.D = D
-
-    @property
-    def gradient(self) -> str:
-        """The gradient of the molecule."""
-        return self.gradient
-
-    @gradient.setter
-    def gradient(self, gradient: str):
+        self.conc = conc
         self.gradient = gradient
+
+    def __str__(self):
+        return self.name
 
 
 class DiffusionSystem:
@@ -149,23 +110,23 @@ class DiffusionSystem:
         self._grid_concentrations = np.zeros((len(self._molecules), *self._grid_size))
 
         for idx, mol in enumerate(self._molecules):
-            match mol._gradient:
+            match mol.gradient:
                 case None:
                     continue
                 case "random":
                     variation = 0.1  # 10% variation
                     noise = np.random.normal(
-                        0, variation * mol._conc, size=self._grid_size
+                        0, variation * mol.conc, size=self._grid_size
                     )
-                    rand_conc = mol._conc + noise
+                    rand_conc = mol.conc + noise
                     # conc is always positive
                     rand_conc = np.clip(rand_conc, 0, None)
                     self._grid_concentrations[idx] = rand_conc
                 case "center":
                     center_index = self._get_nearest_grid_index(self._grid_center)
-                    self._grid_concentrations[idx][center_index] += mol._conc
+                    self._grid_concentrations[idx][center_index] += mol.conc
                 case "linear":
-                    x_grad = np.linspace(0, mol._conc, self._grid_size[0]).reshape(
+                    x_grad = np.linspace(0, mol.conc, self._grid_size[0]).reshape(
                         -1, 1, 1
                     )
 
@@ -215,13 +176,13 @@ class DiffusionSystem:
 
     def get_all_concentrations(self, center, radius):
         """Get concentrations of all molecules in a sphere with given center and radius."""
-        distances = self._kd_tree.query(
+        distances, indices = self._kd_tree.query(
             center, k=500, distance_upper_bound=1.5 * radius, p=2
         )
         signaling_concs = {}
         for mol_idx, molecule in enumerate(self._molecules):
             signaling_concs[molecule] = 0
-            for cell_distance, index in distances:
+            for cell_distance, index in zip(distances, indices):
                 if np.isinf(cell_distance):
                     continue
                 elif cell_distance >= radius:
@@ -231,47 +192,47 @@ class DiffusionSystem:
     @property
     def molecules(self) -> list[Molecule]:
         """The list of molecules in the system."""
-        return self.molecules
+        return self._molecules
 
     @molecules.setter
     def molecules(self, molecules: list[Molecule]):
-        self.molecules = molecules
+        self._molecules = molecules
 
     @property
     def gradient(self) -> list[(Molecule, str)]:
         """The gradient of the molecules in the system."""
-        return self.gradient
+        return self._gradient
 
     @gradient.setter
     def gradient(self, gradient: list[(Molecule, str)]):
-        self.gradient = gradient
+        self._gradient = gradient
 
     @property
     def grid_size(self) -> tuple:
         """The size of the 3D grid."""
-        return self.grid_size
+        return self._grid_size
 
     @grid_size.setter
     def grid_size(self, grid_size: tuple):
-        self.grid_size = grid_size
+        self._grid_size = grid_size
 
     @property
     def time_step(self) -> float:
         """The time step of the simulation."""
-        return self.time_step
+        return self._time_step
 
     @time_step.setter
     def time_step(self, time_step: float):
-        self.time_step = time_step
+        self._time_step = time_step
 
     @property
     def total_time(self) -> int:
         """The total time of the simulation."""
-        return self.total_time
+        return self._total_time
 
     @total_time.setter
     def total_time(self, total_time: int):
-        self.total_time = total_time
+        self._total_time = total_time
 
     def diffuse(self, t, y):
         concentrations = []
@@ -284,10 +245,9 @@ class DiffusionSystem:
         return np.concatenate(concentrations)
 
     def run(self):
+        return
         # Initialize the combined state for all molecules
-        y0 = np.concatenate(
-            [molecule.concentration.flatten() for molecule in self.molecules]
-        )
+        y0 = np.concatenate([molecule.conc for molecule in self.molecules])
         t_span = (0, self.total_time)
         t_eval = np.arange(0, self.total_time, self.time_step)
 

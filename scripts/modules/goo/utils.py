@@ -246,7 +246,7 @@ class ClothConstructor(ModConstructor):
         mod.settings.use_pressure_volume = True
         mod.settings.target_volume = 1
         mod.settings.pressure_factor = 2
-        mod.settings.fluid_density = 1.05
+        # mod.settings.fluid_density = 1.05
         # Cloth > Collisions
         mod.collision_settings.collision_quality = 4
         mod.collision_settings.use_collision = True

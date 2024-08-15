@@ -21,7 +21,7 @@ class Handler:
     def setup(
         self,
         get_cells: Callable[[], list[Cell]],
-        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        get_diffsystem: Callable[[], DiffusionSystem],
         dt: float,
     ):
         """Set up the handler.
@@ -32,7 +32,7 @@ class Handler:
             dt: The time step for the simulation.
         """
         self.get_cells = get_cells
-        self.get_diff_systems = get_diffsystems
+        self.get_diffsystem = get_diffsystem
         self.dt = dt
 
     def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
@@ -109,76 +109,35 @@ class DiffusionHandler(Handler):
         diffusionSystem: The reaction-diffusion system to simulate.
     """
 
-    def __init__(self, diffusionSystem: DiffusionSystem) -> None:
-        self.diffusionSystem = diffusionSystem
-        self.kd_tree = None
-
-    def build_kd_tree(self):
+    @override
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt,
+    ):
         """Build the KD-Tree from the grid coordinates if not already built."""
-        self.kd_tree = self.diffusionSystem._build_kdtree()
-
-    def update_cell_concentration(
-        self, cell: Cell, cell_distances: np.ndarray, indices: np.ndarray, radius: float
-    ) -> None:
-        """Update the concentration of molecules in the cell."""
-        for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
-            total_conc = 0
-            valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
-            for cell_distance, index in zip(
-                cell_distances[valid_indices], indices[valid_indices]
-            ):
-                k = 0.1
-                add_conc = k * (cell_distance / radius)
-                self.diffusionSystem.update_concentration(mol_idx, index, add_conc)
-                # total_conc = self.diffusionSystem.get_concentration(mol_idx, index)
-
-            cell.molecules_conc.update({molecule._name: total_conc})
-            print(cell.molecules_conc)
-            print(f"Total conc of cell {cell.name} for {molecule._name}: {total_conc}")
+        super(DiffusionHandler, self).setup(get_cells, get_diffsystems, dt)
+        self.get_diffsystem()._build_kdtree()
 
     @override
     def run(self, scene, depsgraph) -> None:
-        if self.kd_tree is None:
-            self.build_kd_tree()
-
-        print("Current frame", scene.frame_current)
-        cells = self.get_cells()
-
-        for cell in cells:
-            radius = cell.radius()
-            com = cell.COM()
-            cell_distances, indices = self.kd_tree.query(
-                com, k=500, distance_upper_bound=1.5 * radius, p=2
-            )
-
-            if len(cell_distances) > 0 and not np.all(np.isinf(cell_distances)):
-                self.update_cell_concentration(cell, cell_distances, indices, radius)
-            else:
-                # If no valid distances, set concentration to 0
-                for molecule in self.diffusionSystem._molecules:
-                    cell.molecules_conc.update({molecule._name: 0})
-                    print(cell.molecules_conc)
-                    print(f"Total conc of cell {cell.name} for {molecule._name}: 0")
-
-
-class MolecularSensingHandler(Handler):
-    """Handler for simulating cells sensing molecular concentrations at their surfaces.
-
-    Args:
-        diffusion_system: The reaction-diffusion system to simulate.
-
-    """
-
-    def __init__(self, diffusion_system: DiffusionSystem) -> None:
-        self.diffusion_system = diffusion_system
-
-    @override
-    def run(self, scene, depsgraph):
-        self.diffusion_system.run()
+        self.get_diffsystem().run()
 
 
 class NetworkHandler(Handler):
     """Handler for gene regulatory networks."""
+
+    @override
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt,
+    ):
+        super(NetworkHandler, self).setup(get_cells, get_diffsystems, dt)
+        for cell in self.get_cells():
+            cell.grn.set_diffusion_system(self.get_diffsystem())
 
     @override
     def run(self, scene, despgraph):
@@ -187,19 +146,24 @@ class NetworkHandler(Handler):
 
 
 class AdhesionLocationHandler(Handler):
-    """Handler for updating cell-associated adhesion locations every frame."""
+    """Handler for updating cell origin and location of
+    cell-associated adhesion locations every frame."""
 
     @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
-            cell_size = cell.major_axis().length() / 2
+            cell.recenter()
 
+            cell_size = cell.major_axis().length() / 2
             for force in cell.adhesion_forces:
                 if not force.enabled():
                     continue
                 force.loc = cell.COM()
                 force.min_dist = cell_size - 0.4
                 force.max_dist = cell_size + 0.4
+
+            if cell.motion_force:
+                cell.move()
 
 
 """Possible types of growth."""
@@ -362,7 +326,7 @@ class RandomMotionHandler(Handler):
                         "Motion noise distribution must be one of UNIFORM or GAUSSIAN."
                     )
             cell.motion_force.strength = strength
-            cell.move_towards(dir)
+            cell.move(dir)
 
 
 """Possible properties by which cells are colored."""
@@ -626,7 +590,7 @@ class DataExporter(Handler):
             frame_out["contact_ratios"] = ratios
 
         if self.options & DataFlag.GRID:
-            for diff_system in self.get_diff_systems():
+            for diff_system in self.get_diffsystem():
                 grid_conc = diff_system._grid_concentrations
                 mol = diff_system._molecules[0]
                 if mol._name not in frame_out:
