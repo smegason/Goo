@@ -23,7 +23,7 @@ sim = goo.Simulator(cells=[cell], diffsystem=diffsys)
 sim.setup_world()
 sim.add_handlers(
     [
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         DiffusionHandler(),
         NetworkHandler(),
         ColorizeHandler(Colorizer.GENE, mol, range=(1, 1.5)),

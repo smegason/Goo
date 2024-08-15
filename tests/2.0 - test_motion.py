@@ -17,7 +17,7 @@ sim = goo.Simulator([celltype])
 sim.setup_world()
 sim.add_handlers(
     [
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RemeshHandler(),
     ]
 )

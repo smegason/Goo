@@ -39,4 +39,4 @@ for i, loc in enumerate(locs_B):
 
 sim = goo.Simulator([celltypeA, celltypeB])
 sim.setup_world()
-sim.add_handler(AdhesionLocationHandler())
+sim.add_handler(RecenterHandler())

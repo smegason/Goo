@@ -1,6 +1,6 @@
 from importlib import reload
 import goo
-from goo import * 
+from goo import *
 
 reload(goo)
 reset_modules()
@@ -28,7 +28,7 @@ sim.setup_world()
 sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=25),
-        AdhesionLocationHandler(),
-        RandomMotionHandler(ForceDist.GAUSSIAN, max_strength=750)
+        RecenterHandler(),
+        RandomMotionHandler(ForceDist.GAUSSIAN, max_strength=750),
     ]
 )

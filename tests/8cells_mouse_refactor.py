@@ -31,7 +31,7 @@ sim.add_celltype(celltype)
 sim.add_handlers(
     [
         GrowthPIDHandler(),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RandomMotionHandler(),
         SceneExtensionHandler(end=500),
     ]

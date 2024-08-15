@@ -18,7 +18,7 @@ sim.setup_world()
 sim.add_handlers(
     [
         GrowthPIDHandler(),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RandomMotionHandler(ForceDist.CONSTANT, max_strength=8000),
         RemeshHandler(),
         DataExporter(

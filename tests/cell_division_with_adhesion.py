@@ -16,7 +16,7 @@ sim.setup_world()
 sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=30),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         TimeDivisionHandler(BisectDivisionLogic, mu=30),
         RemeshHandler(),
         DataExporter(

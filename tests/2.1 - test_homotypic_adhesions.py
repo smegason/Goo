@@ -27,4 +27,4 @@ for i, loc in enumerate(locs):
 
 sim = goo.Simulator([celltype])
 sim.setup_world()
-sim.add_handler(AdhesionLocationHandler())
+sim.add_handler(RecenterHandler())

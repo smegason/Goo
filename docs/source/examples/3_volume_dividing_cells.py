@@ -20,7 +20,7 @@ sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=70),
         SizeDivisionHandler(BisectDivisionLogic, mu=60, sigma=2),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RemeshHandler(),
     ]
 )

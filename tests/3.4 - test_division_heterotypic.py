@@ -24,7 +24,7 @@ sim.add_handlers(
     [
         # TimeDivisionHandler(BisectDivisionLogic, mu=50),
         GrowthPIDHandler(target_volume=5),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RemeshHandler(sphere_factor=0.25),
     ]
 )

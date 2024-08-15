@@ -16,11 +16,12 @@ cell.pressure = 5
 sim = goo.Simulator(celltypes=[celltype])
 sim.setup_world()
 sim.add_handlers(
-    
     [
         GrowthPIDHandler(target_volume=75),
-        SizeDivisionHandler(BisectDivisionLogic, mu=60, sigma=10),  # TimeDivisionHandler
-        AdhesionLocationHandler(),
+        SizeDivisionHandler(
+            BisectDivisionLogic, mu=60, sigma=10
+        ),  # TimeDivisionHandler
+        RecenterHandler(),
         RemeshHandler(),
         RandomMotionHandler(distribution=ForceDist.CONSTANT, max_strength=0),
     ]

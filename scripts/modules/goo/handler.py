@@ -145,7 +145,7 @@ class NetworkHandler(Handler):
             cell.step_grn()
 
 
-class AdhesionLocationHandler(Handler):
+class RecenterHandler(Handler):
     """Handler for updating cell origin and location of
     cell-associated adhesion locations every frame."""
 

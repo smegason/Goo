@@ -21,7 +21,7 @@ sim.add_handlers(
         SizeDivisionHandler(BisectDivisionLogic, threshold=29.5),
         GrowthPIDHandler(target_volume=30),
         RemeshHandler(),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         # ColorizeHandler(Colorizer.PRESSURE),
         # DataExporter(
         #     path="", options=DataFlag.TIMES | DataFlag.VOLUMES | DataFlag.PRESSURES

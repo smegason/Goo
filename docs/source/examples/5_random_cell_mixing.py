@@ -56,7 +56,7 @@ sim.toggle_gravity(True)
 sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=50),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RandomMotionHandler(distribution=ForceDist.CONSTANT, max_strength=2500),
     ]
 )
