@@ -7,7 +7,8 @@ import numpy as np
 from .utils import *
 from .force import *
 from .growth import *
-from .circuits import GeneRegulatoryNetwork as GRN, Circuit
+from .gene import GeneRegulatoryNetwork as GRN, Gene, Circuit
+from .molecule import DiffusionSystem, Molecule
 
 
 class Cell(BlenderObject):
@@ -341,15 +342,18 @@ class Cell(BlenderObject):
             new_pressure = self.growth_controller.step_growth(self.volume(), dt)
             self.pressure = new_pressure
 
-    def step_grn(self, dt=1):
+    def step_grn(self, diffsys: DiffusionSystem = None, dt=1):
         """Calculate and update the metabolite concentrations of the gene regulatory network after 1 time step."""
         com = self.COM()
         radius = self.radius()
 
-        self.grn.update_concs(center=com, radius=radius, dt=dt)
+        # Step through GRN
+        self.grn.update_concs(diffsys, com, radius, dt)
         self["genes"] = {str(k): v for k, v in self.metabolites.items()}
+
+        # Update physical attributes
         for hook in self.hooks:
-            hook()
+            hook(diffsys)
 
     # ===== Gene regulatory network items =====
     @property
@@ -361,33 +365,88 @@ class Cell(BlenderObject):
         self["genes"] = {str(k): v for k, v in metabolites.items()}
         self.grn.concs = metabolites
 
-    # TODO: how to make this generalizable? for CellType
-    def link_property_to_gene(self, property, gene, pscale=(0, 1), gscale=(0, 1)):
-        """Link property to gene, so that changes in the gene will
+    def link_gene_to_property(self, gene, property, gscale=(0, 1), pscale=(0, 1)):
+        """Link gene to property, so that changes in the gene will
         cause changes in the physical property.
         """
-        match property:
-            case "motion_force":
-
-                def func(x):
-                    self.motion_force.strength = x
-
-            case _:
-                raise NotImplementedError()
-
-        def hook():
-            x = self.metabolites[str(gene)]
-            pmin, pmax = pscale
-            gmin, gmax = gscale
-            if x <= gmin:
-                v = pmin
-            elif x >= gmax:
-                v = pmax
-            else:
-                v = (x - gmin) / (gmax - gmin) * (pmax - pmin) + pmin
-            func(v)
+        if property == "motion_direction":
+            hook = create_direction_updater(self, gene)
+        else:
+            hook = create_scalar_updater(self, gene, property, "linear", gscale, pscale)
 
         self.hooks.append(hook)
+
+
+class PropertyUpdater:
+    def __init__(self, getter, transformer, setter):
+        self.getter = getter
+        self.transformer = transformer
+        self.setter = setter
+
+    def __call__(self, diffsys: DiffusionSystem):
+        gene_value = self.getter(diffsys)
+        prop_value = self.transformer(gene_value)
+        self.setter(prop_value)
+
+
+def create_scalar_updater(
+    cell: Cell,
+    gene: Gene,
+    property,
+    relationship="linear",
+    gscale=(0, 1),
+    pscale=(0, 1),
+):
+    gmin, gmax = gscale
+    pmin, pmax = pscale
+
+    # Simple gene getter
+    def gene_getter(diffsys):
+        return cell.metabolites[gene]
+
+    # Different transformers
+    def linear_transformer(gene_value):
+        if gene_value <= gmin:
+            return pmin
+        if gene_value >= gmax:
+            return pmax
+        return (gene_value - gmin) / (gmax - gmin) * (pmax - pmin) + pmin
+
+    # Different property setters
+    def set_motion_force(prop_value):
+        cell.motion_force = prop_value
+
+    match relationship:
+        case "linear":
+            transformer = linear_transformer
+        case _:
+            raise NotImplementedError()
+
+    match property:
+        case "motion_force":
+            setter = set_motion_force
+        case _:
+            raise NotImplementedError()
+
+    return PropertyUpdater(gene_getter, transformer, setter)
+
+
+def create_direction_updater(
+    cell: Cell,
+    gene: Gene,
+):
+    def molecule_getter(diffsys: DiffusionSystem):
+        return diffsys.get_coords_concentrations(gene, cell.COM(), cell.radius())
+
+    def weighted_direction(molecule_values):
+        coords, concs = molecule_values
+        direction = np.average(coords, axis=0, weights=concs)
+        return direction - cell.loc
+
+    def set_direction(direction):
+        cell.move(direction)
+
+    return PropertyUpdater(molecule_getter, weighted_direction, set_direction)
 
 
 def store_settings(mod: bpy.types.bpy_struct) -> dict:
@@ -424,17 +483,6 @@ def declare_settings(mod: bpy.types.bpy_struct, settings: dict):
             setattr(mod, id, setting)
 
 
-class DiffusionSystem:
-    def __init__(self):
-        pass
-
-    def get_concentration(self, voxel):
-        pass
-
-    def get_total_concentration(self, center, radius):
-        pass
-
-
 class CellType:
     """A director class that takes a cell pattern as an instruction set to create
     new cells."""
@@ -444,12 +492,13 @@ class CellType:
     def __init__(
         self,
         name,
-        pattern="simple",
+        pattern="standard",
         homo_adhesion_strength=2000,
         hetero_adhesion_strengths={},
         motion_strength=0,
     ):
         self.name = name
+        self.cells = []
 
         if type(pattern) == str:
             match pattern:
@@ -525,6 +574,8 @@ class CellType:
             )
         cell = self.pattern.retrieve_cell()
         cell.celltype = self
+
+        self.cells.append(cell)
         return cell
 
     def set_hetero_adhesion_strength(self, other_celltype: "CellType", strength: float):

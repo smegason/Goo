@@ -1,18 +1,25 @@
-from copy import deepcopy
 from dataclasses import dataclass
+from typing_extensions import override
 
 import antimony
 import roadrunner
+from mathutils import Vector
 
 from .molecule import DiffusionSystem
 
 
 class Gene:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
     def __str__(self):
         return self.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
 
 class Circuit:
@@ -70,7 +77,7 @@ class CircuitEngine:
     def __init__(self):
         pass
 
-    def copy(self):
+    def copy(self) -> "CircuitEngine":
         """Return copy of engine."""
         pass
 
@@ -82,7 +89,7 @@ class CircuitEngine:
         """Take 1 frame step of time dt to calculate new metabolite concentrations."""
         pass
 
-    def retrieve_concs(self):
+    def retrieve_concs(self) -> dict[Gene, float]:
         """Get current metabolite concentrations."""
         pass
 
@@ -92,19 +99,22 @@ class TelluriumEngine(CircuitEngine):
         self.model = None
         self.result = None
 
+    @override
     def copy(self):
         engine = TelluriumEngine()
         engine.model = self.model
         return engine
 
-    def load_circuits(self, *circuits):
-        model = []
+    @override
+    def load_circuits(self, *circuits: Circuit):
+        encodings = []
         for circuit in circuits:
-            model.append(self._encode(circuit))
-        self.model = "\n".join(model)
+            encodings.append(self._encode(circuit))
+        self.model = "\n".join(encodings)
 
     @staticmethod
-    def _encode(circuit):
+    def _encode(circuit: Circuit) -> str:
+        """Encodes a single circuit into a string representation."""
         match circuit:
             case DegFirstOrder(x, k):
                 return f"{x} -> ; {k} * {x}"
@@ -118,10 +128,14 @@ class TelluriumEngine(CircuitEngine):
                 s = "" if s is None else s
                 return f"{s} -> {y}; {a0} + {kcat} / ({Km} + {x}^{n})"
 
+    @override
     def load_sbml(self, sbml):
         pass
 
-    def step(self, metabolite_concs, iter=5, dt=1):
+    @override
+    def step(
+        self, metabolite_concs: dict[Gene, float], iter: int = 5, dt: float = 1
+    ) -> None:
         if self.model is None:
             return
         model_full = self._get_model_full(metabolite_concs)
@@ -136,7 +150,9 @@ class TelluriumEngine(CircuitEngine):
         result = rr.simulate(0, dt, iter)
         self.result = result
 
-    def _get_model_full(self, metabolite_concs):
+    def _get_model_full(self, metabolite_concs: dict[Gene, float]) -> str:
+        """Encodes the entire model, including metabolites, into a string representation to be fed into the
+        Roadrunner solver."""
         prefix = "model cell"
         suffix = "end"
         gene_levels = "\n".join(
@@ -147,10 +163,11 @@ class TelluriumEngine(CircuitEngine):
         )
         return "\n".join([prefix, self.model, gene_levels, suffix])
 
+    @override
     def retrieve_concs(self):
         if self.result is None:
             return {}
-        colnames = map(lambda name: name[1:-1], self.result.colnames[1:])
+        colnames = map(lambda name: Gene(name[1:-1]), self.result.colnames[1:])
         new_concs = dict(zip(colnames, self.result[-1][1:]))
         return new_concs
 
@@ -159,53 +176,44 @@ class GeneRegulatoryNetwork:
     def __init__(
         self,
         concs: dict = {},
-        diffusion_system: DiffusionSystem = None,
         circuit_engine: CircuitEngine = TelluriumEngine(),
     ):
         self.concs = concs
-        self.diffusion_system = diffusion_system
-        self.circuit_engine = circuit_engine
+        self._circuit_engine = circuit_engine
 
-    def copy(self):
+    def copy(self) -> "GeneRegulatoryNetwork":
         grn = GeneRegulatoryNetwork(
-            deepcopy(self.concs),
-            self.diffusion_system,
-            self.circuit_engine.copy(),
+            self.concs.copy(),
+            self._circuit_engine.copy(),
         )
         return grn
 
-    @property
-    def concs(self):
-        return self._concs
+    def load_circuits(self, *circuits: Circuit):
+        self._circuit_engine.load_circuits(*circuits)
 
-    # TODO: integrate molecule with Gene, get rid of str() func
-    @concs.setter
-    def concs(self, concs):
-        concs = {str(k): v for k, v in concs.items()}
-        self._concs = concs
-
-    def set_diffusion_system(self, system):
-        self.diffusion_system = system
-
-    def load_circuits(self, *circuits):
-        self.circuit_engine.load_circuits(*circuits)
-
-    def update_concs(self, center=None, radius=None, dt=1):
+    def update_concs(
+        self,
+        diffusion_system: DiffusionSystem = None,
+        center: Vector = None,
+        radius: float = None,
+        dt=1,
+    ):
         """Update network concentrations based on underlying diffusion systems, cell center and radius."""
-        if self.diffusion_system is not None:
+        if diffusion_system is not None:
             if center is None or radius is None:
                 raise ValueError(
                     "If there is a diffusion system, center or radius must be supplied as arguments."
                 )
-            self.update_signaling_concs(center, radius)
+            self.update_signaling_concs(diffusion_system, center, radius)
         self.update_metabolite_concs(dt=dt)
 
     def update_metabolite_concs(self, iter=5, dt=1):
-        self.circuit_engine.step(self._concs, iter=iter, dt=dt)
-        new_concs = self.circuit_engine.retrieve_concs()
-        self._concs.update(new_concs)
+        self._circuit_engine.step(self.concs, iter=iter, dt=dt)
+        new_concs = self._circuit_engine.retrieve_concs()
+        self.concs.update(new_concs)
 
-    def update_signaling_concs(self, center, radius):
-        signaling_concs = self.diffusion_system.get_all_concentrations(center, radius)
-        signaling_concs = {str(k): v for k, v in signaling_concs.items()}
-        self._concs.update(signaling_concs)
+    def update_signaling_concs(
+        self, diffusion_system: DiffusionSystem, center: Vector, radius: float
+    ):
+        signaling_concs = diffusion_system.get_ball_concentrations(center, radius)
+        self.concs.update(signaling_concs)

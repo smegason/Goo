@@ -36,16 +36,16 @@ class Simulator:
         self.time = time
 
         # Set up simulation parameters for diffusion system
-        diffsystem._time_step = physics_dt / 10
-        diffsystem._total_time = physics_dt
+        if diffsystem is not None:
+            diffsystem.time_step = physics_dt / 10
+            diffsystem.total_time = physics_dt
 
         self.cells = []
         for cell in cells:
             if isinstance(cell, Cell):
                 self.cells.append(cell)
             elif isinstance(cell, CellType):
-                raise NotImplementedError("Implement!")
-                # self.cells.extend(cell.cells)
+                self.cells.extend(cell.cells)
 
     def setup_world(self, seed=1):
         # Enable addons

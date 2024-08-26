@@ -7,7 +7,7 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-celltype = goo.SimpleType("A")
+celltype = goo.CellType("A", pattern="simple")
 cell = celltype.create_cell("cellA", (0, 0, 0))
 
 sim = goo.Simulator([celltype])
@@ -15,14 +15,8 @@ sim.setup_world()
 
 sim.add_handlers(
     [
-        GrowthPIDHandler(
-            target_volume=30,
-            growth_type=Growth.LINEAR,
-            growth_rate=1,
-            initial_pressure=0.01,
-            Kp=0.05,
-        ),
-        RemeshHandler(freq=1, voxel_size=0.25),
+        GrowthPIDHandler(),
+        # RemeshHandler(freq=1, voxel_size=0.25),
         # DataExporter(path=None, options=DataFlag.VOLUMES),
     ]
 )

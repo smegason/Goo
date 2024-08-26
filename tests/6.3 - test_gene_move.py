@@ -13,11 +13,11 @@ diffsys = DiffusionSystem(molecules=[mol])
 
 celltype = CellType("cellsA", pattern="simple")
 celltype.motion_strength = 50
-cell = celltype.create_cell("cell", (0, 0, 0))
+cell = celltype.create_cell("cell", (1, -1, 0))
 cell.pressure = 1
-cell.move((0, 0, -1))
+# cell.move((0, 0, -1))
 
-cell.link_property_to_gene("motion_force", mol, pscale=(0, 50), gscale=(1, 1.5))
+cell.link_gene_to_property(mol, "motion_direction")
 
 sim = goo.Simulator(cells=[cell], diffsystem=diffsys)
 sim.setup_world()
@@ -30,4 +30,14 @@ sim.add_handlers(
     ]
 )
 
-sim.render_animation(end=60)
+points = [[0, 0, 1], [0, 0, -1], [0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0]]
+for point in points:
+    print("Point", point, "\tConcentration:", diffsys.get_concentration(mol, point))
+
+for i in range(1, 11):
+    bpy.context.scene.frame_set(i)
+    print("Motion direction:", cell.motion_force.loc - cell.loc)
+    print("New concentration", cell.metabolites[mol])
+
+# sim.run(1)
+# sim.render_animation(end=60)

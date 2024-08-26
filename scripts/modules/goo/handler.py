@@ -1,5 +1,6 @@
 from typing import Callable, Union
 from typing_extensions import override, Optional
+from abc import ABC, abstractmethod
 
 from enum import Enum, Flag, auto
 from datetime import datetime
@@ -13,11 +14,11 @@ import bpy
 import bmesh
 from mathutils import Vector
 from goo.cell import Cell
-from goo.circuits import Gene
+from goo.gene import Gene
 from goo.molecule import Molecule, DiffusionSystem
 
 
-class Handler:
+class Handler(ABC):
     def setup(
         self,
         get_cells: Callable[[], list[Cell]],
@@ -35,6 +36,7 @@ class Handler:
         self.get_diffsystem = get_diffsystem
         self.dt = dt
 
+    @abstractmethod
     def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
         """Run the handler.
 
@@ -68,7 +70,6 @@ class RemeshHandler(Handler):
         self.smooth_factor = smooth_factor
         self.sphere_factor = sphere_factor
 
-    @override
     def run(self, scene, depsgraph):
         if scene.frame_current % self.freq != 0:
             return
@@ -118,9 +119,8 @@ class DiffusionHandler(Handler):
     ):
         """Build the KD-Tree from the grid coordinates if not already built."""
         super(DiffusionHandler, self).setup(get_cells, get_diffsystems, dt)
-        self.get_diffsystem()._build_kdtree()
+        self.get_diffsystem().build_kdtree()
 
-    @override
     def run(self, scene, depsgraph) -> None:
         self.get_diffsystem().run()
 
@@ -128,28 +128,15 @@ class DiffusionHandler(Handler):
 class NetworkHandler(Handler):
     """Handler for gene regulatory networks."""
 
-    @override
-    def setup(
-        self,
-        get_cells: Callable[[], list[Cell]],
-        get_diffsystems: Callable[[], list[DiffusionSystem]],
-        dt,
-    ):
-        super(NetworkHandler, self).setup(get_cells, get_diffsystems, dt)
-        for cell in self.get_cells():
-            cell.grn.set_diffusion_system(self.get_diffsystem())
-
-    @override
     def run(self, scene, despgraph):
         for cell in self.get_cells():
-            cell.step_grn()
+            cell.step_grn(self.get_diffsystem())
 
 
 class RecenterHandler(Handler):
     """Handler for updating cell origin and location of
     cell-associated adhesion locations every frame."""
 
-    @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             cell.recenter()
@@ -166,120 +153,10 @@ class RecenterHandler(Handler):
                 cell.move()
 
 
-"""Possible types of growth."""
-Growth = Enum("Growth", ["LINEAR", "EXPONENTIAL", "LOGISTIC"])
-
-
 class GrowthPIDHandler(Handler):
-    """Handler for simulating cell growth based off of internal pressure.
-
-    Growth is determined by a PID controller, in which changes to a cell's
-    internal pressure governs how much it grows in the next frame.
-
-    Attributes:
-        growth_type (Growth): Type of growth exhibited by cells.
-        growth_rate (float): Rate of growth of cells.
-        initial_pressure (float): Initial pressure of cells.
-        target_volume (float): Target volume of cells.
-        Kp (float): P variable of the PID controller.
-        Ki (float): I variable of the PID controller.
-        Kd (float): D variable of the PID controller.
-    """
-
-    def __init__(
-        self,
-        growth_type: Growth = Growth.LINEAR,
-        growth_rate: float = 1,
-        initial_pressure=0.01,
-        target_volume=30,
-        Kp=0.05,
-        Ki=0.00001,
-        Kd=0.5,
-    ):
-        self.growth_type = growth_type
-        self.growth_rate = growth_rate  # in cubic microns per frame
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.PID_scale = 60
-        self.initial_pressure = initial_pressure
-        self.target_volume = target_volume
-
-    @override
-    def setup(
-        self,
-        get_cells: Callable[[], list[Cell]],
-        get_diffsystems: Callable[[], list[DiffusionSystem]],
-        dt,
-    ):
-        super(GrowthPIDHandler, self).setup(get_cells, get_diffsystems, dt)
-        for cell in self.get_cells():
-            self.initialize_PID(cell)
-
-    def initialize_PID(self, cell: Cell):
-        """Initialize PID controller for a cell.
-
-        Args:
-            cell: Cell to initialize PID controller.
-        """
-        cell["Kp"] = self.Kp
-        cell["Ki"] = self.Ki
-        cell["Kd"] = self.Kd
-        cell["PID_scale"] = self.PID_scale
-        cell["growth_rate"] = self.growth_rate
-
-        cell["integral"] = 0
-        cell["previous_error"] = 0
-
-        cell["previous_pressure"] = self.initial_pressure
-        cell["next_volume"] = cell.volume()
-        cell["target_volume"] = self.target_volume
-
-    @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
-            if "target_volume" not in cell:
-                self.initialize_PID(cell)
-            if "divided" in cell and cell["divided"]:
-                # if divided, reset certain values
-                cell["previous_pressure"] = self.initial_pressure
-                cell["next_volume"] = cell.volume()
-            if not cell.is_physics_enabled:
-                continue
-
-            cell["volume"] = cell.volume()
-
-            match self.growth_type:
-                case Growth.LINEAR:
-                    cell["next_volume"] += cell["growth_rate"] * self.dt
-                case Growth.EXPONENTIAL:
-                    cell["next_volume"] *= 1 + cell["growth_rate"] * self.dt
-                case Growth.LOGISTIC:
-                    cell["next_volume"] = cell["next_volume"] * (
-                        1
-                        + cell["growth_rate"]
-                        * (1 - cell["next_volume"] / cell["target_volume"])
-                        * self.dt
-                    )
-                case _:
-                    raise ValueError(
-                        "Growth type must be one of LINEAR, EXPONENTIAL, or LOGISTIC."
-                    )
-            cell["next_volume"] = min(cell["next_volume"], cell["target_volume"])
-            volume_deviation = 1 - cell["volume"] / cell["next_volume"]
-
-            # Update pressure based on PID output
-            error = volume_deviation
-            integral = cell["integral"] + error
-            derivative = error - cell["previous_error"]
-            pid = cell["Kp"] * error + cell["Ki"] * integral + cell["Kd"] * derivative
-
-            cell.pressure = cell["previous_pressure"] + pid * cell["PID_scale"]
-
-            # Update previous error and pressure for the next iteration
-            cell["previous_error"] = error
-            cell["integral"] = integral
-            cell["previous_pressure"] = cell.pressure
+            cell.step_growth()
 
 
 """Possible distributions of random motion."""
@@ -305,7 +182,6 @@ class RandomMotionHandler(Handler):
         self.distribution = distribution
         self.max_strength = max_strength
 
-    @override
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
             if not cell.is_physics_enabled:
@@ -353,7 +229,7 @@ class ColorizeHandler(Handler):
         range: Optional[tuple] = None,
     ):
         self.colorizer = colorizer
-        self.gene = str(gene)
+        self.gene = gene
         self.range = range
 
     def _scale(self, values):
@@ -367,7 +243,6 @@ class ColorizeHandler(Handler):
             values = np.maximum(values, min)
             return (values - min) / (max - min)
 
-    @override
     def run(self, scene, depsgraph):
         match self.colorizer:
             case Colorizer.PRESSURE:
@@ -559,7 +434,6 @@ class DataExporter(Handler):
             print(out)
         self.run(bpy.context.scene, bpy.context.evaluated_depsgraph_get())
 
-    @override
     def run(self, scene, depsgraph):
         frame_out = {"frame": scene.frame_current}
 

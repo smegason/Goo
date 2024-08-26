@@ -21,6 +21,19 @@ class GrowthController:
 
 
 class PIDController(GrowthController):
+    """Class to control growth by a PID controller, in which changes to a cell's
+    internal pressure governs how much it grows in the next frame.
+
+    Attributes:
+        growth_type (Growth): Type of growth exhibited by cells.
+        growth_rate (float): Rate of growth of cells.
+        initial_pressure (float): Initial pressure of cells.
+        target_volume (float): Target volume of cells.
+        Kp (float): P variable of the PID controller.
+        Ki (float): I variable of the PID controller.
+        Kd (float): D variable of the PID controller.
+    """
+
     def __init__(
         self,
         current_volume,

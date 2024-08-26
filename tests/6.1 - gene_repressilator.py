@@ -1,6 +1,6 @@
 from importlib import reload
 import goo
-from goo.circuits import *
+from goo.gene import *
 from goo.division import *
 from goo.handler import *
 
