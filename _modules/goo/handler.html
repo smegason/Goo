@@ -216,9 +216,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
@@ -231,13 +230,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_guide/learning_resources.html">Learning resources</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/contributors.html">Contributors</a></li>
 </ul>
 
 </div>
@@ -279,17 +279,17 @@
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">Flag</span><span class="p">,</span> <span class="n">auto</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span><span class="p">,</span> <span class="n">pdist</span><span class="p">,</span> <span class="n">squareform</span>
-<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">KDTree</span>
 <span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">laplace</span>
 
 <span class="kn">import</span> <span class="nn">bpy</span>
 <span class="kn">import</span> <span class="nn">bmesh</span>
 <span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="n">Vector</span>
 <span class="kn">from</span> <span class="nn">goo.cell</span> <span class="kn">import</span> <span class="n">Cell</span>
-<span class="kn">from</span> <span class="nn">goo.molecule</span> <span class="kn">import</span> <span class="n">Molecule</span><span class="p">,</span> <span class="n">DiffusionSystem</span>
+<span class="kn">from</span> <span class="nn">goo.molecule</span> <span class="kn">import</span> <span class="n">DiffusionSystem</span>
 
 
 <div class="viewcode-block" id="Handler">
@@ -332,8 +332,6 @@
 
 
 
-<span class="c1"># TODO: make voxel_size the same for remesh function and remesh handler</span>
-<span class="c1"># TODO: remeshing seems to interfere with motion</span>
 <div class="viewcode-block" id="RemeshHandler">
 <a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.RemeshHandler">[docs]</a>
 <span class="k">class</span> <span class="nc">RemeshHandler</span><span class="p">(</span><span class="n">Handler</span><span class="p">):</span>
@@ -384,7 +382,7 @@
             <span class="k">else</span><span class="p">:</span> 
                 <span class="n">cell</span><span class="o">.</span><span class="n">remesh</span><span class="p">()</span>
                 <span class="n">cell</span><span class="o">.</span><span class="n">recenter</span><span class="p">()</span>
-
+            
             <span class="c1"># Recenter and re-enable physics</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">enable_physics</span><span class="p">()</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">cloth_mod</span><span class="o">.</span><span class="n">point_cache</span><span class="o">.</span><span class="n">frame_start</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">frame_current</span></div>
@@ -422,13 +420,15 @@
         <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read the concentration of molecules in the cell.&quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">mol_idx</span><span class="p">,</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">_molecules</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">mol_idx</span><span class="p">,</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">molecules</span><span class="p">):</span>
             <span class="n">valid_indices</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">cell_distances</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cell_distances</span> <span class="o">&gt;=</span> <span class="n">radius</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valid indices: </span><span class="si">{</span><span class="n">valid_indices</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>    
             <span class="k">if</span> <span class="n">valid_indices</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
                 <span class="n">index</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">valid_indices</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
                 <span class="n">total_conc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">get_concentration</span><span class="p">(</span><span class="n">mol_idx</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Conc of cell </span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">molecule</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">total_conc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">cell</span><span class="o">.</span><span class="n">molecules_conc</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">molecule</span><span class="o">.</span><span class="n">_name</span><span class="p">:</span> <span class="n">total_conc</span><span class="p">})</span></div>
+                <span class="n">cell</span><span class="o">.</span><span class="n">molecules_conc</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">molecule</span><span class="o">.</span><span class="n">_name</span><span class="p">:</span> <span class="n">total_conc</span><span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Molecular concentrations: </span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">molecules_conc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DiffusionHandler.update_molecular_signal">
@@ -444,19 +444,15 @@
                         
         <span class="n">k</span> <span class="o">=</span> <span class="mf">0.1</span>
         <span class="k">for</span> <span class="n">mol_idx</span><span class="p">,</span> <span class="n">molecule</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">_molecules</span><span class="p">):</span>
-            <span class="n">total_conc</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">valid_indices</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">cell_distances</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cell_distances</span> <span class="o">&gt;=</span> <span class="n">radius</span><span class="p">)</span>
             <span class="n">valid_distances</span> <span class="o">=</span> <span class="n">cell_distances</span><span class="p">[</span><span class="n">valid_indices</span><span class="p">]</span>
             <span class="n">valid_indices</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">valid_indices</span><span class="p">]</span>
 
             <span class="k">for</span> <span class="n">cell_distance</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">valid_distances</span><span class="p">,</span> <span class="n">valid_indices</span><span class="p">):</span>
                 <span class="n">add_conc</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">cell_distance</span> <span class="o">/</span> <span class="n">radius</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">update_concentration</span><span class="p">(</span><span class="n">mol_idx</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">add_conc</span><span class="p">)</span>
-            
-            <span class="n">cell</span><span class="o">.</span><span class="n">molecules_conc</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">molecule</span><span class="o">.</span><span class="n">_name</span><span class="p">:</span> <span class="n">total_conc</span><span class="p">})</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Molecular concentrations: </span><span class="si">{</span><span class="n">cell</span><span class="o">.</span><span class="n">molecules_conc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">update_concentration</span><span class="p">(</span><span class="n">mol_idx</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">add_conc</span><span class="p">)</span></div>
 
-    
+
 <div class="viewcode-block" id="DiffusionHandler.diffuse">
 <a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.DiffusionHandler.diffuse">[docs]</a>
     <span class="k">def</span> <span class="nf">diffuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mol_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -491,7 +487,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Current frame&quot;</span><span class="p">,</span> <span class="n">scene</span><span class="o">.</span><span class="n">frame_current</span><span class="p">)</span>
 
         <span class="c1"># diffuse molecules on grid</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">simulate_diffusion</span><span class="p">()</span>
+        <span class="c1"># self.simulate_diffusion()</span>
 
         <span class="n">cells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span><span class="p">()</span>
         
@@ -500,12 +496,12 @@
             <span class="n">com</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">COM</span><span class="p">()</span>
             <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusionSystem</span><span class="o">.</span><span class="n">_element_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">cell_distances</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kd_tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">com</span><span class="p">,</span> 
-                                                         <span class="n">k</span><span class="o">=</span><span class="mi">500</span> <span class="o">*</span> <span class="n">scaling_factor</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> 
-                                                         <span class="n">distance_upper_bound</span><span class="o">=</span><span class="mf">1.5</span><span class="o">*</span><span class="n">radius</span><span class="p">,</span> 
+                                                         <span class="n">k</span><span class="o">=</span><span class="mi">1000</span> <span class="o">*</span> <span class="n">scaling_factor</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> 
+                                                         <span class="n">distance_upper_bound</span><span class="o">=</span><span class="mf">1.25</span><span class="o">*</span><span class="n">radius</span><span class="p">,</span> 
                                                          <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cell_distances</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">cell_distances</span><span class="p">)):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">update_molecular_signal</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">cell_distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">radius</span><span class="p">)</span>
+                <span class="c1"># self.update_molecular_signal(cell, cell_distances, indices, radius)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">read_molecular_signal</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">cell_distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">radius</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># If no valid distances, set concentration to 0</span>
@@ -767,22 +763,7 @@
 
 
 
-<span class="c1"># TODO: remove because not used</span>
-<span class="sd">&#39;&#39;&#39;class SceneExtensionHandler(Handler):</span>
-<span class="sd">    &quot;&quot;&quot;Handler for extending the calculation of physics beyond the default 250</span>
-<span class="sd">    frames.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-<span class="sd">    def __init__(self, end):</span>
-<span class="sd">        self.end = end</span>
-
-<span class="sd">    @override</span>
-<span class="sd">    def run(self, scene, depsgraph):</span>
-<span class="sd">        for cell in self.get_cells():</span>
-<span class="sd">            if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end &lt; self.end:</span>
-<span class="sd">                cell.cloth_mod.point_cache.frame_end = self.end&#39;&#39;&#39;</span>
-
-
+<span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">_get_divisions</span><span class="p">(</span><span class="n">cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate a list of cells that have divided in the past frame.</span>
 
@@ -801,6 +782,7 @@
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">divisions</span><span class="p">)</span>
 
 
+<span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">_contact_area</span><span class="p">(</span><span class="n">cell1</span><span class="p">:</span> <span class="n">Cell</span><span class="p">,</span> <span class="n">cell2</span><span class="p">:</span> <span class="n">Cell</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the contact areas between two cells.</span>
 
@@ -843,6 +825,7 @@
     <span class="k">return</span> <span class="n">contact_areas1</span><span class="p">,</span> <span class="n">contact_areas2</span><span class="p">,</span> <span class="n">ratio1</span><span class="p">,</span> <span class="n">ratio2</span>
 
 
+<span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">_contact_areas</span><span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the pairwise contact areas between a list of cells.</span>
 
@@ -1015,6 +998,100 @@
             <span class="k">return</span> <span class="n">obj</span></div>
 
         
+
+<div class="viewcode-block" id="SliceExporter">
+<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.SliceExporter">[docs]</a>
+<span class="k">class</span> <span class="nc">SliceExporter</span><span class="p">(</span><span class="n">Handler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handler to save Z slices of the simulation at each frame.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> 
+        <span class="n">z_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">),</span> 
+        <span class="n">z_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> 
+        <span class="n">microscope_dt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z_range</span> <span class="o">=</span> <span class="n">z_range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z_step</span> <span class="o">=</span> <span class="n">z_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">microscope_dt</span> <span class="o">=</span> <span class="n">microscope_dt</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SliceExporter.run">
+<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.SliceExporter.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scene</span><span class="p">:</span> <span class="n">bpy</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Scene</span><span class="p">,</span> <span class="n">depsgraph</span><span class="p">:</span> <span class="n">bpy</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Depsgraph</span><span class="p">):</span>
+        <span class="c1"># export slices every microscope_dt</span>
+        <span class="k">if</span> <span class="n">scene</span><span class="o">.</span><span class="n">frame_current</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">microscope_dt</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        
+        <span class="n">time_step</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">frame_current</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">microscope_dt</span>
+        <span class="n">time_step_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;T</span><span class="si">{</span><span class="n">time_step</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">time_step_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">time_step_dir</span><span class="p">)</span>
+
+        <span class="c1"># Check if a camera named &#39;SliceExporterCamera&#39; already exists</span>
+        <span class="n">camera</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SliceExporterCamera&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">camera</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># No camera exists, so create and center it</span>
+            <span class="n">camera</span> <span class="o">=</span> <span class="n">create_and_center_camera</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">target</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        
+        <span class="c1"># Set the created or existing camera as the active camera</span>
+        <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">camera</span> <span class="o">=</span> <span class="n">camera</span>
+
+        <span class="n">z_start</span><span class="p">,</span> <span class="n">z_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_range</span>
+        <span class="n">num_slices</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">z_end</span> <span class="o">-</span> <span class="n">z_start</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_step</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of slices:&quot;</span><span class="p">,</span> <span class="n">num_slices</span><span class="p">)</span>
+
+        <span class="c1"># Iterate over z-axis</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_slices</span><span class="p">):</span>
+            <span class="c1"># current slice position</span>
+            <span class="n">slice_z</span> <span class="o">=</span> <span class="n">z_start</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_step</span> <span class="k">if</span> <span class="n">z_start</span> <span class="o">&lt;</span> <span class="n">z_end</span> <span class="k">else</span> <span class="n">z_start</span> <span class="o">-</span> <span class="n">i</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_step</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">slice_z</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Camera location:&quot;</span><span class="p">,</span> <span class="n">camera</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+
+            <span class="c1"># thin slice</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clip_start</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># front of the camera</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clip_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_step</span>  <span class="c1"># end of the slice being photographed</span>
+
+            <span class="n">slice_filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;slice_z</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">.png&quot;</span>
+            <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">time_step_dir</span><span class="p">,</span> <span class="n">slice_filename</span><span class="p">)</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">filepath</span>
+            
+            <span class="c1"># OpenGL render from the active camera&#39;s perspective</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">opengl</span><span class="p">(</span><span class="n">write_still</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">view_context</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</div>
+
+
+            <span class="c1"># add a step to convert from RGB  to 8-bit grayscale</span>
+
+
+<div class="viewcode-block" id="create_and_center_camera">
+<a class="viewcode-back" href="../../user_guide/goo.handler.html#goo.handler.create_and_center_camera">[docs]</a>
+<span class="nd">@staticmethod</span>
+<span class="k">def</span> <span class="nf">create_and_center_camera</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">target</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new camera object, set its parameters, </span>
+<span class="sd">    center it to the specified location, and orient it towards the target.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        location: The location to place the camera (default is (0, 0, 10)).</span>
+<span class="sd">        target: The point the camera should face (default is the origin in (0, 0, 0)).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># new camera data block</span>
+    <span class="n">cam_data</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">cameras</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SliceExporterCamera&quot;</span><span class="p">)</span>
+    <span class="n">cam_object</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;SliceExporterCamera&quot;</span><span class="p">,</span> <span class="n">cam_data</span><span class="p">)</span>
+    <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">cam_object</span><span class="p">)</span>
+    <span class="n">cam_object</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">-</span> <span class="n">cam_object</span><span class="o">.</span><span class="n">location</span>
+    <span class="n">cam_object</span><span class="o">.</span><span class="n">rotation_euler</span> <span class="o">=</span> <span class="n">direction</span><span class="o">.</span><span class="n">to_track_quat</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_euler</span><span class="p">()</span>
+    <span class="c1"># acquisition parameters</span>
+    <span class="n">cam_object</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;ORTHO&#39;</span>
+    <span class="n">cam_object</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">ortho_scale</span> <span class="o">=</span> <span class="mi">20</span>
+
+    <span class="k">return</span> <span class="n">cam_object</span></div>
+
 </pre></div>
         </article>
       </div>

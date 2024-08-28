@@ -216,9 +216,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
@@ -231,13 +230,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_guide/learning_resources.html">Learning resources</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/contributors.html">Contributors</a></li>
 </ul>
 
 </div>
@@ -296,6 +296,7 @@
 <span class="sd">        celltypes (List[CellType]): List of cell types.</span>
 <span class="sd">        time (List[int]): Start and end frames.</span>
 <span class="sd">        physics_dt (int): Time step for physics simulation.</span>
+<span class="sd">        molecular_dt (int): Time step for molecular simulation.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -304,18 +305,27 @@
         <span class="n">diffsystems</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DiffusionSystem</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
         <span class="n">time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">250</span><span class="p">,</span>
         <span class="n">physics_dt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">molecular_dt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
     <span class="p">):</span> 
         <span class="bp">self</span><span class="o">.</span><span class="n">celltypes</span> <span class="o">=</span> <span class="n">celltypes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">diffsystems</span> <span class="o">=</span> <span class="n">diffsystems</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">physics_dt</span> <span class="o">=</span> <span class="n">physics_dt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molecular_dt</span> <span class="o">=</span> <span class="n">physics_dt</span> <span class="o">/</span> <span class="mi">10</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addons</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;add_mesh_extra_objects&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">render_format</span><span class="p">:</span> <span class="n">Render</span> <span class="o">=</span> <span class="n">Render</span><span class="o">.</span><span class="n">PNG</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
 
         <span class="c1"># Set up simulation parameters for diffusion system</span>
         <span class="k">for</span> <span class="n">diff_sys</span> <span class="ow">in</span> <span class="n">diffsystems</span><span class="p">:</span> 
-            <span class="n">diff_sys</span><span class="o">.</span><span class="n">_time_step</span> <span class="o">=</span> <span class="n">physics_dt</span> <span class="o">/</span> <span class="mi">10</span> 
+            <span class="n">diff_sys</span><span class="o">.</span><span class="n">_time_step</span> <span class="o">=</span> <span class="n">molecular_dt</span>
             <span class="n">diff_sys</span><span class="o">.</span><span class="n">_total_time</span> <span class="o">=</span> <span class="n">physics_dt</span>
+
+<div class="viewcode-block" id="Simulator.set_seed">
+<a class="viewcode-back" href="../../user_guide/goo.simulator.html#goo.simulator.Simulator.set_seed">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;seed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">seed</span></div>
+
 
 <div class="viewcode-block" id="Simulator.setup_world">
 <a class="viewcode-back" href="../../user_guide/goo.simulator.html#goo.simulator.Simulator.setup_world">[docs]</a>
@@ -325,8 +335,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">enable_addon</span><span class="p">(</span><span class="n">addon</span><span class="p">)</span>
 
         <span class="c1"># Set random seed</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-        <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;seed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
 
         <span class="c1"># Set up simulation time interval</span>
         <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_start</span> <span class="o">=</span> <span class="mi">1</span>

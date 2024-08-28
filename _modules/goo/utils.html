@@ -216,9 +216,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
@@ -231,13 +230,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_guide/learning_resources.html">Learning resources</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/contributors.html">Contributors</a></li>
 </ul>
 
 </div>
@@ -415,74 +415,88 @@
 <div class="viewcode-block" id="create_material">
 <a class="viewcode-back" href="../../user_guide/goo.utils.html#goo.utils.create_material">[docs]</a>
 <span class="k">def</span> <span class="nf">create_material</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+    <span class="c1"># Create a new material</span>
     <span class="n">mat</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
     <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">color</span>
-    <span class="n">mat</span><span class="o">.</span><span class="n">diffuse_color</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>  <span class="c1"># viewport color</span>
-    <span class="n">mat</span><span class="o">.</span><span class="n">use_nodes</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">mat</span><span class="o">.</span><span class="n">blend_method</span> <span class="o">=</span> <span class="s2">&quot;BLEND&quot;</span>
+    <span class="n">mat</span><span class="o">.</span><span class="n">diffuse_color</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 
-    <span class="c1"># get the material nodes</span>
-    <span class="n">nodes</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
-    <span class="n">nodes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-
-    <span class="c1"># create principled node for main color</span>
-    <span class="n">node_main</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ShaderNodeBsdfPrincipled&quot;</span><span class="p">)</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">100</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Base Color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Metallic&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.036</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Roughness&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.318</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;IOR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">1.450</span>
-
-    <span class="c1"># specular</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Anisotropic&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.041</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Anisotropic Rotation&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.048</span>
-    <span class="n">node_main</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Alpha&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.414</span>
-
-    <span class="c1"># create noise texture source</span>
-    <span class="n">node_noise</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ShaderNodeTexNoise&quot;</span><span class="p">)</span>
-    <span class="n">node_noise</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Scale&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.600</span>
-    <span class="n">node_noise</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Detail&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">15.0</span>
-    <span class="n">node_noise</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Roughness&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.500</span>
-    <span class="n">node_noise</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Distortion&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">3.0</span>
-
-    <span class="c1"># create HSV</span>
-    <span class="n">node_HSV</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ShaderNodeHueSaturation&quot;</span><span class="p">)</span>
-    <span class="n">node_HSV</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Hue&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.800</span>
-    <span class="n">node_HSV</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Saturation&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">2.00</span>
-    <span class="n">node_HSV</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Value&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">2.00</span>
-    <span class="n">node_HSV</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Fac&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">1.00</span>
-
-    <span class="c1"># create second principled node for random color variation</span>
-    <span class="n">node_random</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ShaderNodeBsdfPrincipled&quot;</span><span class="p">)</span>
-    <span class="n">node_random</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span>
-    <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Base Color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Metallic&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.0</span>
-
-    <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Roughness&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.482</span>
-    <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Anisotropic&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Anisotropic Rotation&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;IOR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">1.450</span>
-    <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Alpha&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.555</span>
-
-    <span class="c1"># create mix shader node</span>
-    <span class="n">node_mix</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ShaderNodeMixShader&quot;</span><span class="p">)</span>
-    <span class="n">node_mix</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
-    <span class="n">node_mix</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Fac&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.079</span>
-
-    <span class="c1"># create output node</span>
-    <span class="n">node_output</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ShaderNodeOutputMaterial&quot;</span><span class="p">)</span>
-    <span class="n">node_output</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">0</span>
-
-    <span class="c1"># link nodes</span>
-    <span class="n">links</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
-    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">node_noise</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">node_HSV</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>  <span class="c1"># link_noise_HSV</span>
-    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">node_HSV</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node_random</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># link_HSV_random</span>
-    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">node_main</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node_mix</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># link_main_mix</span>
-    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">node_random</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node_mix</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>  <span class="c1"># link_random_mix</span>
-    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">node_mix</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node_output</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># link_mix_out</span>
+    <span class="c1"># Set material properties to create a matte finish</span>
+    <span class="n">mat</span><span class="o">.</span><span class="n">metallic</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># No metallic reflection</span>
+    <span class="n">mat</span><span class="o">.</span><span class="n">roughness</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Maximum roughness for a matte finish</span>
+    <span class="n">mat</span><span class="o">.</span><span class="n">specular_intensity</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># No specular reflection</span>
+    <span class="n">mat</span><span class="o">.</span><span class="n">use_nodes</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Ensure nodes are not used</span>
 
     <span class="k">return</span> <span class="n">mat</span></div>
 
+
+<span class="c1"># def create_material(name, color):</span>
+<span class="c1">#     mat = bpy.data.materials.new(name=name)</span>
+<span class="c1">#     r, g, b = color</span>
+<span class="c1">#     mat.diffuse_color = (r, g, b, 0.8)  # viewport color</span>
+<span class="c1">#     mat.use_nodes = True</span>
+<span class="c1">#     mat.blend_method = &quot;BLEND&quot;</span>
+
+<span class="c1">#     # get the material nodes</span>
+<span class="c1">#     nodes = mat.node_tree.nodes</span>
+<span class="c1">#     nodes.clear()</span>
+
+<span class="c1">#     # create principled node for main color</span>
+<span class="c1">#     node_main = nodes.new(type=&quot;ShaderNodeBsdfPrincipled&quot;)</span>
+<span class="c1">#     node_main.location = -200, 100</span>
+<span class="c1">#     node_main.inputs[&quot;Base Color&quot;].default_value = (r, g, b, 1)</span>
+<span class="c1">#     node_main.inputs[&quot;Metallic&quot;].default_value = 1.0</span>
+<span class="c1">#     node_main.inputs[&quot;Roughness&quot;].default_value = 1.0</span>
+<span class="c1">#     node_main.inputs[&quot;IOR&quot;].default_value = 1.450</span>
+
+<span class="c1">#     # specular</span>
+<span class="c1">#     node_main.inputs[&quot;Anisotropic&quot;].default_value = 0.041</span>
+<span class="c1">#     node_main.inputs[&quot;Anisotropic Rotation&quot;].default_value = 0.048</span>
+<span class="c1">#     node_main.inputs[&quot;Alpha&quot;].default_value = 0.414</span>
+
+<span class="c1">#     # create noise texture source</span>
+<span class="c1">#     node_noise = nodes.new(type=&quot;ShaderNodeTexNoise&quot;)</span>
+<span class="c1">#     node_noise.inputs[&quot;Scale&quot;].default_value = 0.600</span>
+<span class="c1">#     node_noise.inputs[&quot;Detail&quot;].default_value = 15.0</span>
+<span class="c1">#     node_noise.inputs[&quot;Roughness&quot;].default_value = 1.0</span>
+<span class="c1">#     node_noise.inputs[&quot;Distortion&quot;].default_value = 3.0</span>
+
+<span class="c1">#     # create HSV</span>
+<span class="c1">#     node_HSV = nodes.new(type=&quot;ShaderNodeHueSaturation&quot;)</span>
+<span class="c1">#     node_HSV.inputs[&quot;Hue&quot;].default_value = 0.800</span>
+<span class="c1">#     node_HSV.inputs[&quot;Saturation&quot;].default_value = 2.00</span>
+<span class="c1">#     node_HSV.inputs[&quot;Value&quot;].default_value = 2.00</span>
+<span class="c1">#     node_HSV.inputs[&quot;Fac&quot;].default_value = 1.00</span>
+
+<span class="c1">#     # create second principled node for random color variation</span>
+<span class="c1">#     node_random = nodes.new(type=&quot;ShaderNodeBsdfPrincipled&quot;)</span>
+<span class="c1">#     node_random.location = -200, -100</span>
+<span class="c1">#     node_random.inputs[&quot;Base Color&quot;].default_value = (r, g, b, 1)</span>
+<span class="c1">#     node_random.inputs[&quot;Metallic&quot;].default_value = 1.0</span>
+
+<span class="c1">#     node_random.inputs[&quot;Roughness&quot;].default_value = 1.0</span>
+<span class="c1">#     node_random.inputs[&quot;Anisotropic&quot;].default_value = 0.0</span>
+<span class="c1">#     node_random.inputs[&quot;Anisotropic Rotation&quot;].default_value = 0.0</span>
+<span class="c1">#     node_random.inputs[&quot;IOR&quot;].default_value = 1.450</span>
+<span class="c1">#     node_random.inputs[&quot;Alpha&quot;].default_value = 0.555</span>
+
+<span class="c1">#     # create mix shader node</span>
+<span class="c1">#     node_mix = nodes.new(type=&quot;ShaderNodeMixShader&quot;)</span>
+<span class="c1">#     node_mix.location = 0, 0</span>
+<span class="c1">#     node_mix.inputs[&quot;Fac&quot;].default_value = 0.079</span>
+
+<span class="c1">#     # create output node</span>
+<span class="c1">#     node_output = nodes.new(type=&quot;ShaderNodeOutputMaterial&quot;)</span>
+<span class="c1">#     node_output.location = 200, 0</span>
+
+<span class="c1">#     # link nodes</span>
+<span class="c1">#     links = mat.node_tree.links</span>
+<span class="c1">#     links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV</span>
+<span class="c1">#     links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random</span>
+<span class="c1">#     links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix</span>
+<span class="c1">#     links.new(node_random.outputs[0], node_mix.inputs[2])  # link_random_mix</span>
+<span class="c1">#     links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out</span>
+
+<span class="c1">#     return mat</span>
 
 
 <span class="c1"># --- PHYSICS MODIFIER CONSTRUCTORS ---</span>
