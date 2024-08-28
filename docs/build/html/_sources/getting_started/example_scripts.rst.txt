@@ -99,7 +99,7 @@ Put together, this script models three cell doublets of varying stiffness and ho
 Running this script in Blender should produce the following simulation:
 
 .. video:: ../examples/adherent_cell_doublets0001-0300.mp4
-   :width: 600
+   :width: 810
 
 .. .. raw:: html
 
@@ -119,14 +119,18 @@ Cell division based a threshold volume
 
 Running this script in Blender should produce the following simulation:
 
-.. raw:: html
+.. video:: ../examples/division_cells0001-0150.mp4
+   :width: 810
 
-   <div style="max-width: 100%; height: auto;">
-      <video style="width: 100%; height: auto;" controls>
-         <source src="/Users/antoine/Harvard/MegasonLab/github/Goo/docs/source/examples/division_cells0001-0150.mp4" type="video/mp4">
-         Your browser does not support the video tag.
-      </video>
-   </div>
+
+.. .. raw:: html
+
+..    <div style="max-width: 100%; height: auto;">
+..       <video style="width: 100%; height: auto;" controls>
+..          <source src="/Users/antoine/Harvard/MegasonLab/github/Goo/docs/source/examples/division_cells0001-0150.mp4" type="video/mp4">
+..          Your browser does not support the video tag.
+..       </video>
+..    </div>
 
 
 Random cell motion in a confined sphere
