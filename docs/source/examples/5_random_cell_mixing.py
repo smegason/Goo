@@ -1,8 +1,7 @@
 from importlib import reload
 import goo
-from goo.division import *
-from goo.handler import *
-from goo.boundary import *
+import numpy as np
+
 
 reload(goo)
 goo.reset_modules()
@@ -55,8 +54,8 @@ sim.setup_world()
 sim.toggle_gravity(True)
 sim.add_handlers(
     [
-        GrowthPIDHandler(target_volume=50),
-        AdhesionLocationHandler(),
-        RandomMotionHandler(distribution=ForceDist.CONSTANT, max_strength=2500),
+        goo.GrowthPIDHandler(target_volume=50), 
+        goo.AdhesionLocationHandler(),
+        goo.RandomMotionHandler(distribution=goo.ForceDist.CONSTANT, max_strength=2500),
     ]
 )

@@ -217,9 +217,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/hardware.html">Hardware recommendations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">Documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="goo.cell.html">goo.cell</a></li>
@@ -232,13 +231,14 @@
 <li class="toctree-l2"><a class="reference internal" href="goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide/learning_resources.html">Learning resources</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../acknowledgment/contributors.html">Contributors</a></li>
 </ul>
 
 </div>
@@ -803,6 +803,54 @@ upon specified events (e.g. post-frame change).</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="goo.handler.SliceExporter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.handler.</span></span><span class="sig-name descname"><span class="pre">SliceExporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(5,</span> <span class="pre">-5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">microscope_dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#SliceExporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.SliceExporter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#goo.handler.Handler" title="goo.handler.Handler"><code class="xref py py-class docutils literal notranslate"><span class="pre">Handler</span></code></a></p>
+<p>Handler to save Z slices of the simulation at each frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_dir</strong> (<em>str</em>)</p></li>
+<li><p><strong>z_range</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>z_step</strong> (<em>float</em>)</p></li>
+<li><p><strong>microscope_dt</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="goo.handler.SliceExporter.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Scene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depsgraph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Depsgraph</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#SliceExporter.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.SliceExporter.run" title="Link to this definition">¶</a></dt>
+<dd><p>Run the handler.</p>
+<p>This is the function that gets passed to Blender, to be called
+upon specified events (e.g. post-frame change).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scene</strong> (<em>Scene</em>) – The Blender scene.</p></li>
+<li><p><strong>depsgraph</strong> (<em>Depsgraph</em>) – The dependency graph.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="goo.handler.create_and_center_camera">
+<span class="sig-prename descclassname"><span class="pre">goo.handler.</span></span><span class="sig-name descname"><span class="pre">create_and_center_camera</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#create_and_center_camera"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.create_and_center_camera" title="Link to this definition">¶</a></dt>
+<dd><p>Create a new camera object, set its parameters,
+center it to the specified location, and orient it towards the target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>location</strong> – The location to place the camera (default is (0, 0, 10)).</p></li>
+<li><p><strong>target</strong> – The point the camera should face (default is the origin in (0, 0, 0)).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
         </article>
@@ -933,6 +981,11 @@ upon specified events (e.g. post-frame change).</p>
 <li><a class="reference internal" href="#goo.handler.RemeshHandler.run"><code class="docutils literal notranslate"><span class="pre">RemeshHandler.run()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#goo.handler.SliceExporter"><code class="docutils literal notranslate"><span class="pre">SliceExporter</span></code></a><ul>
+<li><a class="reference internal" href="#goo.handler.SliceExporter.run"><code class="docutils literal notranslate"><span class="pre">SliceExporter.run()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#goo.handler.create_and_center_camera"><code class="docutils literal notranslate"><span class="pre">create_and_center_camera()</span></code></a></li>
 </ul>
 </li>
 </ul>

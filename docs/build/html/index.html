@@ -217,9 +217,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/hardware.html">Hardware recommendations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.cell.html">goo.cell</a></li>
@@ -232,13 +231,14 @@
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide/learning_resources.html">Learning resources</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgment/contributors.html">Contributors</a></li>
 </ul>
 
 </div>
@@ -292,13 +292,35 @@ but will later support cell-cell communication and biocircuits including gene re
 <h1>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/learning_resources.html">Learning resources</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#macos-linux">MacOS/Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/example_scripts.html">Example scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#writing-your-first-simulation-script">Writing your first simulation script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#cell-division-based-a-threshold-volume">Cell division based a threshold volume</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#random-cell-motion-in-a-confined-sphere">Random cell motion in a confined sphere</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/hardware.html">Hardware recommendations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/hardware.html#gpu">GPU</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/api.html">Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/hardware.html">Hardware recommendations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/api.html">Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.cell.html">goo.cell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.molecule.html">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.division.html">goo.division</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.handler.html">goo.handler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/goo.utils.html">goo.utils</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
@@ -306,17 +328,29 @@ but will later support cell-cell communication and biocircuits including gene re
 <h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide/developers.html">Developer’s guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/developers.html#contributing-to-the-codebase">Contributing to the codebase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/developers.html#testing-your-code">Testing your code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/developers.html#update-the-documentation">Update the documentation</a></li>
 </ul>
-</div>
-<section id="how-to-cite-goo">
-<h2>How to cite Goo<a class="headerlink" href="#how-to-cite-goo" title="Link to this heading">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="credits/credits_and_citation.html">Credits</a></li>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide/learning_resources.html">Learning resources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/learning_resources.html#learn-blender">Learn Blender</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/learning_resources.html#learn-blender-s-python-api">Learn Blender’s Python API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/learning_resources.html#learn-goo">Learn Goo</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
+<section id="acknowledgments">
+<h1>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgment/contributors.html">Contributors</a></li>
+</ul>
+</div>
 </section>
 <section id="news">
 <h1>News<a class="headerlink" href="#news" title="Link to this heading">¶</a></h1>

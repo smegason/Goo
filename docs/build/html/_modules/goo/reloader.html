@@ -216,9 +216,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
@@ -231,13 +230,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_guide/learning_resources.html">Learning resources</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgment/contributors.html">Contributors</a></li>
 </ul>
 
 </div>
@@ -280,6 +280,7 @@
 <div class="viewcode-block" id="reset_modules">
 <a class="viewcode-back" href="../../user_guide/goo.reloader.html#goo.reloader.reset_modules">[docs]</a>
 <span class="k">def</span> <span class="nf">reset_modules</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resets the modules from the library. &quot;&quot;&quot;</span>
     <span class="n">to_delete</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">modname</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">modname</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;goo&quot;</span><span class="p">):</span>

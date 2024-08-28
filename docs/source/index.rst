@@ -21,29 +21,30 @@ Getting started
 ==================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    getting_started/installation.rst
-   getting_started/learning_resources.rst
    getting_started/example_scripts.rst
+   getting_started/hardware.rst
    getting_started/blender_on_o2.rst
    user_guide/api.rst
-   getting_started/hardware.rst
 
 Contributing
 ==================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    developer_guide/developers.rst
+   developer_guide/learning_resources.rst
 
-How to cite Goo
-------------------
+Acknowledgments
+==================
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
-   credits/credits_and_citation.rst
+   acknowledgment/citation.rst
+   acknowledgment/contributors.rst
 
 
 News

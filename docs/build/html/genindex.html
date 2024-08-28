@@ -215,9 +215,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/learning_resources.html">Learning resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/example_scripts.html">Example scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/hardware.html">Hardware recommendations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/blender_on_o2.html">Running Goo on O2</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.cell.html">goo.cell</a></li>
@@ -230,13 +229,14 @@
 <li class="toctree-l2"><a class="reference internal" href="user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="developer_guide/developers.html">Developer’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide/learning_resources.html">Learning resources</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="credits/credits_and_citation.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgment/citation.html">Citing goo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgment/contributors.html">Contributors</a></li>
 </ul>
 
 </div>
@@ -366,9 +366,11 @@
 </li>
         <li><a href="user_guide/goo.utils.html#goo.utils.CollisionConstructor">CollisionConstructor (class in goo.utils)</a>
 </li>
-        <li><a href="user_guide/goo.cell.html#goo.cell.CellType.color">color (goo.cell.CellType attribute)</a>
+        <li><a href="user_guide/goo.cell.html#goo.cell.Cell.color">color (goo.cell.Cell property)</a>
 
         <ul>
+          <li><a href="user_guide/goo.cell.html#goo.cell.CellType.color">(goo.cell.CellType attribute)</a>
+</li>
           <li><a href="user_guide/goo.cell.html#goo.cell.SimpleType.color">(goo.cell.SimpleType attribute)</a>
 </li>
           <li><a href="user_guide/goo.cell.html#goo.cell.YolkType.color">(goo.cell.YolkType attribute)</a>
@@ -393,6 +395,8 @@
         <li><a href="user_guide/goo.cell.html#goo.cell.Cell.copy">copy() (goo.cell.Cell method)</a>
 </li>
         <li><a href="user_guide/goo.force.html#goo.force.create_adhesion">create_adhesion() (in module goo.force)</a>
+</li>
+        <li><a href="user_guide/goo.handler.html#goo.handler.create_and_center_camera">create_and_center_camera() (in module goo.handler)</a>
 </li>
         <li><a href="user_guide/goo.force.html#goo.force.create_boundary">create_boundary() (in module goo.force)</a>
 </li>
@@ -854,6 +858,8 @@
 </li>
           <li><a href="user_guide/goo.handler.html#goo.handler.RemeshHandler.run">(goo.handler.RemeshHandler method)</a>
 </li>
+          <li><a href="user_guide/goo.handler.html#goo.handler.SliceExporter.run">(goo.handler.SliceExporter method)</a>
+</li>
           <li><a href="user_guide/goo.simulator.html#goo.simulator.Simulator.run">(goo.simulator.Simulator method)</a>
 </li>
         </ul></li>
@@ -868,6 +874,8 @@
         <li><a href="user_guide/goo.cell.html#goo.cell.CellType.set_hetero_adhesion">set_hetero_adhesion() (goo.cell.CellType method)</a>
 </li>
         <li><a href="user_guide/goo.force.html#goo.force.MotionForce.set_loc">set_loc() (goo.force.MotionForce method)</a>
+</li>
+        <li><a href="user_guide/goo.simulator.html#goo.simulator.Simulator.set_seed">set_seed() (goo.simulator.Simulator method)</a>
 </li>
         <li><a href="user_guide/goo.division.html#goo.division.DivisionHandler.setup">setup() (goo.division.DivisionHandler method)</a>
 
@@ -920,6 +928,8 @@
         <li><a href="user_guide/goo.simulator.html#goo.simulator.Simulator">Simulator (class in goo.simulator)</a>
 </li>
         <li><a href="user_guide/goo.division.html#goo.division.SizeDivisionHandler">SizeDivisionHandler (class in goo.division)</a>
+</li>
+        <li><a href="user_guide/goo.handler.html#goo.handler.SliceExporter">SliceExporter (class in goo.handler)</a>
 </li>
         <li><a href="user_guide/goo.cell.html#goo.cell.Cell.stiffness">stiffness (goo.cell.Cell property)</a>
 </li>
