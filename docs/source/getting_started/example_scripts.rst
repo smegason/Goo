@@ -98,17 +98,17 @@ Put together, this script models three cell doublets of varying stiffness and ho
 
 Running this script in Blender should produce the following simulation:
 
-.. .. video:: ../examples/adherent_cell_doublets0001-0300.mp4
-..    :width: 600
+.. video:: ../examples/adherent_cell_doublets0001-0300.mp4
+   :width: 600
 
-.. raw:: html
+.. .. raw:: html
 
-    <div style="max-width: 100%; height: auto;">
-        <video style="width: 100%; height: auto;" controls>
-            <source src="/Users/antoine/Harvard/MegasonLab/github/Goo/docs/source/examples/adherent_cell_doublets0001-0300.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </div>
+..     <div style="max-width: 100%; height: auto;">
+..         <video style="width: 100%; height: auto;" controls>
+..             <source src="/Users/antoine/Harvard/MegasonLab/github/Goo/docs/source/examples/adherent_cell_doublets0001-0300.mp4" type="video/mp4">
+..             Your browser does not support the video tag.
+..         </video>
+..     </div>
 
    
 Cell division based a threshold volume
