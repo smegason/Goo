@@ -100,6 +100,7 @@ Running this script in Blender should produce the following simulation:
 
 .. video:: ../examples/adherent_cell_doublets0001-0300.mp4
    :width: 810
+   :loop:
 
 .. .. raw:: html
 
@@ -121,7 +122,7 @@ Running this script in Blender should produce the following simulation:
 
 .. video:: ../examples/division_cells0001-0150.mp4
    :width: 810
-
+   :loop:
 
 .. .. raw:: html
 
