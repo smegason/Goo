@@ -4,17 +4,17 @@ from typing_extensions import override
 from enum import Enum, Flag, auto
 from datetime import datetime
 import json
+import os
 
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.spatial import KDTree
 from scipy.ndimage import laplace
 
 import bpy
 import bmesh
 from mathutils import Vector
 from goo.cell import Cell
-from goo.molecule import Molecule, DiffusionSystem
+from goo.molecule import DiffusionSystem
 
 
 class Handler:
@@ -48,8 +48,6 @@ class Handler:
         raise NotImplementedError("Subclasses must implement run() method.")
 
 
-# TODO: make voxel_size the same for remesh function and remesh handler
-# TODO: remeshing seems to interfere with motion
 class RemeshHandler(Handler):
     """Handler for remeshing cells at given frequencies.
 
@@ -96,7 +94,7 @@ class RemeshHandler(Handler):
             else: 
                 cell.remesh()
                 cell.recenter()
-
+            
             # Recenter and re-enable physics
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
@@ -125,13 +123,15 @@ class DiffusionHandler(Handler):
         radius: float
     ) -> None: 
         """Read the concentration of molecules in the cell."""
-        for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
+        for mol_idx, molecule in enumerate(self.diffusionSystem.molecules):
             valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
+            print(f"Valid indices: {valid_indices}")    
             if valid_indices.any():
                 index = indices[valid_indices][0]
                 total_conc = self.diffusionSystem.get_concentration(mol_idx, index)
                 print(f"Conc of cell {cell.name} for {molecule._name}: {total_conc}")
                 cell.molecules_conc.update({molecule._name: total_conc})
+        print(f"Molecular concentrations: {cell.molecules_conc}")
 
     def update_molecular_signal(
         self,
@@ -144,7 +144,6 @@ class DiffusionHandler(Handler):
                         
         k = 0.1
         for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
-            total_conc = 0
             valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
             valid_distances = cell_distances[valid_indices]
             valid_indices = indices[valid_indices]
@@ -152,10 +151,7 @@ class DiffusionHandler(Handler):
             for cell_distance, index in zip(valid_distances, valid_indices):
                 add_conc = k * (cell_distance / radius)
                 self.diffusionSystem.update_concentration(mol_idx, index, add_conc)
-            
-            cell.molecules_conc.update({molecule._name: total_conc})
-            print(f"Molecular concentrations: {cell.molecules_conc}")
-    
+
     def diffuse(self, mol_idx: int):
         """Update the concentration of molecules based on diffusion."""
         conc = self.diffusionSystem._grid_concentrations[mol_idx]
@@ -182,7 +178,7 @@ class DiffusionHandler(Handler):
         print("Current frame", scene.frame_current)
 
         # diffuse molecules on grid
-        self.simulate_diffusion()
+        # self.simulate_diffusion()
 
         cells = self.get_cells()
         
@@ -191,12 +187,12 @@ class DiffusionHandler(Handler):
             com = cell.COM()
             scaling_factor = 1 / self.diffusionSystem._element_size[0]
             cell_distances, indices = self.kd_tree.query(com, 
-                                                         k=500 * scaling_factor**2, 
-                                                         distance_upper_bound=1.5*radius, 
+                                                         k=1000 * scaling_factor**2, 
+                                                         distance_upper_bound=1.25*radius, 
                                                          p=2)
 
             if len(cell_distances) > 0 and not np.all(np.isinf(cell_distances)):
-                self.update_molecular_signal(cell, cell_distances, indices, radius)
+                # self.update_molecular_signal(cell, cell_distances, indices, radius)
                 self.read_molecular_signal(cell, cell_distances, indices, radius)
             else:
                 # If no valid distances, set concentration to 0
@@ -426,22 +422,7 @@ class ColorizeHandler(Handler):
             cell.recolor(tuple(color))
 
 
-# TODO: remove because not used
-'''class SceneExtensionHandler(Handler):
-    """Handler for extending the calculation of physics beyond the default 250
-    frames.
-    """
-
-    def __init__(self, end):
-        self.end = end
-
-    @override
-    def run(self, scene, depsgraph):
-        for cell in self.get_cells():
-            if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.end:
-                cell.cloth_mod.point_cache.frame_end = self.end'''
-
-
+@staticmethod
 def _get_divisions(cells: list[Cell]):
     """Calculate a list of cells that have divided in the past frame.
 
@@ -460,6 +441,7 @@ def _get_divisions(cells: list[Cell]):
     return list(divisions)
 
 
+@staticmethod
 def _contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
     """Calculate the contact areas between two cells.
 
@@ -502,6 +484,7 @@ def _contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
     return contact_areas1, contact_areas2, ratio1, ratio2
 
 
+@staticmethod
 def _contact_areas(cells, threshold=4):
     """Calculate the pairwise contact areas between a list of cells.
 
@@ -662,3 +645,88 @@ class DataExporter(Handler):
         else:
             return obj
         
+
+class SliceExporter(Handler):
+    """Handler to save Z slices of the simulation at each frame."""
+
+    def __init__(
+        self,
+        output_dir: str = "", 
+        z_range: tuple[float, float] = (5, -5), 
+        z_step: float = 0.2, 
+        microscope_dt: int = 10
+    ):
+        self.output_dir = output_dir
+        self.z_range = z_range
+        self.z_step = z_step
+        self.microscope_dt = microscope_dt
+
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+
+    def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
+        # export slices every microscope_dt
+        if scene.frame_current % self.microscope_dt != 0:
+            return
+        
+        time_step = scene.frame_current // self.microscope_dt
+        time_step_dir = os.path.join(self.output_dir, f"T{time_step:03d}")
+        if not os.path.exists(time_step_dir):
+            os.makedirs(time_step_dir)
+
+        # Check if a camera named 'SliceExporterCamera' already exists
+        camera = bpy.data.objects.get('SliceExporterCamera')
+
+        if camera is None:
+            # No camera exists, so create and center it
+            camera = create_and_center_camera(location=(0, 0, 5), target=(0, 0, 0))
+        
+        # Set the created or existing camera as the active camera
+        bpy.context.scene.camera = camera
+
+        z_start, z_end = self.z_range
+        num_slices = int(abs(z_end - z_start) / self.z_step) + 1
+        print("Number of slices:", num_slices)
+
+        # Iterate over z-axis
+        for i in range(num_slices):
+            # current slice position
+            slice_z = z_start + i * self.z_step if z_start < z_end else z_start - i * self.z_step
+            camera.location.z = slice_z
+            print("Camera location:", camera.location)
+
+            # thin slice
+            camera.data.clip_start = 0  # front of the camera
+            camera.data.clip_end = self.z_step  # end of the slice being photographed
+
+            slice_filename = f"slice_z{i:03d}.png"
+            filepath = os.path.join(time_step_dir, slice_filename)
+            bpy.context.scene.render.filepath = filepath
+            
+            # OpenGL render from the active camera's perspective
+            bpy.ops.render.opengl(write_still=True, view_context=False)
+
+            # add a step to convert from RGB  to 8-bit grayscale
+
+
+@staticmethod
+def create_and_center_camera(location=(0, 0, 10), target=(0, 0, 0)):
+    """Create a new camera object, set its parameters, 
+    center it to the specified location, and orient it towards the target.
+
+    Args:
+        location: The location to place the camera (default is (0, 0, 10)).
+        target: The point the camera should face (default is the origin in (0, 0, 0)).
+    """
+    # new camera data block
+    cam_data = bpy.data.cameras.new(name="SliceExporterCamera")
+    cam_object = bpy.data.objects.new("SliceExporterCamera", cam_data)
+    bpy.context.collection.objects.link(cam_object)
+    cam_object.location = location
+    direction = Vector(target) - cam_object.location
+    cam_object.rotation_euler = direction.to_track_quat('Z', 'Y').to_euler()
+    # acquisition parameters
+    cam_object.data.type = 'ORTHO'
+    cam_object.data.ortho_scale = 20
+
+    return cam_object

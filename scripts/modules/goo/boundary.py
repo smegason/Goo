@@ -2,7 +2,6 @@ from typing import Optional
 from typing_extensions import override
 import bpy
 import numpy as np
-import math
 from goo.utils import *
 
 

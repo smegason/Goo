@@ -29,27 +29,31 @@ def setup_blender():
     yield cell
 
 
-def test_force_follows_cell(setup_blender: Cell):
-    cell = setup_blender
-    assert cell.loc == cell.adhesion_forces[0].loc
-
-
-def test_force_follows_cell_t1(setup_blender):
+def test_adhesion_force_follows_cell(setup_blender: Cell):
     cell = setup_blender
     bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    com_0 = cell.COM()
+    adhesion_loc_0 = Vector(cell.adhesion_forces[0].loc)
 
-    assert cell.loc == cell.adhesion_forces[0].loc
-
-
-def test_force_follows_cell_t2(setup_blender):
-    cell = setup_blender
     bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
-
-    assert cell.loc == cell.adhesion_forces[0].loc
-
-
-def test_force_follows_cell_t3(setup_blender):
-    cell = setup_blender
     bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    com_1 = cell.COM()
+    adhesion_loc_1 = Vector(cell.adhesion_forces[0].loc)
 
-    assert cell.loc == cell.adhesion_forces[0].loc
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    com_2 = cell.COM()
+    adhesion_loc_2 = Vector(cell.adhesion_forces[0].loc)
+
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    com_3 = cell.COM()
+    adhesion_loc_3 = Vector(cell.adhesion_forces[0].loc)
+
+    assert com_0 == adhesion_loc_0
+    assert com_1 == adhesion_loc_1
+    assert com_2 == adhesion_loc_2
+    assert com_3 == adhesion_loc_3

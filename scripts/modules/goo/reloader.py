@@ -3,6 +3,7 @@ import bpy
 
 
 def reset_modules():
+    """Resets the modules from the library. """
     to_delete = []
     for modname, _ in sys.modules.items():
         if modname.startswith("goo"):

@@ -38,41 +38,41 @@ class Molecule:
     
     @property
     def name(self) -> str:
-        """Name of the cell. Also defines the name of related forces and
+        """Name of the molecule. Also defines the name of related forces and
         collections of effectors.
         """
-        return self.name
+        return self._name
         
     @name.setter
     def name(self, name: str):
-        self.name = name
+        self._name = name
 
     @property
     def conc(self) -> float:
         """The concentration of the molecule."""
-        return self.conc
+        return self._conc
     
     @conc.setter
     def conc(self, conc: float):
-        self.conc = conc
+        self._conc = conc
 
     @property
     def D(self) -> float:
         """The diffusion rate of the molecule."""
-        return self.D
+        return self._D
     
     @D.setter
     def D(self, D: float):
-        self.D = D
+        self._D = D
 
     @property
     def gradient(self) -> str:
         """The gradient of the molecule."""
-        return self.gradient
+        return self._gradient
     
     @gradient.setter
     def gradient(self, gradient: str):
-        self.gradient = gradient
+        self._gradient = gradient
 
 
 class DiffusionSystem:
@@ -93,7 +93,7 @@ class DiffusionSystem:
         grid_size: Tuple[int, int, int] = (50, 50, 50), 
         grid_center: Tuple[int, int, int] = (0, 0, 0),
         time_step: float = 0.1, 
-        total_time: int = 10, 
+        total_time: int = 1, 
         element_size=(0.5, 0.5, 0.5)
     ) -> None: 
         self._molecules = molecules
@@ -136,6 +136,8 @@ class DiffusionSystem:
             match mol._gradient:
                 case None:
                     continue
+                case "constant":
+                    self._grid_concentrations[idx] = mol._conc
                 case "random":
                     variation = 0.1  # 10% variation
                     noise = np.random.normal(0, 
@@ -179,16 +181,22 @@ class DiffusionSystem:
         """Get the nearest grid index for the given point."""
         return self._kd_tree.query(point)[1]
     
+    def _get_grid_position(self, index):
+        """Get the coordinates of the given index in the grid."""
+        return np.unravel_index(index, self._grid_size)
+    
     def update_concentration(self, mol_idx, index, value):
         """Update the concentration value of a molecule at a given voxel in the grid."""
         # Convert flat index to 3D index
         z_index, y_index, x_index = np.unravel_index(index, self._grid_size)
+        # z_index, y_index, x_index = self._get_grid_position(index)
         self._grid_concentrations[mol_idx, z_index, y_index, x_index] += value
         return self._grid_concentrations[mol_idx, z_index, y_index, x_index]
     
     def get_concentration(self, mol_idx, index): 
         """Get the concentration value of a molecule at a given voxel in the grid."""
         z_index, y_index, x_index = np.unravel_index(index, self._grid_size)
+        # z_index, y_index, x_index = self._get_grid_position(index)
         return self._grid_concentrations[mol_idx, z_index, y_index, x_index]
     
     def diffuse(self, mol_idx):
@@ -210,11 +218,11 @@ class DiffusionSystem:
     @property
     def molecules(self) -> list[Molecule]:
         """The list of molecules in the system."""
-        return self.molecules
+        return self._molecules
     
     @molecules.setter
     def molecules(self, molecules: list[Molecule]):
-        self.molecules = molecules
+        self._molecules = molecules
 
     @property
     def gradient(self) -> list[(Molecule, str)]:
@@ -228,26 +236,26 @@ class DiffusionSystem:
     @property
     def grid_size(self) -> tuple:
         """The size of the 3D grid."""
-        return self.grid_size
+        return self._grid_size
     
     @grid_size.setter
     def grid_size(self, grid_size: tuple):
-        self.grid_size = grid_size
+        self._grid_size = grid_size
 
     @property
     def time_step(self) -> float:
         """The time step of the simulation."""
-        return self.time_step
+        return self._time_step
     
     @time_step.setter
     def time_step(self, time_step: float):
-        self.time_step = time_step
+        self._time_step = time_step
 
     @property
     def total_time(self) -> int:
         """The total time of the simulation."""
-        return self.total_time
+        return self._total_time
     
     @total_time.setter
     def total_time(self, total_time: int):
-        self.total_time = total_time
+        self._total_time = total_time

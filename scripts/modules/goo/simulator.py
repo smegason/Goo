@@ -19,6 +19,7 @@ class Simulator:
         celltypes (List[CellType]): List of cell types.
         time (List[int]): Start and end frames.
         physics_dt (int): Time step for physics simulation.
+        molecular_dt (int): Time step for molecular simulation.
 
     """
     def __init__(
@@ -27,18 +28,24 @@ class Simulator:
         diffsystems: List[DiffusionSystem] = [],
         time: int = 250,
         physics_dt: int = 1,
+        molecular_dt: int = 0.1,
     ): 
         self.celltypes = celltypes
         self.diffsystems = diffsystems
         self.physics_dt = physics_dt
+        self.molecular_dt = physics_dt / 10
         self.addons = ["add_mesh_extra_objects"]
         self.render_format: Render = Render.PNG
         self.time = time
 
         # Set up simulation parameters for diffusion system
         for diff_sys in diffsystems: 
-            diff_sys._time_step = physics_dt / 10 
+            diff_sys._time_step = molecular_dt
             diff_sys._total_time = physics_dt
+
+    def set_seed(self, seed):
+        np.random.seed(seed)
+        bpy.context.scene["seed"] = seed
 
     def setup_world(self, seed=1):
         # Enable addons
@@ -46,8 +53,7 @@ class Simulator:
             self.enable_addon(addon)
 
         # Set random seed
-        np.random.seed(seed)
-        bpy.context.scene["seed"] = seed
+        self.set_seed(seed)
 
         # Set up simulation time interval
         bpy.context.scene.frame_start = 1

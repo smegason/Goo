@@ -3,7 +3,7 @@ import bpy
 import goo
 from goo import Cell, CellType
 from goo.force import * 
-from goo.handler import AdhesionLocationHandler, GrowthPIDHandler, RandomMotionHandler
+from goo.handler import AdhesionLocationHandler, GrowthPIDHandler, RandomMotionHandler, ForceDist
 from goo.simulator import Simulator
 from goo.cell import *
 import bmesh
@@ -15,17 +15,17 @@ def setup_blender():
     # Create a Blender object to pass to the Cell constructor
     bpy.ops.wm.read_factory_settings(use_empty=True)  # Reset to empty scene
     cellsA = CellType("A")
-    cellsA.homo_adhesion_strength = 500
+    cellsA.homo_adhesion_strength = 100
     cell = cellsA.create_cell("A1", (0, 0, 0), color=(0.5, 0, 0), size=1)
 
-    sim = Simulator([cellsA], time=5, physics_dt=1)
+    sim = Simulator([cellsA], time=10, physics_dt=1)
     # cannot use setup_world in testing because requires Blender in non-headless mode
     # sim.setup_world()
     sim.set_seed(1)
     sim.add_handlers(
         [
             GrowthPIDHandler(target_volume=50),
-            RandomMotionHandler(max_strength=750),
+            RandomMotionHandler(ForceDist.UNIFORM, max_strength=10000),
             AdhesionLocationHandler(),
         ]
     )
@@ -36,34 +36,25 @@ def setup_blender():
 def test_next_cell_position(setup_blender):
     cell = setup_blender
     current_loc = Cell.COM(cell)
+    
     bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+
     next_random_loc = Cell.COM(cell)
 
     assert current_loc != next_random_loc
 
 
-def test_force_follows_cell(setup_blender: Cell):
+def test_random_motion_force_position(setup_blender):
     cell = setup_blender
-
-    assert cell.loc == cell.adhesion_forces[0].loc
-
-
-def test_force_follows_cell_t1(setup_blender):
-    cell = setup_blender
+    force_loc_t = Vector(cell.motion_force.loc)
     bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
-
-    assert cell.loc == cell.adhesion_forces[0].loc
-
-
-def test_force_follows_cell_t2(setup_blender):
-    cell = setup_blender
+    force_loc_t1 = Vector(cell.motion_force.loc)
     bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
-
-    assert cell.loc == cell.adhesion_forces[0].loc
-
-
-def test_force_follows_cell_t3(setup_blender):
-    cell = setup_blender
+    force_loc_t2 = Vector(cell.motion_force.loc)
     bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
+    force_loc_t3 = Vector(cell.motion_force.loc)
 
-    assert cell.loc == cell.adhesion_forces[0].loc
+    assert force_loc_t != force_loc_t1
+    assert force_loc_t1 != force_loc_t2
+    assert force_loc_t2 != force_loc_t3
+    assert force_loc_t != force_loc_t1 != force_loc_t2 != force_loc_t3

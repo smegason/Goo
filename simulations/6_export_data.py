@@ -1,7 +1,6 @@
 from importlib import reload
 import goo
-from goo.division import *
-from goo.handler import *
+
 
 reload(goo)
 goo.reset_modules()
@@ -21,12 +20,12 @@ sim.setup_world()
 sim.add_handlers(
     
     [
-        GrowthPIDHandler(target_volume=50),
-        AdhesionLocationHandler(),
-        RandomMotionHandler(distribution=ForceDist.UNIFORM, max_strength=250),
-        DataExporter(
+        goo.GrowthPIDHandler(target_volume=50),
+        goo.AdhesionLocationHandler(),
+        goo.RandomMotionHandler(distribution=goo.ForceDist.UNIFORM, max_strength=250),
+        goo.DataExporter(
             path="tmp/out.json", 
-            options=DataFlag.CONCENTRATIONS | DataFlag.MOTION_PATH  # or ALL flag
+            options=goo.DataFlag.CONCENTRATIONS | goo.DataFlag.MOTION_PATH  # or ALL flag
         ),
     ]
 )

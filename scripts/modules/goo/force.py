@@ -152,6 +152,7 @@ class MotionForce(Force):
         """
         dir = target_loc - new_loc
         self.loc = new_loc
+        print("self.loc", self.loc)
         self.obj.rotation_euler = dir.to_track_quat("Z", "X").to_euler()
 
 

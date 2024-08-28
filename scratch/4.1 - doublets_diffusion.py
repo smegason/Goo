@@ -15,7 +15,7 @@ cell1.stiffness = 1
 cell1.pressure = 5
 
 molA = goo.Molecule("molA", conc=1, D=1, gradient="linear")
-molB = goo.Molecule("molB", conc=0.5, D=2, gradient="random")
+molB = goo.Molecule("molB", conc=0, D=2, gradient="random")
 
 diffusionsystem = goo.DiffusionSystem(molecules=[molA, molB])
 

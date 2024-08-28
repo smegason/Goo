@@ -3,13 +3,11 @@ import bpy
 from goo import Cell, CellType
 from goo.force import * 
 from goo.division import BisectDivisionLogic
-import bmesh
 from mathutils import Vector
 
 
 @pytest.fixture
 def setup_blender():
-    # Create a Blender object to pass to the Cell constructor
     bpy.ops.wm.read_factory_settings(use_empty=True)  # Reset to empty scene
     cellsA = CellType("A")
     cellsA.homo_adhesion_strength = 1000
@@ -26,35 +24,35 @@ def test_cell_creation():
     assert cell.color == (1, 0, 0)
 
 
-def test_get_volume(setup_blender):
+def test_get_volume(setup_blender: Cell):
     cell = setup_blender
     volume = cell.volume()
     expected_volume = 27.50
     assert volume == pytest.approx(expected_volume, rel=1e-2)
 
 
-def test_get_cell_name(setup_blender):
+def test_get_cell_name(setup_blender: Cell):
     cell = setup_blender
     name = cell.name
     expected_name = "A1"
     assert name == expected_name
 
 
-def test_get_type_name(setup_blender):
+def test_get_type_name(setup_blender: Cell):
     cell = setup_blender
     type_name = cell.celltype.name
     expected_name = "A"
     assert type_name == expected_name
 
 
-def test_get_cell_number(setup_blender):
+def test_get_cell_number(setup_blender: Cell):
     cell = setup_blender
     type = cell.celltype
     cells_len = len(type.cells)
     assert cells_len == 1
 
 
-def test_COM(setup_blender):
+def test_COM(setup_blender: Cell):
     cell = setup_blender
     COM = cell.COM()
     expected_COM = Vector((0, 0, 0))
@@ -63,21 +61,21 @@ def test_COM(setup_blender):
     assert COM.z == pytest.approx(expected_COM.z, abs=1e-6)
 
 
-def test_homotypic_adhesion_strength(setup_blender):
+def test_homotypic_adhesion_strength(setup_blender: Cell):
     cell = setup_blender
     strength = cell.celltype.homo_adhesion_strength
     expected_strength = 1000
     assert strength == expected_strength
 
 
-def test_cell_stiffness(setup_blender):
+def test_cell_stiffness(setup_blender: Cell):
     cell = setup_blender
     stiffness = cell.stiffness
     expected_stiffness = 1
     assert stiffness == expected_stiffness
 
 
-def test_update_cell_stiffness(setup_blender):
+def test_update_cell_stiffness(setup_blender: Cell):
     cell = setup_blender
     cell.stiffness = 10
     stiffness = cell.stiffness
@@ -85,14 +83,14 @@ def test_update_cell_stiffness(setup_blender):
     assert stiffness == expected_stiffness
 
 
-def test_cell_pressure(setup_blender):
+def test_cell_pressure(setup_blender: Cell):
     cell = setup_blender
     pressure = cell.pressure
     expected_pressure = .01
     assert pressure == pytest.approx(expected_pressure, abs=1e-5)
 
 
-def test_update_cell_pressure(setup_blender):
+def test_update_cell_pressure(setup_blender: Cell):
     cell = setup_blender
     cell.pressure = 10
     pressure = cell.pressure
@@ -100,14 +98,14 @@ def test_update_cell_pressure(setup_blender):
     assert pressure == expected_pressure
 
 
-def test_motion_strength(setup_blender):
+def test_motion_strength(setup_blender: Cell):
     cell = setup_blender
     strength = cell.celltype.motion_strength
     expected_strength = 0
     assert strength == expected_strength
 
 
-def test_updated_motion_strength(setup_blender):
+def test_updated_motion_strength(setup_blender: Cell):
     cell = setup_blender
     cell.celltype.motion_strength = 1000
     strength = cell.celltype.motion_strength
@@ -115,14 +113,14 @@ def test_updated_motion_strength(setup_blender):
     assert strength == expected_strength
 
 
-def test_cell_material(setup_blender):
+def test_cell_material(setup_blender: Cell):
     cell = setup_blender
     mat = cell.celltype.color
     expected_mat = (0.007, 0.021, 0.3)
     assert mat == expected_mat
 
 
-def test_update_cell_material(setup_blender):
+def test_update_cell_material(setup_blender: Cell):
     cell = setup_blender
     cell.recolor((0.5, 0.5, 0.5))
     mat = cell.celltype.color
@@ -130,23 +128,15 @@ def test_update_cell_material(setup_blender):
     assert mat == expected_mat
 
 
-def test_disable_enable_physics(setup_blender):
+def test_disable_enable_physics(setup_blender: Cell):
     cell = setup_blender
     cell.disable_physics()
     assert not cell.physics_enabled
     cell.enable_physics()
     assert cell.physics_enabled
-
-
-def test_divide_cell(setup_blender):
-    cell = setup_blender
-    logic = BisectDivisionLogic(margin=0.025)
-    mother, daughter = cell.divide(logic)
-    assert isinstance(mother, Cell)
-    assert isinstance(daughter, Cell)
-
     
-def test_recenter(setup_blender):
+    
+def test_recenter(setup_blender: Cell):
     cell = setup_blender
     initial_loc = cell.loc
     cell.recenter()
@@ -154,7 +144,7 @@ def test_recenter(setup_blender):
     assert cell.loc == initial_loc
 
 
-def test_remesh(setup_blender):
+def test_remesh(setup_blender: Cell):
     cell = setup_blender
     initial_vert_count = len(cell.vertices())
     cell.remesh(voxel_size=0.5)

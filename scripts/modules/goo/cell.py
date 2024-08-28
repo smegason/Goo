@@ -36,6 +36,7 @@ class Cell(BlenderObject):
         # self.add_effector(ForceCollection.global_forces())  # link global forces
 
         self._mat = mat
+        self._color = mat.diffuse_color[:3] if mat else None
         self.obj.data.materials.append(mat)
 
         self.celltype: CellType = None
@@ -285,6 +286,8 @@ class Cell(BlenderObject):
         r, g, b = color
         _, _, _, a = self._mat.diffuse_color
         self._mat.diffuse_color = (r, g, b, a)
+        self.celltype.color = color
+        self.color = color
 
         if self._mat.use_nodes:
             for node in self._mat.node_tree.nodes:
@@ -313,6 +316,15 @@ class Cell(BlenderObject):
             The first modifier of the specified type if found, otherwise None.
         """
         return next((m for m in self.obj.modifiers if m.type == type), None)
+
+    @property
+    def color(self) -> tuple[float, float, float]:
+        """Color of the cell."""
+        return self._color
+    
+    @color.setter
+    def color(self, color: tuple[float, float, float]):
+        self._color = color
 
     @property
     def cloth_mod(self) -> Optional[ClothModifier]:
@@ -712,6 +724,7 @@ class CellType:
 
         mat = create_material(f"{name}_material", color=color) if color else None
         cell = Cell(obj, mat)
+        cell.color = color
         cell.remesh()
 
         # enable physics for cell

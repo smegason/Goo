@@ -1,5 +1,4 @@
 import sys
-import site
 import scipy
 import numpy
 import bpy
@@ -22,6 +21,3 @@ def test_libraries_loaded():
     assert sys.modules.get('scipy') is not None, "scipy is not loaded"
     assert sys.modules.get('numpy') is not None, "numpy is not loaded"
     assert sys.modules.get('pytest') is not None, "pytest is not loaded"
-
-
-test_libraries_loaded()

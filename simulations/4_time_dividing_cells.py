@@ -1,7 +1,5 @@
 from importlib import reload
 import goo
-from goo.division import *
-from goo.handler import *
 
 reload(goo)
 goo.reset_modules()
@@ -17,10 +15,10 @@ sim = goo.Simulator(celltypes=[celltype], time=500, physics_dt=1)
 sim.setup_world()
 sim.add_handlers(
     [
-        GrowthPIDHandler(target_volume=70),
-        TimeDivisionHandler(BisectDivisionLogic, mu=100, sigma=5),
-        AdhesionLocationHandler(),
-        RemeshHandler(),
+        goo.GrowthPIDHandler(target_volume=70),
+        goo.TimeDivisionHandler(goo.BisectDivisionLogic, mu=100, sigma=5),
+        goo.AdhesionLocationHandler(),
+        goo.RemeshHandler(),
     ]
 )
 
