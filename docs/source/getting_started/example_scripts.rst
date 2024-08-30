@@ -1,12 +1,13 @@
 .. _example_scripts:
 
 Example scripts
-========================
+=================
 
 Writing your first simulation script 
-------------------------------------
+--------------------------------------
 
-Examples of simulation script can be found in the `simulations/` folder, located `here <https://github.com/smegason/Goo/tree/main/simulations>`__. 
+Examples of simulation script can be found in the `/simulations/` folder, located `here <https://github.com/smegason/Goo/tree/main/simulations>`__. 
+Goo extends Blender towards agent-based simulations of cell mechanics, molecular reactions and gene regulatory networks.
 Once you get a good grasp of the library, you will be able to write your own Goo scripts and specify lots of initial conditions for your simulations of cells. 
 
 Goo scripts typically get ran from Blender's scripting tab, though they can be ran from Visual Studio Code directly using the `developer's extension <https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development>`__ developed by Jacques Lucke. 
@@ -30,30 +31,30 @@ Parameters are dimensionless in Goo.
    cellsB = goo.CellType("B")
    cellsC = goo.CellType("C")
 
-   cellsA.homo_adhesion_strength = 50
-   cellsA.stiffness = 10 # ratio = 5
-   cellsB.homo_adhesion_strength = 250
-   cellsB.stiffness = 5 # ratio = 50
+   cellsA.homo_adhesion_strength = 15
+   cellsA.stiffness = 3  # ratio = 5
+   cellsB.homo_adhesion_strength = 100
+   cellsB.stiffness = 2  # ratio = 50
    cellsC.homo_adhesion_strength = 500
-   cellsC.stiffness = 1 # ratio = 500
+   cellsC.stiffness = 1  # ratio = 500
 
 
 Cell types can then be populated with actual cell instances using `create_cell()`. 
-The initial location, size and shape of each cell need to be specified - or set randomly. A material (i.e. a color) can also be given, which comes handy to visualize cell types or track individual cells with a color. 
+The initial location, size and shape of each cell need to be specified, or set randomly. A material (i.e. a color) can also be given, which comes handy to visualize cell types or track individual cells with a color. 
 
 .. code-block:: python
 
-   cellsA.create_cell("A1", (+1.75, -5, 0), color=(0.5, 0, 0), size=1.6)
-   cellsA.create_cell("A2", (-1.75, -5, 0), color=(0.5, 0, 0), size=1.6)
+   cellsA.create_cell("A1", (-10, +1.75, 0), color=(1, 1, 0), size=1.6)
+   cellsA.create_cell("A2", (-10, -1.75, 0), color=(1, 1, 0), size=1.6)
 
-   cellsB.create_cell("B1", (+1.75, 0, 0), color=(0, 0.5, 0), size=1.6)
-   cellsB.create_cell("B2", (-1.75, 0, 0), color=(0, 0.5, 0), size=1.6)
+   cellsB.create_cell("B1", (0, +1.75, 0), color=(0, 1, 1), size=1.6)
+   cellsB.create_cell("B2", (0, -1.75, 0), color=(0, 1, 1), size=1.6)
 
-   cellsC.create_cell("C1", (+1.75, 5, 0), color=(0, 0, 0.5), size=1.6)
-   cellsC.create_cell("C2", (-1.75, 5, 0), color=(0, 0, 0.5), size=1.6)
+   cellsC.create_cell("C1", (10, +1.75, 0), color=(1, 0, 1), size=1.6)
+   cellsC.create_cell("C2", (10, -1.75, 0), color=(1, 0, 1), size=1.6)
 
 
-Until now, cells remain static meshes - no cell behaviours have been modelled yet. To do so, you need to call the simulator, 
+Until now, cells remain static meshes–no cell behaviours have been modelled yet. To do so, you need to call the simulator, 
 which handles simulating the cell physics and solving sets of ODEs over time for gene regulation circuitry. 
 The simulator takes lists of cell types and reaction-diffusion systems to be included in the simulation. If not included, objects will remain static.
 This is also where the total simulation time is specified, as well as the time step used in simulations.
@@ -67,30 +68,30 @@ The `setup_world()` function always needs be defined. It sets some general param
 
 .. code-block:: python
 
-   sim = goo.Simulator([cellsA, cellsB, cellsC], time=300, physics_dt=1)
+   sim = goo.Simulator([cellsA, cellsB, cellsC], time=130, physics_dt=1)
    sim.setup_world(seed=2024)
 
-Lastly, cell behaviors can be modelled in a modular fashion using handlers. By a cell behavior, we mean a cellular function such as cell division, adhesion, motility, signal sensing and transduction.
-The role of a handler is to execute a function over time. They are executed sequentially at every time step.  
-Goo extends Blender towards agent-based simulations of cell mechanics, molecular reactions and gene regulatory networks.
-Handlers take some parameters as arguments to control e.g. the rate of division based on time or cell volume. 
+Lastly, cell behaviors–cell division, adhesion, motility, signal sensing and transduction–can be modelled in a modular fashion using handlers.
+Handlers execute functions sequentially at every time step. They can take some parameters as arguments to control e.g. the rate of division based on cell volume. 
+In this example, we model cell growth, homotypic adhesion, volume-based division (target volume of 50 :math:`\mu m^3` with a std.dev. of 1) and gaussian random motion. 
 
 .. code-block:: python
 
    sim.add_handlers(
       [
-         goo.GrowthPIDHandler(target_volume=50), # in cubic micrometers
-         goo.AdhesionLocationHandler(), # no parameters
-         goo.RandomMotionHandler(goo.ForceDist.GAUSSIAN, max_strength=750)
+         goo.GrowthPIDHandler(target_volume=50),  # in um3
+         goo.AdhesionLocationHandler(),  # no parameters needed
+         goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=50, sigma=1),  # in um3
+         goo.RandomMotionHandler(goo.ForceDist.GAUSSIAN, max_strength=1000)
       ]
    )
 
 .. note::
    
-   The full list of handlers - cell behaviors the library currently supports - can be found in the codebase documentation. 
+   The full list of handlers–cell behaviors the library currently supports–can be found in the codebase documentation. 
 
 
-Put together, this script models three cell doublets of varying stiffness and homotypic adhesion strength, all moving at the same strength for 300 minutes. Heterotypic adhesion is ignored here.
+Put together, this script models three cell doublets of varying stiffness and homotypic adhesion strength, all moving at the same strength for ~150 minutes. Heterotypic adhesion is ignored here.
 
 
 .. literalinclude:: ../examples/2_randomly_moving_doublets.py
@@ -98,7 +99,7 @@ Put together, this script models three cell doublets of varying stiffness and ho
 
 Running this script in Blender should produce the following simulation:
 
-.. video:: ../examples/adherent_cell_doublets0001-0300.mp4
+.. video:: ../examples/doublets_1-130.mp4
    :width: 810
    :loop:
 
@@ -113,7 +114,7 @@ Running this script in Blender should produce the following simulation:
 
    
 Cell division based a threshold volume
-------------------------------------------------
+----------------------------------------
 
 .. literalinclude:: ../examples/3_volume_dividing_cells.py
    :language: python
@@ -135,7 +136,7 @@ Running this script in Blender should produce the following simulation:
 
 
 Random cell motion in a confined sphere
-------------------------------------------
+-----------------------------------------
 
 .. literalinclude:: ../examples/5_random_cell_mixing.py
    :language: python
