@@ -10,7 +10,7 @@ Contributing to the codebase
 
 2. Clone your fork repository within VSCode. 
 
-3. Install libraries: follow the steps of the `installation guide <https://smegason.github.io/Goo/getting_started/installation.html>`__. 
+3. Install dependencies: follow the steps of the `installation guide <https://smegason.github.io/Goo/getting_started/installation.html>`__. 
 
 4. Install the `Blender developer's extension <https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development>`__ developed by Jacques Lucke inside VSCode. 
 
@@ -20,15 +20,21 @@ Testing your code
 
 We developed a suite of tests to ensure the correct functioning of the codebase. They do not cover all possible cases, but they are a good starting point. Also, they do not test the realism and accuracy of the physics simulations. 
 
-1. We use pytest from within Blender's Python interpreter to run tests.
+1. We use pytest from within Blender's Python interpreter to run tests. Make sure to install the `pytest` library in your Blender Python environment.
 
 2. A suite of test cases can be found inside the `\tests` folder.
 
 3. To run the suite of tests, open a terminal in VSCode and run the following command from the codebase root directory. Make sure to replace the path to the Blender executable with the correct path on your system.
 
+macOS: 
 .. code-block:: bash
 
     /Applications/Blender-4.0.app/Contents/MacOS/Blender --background  --python-expr "import pytest; pytest.main(['-v', './tests'])"
+
+Windows: 
+.. code-block:: bash
+
+    "C:\Program Files\Blender Foundation\Blender 3.0\blender.exe" --background  --python-expr "import pytest; pytest.main(['-v', './tests'])"
 
 4. All tests should pass before submitting a pull request.
 

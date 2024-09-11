@@ -10,6 +10,7 @@ def setup_blender():
     bpy.ops.wm.read_factory_settings(use_empty=True)  # Reset to empty scene
     cellsA = CellType("A")
     cellsA.homo_adhesion_strength = 1000
+
     oriented_cell1 = cellsA.create_cell(name="A1", 
                                         loc=(10, 0, 0), 
                                         color=(0.5, 0.5, 0), 
@@ -22,20 +23,39 @@ def setup_blender():
                                         loc=(0, 0, 0), 
                                         color=(0.5, 0.5, 0), 
                                         scale=(1.5, 1.5, 2))
-    
     oriented_cell4 = cellsA.create_cell(name="A4", 
                                         loc=(0, 10, 0), 
                                         color=(0.5, 0.5, 0), 
                                         scale=(1, 1, 1), 
                                         rotation=(45, 0, 0))
-    
     oriented_cell5 = cellsA.create_cell(name="A5", 
                                         loc=(0, -10, 0), 
                                         color=(0.5, 0.5, 0), 
                                         scale=(1, 1, 1), 
                                         rotation=(0, 45, 0))
+    sized_cell1 = cellsA.create_cell(name="A6",
+                                     loc=(0, 0, 10),
+                                     color=(0.5, 0.5, 0),
+                                     scale=(1, 1, 1),
+                                     size=1)
+    sized_cell2 = cellsA.create_cell(name="A7",
+                                     loc=(0, 0, 20),
+                                     color=(0.5, 0.5, 0),
+                                     size=2, 
+                                     scale=(2, 1, 1))
+    sized_cell3 = cellsA.create_cell(name="A8",
+                                     loc=(0, 0, 30),
+                                     color=(0.5, 0.5, 0),
+                                     size=3, 
+                                     scale=(1, 2, 1))
+    sized_cell4 = cellsA.create_cell(name="A9",
+                                     loc=(0, 0, 40),
+                                     color=(0.5, 0.5, 0),
+                                     size=4, 
+                                     scale=(1, 1, 1.33))
     
-    yield oriented_cell1, oriented_cell2, oriented_cell3, oriented_cell4, oriented_cell5
+    yield (oriented_cell1, oriented_cell2, oriented_cell3, oriented_cell4, oriented_cell5, 
+           sized_cell1, sized_cell2, sized_cell3, sized_cell4)
 
 
 def test_cell_major_axis(setup_blender): 
@@ -61,3 +81,51 @@ def test_cell_major_cell_rotation(setup_blender):
     assert (pytest.approx(major5._axis, abs=1e-6) == 
             (0, 0.7071067811865476, 0.7071067811865476) 
             or (0, -0.7071067811865476, -0.7071067811865476))
+
+    
+def test_cell_area(setup_blender):
+    cell1, cell2, cell3, cell4 = setup_blender[5:9]
+    area1 = cell1.area()
+    area2 = cell2.area()
+    area3 = cell3.area()
+    area4 = cell4.area()
+
+    assert pytest.approx(area1, abs=1e-3) == 9.853
+    assert pytest.approx(area2, abs=1e-3) == 44.204
+    assert pytest.approx(area3, abs=1e-3) == 101.739
+    assert pytest.approx(area4, abs=1e-3) == 183.006
+
+
+def test_cell_aspect_ratio(setup_blender):
+    cell1, cell2, cell3, cell4 = setup_blender[5:9]
+
+    cell1.remesh()  # remesh because the cell is small
+    # cell2.remesh()
+    # cell3.remesh()
+    # cell4.remesh()
+
+    aspect1 = cell1.aspect_ratio()
+    aspect2 = cell2.aspect_ratio()
+    aspect3 = cell3.aspect_ratio()
+    aspect4 = cell4.aspect_ratio()
+
+    assert pytest.approx(aspect1, abs=1e-2) == 1
+    assert pytest.approx(aspect2, abs=1e-1) == 2
+    assert pytest.approx(aspect3, abs=1e-1) == 2
+    assert pytest.approx(aspect4, abs=1e-1) == 1.33
+
+
+def test_cell_sphericity(setup_blender):
+    cell1, cell2, cell3, cell4 = setup_blender[5:9]
+
+    cell1.remesh()  # remesh because the cell is small
+
+    sphericity1 = cell1.sphericity()
+    sphericity2 = cell2.sphericity()
+    sphericity3 = cell3.sphericity()
+    sphericity4 = cell4.sphericity()
+
+    assert pytest.approx(sphericity1, abs=1e-1) == 1
+    assert pytest.approx(sphericity2, abs=1e-1) == 1.5
+    assert pytest.approx(sphericity3, abs=1e-1) == 1.5
+    assert pytest.approx(sphericity4, abs=1e-1) == 1.2

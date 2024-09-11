@@ -154,11 +154,20 @@ class Cell(BlenderObject):
         bm.transform(self.obj_eval.matrix_world)
         volume = bm.calc_volume()
         bm.free()
-
         return volume
+    
+    def area(self) -> float:
+        """Calculates the surface area of the cell.
+
+        Returns:
+            The surface area of the cell.
+        """
+        faces = self.obj_eval.data.polygons
+        area = sum(f.area for f in faces)
+        return area
 
     def COM(self, local_coords: bool = False) -> Vector:
-        """Calculates the center of mass of a cell.
+        """Calculates the center of mass of the cell.
 
         Args:
             local_coords: if `True`, coordinates are returned in local object
@@ -170,6 +179,62 @@ class Cell(BlenderObject):
         vert_coords = self.vertices(local_coords)
         com = Vector(np.mean(vert_coords, axis=0))
         return com
+    
+    def aspect_ratio(self) -> float:
+        """Calculates the aspect ratio of the cell.
+
+        The aspect ratio is the ratio of the major axis to the minor axis of the cell.
+
+        Returns:
+            The aspect ration value for a cell.
+        """
+        major_axis = self.major_axis().length()
+        minor_axis = self.minor_axis().length()
+        aspect_ratio = major_axis / minor_axis
+        return aspect_ratio
+
+    def sphericity(self) -> float:
+        """Calculates the sphericity of the cell.
+        
+        The sphericity is a measure of how closely a cell resembles a perfect sphere.
+        It is calculated as the ratio of the surface area of a sphere with the same volume
+        as the cell to the surface area of the cell.
+        
+        Returns:
+            The sphericity value for the cell.
+        """
+
+        volume = self.volume()
+        surface_area = self.area()
+        sphericity = (np.pi**(1/3) * (6 * volume)**(2/3)) / surface_area
+        return sphericity
+    
+    def compactness(self) -> float:
+        """Calculates the compactness of the cell. 
+
+        Compactness provides a measure of how efficiently the volume 
+        is enclosed by the surface area, calculated as .
+
+        Returns: 
+            The compactness value for the cell. 
+        """
+
+        volume = self.volume()
+        area = self.area()
+        compactness = (volume ^ 2 / area ^ 3)
+        return compactness
+
+    def sav_ratio(self) -> float: 
+        """Calculates the surface area: volume (SA:V) ratio of the cell. 
+
+        Returns:
+            The SA:V ratio of the cell. 
+        """
+
+        volume = self.volume()
+        area = self.area()
+        sav_ratio = area / volume
+        return sav_ratio
 
     def _get_eigenvector(self, n: int) -> Axis:
         """Returns the nth eigenvector (axis) in object space as a line defined
@@ -200,7 +265,6 @@ class Cell(BlenderObject):
         max_index = np.argmax(projections)
         first_vertex = Vector(verts[min_index])
         last_vertex = Vector(verts[max_index])
-
         return Axis(Vector(axis), first_vertex, last_vertex, self.obj_eval.matrix_world)
 
     def major_axis(self) -> Axis:
@@ -241,7 +305,7 @@ class Cell(BlenderObject):
             mother.celltype.add_cell(daughter)
         return mother, daughter
 
-    def recenter(self):
+    def recenter(self) -> None:
         """Recenter the cell origin to the center of mass of the cell."""
         bm = bmesh.new()
         bm.from_mesh(self.obj_eval.to_mesh())
@@ -254,7 +318,7 @@ class Cell(BlenderObject):
 
         self.loc = com
 
-    def remesh(self, voxel_size: float = 0.55, smooth: bool = False):
+    def remesh(self, voxel_size: float = 0.55, smooth: bool = False) -> None:
         """Remesh the underlying mesh representation of the cell.
 
         Remeshing is done using the built-in `voxel_remesh()`.
@@ -273,7 +337,7 @@ class Cell(BlenderObject):
         for f in self.obj.data.polygons:
             f.use_smooth = smooth
 
-    def recolor(self, color: tuple[float, float, float]):
+    def recolor(self, color: tuple[float, float, float]) -> None:
         """Recolors the material of the cell.
 
         This function changes the diffuse color of the cell's material to the

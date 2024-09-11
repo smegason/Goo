@@ -23,7 +23,7 @@ class Handler:
         get_cells: Callable[[], list[Cell]], 
         get_diffsystems: Callable[[], list[DiffusionSystem]],
         dt: float
-    ):
+    ) -> None:
         """Set up the handler.
 
         Args:
@@ -35,7 +35,7 @@ class Handler:
         self.get_diff_systems = get_diffsystems
         self.dt = dt
 
-    def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
+    def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
         """Run the handler.
 
         This is the function that gets passed to Blender, to be called
@@ -67,7 +67,7 @@ class RemeshHandler(Handler):
         self.sphere_factor = sphere_factor
 
     @override
-    def run(self, scene, depsgraph):
+    def run(self, scene, depsgraph) -> None:
         if scene.frame_current % self.freq != 0:
             return
         for cell in self.get_cells():
@@ -111,7 +111,7 @@ class DiffusionHandler(Handler):
         self.diffusionSystem = diffusionSystem
         self.kd_tree = None
 
-    def build_kd_tree(self):
+    def build_kd_tree(self) -> None:
         """Build the KD-Tree from the grid coordinates if not already built."""
         self.kd_tree = self.diffusionSystem._build_kdtree()
 
@@ -152,7 +152,7 @@ class DiffusionHandler(Handler):
                 add_conc = k * (cell_distance / radius)
                 self.diffusionSystem.update_concentration(mol_idx, index, add_conc)
 
-    def diffuse(self, mol_idx: int):
+    def diffuse(self, mol_idx: int) -> None:
         """Update the concentration of molecules based on diffusion."""
         conc = self.diffusionSystem._grid_concentrations[mol_idx]
         laplacian = laplace(conc, mode='wrap')
@@ -161,7 +161,7 @@ class DiffusionHandler(Handler):
         conc = np.clip(conc, 0, None)
         self.diffusionSystem._grid_concentrations[mol_idx] = conc
 
-    def simulate_diffusion(self):
+    def simulate_diffusion(self) -> None:
         """Run the diffusion simulation over the total time."""
         tot_time = self.diffusionSystem._total_time
         t_step = self.diffusionSystem._time_step
@@ -206,7 +206,7 @@ class AdhesionLocationHandler(Handler):
     """Handler for updating cell-associated adhesion locations every frame."""
 
     @override
-    def run(self, scene, depsgraph):
+    def run(self, scene, depsgraph) -> None:
         for cell in self.get_cells():
             cell_size = cell.major_axis().length() / 2
 
@@ -261,12 +261,12 @@ class GrowthPIDHandler(Handler):
     def setup(self, 
               get_cells: Callable[[], list[Cell]], 
               get_diffsystems: Callable[[], list[DiffusionSystem]], 
-              dt):
+              dt) -> None:
         super(GrowthPIDHandler, self).setup(get_cells, get_diffsystems, dt)
         for cell in self.get_cells():
             self.initialize_PID(cell)
 
-    def initialize_PID(self, cell: Cell):
+    def initialize_PID(self, cell: Cell) -> None:
         """Initialize PID controller for a cell.
 
         Args:
@@ -286,7 +286,7 @@ class GrowthPIDHandler(Handler):
         cell["target_volume"] = self.target_volume
 
     @override
-    def run(self, scene, depsgraph):
+    def run(self, scene, depsgraph) -> None:
         for cell in self.get_cells():
             if "target_volume" not in cell:
                 self.initialize_PID(cell)
@@ -298,6 +298,8 @@ class GrowthPIDHandler(Handler):
                 continue
 
             cell["volume"] = cell.volume()
+            cell["area"] = cell.area()
+            cell["aspect_ratio"] = cell.aspect_ratio()
 
             match self.growth_type:
                 case Growth.LINEAR:
@@ -356,7 +358,7 @@ class RandomMotionHandler(Handler):
         self.max_strength = max_strength
 
     @override
-    def run(self, scene, depsgraph):
+    def run(self, scene, depsgraph) -> None:
         for cell in self.get_cells():
             if not cell.physics_enabled:
                 continue
@@ -423,7 +425,7 @@ class ColorizeHandler(Handler):
 
 
 @staticmethod
-def _get_divisions(cells: list[Cell]):
+def _get_divisions(cells: list[Cell]) -> list[tuple[str, str, str]]:
     """Calculate a list of cells that have divided in the past frame.
 
     Each element of the list contains a tuple of three names: that of the mother
@@ -442,7 +444,9 @@ def _get_divisions(cells: list[Cell]):
 
 
 @staticmethod
-def _contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
+def _contact_area(
+    cell1: Cell, cell2: Cell, threshold=0.1
+) -> tuple[float, float, float, float]:
     """Calculate the contact areas between two cells.
 
     Contact is defined as two faces that are within a set threshold distance
@@ -485,7 +489,7 @@ def _contact_area(cell1: Cell, cell2: Cell, threshold=0.1):
 
 
 @staticmethod
-def _contact_areas(cells, threshold=4):
+def _contact_areas(cells: list[Cell], threshold=4) -> tuple[dict, dict]:
     """Calculate the pairwise contact areas between a list of cells.
 
     Contact is calculated heuristically by first screening cells that are within
@@ -521,6 +525,38 @@ def _contact_areas(cells, threshold=4):
     return areas, ratios
 
 
+@staticmethod
+def _shape_features(cells: list[Cell]) -> tuple[float, float, float, float]:
+    """Calculate a set of shape features of a cell.
+
+    Inlcudes the aspect ratio, sphericity
+
+    Args: 
+        cell: A cell. 
+
+    Returns: 
+        Shape features (aspect ratio, sphericity, compactness, sav_ratio). 
+    """
+
+    aspect_ratios = []
+    sphericities = []
+    compactnesses = []
+    sav_ratios = []
+    
+    for cell in cells:
+        aspect_ratio = cell.aspect_ratio()
+        sphericity = cell.sphericity()
+        compactness = cell.compactness()
+        sav_ratio = cell.sav_ratio()
+
+        aspect_ratios.append(aspect_ratio)
+        sphericities.append(sphericity)
+        compactnesses.append(compactness)
+        sav_ratios.append(sav_ratio)
+
+    return (aspect_ratios, sphericities, compactnesses, sav_ratios)
+
+
 class _all:
     def __get__(self, instance, cls):
         return ~cls(0)
@@ -548,6 +584,7 @@ class DataFlag(Flag):
     VOLUMES = auto()
     PRESSURES = auto()
     CONTACT_AREAS = auto()
+    SHAPE_FEATURES = auto()
     GRID = auto()
     CELL_CONCENTRATIONS = auto()
 
@@ -574,7 +611,7 @@ class DataExporter(Handler):
     def setup(self, 
               get_cells: Callable[[], list[Cell]], 
               get_diffsystems: Callable[[], list[DiffusionSystem]],
-              dt):
+              dt) -> None:
         super(DataExporter, self).setup(get_cells, get_diffsystems, dt)
         self.time_start = datetime.now()
         out = {"seed": bpy.context.scene["seed"], "frames": []}
@@ -587,7 +624,7 @@ class DataExporter(Handler):
         self.run(bpy.context.scene, bpy.context.evaluated_depsgraph_get())
 
     @override
-    def run(self, scene, depsgraph):
+    def run(self, scene, depsgraph) -> None:
         frame_out = {"frame": scene.frame_current}
 
         if self.options & DataFlag.TIMES:
@@ -610,6 +647,15 @@ class DataExporter(Handler):
                 cell_out["pressure"] = cell.pressure
             if self.options & DataFlag.CELL_CONCENTRATIONS:
                 cell_out["concentrations"] = cell.molecules_conc
+
+        if self.options & DataFlag.SHAPE_FEATURES:
+            aspect_ratios, sphericities, compactnesses, sav_ratios = _shape_features(
+                self.get_cells()
+            )
+            frame_out["aspect_ratios"] = aspect_ratios
+            frame_out["aspect_ratios"] = aspect_ratios
+            frame_out["compactnesses"] = compactnesses
+            frame_out["sav_ratios"] = sav_ratios
 
         if self.options & DataFlag.CONTACT_AREAS:
             areas, ratios = _contact_areas(self.get_cells())
@@ -634,7 +680,7 @@ class DataExporter(Handler):
         else:
             print(frame_out)
 
-    def _convert_numpy_to_list(self, obj):
+    def _convert_numpy_to_list(self, obj) -> Any:
         """Convert numpy arrays to lists for JSON serialization."""
         if isinstance(obj, np.ndarray):
             return obj.tolist()
@@ -644,10 +690,18 @@ class DataExporter(Handler):
             return [self._convert_numpy_to_list(i) for i in obj]
         else:
             return obj
-        
+
 
 class SliceExporter(Handler):
-    """Handler to save Z slices of the simulation at each frame."""
+    """Handler to save Z slices of the simulation at each frame.
+    
+    Attributes:
+        output_dir (str): Directory to save the slices.
+        z_range (tuple[float, float]): Z tickness to image. Default is (5, -5), 
+            in micrometers.
+        z_step (float): Step size between slices, in micrometer.
+        microscope_dt (int): Number of frames between each slice.    
+    """
 
     def __init__(
         self,
@@ -664,7 +718,7 @@ class SliceExporter(Handler):
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-    def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph):
+    def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
         # export slices every microscope_dt
         if scene.frame_current % self.microscope_dt != 0:
             return
@@ -691,7 +745,9 @@ class SliceExporter(Handler):
         # Iterate over z-axis
         for i in range(num_slices):
             # current slice position
-            slice_z = z_start + i * self.z_step if z_start < z_end else z_start - i * self.z_step
+            slice_z = (z_start + i * self.z_step 
+                       if z_start < z_end 
+                       else z_start - i * self.z_step)
             camera.location.z = slice_z
             print("Camera location:", camera.location)
 
@@ -710,7 +766,7 @@ class SliceExporter(Handler):
 
 
 @staticmethod
-def create_and_center_camera(location=(0, 0, 10), target=(0, 0, 0)):
+def create_and_center_camera(location=(0, 0, 10), target=(0, 0, 0)) -> bpy.types.Object:
     """Create a new camera object, set its parameters, 
     center it to the specified location, and orient it towards the target.
 
