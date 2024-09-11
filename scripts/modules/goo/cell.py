@@ -221,7 +221,7 @@ class Cell(BlenderObject):
 
         volume = self.volume()
         area = self.area()
-        compactness = (volume ^ 2 / area ^ 3)
+        compactness = (volume**2 / area**3)
         return compactness
 
     def sav_ratio(self) -> float: 

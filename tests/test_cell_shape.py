@@ -129,3 +129,33 @@ def test_cell_sphericity(setup_blender):
     assert pytest.approx(sphericity2, abs=1e-1) == 1.5
     assert pytest.approx(sphericity3, abs=1e-1) == 1.5
     assert pytest.approx(sphericity4, abs=1e-1) == 1.2
+
+# def test_sav_ratio(setup_blender):
+#     cell1, cell2, cell3, cell4 = setup_blender[5:9]
+
+#     cell1.remesh()  # remesh because the cell is small
+
+#     sav1 = cell1.sav_ratio()
+#     sav2 = cell2.sav_ratio()
+#     sav3 = cell3.sav_ratio()
+#     sav4 = cell4.sav_ratio()
+
+#     assert pytest.approx(sav1, abs=1e-1) == 3.461
+#     assert pytest.approx(sav2, abs=1e-1) == (0.804 or 0.530)
+#     assert pytest.approx(sav3, abs=1e-1) == (0.804 or 0.530)
+#     assert pytest.approx(sav4, abs=1e-1) == 0.83
+
+# def test_cell_compactness(setup_blender):
+#     cell1, cell2, cell3, cell4 = setup_blender[5:9]
+
+#     cell1.remesh()  # remesh because the cell is small
+
+#     compactness1 = cell1.compactness()
+#     compactness2 = cell2.compactness()
+#     compactness3 = cell3.compactness()
+#     compactness4 = cell4.compactness()
+
+#     assert pytest.approx(compactness1, abs=1e-1) == 0
+#     assert pytest.approx(compactness2, abs=1e-1) == 0
+#     assert pytest.approx(compactness3, abs=1e-1) == 0
+#     assert pytest.approx(compactness4, abs=1e-1) == 0
