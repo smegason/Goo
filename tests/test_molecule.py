@@ -8,22 +8,23 @@ def setup_blender():
     bpy.ops.wm.read_factory_settings(use_empty=True)  # Reset to empty scene
     cellsA = goo.CellType("A")
     cellsA.homo_adhesion_strength = 100
-    cell = cellsA.create_cell("A1", (0, 0, 0), color=(0.5, 0, 0), size=2)
+    cell = cellsA.create_cell(
+        "A1", (0, 0, 0), color=(0.5, 0, 0), size=2, target_volume=50
+    )
 
     molA = goo.Molecule("molA", conc=1, D=1, gradient="linear")
     molB = goo.Molecule("molB", conc=0.5, D=2, gradient="random")
     molC = goo.Molecule("molB", conc=0.5, D=2)
 
     diffusionsystem = goo.DiffusionSystem(molecules=[molA, molB, molC])
-    
+
     sim = goo.Simulator(celltypes=[cellsA], diffsystems=[diffusionsystem], time=20)
     sim.set_seed(2024)
     sim.add_handlers(
-        
         [
-            goo.GrowthPIDHandler(target_volume=50),
-            goo.AdhesionLocationHandler(),
-            goo.DiffusionHandler(diffusionSystem=diffusionsystem),
+            goo.GrowthPIDHandler(),
+            goo.RecenterHandler(),
+            goo.DiffusionHandler(),
         ]
     )
 

@@ -212,10 +212,12 @@ class DivisionHandler(Handler):
         self.sigma = sigma
 
     @override
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_diffsystems: Callable[[], list[DiffusionSystem]], 
-              dt: float):
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt: float,
+    ):
         super(DivisionHandler, self).setup(get_cells, get_diffsystems, dt)
         for cell in self.get_cells():
             cell["divided"] = False
@@ -282,8 +284,8 @@ class TimeDivisionHandler(DivisionHandler):
         super(TimeDivisionHandler, self).__init__(division_logic, mu, sigma)
 
     @override
-    def setup(self, get_cells, dt):
-        super(TimeDivisionHandler, self).setup(get_cells, dt)
+    def setup(self, get_cells, get_diffsystem, dt):
+        super(TimeDivisionHandler, self).setup(get_cells, get_diffsystem, dt)
         for cell in self.get_cells():
             cell["last_division_time"] = 0
 

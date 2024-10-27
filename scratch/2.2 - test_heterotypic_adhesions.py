@@ -20,12 +20,10 @@ locs_B = [
     (3, 2, 0),
 ]
 
-celltypeA = goo.SimpleType("A")
-celltypeA.homo_adhesion_strength = -1000
+celltypeA = goo.CellType("A", pattern="simple", homo_adhesion_strength=100, size=1)
 
-celltypeB = goo.SimpleType("B")
-celltypeB.homo_adhesion_strength = -1000
-celltypeA.set_hetero_adhesion(celltypeB, 3500)
+celltypeB = goo.CellType("B", pattern="simple", homo_adhesion_strength=100, size=1)
+celltypeA.set_hetero_adhesion_strength(celltypeB, 350)
 
 for i, loc in enumerate(locs_A):
     cell = celltypeA.create_cell("cellA" + str(i), loc)
@@ -39,4 +37,4 @@ for i, loc in enumerate(locs_B):
 
 sim = goo.Simulator([celltypeA, celltypeB])
 sim.setup_world()
-sim.add_handler(AdhesionLocationHandler())
+sim.add_handler(RecenterHandler())

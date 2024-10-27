@@ -52,7 +52,7 @@ sim.toggle_gravity(True)
 sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=30),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RandomMotionHandler(distribution=ForceDist.CONSTANT, max_strength=2500),
         DataExporter(
             path="/tmp/out.json", options=DataFlag.TIMES | DataFlag.CONTACT_AREAS

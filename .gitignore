@@ -126,11 +126,13 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.blender_venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+hook/
 
 # Spyder project settings
 .spyderproject
@@ -141,6 +143,9 @@ venv.bak/
 
 # mkdocs documentation
 /site
+
+# Sphinx documentation
+docs/build/
 
 # mypy
 .mypy_cache/
@@ -175,11 +180,6 @@ pyrightconfig.json
 
 ### VisualStudioCode ###
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/

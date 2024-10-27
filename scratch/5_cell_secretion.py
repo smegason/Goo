@@ -20,14 +20,13 @@ cell2.pressure = cell1.pressure
 molA = goo.Molecule("molA", conc=1, D=1)
 diffusionsystem = goo.DiffusionSystem(molecules=[molA])
 
-sim = goo.Simulator(celltypes=[celltype], diffsystems=[diffusionsystem])
+sim = goo.Simulator(celltypes=[celltype], diffsystem=[diffusionsystem])
 sim.setup_world()
 sim.add_handlers(
-    
     [
         GrowthPIDHandler(target_volume=50),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         RandomMotionHandler(distribution=ForceDist.CONSTANT, max_strength=5000),
-        DiffusionHandler()
+        DiffusionHandler(),
     ]
 )

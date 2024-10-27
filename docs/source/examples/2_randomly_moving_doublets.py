@@ -30,8 +30,8 @@ sim.setup_world(seed=2024)
 sim.add_handlers(
     [
         goo.GrowthPIDHandler(target_volume=50),  # in um3
-        goo.AdhesionLocationHandler(),  # no parameters needed
+        goo.RecenterHandler(),  # no parameters needed
         goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=50, sigma=1),  # in um3
-        goo.RandomMotionHandler(goo.ForceDist.GAUSSIAN, max_strength=1000)
+        goo.RandomMotionHandler(goo.ForceDist.GAUSSIAN, max_strength=1000),
     ]
 )

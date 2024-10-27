@@ -1,6 +1,6 @@
 from importlib import reload
 import goo
-from goo import * 
+from goo import *
 
 reload(goo)
 reset_modules()
@@ -33,7 +33,7 @@ sim.setup_world()
 sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=20),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         # RemeshHandler(),
         DataExporter(
             path="/tmp/out.json", options=DataFlag.TIMES | DataFlag.CONTACT_AREAS

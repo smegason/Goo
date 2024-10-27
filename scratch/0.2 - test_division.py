@@ -11,13 +11,14 @@ goo.reset_modules()
 goo.reset_scene()
 
 rot = (pi / 4, pi / 4, pi / 4)
-cell = goo.create_cell(
+celltype = goo.CellType("celltype", pattern="simple")
+cell = celltype.create_cell(
     "cell",
     (0, 0, 0),
     subdivisions=4,
     scale=(2, 1, 3),
     rotation=rot,
-    physics_on=False,
+    physics_enabled=False,
 )
 
 print(f"Initial volume: {cell.volume()}")

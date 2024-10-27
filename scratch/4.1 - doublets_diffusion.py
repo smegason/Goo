@@ -19,22 +19,20 @@ molB = goo.Molecule("molB", conc=0, D=2, gradient="random")
 
 diffusionsystem = goo.DiffusionSystem(molecules=[molA, molB])
 
-sim = goo.Simulator(celltypes=[celltype], diffsystems=[diffusionsystem], time=500)
-sim.setup_world() 
+sim = goo.Simulator(celltypes=[celltype], diffsystem=[diffusionsystem], time=500)
+sim.setup_world()
 sim.add_handlers(
-    
     [
         GrowthPIDHandler(target_volume=50),
         # SizeDivisionHandler(BisectDivisionLogic, mu=60, sigma=10),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         # RemeshHandler(),
         # RandomMotionHandler(distribution=ForceDist.CONSTANT, max_strength=2000),
         DiffusionHandler(diffusionSystem=diffusionsystem),
         # MolecularSensingHandler(diffusionSystem=diffusionsystem),
         DataExporter(
-            path="/Users/antoine/Harvard/MegasonLab/GPU_backup/AntoineRuzette/goo/data/diffusion/20240701_molecules_secretion/linear_gradient.json", 
-            options=DataFlag.CELL_CONCENTRATIONS | DataFlag.MOTION_PATH # or ALL flag
+            path="/Users/antoine/Harvard/MegasonLab/GPU_backup/AntoineRuzette/goo/data/diffusion/20240701_molecules_secretion/linear_gradient.json",
+            options=DataFlag.CELL_CONCENTRATIONS | DataFlag.MOTION_PATH,  # or ALL flag
         ),
-        
     ]
 )

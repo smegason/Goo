@@ -2,8 +2,8 @@ import pytest
 import bpy
 import goo
 from goo import Cell, CellType
-from goo.force import * 
-from goo.handler import AdhesionLocationHandler, GrowthPIDHandler, RandomMotionHandler
+from goo.force import *
+from goo.handler import RecenterHandler, GrowthPIDHandler, RandomMotionHandler
 from goo.simulator import Simulator
 import bmesh
 from mathutils import Vector
@@ -22,7 +22,7 @@ def setup_blender():
     sim.add_handlers(
         [
             GrowthPIDHandler(target_volume=25),
-            AdhesionLocationHandler(),
+            RecenterHandler(),
         ]
     )
     yield cell

@@ -1,4 +1,5 @@
 from functools import reduce
+from typing import Union
 
 import bpy
 import bmesh
@@ -8,11 +9,7 @@ from mathutils import *
 
 class BlenderObject:
     def __init__(self, obj: bpy.types.Object):
-        self._obj = obj
-
-    @property
-    def obj(self):
-        return self._obj
+        self.obj = obj
 
     @property
     def name(self):
@@ -32,6 +29,16 @@ class BlenderObject:
 
     def hide(self):
         self.obj.hide_set(True)
+
+    # ----- CUSTOM PROPERTIES -----
+    def __setitem__(self, k: str, v: Union[float, list[float], int, list[int], str]):
+        self.obj[k] = v
+
+    def __contains__(self, k: str):
+        return k in self.obj.keys()
+
+    def __getitem__(self, k):
+        return self.obj[k]
 
 
 class Axis:
@@ -205,9 +212,9 @@ class PhysicsConstructor:
     def __init__(self, *mod_contructors: "ModConstructor"):
         self.mod_constructors = [*mod_contructors]
 
-    def __call__(self, obj: bpy.types.Object):
+    def __call__(self, bobj: BlenderObject):
         for mod_constructor in self.mod_constructors:
-            mod_constructor().construct(obj)
+            mod_constructor().construct(bobj.obj)
 
 
 class ModConstructor:
@@ -253,7 +260,7 @@ class ClothConstructor(ModConstructor):
         mod.settings.use_pressure_volume = True
         mod.settings.target_volume = 1
         mod.settings.pressure_factor = 2
-        mod.settings.fluid_density = 1.05
+        # mod.settings.fluid_density = 1.05
         # Cloth > Collisions
         mod.collision_settings.collision_quality = 4
         mod.collision_settings.use_collision = True

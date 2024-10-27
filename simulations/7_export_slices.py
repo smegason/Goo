@@ -14,17 +14,14 @@ cell1.stiffness = 2
 cell1.pressure = 5
 output_dir = "<output/directory/>"
 
-sim = goo.Simulator(celltypes=[celltype], 
-                    time=500, 
-                    physics_dt=1)
+sim = goo.Simulator(celltypes=[celltype], time=500, physics_dt=1)
 sim.setup_world()
 sim.add_handlers(
-    
     [
         goo.GrowthPIDHandler(target_volume=50),
         goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=50, sigma=2),
-        goo.AdhesionLocationHandler(),
+        goo.RecenterHandler(),
         goo.RemeshHandler(),
-        goo.SliceExporter(output_dir=output_dir, z_range=(3, -3), z_step=0.2)
+        goo.SliceExporter(output_dir=output_dir, z_range=(3, -3), z_step=0.2),
     ]
 )

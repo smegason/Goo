@@ -22,6 +22,6 @@ sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=5),
         # RemeshHandler(),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
     ]
 )

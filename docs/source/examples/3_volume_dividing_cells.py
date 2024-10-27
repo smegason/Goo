@@ -19,7 +19,7 @@ sim.add_handlers(
     [
         goo.GrowthPIDHandler(target_volume=70),
         goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=60, sigma=2),
-        goo.AdhesionLocationHandler(),
+        goo.RecenterHandler(),
         goo.RemeshHandler(),
     ]
 )

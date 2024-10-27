@@ -55,10 +55,9 @@ sim.setup_world()
 sim.add_handlers(
     [
         GrowthPIDHandler(target_volume=20),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
         # RemeshHandler(),
         SceneExtensionHandler(end=500),
-        
     ]
 )
 

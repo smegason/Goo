@@ -22,7 +22,7 @@ Goo currently support Blender 3.3 to 4.0. We aim to maintain Goo for future Blen
       wget <Goo-latest-release>.tar.gz
       tar -xvf <Goo-latest-release>.tar.gz
 
-2. In Blender < 4.0, go to Edit > Preferences > File Paths > Scripts: add `<your_root_path>/Goo/scripts`. In Blender 4.0 and above, the script folder is now located at Edit > Preferences > File Paths > Script Directories: add an entry with `goo` as name and `<your_root_path>/Goo/scripts` as path.
+2. In Blender, go to `Edit > Preferences > File Paths > Scripts` and add `<your_root_path>/Goo/scripts`.
 
 Dependencies
 ------------

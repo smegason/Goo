@@ -6,7 +6,7 @@ from enum import Enum, Flag, auto
 from typing import Union, List, Optional
 
 from goo.handler import Handler
-from goo.cell import CellType
+from goo.cell import Cell, CellType
 from goo.molecule import DiffusionSystem
 
 Render = Enum("Render", ["PNG", "TIFF", "MP4"])
@@ -16,32 +16,35 @@ class Simulator:
     """A simulator for cell-based simulations in Blender.
 
     Args:
-        celltypes (List[CellType]): List of cell types.
+        cells (List[Cell]): List of cells.
         time (List[int]): Start and end frames.
         physics_dt (int): Time step for physics simulation.
         molecular_dt (int): Time step for molecular simulation.
 
     """
+
+    # TODO: determine diffsystem or diffsystems
     def __init__(
         self,
-        celltypes: List[CellType] = [],
-        diffsystems: List[DiffusionSystem] = [],
+        celltypes: List[Union[CellType, Cell]] = [],
+        diffsystems: DiffusionSystem = [],
         time: int = 250,
         physics_dt: int = 1,
-        molecular_dt: int = 0.1,
-    ): 
+        molecular_dt: int = 1,
+    ):
         self.celltypes = celltypes
-        self.diffsystems = diffsystems
+        # takes first possible diffsystem
+        self.diffsystem = diffsystems[0] if diffsystems else None
         self.physics_dt = physics_dt
-        self.molecular_dt = physics_dt / 10
+        self.molecular_dt = molecular_dt
         self.addons = ["add_mesh_extra_objects"]
         self.render_format: Render = Render.PNG
         self.time = time
 
         # Set up simulation parameters for diffusion system
-        for diff_sys in diffsystems: 
-            diff_sys._time_step = molecular_dt
-            diff_sys._total_time = physics_dt
+        if self.diffsystem is not None:
+            self.diffsystem.time_step = molecular_dt
+            self.diffsystem.total_time = physics_dt
 
     def set_seed(self, seed):
         np.random.seed(seed)
@@ -116,73 +119,80 @@ class Simulator:
     def toggle_gravity(self, on):
         bpy.context.scene.use_gravity = on
 
-    def add_celltype(self, celltype):
-        self.celltypes.append(celltype)
-
-    def add_celltypes(self, celltypes):
-        self.celltypes.extend(celltypes)
-
     def get_cells_func(self, celltypes=None):
-        celltypes = celltypes if celltypes is not None else self.celltypes
+        celltypes = celltypes if celltypes else self.celltypes
 
         def get_cells():
             return [cell for celltype in celltypes for cell in celltype.cells]
 
         return get_cells
-    
-    def get_diffsystems_func(self, diffsystems=None):
-        diffsystems = diffsystems if diffsystems is not None else self.diffsystems
 
-        def get_diffsystems():
-            return diffsystems
+    def get_diffsystem_func(self, diffsystem=None):
+        diffsystem = diffsystem if diffsystem is not None else self.diffsystem
 
-        return get_diffsystems
+        def get_diffsystem():
+            return diffsystem
+
+        return get_diffsystem
 
     def get_cells(self, celltypes=None):
-        celltypes = celltypes if celltypes is not None else self.celltypes
+        celltypes = celltypes if celltypes else self.celltypes
         return [cell for celltype in celltypes for cell in celltype.cells]
-    
+
     def extend_scene(self):
         cells = self.get_cells()
         for cell in cells:
             if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.time:
                 cell.cloth_mod.point_cache.frame_end = self.time
 
-    def add_handler(self, 
-                    handler: Handler, celltypes: list[CellType] = None, 
-                    diffsystems: list[DiffusionSystem] = None):
-        handler.setup(self.get_cells_func(celltypes), 
-                      self.get_diffsystems_func(diffsystems), 
-                      self.physics_dt)
+    def add_handler(
+        self,
+        handler: Handler,
+        celltypes: list[CellType] = None,
+        diffsystem: DiffusionSystem = None,
+    ):
+        handler.setup(
+            self.get_cells_func(celltypes),
+            self.get_diffsystem_func(diffsystem),
+            self.physics_dt,
+        )
         bpy.app.handlers.frame_change_post.append(handler.run)
 
-    def add_handlers(self, handlers: list[Handler], celltypes: list[CellType] = None):
+    def add_handlers(self, handlers: list[Handler]):
         # handlers.append(SceneExtensionHandler(bpy.context.scene.frame_end))
         for handler in handlers:
-            self.add_handler(handler, celltypes)
+            self.add_handler(handler)
 
     def render(
-        self, 
+        self,
         frames: Optional[Union[List[int], range]] = None,
         path: str = None,
         camera=False,
-        format: Render = Render.PNG
-    ): 
+        format: Render = Render.PNG,
+    ):
         """
-        Render the simulation in the background without 
+        Render the simulation in the background without
         updating the 3D Viewport in real time.
-        If a camera is specified, the frames will be rendered with it, 
-        otherwise the frames will be rendered in the 3D Viewport. 
-        It will updated the scene at the end of the simulation.      
+        If a camera is specified, the frames will be rendered with it,
+        otherwise the frames will be rendered in the 3D Viewport.
+        It will updated the scene at the end of the simulation.
 
         Args:
             start (int): Start frame.
             end (int): End frame.
             path (str): Path to save the frames.
             camera (bool): Render with the camera.
-            format (Render): Render format: PNG (default), TIFF, MP4. 
+            format (Render): Render format: PNG (default), TIFF, MP4.
         """
-        match self.render_format:
+        if not path:
+            path = os.path.dirname(bpy.context.scene.render.filepath)
+        else:
+            print("Save path not provided. Falling back on default path.")
+
+        print("----- RENDERING... -----")
+
+        render_format = format if format else self.render_format
+        match render_format:
             case Render.PNG:
                 bpy.context.scene.render.image_settings.file_format = "PNG"
             case Render.TIFF:
@@ -191,12 +201,6 @@ class Simulator:
                 bpy.context.scene.render.image_settings.file_format = "FFMPEG"
                 bpy.context.scene.render.ffmpeg.format = "MPEG4"
 
-        if not path:
-            path = os.path.dirname(bpy.context.scene.render.filepath)
-        else: 
-            print("Save path not provided. Falling back on default path.")
-
-        print("----- RENDERING... -----")
         match frames:
             case None:
                 start = 1
@@ -208,9 +212,10 @@ class Simulator:
                 frame_list = frames
 
         for i in range(1, max(frame_list) + 1):
+            print(i, end=" ")
             bpy.context.scene.frame_set(i)
             bpy.context.scene.render.filepath = os.path.join(path, f"{i:04d}")
-            if i in frame_list: 
+            if i in frame_list:
                 if camera:
                     bpy.ops.render.render(write_still=True)
                 else:
@@ -219,9 +224,30 @@ class Simulator:
         bpy.context.scene.render.filepath = path
         print("\n----- RENDERING COMPLETED! -----")
 
+    def render_animation(self, path=None, end=250, camera=False):
+        if not path:
+            print("Save path not provided. Falling back on default path.")
+            path = os.path.dirname(bpy.context.scene.render.filepath)
+        bpy.context.scene.render.filepath = os.path.join(path, "")
+
+        bpy.context.scene.render.image_settings.file_format = "FFMPEG"
+        bpy.context.scene.render.ffmpeg.format = "MPEG4"
+
+        print("----- RENDERING... -----")
+        print("Rendering to", bpy.context.scene.render.filepath)
+
+        bpy.context.scene.frame_start = 1
+        bpy.context.scene.frame_set(1)
+        bpy.context.scene.frame_end = end
+        if camera:
+            bpy.ops.render.render(animation=True, write_still=True)
+        else:
+            bpy.ops.render.opengl(animation=True, write_still=True)
+        print("\n----- RENDERING COMPLETED! -----")
+
     def run(self, end=250):
         """
-        Run the simulation in the background without 
+        Run the simulation in the background without
         updating the 3D Viewport in real time.
 
         Args:

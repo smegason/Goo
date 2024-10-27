@@ -5,9 +5,9 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-cellsA = goo.CellType("A")
-cellsB = goo.CellType("B")
-cellsC = goo.CellType("C")
+cellsA = goo.CellType("A", target_volume=50)
+cellsB = goo.CellType("B", target_volume=50)
+cellsC = goo.CellType("C", target_volume=50)
 
 cellsA.homo_adhesion_strength = 0
 cellsB.homo_adhesion_strength = 250
@@ -26,13 +26,13 @@ sim = goo.Simulator([cellsA, cellsB, cellsC], time=300)
 sim.setup_world(seed=2024)
 sim.add_handlers(
     [
-        goo.GrowthPIDHandler(target_volume=50),
-        goo.AdhesionLocationHandler(),
+        goo.GrowthPIDHandler(),
+        goo.RecenterHandler(),
         goo.DataExporter(
-            path="/Users/antoine/Harvard/MegasonLab/GPU_backup/AntoineRuzette/goo/data/docker_export_test/out.json", 
-            options=goo.DataFlag.MOTION_PATH
-        )
+            # path="/Users/antoine/Harvard/MegasonLab/GPU_backup/AntoineRuzette/goo/data/docker_export_test/out.json",
+            options=goo.DataFlag.MOTION_PATH,
+        ),
     ]
 )
 
-sim.run()
+# sim.run()

@@ -54,8 +54,8 @@ sim.setup_world()
 sim.toggle_gravity(True)
 sim.add_handlers(
     [
-        goo.GrowthPIDHandler(target_volume=50), 
-        goo.AdhesionLocationHandler(),
+        goo.GrowthPIDHandler(target_volume=50),
+        goo.RecenterHandler(),
         goo.RandomMotionHandler(distribution=goo.ForceDist.CONSTANT, max_strength=2500),
     ]
 )

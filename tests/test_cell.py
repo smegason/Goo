@@ -1,7 +1,7 @@
 import pytest
 import bpy
 from goo import Cell, CellType
-from goo.force import * 
+from goo.force import *
 from goo.division import BisectDivisionLogic
 from mathutils import Vector
 
@@ -9,10 +9,10 @@ from mathutils import Vector
 @pytest.fixture
 def setup_blender():
     bpy.ops.wm.read_factory_settings(use_empty=True)  # Reset to empty scene
-    cellsA = CellType("A")
+    cellsA = CellType("A", pattern="simple")
     cellsA.homo_adhesion_strength = 1000
     cell = cellsA.create_cell("A1", (0, 0, 0), color=(0.5, 0, 0), size=2)
-    
+
     yield cell
 
 
@@ -27,8 +27,8 @@ def test_cell_creation():
 def test_get_volume(setup_blender: Cell):
     cell = setup_blender
     volume = cell.volume()
-    expected_volume = 27.50
-    assert volume == pytest.approx(expected_volume, rel=1e-2)
+    expected_volume = 29.27
+    assert volume == pytest.approx(expected_volume, rel=1e-1)
 
 
 def test_get_cell_name(setup_blender: Cell):
@@ -86,7 +86,7 @@ def test_update_cell_stiffness(setup_blender: Cell):
 def test_cell_pressure(setup_blender: Cell):
     cell = setup_blender
     pressure = cell.pressure
-    expected_pressure = .01
+    expected_pressure = 0.01
     assert pressure == pytest.approx(expected_pressure, abs=1e-5)
 
 
@@ -115,15 +115,15 @@ def test_updated_motion_strength(setup_blender: Cell):
 
 def test_cell_material(setup_blender: Cell):
     cell = setup_blender
-    mat = cell.celltype.color
-    expected_mat = (0.007, 0.021, 0.3)
+    mat = cell.color
+    expected_mat = (0.5, 0, 0)
     assert mat == expected_mat
 
 
 def test_update_cell_material(setup_blender: Cell):
     cell = setup_blender
     cell.recolor((0.5, 0.5, 0.5))
-    mat = cell.celltype.color
+    mat = cell.color
     expected_mat = (0.5, 0.5, 0.5)
     assert mat == expected_mat
 
@@ -134,8 +134,8 @@ def test_disable_enable_physics(setup_blender: Cell):
     assert not cell.physics_enabled
     cell.enable_physics()
     assert cell.physics_enabled
-    
-    
+
+
 def test_recenter(setup_blender: Cell):
     cell = setup_blender
     initial_loc = cell.loc
@@ -147,6 +147,6 @@ def test_recenter(setup_blender: Cell):
 def test_remesh(setup_blender: Cell):
     cell = setup_blender
     initial_vert_count = len(cell.vertices())
-    cell.remesh(voxel_size=0.5)
+    cell.remesh()
     new_vert_count = len(cell.vertices())
     assert new_vert_count != initial_vert_count

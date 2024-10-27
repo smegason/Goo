@@ -19,7 +19,7 @@ sim.setup_world()
 sim.add_handlers(
     [
         RemeshHandler(voxel_size=0),
-        AdhesionLocationHandler(),
+        RecenterHandler(),
     ]
 )
 sim.add_handlers(

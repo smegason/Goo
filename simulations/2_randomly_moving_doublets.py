@@ -1,14 +1,14 @@
 from importlib import reload
 import goo
-from goo import * 
+from goo import *
 
 reload(goo)
 reset_modules()
 reset_scene()
 
-cellsA = CellType("A")
-cellsB = CellType("B")
-cellsC = CellType("C")
+cellsA = CellType("A", target_volume=25)
+cellsB = CellType("B", target_volume=25)
+cellsC = CellType("C", target_volume=25)
 
 cellsA.homo_adhesion_strength = 0
 cellsB.homo_adhesion_strength = 250
@@ -27,8 +27,8 @@ sim = Simulator([cellsA, cellsB, cellsC], time=300, physics_dt=1)
 sim.setup_world()
 sim.add_handlers(
     [
-        GrowthPIDHandler(target_volume=25),
-        AdhesionLocationHandler(),
-        RandomMotionHandler(ForceDist.GAUSSIAN, max_strength=750)
+        GrowthPIDHandler(),
+        RecenterHandler(),
+        RandomMotionHandler(ForceDist.GAUSSIAN, max_strength=750),
     ]
 )

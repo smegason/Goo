@@ -7,4 +7,8 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-cell = goo.create_cell("cell", (0, 0, 0), physics_on=False)
+celltype = goo.CellType("A", pattern="simple")
+cell = celltype.create_cell("cell", (0, 0, 0), size=1)
+
+print(cell.area())
+print(cell.volume())

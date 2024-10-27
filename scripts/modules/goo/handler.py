@@ -1,5 +1,6 @@
-from typing import Callable, Any, List
-from typing_extensions import override
+from typing import Callable, Union
+from typing_extensions import override, Optional
+from abc import ABC, abstractmethod
 
 from enum import Enum, Flag, auto
 from datetime import datetime
@@ -14,27 +15,29 @@ import bpy
 import bmesh
 from mathutils import Vector
 from goo.cell import Cell
-from goo.molecule import DiffusionSystem
+from goo.gene import Gene
+from goo.molecule import Molecule, DiffusionSystem
 
 
-class Handler:
+class Handler(ABC):
     def setup(
-        self, 
-        get_cells: Callable[[], list[Cell]], 
-        get_diffsystems: Callable[[], list[DiffusionSystem]],
-        dt: float
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystem: Callable[[], DiffusionSystem],
+        dt: float,
     ) -> None:
         """Set up the handler.
 
         Args:
-            get_cells: A function that, when called, 
+            get_cells: A function that, when called,
                 retrieves the list of cells that may divide.
             dt: The time step for the simulation.
         """
         self.get_cells = get_cells
-        self.get_diff_systems = get_diffsystems
+        self.get_diffsystem = get_diffsystem
         self.dt = dt
 
+    @abstractmethod
     def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
         """Run the handler.
 
@@ -53,10 +56,10 @@ class RemeshHandler(Handler):
 
     Attributes:
         freq (int): Number of frames between remeshes.
-        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`. 
+        smooth_factor (float): Factor to pass to `bmesh.ops.smooth_vert`.
             Disabled if set to 0.
         voxel_size (float): Factor to pass to `voxel_remesh()`. Disabled if set to 0.
-        sphere_factor (float): Factor to pass to Cast to sphere modifier. 
+        sphere_factor (float): Factor to pass to Cast to sphere modifier.
             Disabled if set to 0.
     """
 
@@ -66,8 +69,7 @@ class RemeshHandler(Handler):
         self.smooth_factor = smooth_factor
         self.sphere_factor = sphere_factor
 
-    @override
-    def run(self, scene, depsgraph) -> None:
+    def run(self, scene, depsgraph):
         if scene.frame_current % self.freq != 0:
             return
         for cell in self.get_cells():
@@ -91,10 +93,10 @@ class RemeshHandler(Handler):
             if self.voxel_size is not None:
                 cell.remesh(self.voxel_size)
                 cell.recenter()
-            else: 
+            else:
                 cell.remesh()
                 cell.recenter()
-            
+
             # Recenter and re-enable physics
             cell.enable_physics()
             cell.cloth_mod.point_cache.frame_start = scene.frame_current
@@ -107,231 +109,53 @@ class DiffusionHandler(Handler):
         diffusionSystem: The reaction-diffusion system to simulate.
     """
 
-    def __init__(self, diffusionSystem: DiffusionSystem) -> None:
-        self.diffusionSystem = diffusionSystem
-        self.kd_tree = None
-
-    def build_kd_tree(self) -> None:
+    @override
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt,
+    ):
         """Build the KD-Tree from the grid coordinates if not already built."""
-        self.kd_tree = self.diffusionSystem._build_kdtree()
+        super(DiffusionHandler, self).setup(get_cells, get_diffsystems, dt)
+        self.get_diffsystem().build_kdtree()
 
-    def read_molecular_signal(
-        self,
-        cell: Cell,
-        cell_distances: np.ndarray,
-        indices: np.ndarray,
-        radius: float
-    ) -> None: 
-        """Read the concentration of molecules in the cell."""
-        for mol_idx, molecule in enumerate(self.diffusionSystem.molecules):
-            valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
-            print(f"Valid indices: {valid_indices}")    
-            if valid_indices.any():
-                index = indices[valid_indices][0]
-                total_conc = self.diffusionSystem.get_concentration(mol_idx, index)
-                print(f"Conc of cell {cell.name} for {molecule._name}: {total_conc}")
-                cell.molecules_conc.update({molecule._name: total_conc})
-        print(f"Molecular concentrations: {cell.molecules_conc}")
-
-    def update_molecular_signal(
-        self,
-        cell: Cell,
-        cell_distances: np.ndarray,
-        indices: np.ndarray,
-        radius: float
-    ) -> None: 
-        """Update the concentration of molecules in the cell."""
-                        
-        k = 0.1
-        for mol_idx, molecule in enumerate(self.diffusionSystem._molecules):
-            valid_indices = ~np.isinf(cell_distances) & (cell_distances >= radius)
-            valid_distances = cell_distances[valid_indices]
-            valid_indices = indices[valid_indices]
-
-            for cell_distance, index in zip(valid_distances, valid_indices):
-                add_conc = k * (cell_distance / radius)
-                self.diffusionSystem.update_concentration(mol_idx, index, add_conc)
-
-    def diffuse(self, mol_idx: int) -> None:
-        """Update the concentration of molecules based on diffusion."""
-        conc = self.diffusionSystem._grid_concentrations[mol_idx]
-        laplacian = laplace(conc, mode='wrap')
-        diff_coeff = self.diffusionSystem._molecules[mol_idx]._D
-        conc += self.diffusionSystem._time_step * diff_coeff * laplacian
-        conc = np.clip(conc, 0, None)
-        self.diffusionSystem._grid_concentrations[mol_idx] = conc
-
-    def simulate_diffusion(self) -> None:
-        """Run the diffusion simulation over the total time."""
-        tot_time = self.diffusionSystem._total_time
-        t_step = self.diffusionSystem._time_step
-        num_steps = int(tot_time / t_step)
-        for _ in range(num_steps):
-            for mol_idx in range(len(self.diffusionSystem._molecules)):
-                self.diffuse(mol_idx)
-
-    @override
     def run(self, scene, depsgraph) -> None:
-        if self.kd_tree is None:
-            self.build_kd_tree()
-        
-        print("Current frame", scene.frame_current)
-
-        # diffuse molecules on grid
-        # self.simulate_diffusion()
-
-        cells = self.get_cells()
-        
-        for cell in cells:
-            radius = cell.get_radius()
-            com = cell.COM()
-            scaling_factor = 1 / self.diffusionSystem._element_size[0]
-            cell_distances, indices = self.kd_tree.query(com, 
-                                                         k=1000 * scaling_factor**2, 
-                                                         distance_upper_bound=1.25*radius, 
-                                                         p=2)
-
-            if len(cell_distances) > 0 and not np.all(np.isinf(cell_distances)):
-                # self.update_molecular_signal(cell, cell_distances, indices, radius)
-                self.read_molecular_signal(cell, cell_distances, indices, radius)
-            else:
-                # If no valid distances, set concentration to 0
-                for molecule in self.diffusionSystem._molecules:
-                    cell.molecules_conc.update({molecule._name: 0})
-                    print(cell.molecules_conc)
-                    print(f"Total conc of cell {cell.name} for {molecule._name}: 0")
+        self.get_diffsystem().simulate_diffusion()
 
 
-class AdhesionLocationHandler(Handler):
-    """Handler for updating cell-associated adhesion locations every frame."""
+class NetworkHandler(Handler):
+    """Handler for gene regulatory networks."""
 
-    @override
-    def run(self, scene, depsgraph) -> None:
+    def run(self, scene, despgraph):
         for cell in self.get_cells():
-            cell_size = cell.major_axis().length() / 2
+            cell.step_grn(self.get_diffsystem())
 
+
+class RecenterHandler(Handler):
+    """Handler for updating cell origin and location of
+    cell-associated adhesion locations every frame."""
+
+    def run(self, scene, depsgraph):
+        for cell in self.get_cells():
+            cell.recenter()
+
+            cell_size = cell.major_axis().length() / 2
             for force in cell.adhesion_forces:
                 if not force.enabled():
                     continue
-                force.loc = cell.COM()
                 force.min_dist = cell_size - 0.4
                 force.max_dist = cell_size + 0.4
 
-
-"""Possible types of growth."""
-Growth = Enum("Growth", ["LINEAR", "EXPONENTIAL", "LOGISTIC"])
+            if cell.motion_force:
+                cell.move()
 
 
 class GrowthPIDHandler(Handler):
-    """Handler for simulating cell growth based off of internal pressure.
-
-    Growth is determined by a PID controller, in which changes to a cell's
-    internal pressure governs how much it grows in the next frame.
-
-    Attributes:
-        growth_type (Growth): Type of growth exhibited by cells.
-        growth_rate (float): Rate of growth of cells.
-        initial_pressure (float): Initial pressure of cells.
-        target_volume (float): Target volume of cells.
-        Kp (float): P variable of the PID controller.
-        Ki (float): I variable of the PID controller.
-        Kd (float): D variable of the PID controller.
-    """
-
-    def __init__(
-        self,
-        growth_type: Growth = Growth.LINEAR,
-        growth_rate: float = 1,
-        initial_pressure=0.01,
-        target_volume=30,
-        Kp=0.05,
-        Ki=0.00001,
-        Kd=0.5,
-    ):
-        self.growth_type = growth_type
-        self.growth_rate = growth_rate  # in cubic microns per frame
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.PID_scale = 60
-        self.initial_pressure = initial_pressure
-        self.target_volume = target_volume
-
     @override
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_diffsystems: Callable[[], list[DiffusionSystem]], 
-              dt) -> None:
-        super(GrowthPIDHandler, self).setup(get_cells, get_diffsystems, dt)
+    def run(self, scene, depsgraph):
         for cell in self.get_cells():
-            self.initialize_PID(cell)
-
-    def initialize_PID(self, cell: Cell) -> None:
-        """Initialize PID controller for a cell.
-
-        Args:
-            cell: Cell to initialize PID controller.
-        """
-        cell["Kp"] = self.Kp
-        cell["Ki"] = self.Ki
-        cell["Kd"] = self.Kd
-        cell["PID_scale"] = self.PID_scale
-        cell["growth_rate"] = self.growth_rate
-
-        cell["integral"] = 0
-        cell["previous_error"] = 0
-
-        cell["previous_pressure"] = self.initial_pressure
-        cell["next_volume"] = cell.volume()
-        cell["target_volume"] = self.target_volume
-
-    @override
-    def run(self, scene, depsgraph) -> None:
-        for cell in self.get_cells():
-            if "target_volume" not in cell:
-                self.initialize_PID(cell)
-            if "divided" in cell and cell["divided"]:
-                # if divided, reset certain values
-                cell["previous_pressure"] = self.initial_pressure
-                cell["next_volume"] = cell.volume()
-            if not cell.physics_enabled:
-                continue
-
-            cell["volume"] = cell.volume()
-            cell["area"] = cell.area()
-            cell["aspect_ratio"] = cell.aspect_ratio()
-
-            match self.growth_type:
-                case Growth.LINEAR:
-                    cell["next_volume"] += cell["growth_rate"] * self.dt
-                case Growth.EXPONENTIAL:
-                    cell["next_volume"] *= 1 + cell["growth_rate"] * self.dt
-                case Growth.LOGISTIC:
-                    cell["next_volume"] = cell["next_volume"] * (
-                        1
-                        + cell["growth_rate"]
-                        * (1 - cell["next_volume"] / cell["target_volume"])
-                        * self.dt
-                    )
-                case _:
-                    raise ValueError(
-                        "Growth type must be one of LINEAR, EXPONENTIAL, or LOGISTIC."
-                    )
-            cell["next_volume"] = min(cell["next_volume"], cell["target_volume"])
-            volume_deviation = 1 - cell["volume"] / cell["next_volume"]
-
-            # Update pressure based on PID output
-            error = volume_deviation
-            integral = cell["integral"] + error
-            derivative = error - cell["previous_error"]
-            pid = cell["Kp"] * error + cell["Ki"] * integral + cell["Kd"] * derivative
-
-            cell.pressure = cell["previous_pressure"] + pid * cell["PID_scale"]
-
-            # Update previous error and pressure for the next iteration
-            cell["previous_error"] = error
-            cell["integral"] = integral
-            cell["previous_pressure"] = cell.pressure
+            cell.step_growth()
 
 
 """Possible distributions of random motion."""
@@ -357,8 +181,7 @@ class RandomMotionHandler(Handler):
         self.distribution = distribution
         self.max_strength = max_strength
 
-    @override
-    def run(self, scene, depsgraph) -> None:
+    def run(self, scene, depsgraph):
         for cell in self.get_cells():
             if not cell.physics_enabled:
                 continue
@@ -378,11 +201,11 @@ class RandomMotionHandler(Handler):
                         "Motion noise distribution must be one of UNIFORM or GAUSSIAN."
                     )
             cell.motion_force.strength = strength
-            cell.move_towards(dir)
+            cell.move(dir)
 
 
 """Possible properties by which cells are colored."""
-Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM"])
+Colorizer = Enum("Colorizer", ["PRESSURE", "VOLUME", "RANDOM", "GENE"])
 
 
 class ColorizeHandler(Handler):
@@ -395,36 +218,58 @@ class ColorizeHandler(Handler):
 
     Attributes:
         colorizer (Colorizer): the property by which cells are colored.
+        gene (str): optional, the gene off of which cell color is based.
     """
 
-    def __init__(self, colorizer: Colorizer = Colorizer.PRESSURE):
+    def __init__(
+        self,
+        colorizer: Colorizer = Colorizer.PRESSURE,
+        gene: Union[Gene, str] = None,
+        range: Optional[tuple] = None,
+    ):
         self.colorizer = colorizer
+        self.gene = gene
+        self.range = range
 
-    @override
+    def _scale(self, values):
+        if self.range is None:
+            # Scaled based on min and max
+            return (values - np.min(values)) / max(np.max(values) - np.min(values), 1)
+        if self.range is not None:
+            # Truncate numbers into specific range, then scale based on max of range.
+            min, max = self.range
+            values = np.minimum(values, max)
+            values = np.maximum(values, min)
+            return (values - min) / (max - min)
+
     def run(self, scene, depsgraph):
-        red = Vector((1.0, 0.0, 0.0))
-        blue = Vector((0.0, 0.0, 1.0))
-
         match self.colorizer:
             case Colorizer.PRESSURE:
                 ps = np.array([cell.pressure for cell in self.get_cells()])
-                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+                values = self._scale(ps)
             case Colorizer.VOLUME:
-                ps = np.array([cell.volume() for cell in self.get_cells()])
-                ps = (ps - np.min(ps)) / max(np.max(ps) - np.min(ps), 1)
+                vs = np.array([cell.volume() for cell in self.get_cells()])
+                values = self._scale(vs)
+            case Colorizer.GENE:
+                gs = np.array(
+                    [cell.metabolites[self.gene] for cell in self.get_cells()]
+                )
+                values = self._scale(gs)
             case Colorizer.RANDOM:
-                ps = np.random.rand(len(self.get_cells()))
+                values = np.random.rand(len(self.get_cells()))
             case _:
                 raise ValueError(
-                    "Colorizer must be one of PRESSURE, VOLUME, or RANDOM."
+                    "Colorizer must be one of PRESSURE, VOLUME, GENE, or RANDOM."
                 )
 
-        for cell, p in zip(self.get_cells(), ps):
+        red = Vector((1.0, 0.0, 0.0))
+        blue = Vector((0.0, 0.0, 1.0))
+
+        for cell, p in zip(self.get_cells(), values):
             color = blue.lerp(red, p)
             cell.recolor(tuple(color))
 
 
-@staticmethod
 def _get_divisions(cells: list[Cell]) -> list[tuple[str, str, str]]:
     """Calculate a list of cells that have divided in the past frame.
 
@@ -531,18 +376,18 @@ def _shape_features(cells: list[Cell]) -> tuple[float, float, float, float]:
 
     Inlcudes the aspect ratio, sphericity
 
-    Args: 
-        cell: A cell. 
+    Args:
+        cell: A cell.
 
-    Returns: 
-        Shape features (aspect ratio, sphericity, compactness, sav_ratio). 
+    Returns:
+        Shape features (aspect ratio, sphericity, compactness, sav_ratio).
     """
 
     aspect_ratios = []
     sphericities = []
     compactnesses = []
     sav_ratios = []
-    
+
     for cell in cells:
         aspect_ratio = cell.aspect_ratio()
         sphericity = cell.sphericity()
@@ -569,7 +414,7 @@ class DataFlag(Flag):
         TIMES: time elapsed since beginning of simulation.
         DIVISIONS: list of cells that have divided and their daughter cells.
         MOTION_PATH: list of the current position of each cell.
-        FORCE_PATH: list of the current positions of the associated 
+        FORCE_PATH: list of the current positions of the associated
             motion force of each cell.
         VOLUMES: list of the current volumes of each cell.
         PRESSURES: list of the current pressures of each cell.
@@ -598,8 +443,8 @@ class DataExporter(Handler):
     Attributes:
         path (str): Path to save .json file of calculated metrics. If empty, statistics
             are printed instead.
-        options: (DataFlag): Flags of which metrics to calculated and save/print. 
-            Flags can be combined by binary OR operation, 
+        options: (DataFlag): Flags of which metrics to calculated and save/print.
+            Flags can be combined by binary OR operation,
             i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.
     """
 
@@ -608,10 +453,12 @@ class DataExporter(Handler):
         self.options = options
 
     @override
-    def setup(self, 
-              get_cells: Callable[[], list[Cell]], 
-              get_diffsystems: Callable[[], list[DiffusionSystem]],
-              dt) -> None:
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt,
+    ):
         super(DataExporter, self).setup(get_cells, get_diffsystems, dt)
         self.time_start = datetime.now()
         out = {"seed": bpy.context.scene["seed"], "frames": []}
@@ -623,8 +470,7 @@ class DataExporter(Handler):
             print(out)
         self.run(bpy.context.scene, bpy.context.evaluated_depsgraph_get())
 
-    @override
-    def run(self, scene, depsgraph) -> None:
+    def run(self, scene, depsgraph):
         frame_out = {"frame": scene.frame_current}
 
         if self.options & DataFlag.TIMES:
@@ -663,7 +509,7 @@ class DataExporter(Handler):
             frame_out["contact_ratios"] = ratios
 
         if self.options & DataFlag.GRID:
-            for diff_system in self.get_diff_systems():
+            for diff_system in self.get_diffsystem():
                 grid_conc = diff_system._grid_concentrations
                 mol = diff_system._molecules[0]
                 if mol._name not in frame_out:
@@ -680,7 +526,7 @@ class DataExporter(Handler):
         else:
             print(frame_out)
 
-    def _convert_numpy_to_list(self, obj) -> Any:
+    def _convert_numpy_to_list(self, obj):
         """Convert numpy arrays to lists for JSON serialization."""
         if isinstance(obj, np.ndarray):
             return obj.tolist()
@@ -690,99 +536,3 @@ class DataExporter(Handler):
             return [self._convert_numpy_to_list(i) for i in obj]
         else:
             return obj
-
-
-class SliceExporter(Handler):
-    """Handler to save Z slices of the simulation at each frame.
-    
-    Attributes:
-        output_dir (str): Directory to save the slices.
-        z_range (tuple[float, float]): Z tickness to image. Default is (5, -5), 
-            in micrometers.
-        z_step (float): Step size between slices, in micrometer.
-        microscope_dt (int): Number of frames between each slice.    
-    """
-
-    def __init__(
-        self,
-        output_dir: str = "", 
-        z_range: tuple[float, float] = (5, -5), 
-        z_step: float = 0.2, 
-        microscope_dt: int = 10
-    ):
-        self.output_dir = output_dir
-        self.z_range = z_range
-        self.z_step = z_step
-        self.microscope_dt = microscope_dt
-
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-
-    def run(self, scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
-        # export slices every microscope_dt
-        if scene.frame_current % self.microscope_dt != 0:
-            return
-        
-        time_step = scene.frame_current // self.microscope_dt
-        time_step_dir = os.path.join(self.output_dir, f"T{time_step:03d}")
-        if not os.path.exists(time_step_dir):
-            os.makedirs(time_step_dir)
-
-        # Check if a camera named 'SliceExporterCamera' already exists
-        camera = bpy.data.objects.get('SliceExporterCamera')
-
-        if camera is None:
-            # No camera exists, so create and center it
-            camera = create_and_center_camera(location=(0, 0, 5), target=(0, 0, 0))
-        
-        # Set the created or existing camera as the active camera
-        bpy.context.scene.camera = camera
-
-        z_start, z_end = self.z_range
-        num_slices = int(abs(z_end - z_start) / self.z_step) + 1
-        print("Number of slices:", num_slices)
-
-        # Iterate over z-axis
-        for i in range(num_slices):
-            # current slice position
-            slice_z = (z_start + i * self.z_step 
-                       if z_start < z_end 
-                       else z_start - i * self.z_step)
-            camera.location.z = slice_z
-            print("Camera location:", camera.location)
-
-            # thin slice
-            camera.data.clip_start = 0  # front of the camera
-            camera.data.clip_end = self.z_step  # end of the slice being photographed
-
-            slice_filename = f"slice_z{i:03d}.png"
-            filepath = os.path.join(time_step_dir, slice_filename)
-            bpy.context.scene.render.filepath = filepath
-            
-            # OpenGL render from the active camera's perspective
-            bpy.ops.render.opengl(write_still=True, view_context=False)
-
-            # add a step to convert from RGB  to 8-bit grayscale
-
-
-@staticmethod
-def create_and_center_camera(location=(0, 0, 10), target=(0, 0, 0)) -> bpy.types.Object:
-    """Create a new camera object, set its parameters, 
-    center it to the specified location, and orient it towards the target.
-
-    Args:
-        location: The location to place the camera (default is (0, 0, 10)).
-        target: The point the camera should face (default is the origin in (0, 0, 0)).
-    """
-    # new camera data block
-    cam_data = bpy.data.cameras.new(name="SliceExporterCamera")
-    cam_object = bpy.data.objects.new("SliceExporterCamera", cam_data)
-    bpy.context.collection.objects.link(cam_object)
-    cam_object.location = location
-    direction = Vector(target) - cam_object.location
-    cam_object.rotation_euler = direction.to_track_quat('Z', 'Y').to_euler()
-    # acquisition parameters
-    cam_object.data.type = 'ORTHO'
-    cam_object.data.ortho_scale = 20
-
-    return cam_object

@@ -2,8 +2,8 @@ import pytest
 import bpy
 import goo
 from goo import Cell, CellType
-from goo.force import * 
-from goo.handler import AdhesionLocationHandler, GrowthPIDHandler
+from goo.force import *
+from goo.handler import RecenterHandler, GrowthPIDHandler
 from goo.simulator import Simulator
 import bmesh
 from mathutils import Vector
@@ -16,16 +16,20 @@ def setup_blender():
     cellsA = CellType("A")
     cellsB = CellType("B")
     cellsA.homo_adhesion_strength = 500
-    small_cell = cellsA.create_cell("A1", (10, 0, 0), color=(0.5, 0, 0), size=1)
-    large_cell = cellsB.create_cell("A2", (-10, 0, 0), color=(0.5, 0, 0), size=1)
+    small_cell = cellsA.create_cell(
+        "A1", (10, 0, 0), color=(0.5, 0, 0), size=1, target_volume=50
+    )
+    large_cell = cellsB.create_cell(
+        "A2", (-10, 0, 0), color=(0.5, 0, 0), size=1, target_volume=100
+    )
 
     sim_small = Simulator([cellsA], time=105, physics_dt=1)
     # cannot use setup_world in testing because requires Blender in non-headless mode
     # sim.setup_world()
     sim_small.add_handlers(
         [
-            GrowthPIDHandler(target_volume=50),
-            AdhesionLocationHandler(),
+            GrowthPIDHandler(),
+            RecenterHandler(),
         ]
     )
 
@@ -34,8 +38,8 @@ def setup_blender():
     # sim.setup_world()
     sim_large.add_handlers(
         [
-            GrowthPIDHandler(target_volume=100),
-            AdhesionLocationHandler(),
+            GrowthPIDHandler(),
+            RecenterHandler(),
         ]
     )
     yield small_cell, large_cell

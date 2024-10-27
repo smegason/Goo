@@ -6,8 +6,7 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-celltype = goo.SimpleType("cellsA")
-celltype.homo_adhesion_strength = 5000
+celltype = goo.CellType("cellsA", pattern="simple", homo_adhesion_strength=100)
 
 locs = [
     (-1.36, -1, 0.2),
@@ -21,10 +20,10 @@ locs = [
 ]
 
 for i, loc in enumerate(locs):
-    cell = celltype.create_cell(f"cell{i}", loc)
+    cell = celltype.create_cell(f"cell{i}", loc, size=1)
     cell.stiffness = 15
-    cell.pressure = 5
+    cell.pressure = 1
 
 sim = goo.Simulator([celltype])
 sim.setup_world()
-sim.add_handler(AdhesionLocationHandler())
+sim.add_handler(RecenterHandler())

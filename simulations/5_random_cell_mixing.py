@@ -34,7 +34,7 @@ min_distance = 3  # Minimum distance between cells
 
 goo.create_boundary((0, 0, 0), size=radius * 1.2)
 
-cellsA = goo.SimpleType("A")
+cellsA = goo.CellType("A")
 cellsA.homo_adhesion_strength = 500
 cells = []
 
@@ -53,8 +53,8 @@ sim.setup_world()
 sim.toggle_gravity(True)
 sim.add_handlers(
     [
-        goo.GrowthPIDHandler(target_volume=50),
-        goo.AdhesionLocationHandler(),
+        goo.GrowthPIDHandler(),
+        goo.RecenterHandler(),
         goo.RandomMotionHandler(distribution=goo.ForceDist.CONSTANT, max_strength=2500),
     ]
 )
