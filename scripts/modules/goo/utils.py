@@ -137,6 +137,7 @@ def create_material(name, color):
 
     return mat
 
+
 # def create_material(name, color):
 #     mat = bpy.data.materials.new(name=name)
 #     r, g, b = color
@@ -274,6 +275,12 @@ class ClothConstructor(ModConstructor):
 
         # Cloth > Field Weights
         mod.settings.effector_weights.gravity = 0
+
+
+class SimpleClothConstructor(ClothConstructor):
+    def setup_mod(self, mod):
+        super().setup_mod(mod)
+        mod.settings.mass = 10
 
 
 class YolkClothConstructor(ClothConstructor):

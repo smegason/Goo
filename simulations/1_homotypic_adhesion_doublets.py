@@ -5,9 +5,9 @@ reload(goo)
 goo.reset_modules()
 goo.reset_scene()
 
-cellsA = goo.CellType("A", target_volume=50)
-cellsB = goo.CellType("B", target_volume=50)
-cellsC = goo.CellType("C", target_volume=50)
+cellsA = goo.CellType("A", target_volume=50, pattern="simple")
+cellsB = goo.CellType("B", target_volume=50, pattern="simple")
+cellsC = goo.CellType("C", target_volume=50, pattern="simple")
 
 cellsA.homo_adhesion_strength = 0
 cellsB.homo_adhesion_strength = 250

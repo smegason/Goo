@@ -269,6 +269,10 @@ class ForceCollection:
         """Name of the collection of forces."""
         return self.col.name
 
+    @name.setter
+    def name(self, n):
+        self.col.name = n
+
     def add(self, force: Union[Force, "ForceCollection"]):
         """Add a Force or Force Collection to the collection."""
         self.children.append(force)

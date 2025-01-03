@@ -34,7 +34,7 @@ min_distance = 3  # Minimum distance between cells
 
 goo.create_boundary((0, 0, 0), size=radius * 1.2)
 
-cellsA = goo.CellType("A")
+cellsA = goo.CellType("A", pattern="simple")
 cellsA.homo_adhesion_strength = 500
 cells = []
 

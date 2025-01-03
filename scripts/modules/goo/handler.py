@@ -492,7 +492,7 @@ class DataExporter(Handler):
             if self.options & DataFlag.PRESSURES and cell.physics_enabled:
                 cell_out["pressure"] = cell.pressure
             if self.options & DataFlag.CELL_CONCENTRATIONS:
-                cell_out["concentrations"] = cell.molecules_conc
+                cell_out["concentrations"] = cell.metabolites
 
         if self.options & DataFlag.SHAPE_FEATURES:
             aspect_ratios, sphericities, compactnesses, sav_ratios = _shape_features(

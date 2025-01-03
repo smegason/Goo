@@ -28,8 +28,6 @@ class Cell(BlenderObject):
     def __init__(self):
         self._name = ""
         self.obj: bpy.types.Object = None
-        self.mat = None
-        self.celltype: CellType = None
 
         self.direction = Vector()
         self.adhesion_forces: list[AdhesionForce] = []
@@ -53,6 +51,17 @@ class Cell(BlenderObject):
         self._name = name
         if self.obj:
             self.obj.name = name
+        if self.effectors:
+            self.effectors.name = name + "_effectors"
+        if self.motion_force:
+            self.motion_force.name = name + "_motion"
+
+    @property
+    def mat(self):
+        if self.obj.data.materials:
+            return self.obj.data.materials[0]
+
+        return None
 
     def copy(self):
         other_obj = self.obj.copy()
@@ -62,11 +71,12 @@ class Cell(BlenderObject):
         other.growth_controller = self.growth_controller.copy()
         other.grn = self.grn.copy()
 
+        other.physics_enabled = self.physics_enabled
         if self.cloth_mod:
             other.pressure = self.pressure
             other.stiffness = self.stiffness
             other._update_cloth()
-        other.mod_settings = self.mod_settings
+        other.mod_settings = self.mod_settings.copy()
 
         return other
 
@@ -312,7 +322,9 @@ class Cell(BlenderObject):
             RuntimeError: If physics is already enabled.
         """
         if self.physics_enabled:
-            return
+            raise RuntimeError(
+                f"Trying to enable physics on cell {self.name} when already enabled!"
+            )
 
         # recreate modifier stack
         for name, type, settings in self.mod_settings:
@@ -339,7 +351,9 @@ class Cell(BlenderObject):
             RuntimeError: If physics is not enabled.
         """
         if not self.physics_enabled:
-            return
+            raise RuntimeError(
+                f"Trying to disable physics on cell {self.name} when already disabled!"
+            )
 
         for mod in self.obj.modifiers:
             name, type = mod.name, mod.type
@@ -399,6 +413,8 @@ class Cell(BlenderObject):
     @pressure.setter
     def pressure(self, pressure: float):
         self.cloth_mod.settings.uniform_pressure_force = pressure
+        if self.growth_controller:
+            self.growth_controller.set_pressure(pressure)
 
     def add_effector(self, force: Force | ForceCollection):
         """Add a force or a collection of forces that affects this cell.
@@ -441,6 +457,10 @@ class Cell(BlenderObject):
         """
         if direction is not None:
             self.direction = Vector(direction)
+        elif self.direction is None:
+            raise ValueError(
+                "Direction must be specified if cell's direction has not been previously set!"
+            )
 
         motion_loc = self.loc + self.direction.normalized() * (2 + self.radius())
 
@@ -675,6 +695,7 @@ class CellType:
 
     # TODO: perhaps create better way of dealing with setting hierarchy
     # (pattern > CellType initialization > create_cell)
+    # Perhaps simply moving options that can be set later (i.e. color, growth_rate) solely into Cell
     def create_cell(
         self,
         name,
@@ -697,10 +718,6 @@ class CellType:
             self.pattern.set_obj(name, obj)
         else:
             self.pattern.build_obj(name, loc, color=color, **mesh_kwargs)
-            if physics_enabled:
-                self.pattern.build_physics(
-                    physics_constructor=physics_constructor,
-                )
 
         if physics_enabled:
             self.pattern.build_forces(
@@ -710,6 +727,13 @@ class CellType:
                 self.hetero_adhesion_strengths,
                 self._hetero_adhesion_collections,
             )
+            # Building physics after forces ensures that the cloth modifier
+            # can properly see the target effector collection.
+            if not obj:
+                self.pattern.build_physics(
+                    physics_constructor=physics_constructor,
+                )
+
         if growth_enabled:
             self.pattern.build_growth_controller(
                 growth_type=growth_type,
@@ -754,6 +778,7 @@ class CellPattern:
 
     circuits = []
     metabolites = {}
+    initial_pressure = None
 
     def __init__(self):
         self.reset()
@@ -781,8 +806,6 @@ class CellPattern:
     def set_obj(self, name, obj):
         self._cell.name = name
         self._cell.obj = obj
-        if obj.data.materials:
-            self._cell.mat = obj.data.materials[0]
 
     def build_obj(
         self,
@@ -802,7 +825,6 @@ class CellPattern:
         if color is not None:
             mat = create_material(f"{name}_material", color=color)
             obj.data.materials.append(mat)
-            self._cell.mat = mat
 
     def build_physics(
         self,
@@ -861,6 +883,11 @@ class CellPattern:
             growth_rate=growth_rate,
             target_volume=target_volume,
         )
+        if self.__class__.initial_pressure is not None:
+            controller.initial_pressure = self.__class__.initial_pressure
+            controller.previous_pressure = self.__class__.initial_pressure
+
+        self._cell.pressure = controller.initial_pressure
         self._cell.growth_controller = controller
 
     def build_network(self, circuits=None, metabolites=None):
@@ -882,6 +909,7 @@ class StandardPattern(CellPattern):
         RemeshConstructor,
     )
     color = (0.007, 0.021, 0.3)
+    initial_pressure = 12
 
 
 class SimplePattern(CellPattern):
@@ -889,7 +917,7 @@ class SimplePattern(CellPattern):
 
     color = None
     physics_constructor = PhysicsConstructor(
-        ClothConstructor,
+        SimpleClothConstructor,
         CollisionConstructor,
     )
     color = (0.5, 0.5, 0.5)

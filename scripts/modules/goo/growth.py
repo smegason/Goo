@@ -9,6 +9,10 @@ class GrowthController:
     def __init__(self, current_volume, growth_type, growth_rate):
         pass
 
+    def set_pressure(self, pressure):
+        """Set new pressure."""
+        pass
+
     def step_growth(self, current_volume, dt):
         """Step through the growth controller to calculate normal growth.
 
@@ -51,7 +55,7 @@ class PIDController(GrowthController):
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
-        self.PID_scale = 30
+        self.PID_scale = 15
         self.initial_pressure = initial_pressure
         self.target_volume = target_volume
 
@@ -62,6 +66,9 @@ class PIDController(GrowthController):
 
     def copy(self):
         return copy(self)
+
+    def set_pressure(self, pressure):
+        self.previous_pressure = pressure
 
     def step_growth(self, current_volume, dt):
         match self.growth_type:
@@ -99,5 +106,5 @@ class PIDController(GrowthController):
         return next_pressure
 
     def step_divided(self, new_volume):
-        self.previous_pressure = self.initial_pressure
+        # self.previous_pressure = self.initial_pressure
         self.next_volume = new_volume

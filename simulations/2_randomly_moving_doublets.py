@@ -6,9 +6,9 @@ reload(goo)
 reset_modules()
 reset_scene()
 
-cellsA = CellType("A", target_volume=25)
-cellsB = CellType("B", target_volume=25)
-cellsC = CellType("C", target_volume=25)
+cellsA = CellType("A", target_volume=25, pattern="simple")
+cellsB = CellType("B", target_volume=25, pattern="simple")
+cellsC = CellType("C", target_volume=25, pattern="simple")
 
 cellsA.homo_adhesion_strength = 0
 cellsB.homo_adhesion_strength = 250
