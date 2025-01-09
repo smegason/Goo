@@ -172,7 +172,7 @@ class Simulator:
         """Add multiple handlers to the simulation."""
         # always include a stop handler
         stop_handler = StopHandler()
-        bpy.app.handlers.frame_change_post.append(stop_handler.run)
+        bpy.app.handlers.frame_change_pre.append(stop_handler.run)
         
         for handler in handlers:
             self.add_handler(handler)

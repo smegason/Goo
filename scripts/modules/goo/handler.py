@@ -50,19 +50,26 @@ class Handler(ABC):
             depsgraph: The dependency graph.
         """
         raise NotImplementedError("Subclasses must implement run() method.")
-
-
+    
+    
 class StopHandler(Handler):
     """Handler for stopping the simulation at the end of the simulation time."""
 
     def run(self, scene, depsgraph):
         # Check if the current frame is the last frame
         if scene.frame_current >= bpy.context.scene.frame_end:
-            print(f"Simulation has reached the last frame: {self.last_frame}. Stopping.")
+            print(f"Simulation has reached the last frame: {scene.frame_current}. \
+                  Stopping.")
             # bpy.app.handlers.frame_change_post.remove(self.run)
             bpy.ops.screen.animation_cancel(restore_frame=True) 
         else:
-            print(f"Running simulation for frame {scene.frame_current}.")
+            frame_str = f"Calculating frame {scene.frame_current}"
+            total_length = len(frame_str) + 8  # Account for "=== " and " ==="
+            border_line = "=" * total_length
+
+            print(border_line)
+            print(f"=== {frame_str} ===")
+            print(border_line)
 
 
 class RemeshHandler(Handler):
