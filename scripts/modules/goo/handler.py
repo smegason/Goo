@@ -6,6 +6,7 @@ from enum import Enum, Flag, auto
 from datetime import datetime
 import json
 import os
+import h5py
 
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
@@ -49,6 +50,19 @@ class Handler(ABC):
             depsgraph: The dependency graph.
         """
         raise NotImplementedError("Subclasses must implement run() method.")
+
+
+class StopHandler(Handler):
+    """Handler for stopping the simulation at the end of the simulation time."""
+
+    def run(self, scene, depsgraph):
+        # Check if the current frame is the last frame
+        if scene.frame_current >= bpy.context.scene.frame_end:
+            print(f"Simulation has reached the last frame: {self.last_frame}. Stopping.")
+            # bpy.app.handlers.frame_change_post.remove(self.run)
+            bpy.ops.screen.animation_cancel(restore_frame=True) 
+        else:
+            print(f"Running simulation for frame {scene.frame_current}.")
 
 
 class RemeshHandler(Handler):
@@ -137,6 +151,28 @@ class RecenterHandler(Handler):
     cell-associated adhesion locations every frame."""
 
     def run(self, scene, depsgraph):
+
+        cells = self.get_cells()
+
+        cell_number = len(cells)
+        total_volume = np.sum([cell.volume() for cell in cells])
+        average_volume = np.mean([cell.volume() for cell in cells])
+        valid_pressures = [
+            cell.pressure for cell in cells 
+            if hasattr(cell, 'cloth_mod') and cell.cloth_mod 
+            and hasattr(cell.cloth_mod, 'settings') 
+            and hasattr(cell.cloth_mod.settings, 'uniform_pressure_force')
+        ]
+        average_pressure = np.mean(valid_pressures) if valid_pressures else 0
+        _, sphericities, _, _ = _shape_features(cells)
+        average_sphericity = np.mean(sphericities)
+        
+        bpy.context.scene.world["Cell#"] = cell_number
+        bpy.context.scene.world["Avg Volume"] = average_volume
+        bpy.context.scene.world["Avg Pressure"] = average_pressure
+        bpy.context.scene.world["Avg Sphericity"] = average_sphericity
+        bpy.context.scene.world["Total Volume"] = total_volume
+
         for cell in self.get_cells():
             cell.recenter()
 
@@ -234,7 +270,7 @@ class ColorizeHandler(Handler):
     def _scale(self, values):
         if self.range is None:
             # Scaled based on min and max
-            return (values - np.min(values)) / max(np.max(values) - np.min(values), 1)
+            return (values - np.min(values)) / np.max(np.max(values) - np.min(values), 1)
         if self.range is not None:
             # Truncate numbers into specific range, then scale based on max of range.
             min, max = self.range
@@ -276,6 +312,9 @@ def _get_divisions(cells: list[Cell]) -> list[tuple[str, str, str]]:
     Each element of the list contains a tuple of three names: that of the mother
     cell, and then the two daughter cells.
 
+    Args:
+        cells: List of cells to check for divisions.
+        
     Returns:
         List of tuples of mother and daughter cell names.
     """
@@ -437,102 +476,207 @@ class DataFlag(Flag):
 
 
 class DataExporter(Handler):
-    """Handler for the reporting and saving of data generated during
-    the simulation.
-
-    Attributes:
-        path (str): Path to save .json file of calculated metrics. If empty, statistics
-            are printed instead.
-        options: (DataFlag): Flags of which metrics to calculated and save/print.
-            Flags can be combined by binary OR operation,
-            i.e. `DataFlag.TIMES | DataFlag.DIVISIONS`.
-    """
+    """Handler for the reporting and saving of data generated during the simulation."""
 
     def __init__(self, path="", options: DataFlag = DataFlag.ALL):
         self.path = path
         self.options = options
+        self.h5file = None
 
     @override
     def setup(
-        self,
+        self, 
         get_cells: Callable[[], list[Cell]],
         get_diffsystems: Callable[[], list[DiffusionSystem]],
-        dt,
-    ):
+        dt
+    ) -> None:
         super(DataExporter, self).setup(get_cells, get_diffsystems, dt)
         self.time_start = datetime.now()
-        out = {"seed": bpy.context.scene["seed"], "frames": []}
 
         if self.path:
-            with open(self.path, "w") as f:
-                f.write(json.dumps(out))
-        else:
-            print(out)
-        self.run(bpy.context.scene, bpy.context.evaluated_depsgraph_get())
+            if os.path.exists(self.path):
+                try:
+                    os.remove(self.path)
+                except Exception as e:
+                    print(f"Could not remove existing file: {e}")
+                    raise
 
-    def run(self, scene, depsgraph):
-        frame_out = {"frame": scene.frame_current}
+            self.h5file = h5py.File(self.path, 'w')
+            self.h5file.attrs['seed'] = bpy.context.scene["seed"]
+            self.frames_group = self.h5file.create_group('frames')
+        else:
+            print({"seed": bpy.context.scene["seed"], "frames": []})
+
+    @override
+    def run(self, scene, depsgraph) -> None:
+        frame_number = scene.frame_current  
+        frame_group_name = f'frame_{frame_number:03d}'
+
+        if self.path:
+            # Check if the group already exists
+            if frame_group_name in self.frames_group:
+                print(f"Group {frame_group_name} already exists. Delelting, recreating")
+                del self.frames_group[frame_group_name]  # Remove the existing group
+            frame_group = self.frames_group.create_group(frame_group_name)
+            frame_group.attrs['frame_number'] = frame_number
+        else:
+            frame_out = {"frame": frame_number}
 
         if self.options & DataFlag.TIMES:
-            frame_out["time"] = (datetime.now() - self.time_start).total_seconds()
-        if self.options & DataFlag.DIVISIONS:
-            frame_out["divisions"] = _get_divisions(self.get_cells())
+            time_elapsed = (datetime.now() - self.time_start).total_seconds()
+            if self.path:
+                frame_group.attrs['time'] = time_elapsed
+            else:
+                frame_out["time"] = time_elapsed
 
-        frame_out["cells"] = []
-        for cell in self.get_cells():
-            cell_out = {"name": cell.name}
-            frame_out["cells"].append(cell_out)
+        if self.options & DataFlag.DIVISIONS:
+            divisions = _get_divisions(self.get_cells())
+            if self.path:
+                frame_group.create_dataset('divisions', data=divisions)
+            else:
+                frame_out["divisions"] = divisions
+
+        # Collect cell data
+        cells = self.get_cells()
+        if self.path:
+            cells_group = frame_group.create_group('cells')
+        else:
+            frame_out["cells"] = []
+
+        for cell in cells:
+            cell_name = cell.name
+            if self.path:
+                cell_group = cells_group.create_group(cell_name)
+            else:
+                cell_out = {"name": cell_name}
 
             if self.options & DataFlag.MOTION_PATH:
-                cell_out["loc"] = tuple(cell.loc)
+                loc = np.array(cell.loc, dtype=np.float64)  # Ensure loc is a NumPy array
+                if self.path:
+                    cell_group.create_dataset('loc', data=loc)
+                else:
+                    cell_out["loc"] = loc.tolist()
+
             if self.options & DataFlag.FORCE_PATH:
-                cell_out["motion_loc"] = tuple(cell.motion_force.loc)
+                motion_loc = np.array(cell.motion_force.loc, dtype=np.float64)
+                if self.path:
+                    cell_group.create_dataset('motion_loc', data=motion_loc)
+                else:
+                    cell_out["motion_loc"] = motion_loc.tolist()
+
             if self.options & DataFlag.VOLUMES:
-                cell_out["volume"] = cell.volume()
+                volume = float(cell.volume())  # Convert volume to a float
+                if self.path:
+                    cell_group.attrs['volume'] = volume
+                else:
+                    cell_out["volume"] = volume
+
             if self.options & DataFlag.PRESSURES and cell.physics_enabled:
-                cell_out["pressure"] = cell.pressure
+                pressure = float(cell.pressure)  # Ensure pressure is a float
+                if self.path:
+                    cell_group.attrs['pressure'] = pressure
+                else:
+                    cell_out["pressure"] = pressure
+
             if self.options & DataFlag.CELL_CONCENTRATIONS:
-                cell_out["concentrations"] = cell.metabolites
+                try:
+                    if isinstance(cell.molecules_conc, dict):
+                        # Convert dictionary values to an array
+                        concentrations = np.array(list(cell.molecules_conc.values()), 
+                                                  dtype=np.float64
+                                                  )
+                    else:
+                        concentrations = np.array(cell.molecules_conc, dtype=np.float64)
+                    
+                    if self.path:
+                        cell_group.create_dataset('concentrations', data=concentrations)
+                    else:
+                        cell_out["concentrations"] = concentrations.tolist()
+                except Exception as e:
+                    print(f"Error saving concentrations for cell {cell_name}: {e}")
+
+            if not self.path:
+                frame_out["cells"].append(cell_out)
 
         if self.options & DataFlag.SHAPE_FEATURES:
-            aspect_ratios, sphericities, compactnesses, sav_ratios = _shape_features(
-                self.get_cells()
-            )
-            frame_out["aspect_ratios"] = aspect_ratios
-            frame_out["aspect_ratios"] = aspect_ratios
-            frame_out["compactnesses"] = compactnesses
-            frame_out["sav_ratios"] = sav_ratios
+            aspect_ratios, sphericities, \
+                compactnesses, sav_ratios = _shape_features(cells)
+            if self.path:
+                frame_group.create_dataset(
+                    'aspect_ratios', 
+                    data=np.array(aspect_ratios, dtype=np.float64)
+                )
+                frame_group.create_dataset(
+                    'sphericities', 
+                    data=np.array(sphericities, dtype=np.float64)
+                )
+                frame_group.create_dataset(
+                    'compactnesses', 
+                    data=np.array(compactnesses, dtype=np.float64)
+                )
+                frame_group.create_dataset(
+                    'sav_ratios', 
+                    data=np.array(sav_ratios, dtype=np.float64)
+                )
+            else:
+                frame_out["aspect_ratios"] = aspect_ratios.tolist()
+                frame_out["sphericities"] = sphericities.tolist()
+                frame_out["compactnesses"] = compactnesses.tolist()
+                frame_out["sav_ratios"] = sav_ratios.tolist()
 
+        # Handle contact areas
         if self.options & DataFlag.CONTACT_AREAS:
-            areas, ratios = _contact_areas(self.get_cells())
-            frame_out["contact_areas"] = areas
-            frame_out["contact_ratios"] = ratios
+            try:
+                areas, ratios = _contact_areas(cells)
+                # If areas or ratios are dictionaries, extract numerical values
+                if isinstance(areas, dict):
+                    areas = np.array(list(areas.values()), dtype=np.float64)
+                else:
+                    areas = np.array(areas, dtype=np.float64)
 
+                if isinstance(ratios, dict):
+                    ratios = np.array(list(ratios.values()), dtype=np.float64)
+                else:
+                    ratios = np.array(ratios, dtype=np.float64)
+
+                if self.path:
+                    frame_group.create_dataset('contact_areas', data=areas)
+                    frame_group.create_dataset('contact_ratios', data=ratios)
+                else:
+                    frame_out["contact_areas"] = areas.tolist()
+                    frame_out["contact_ratios"] = ratios.tolist()
+            except Exception as e:
+                print(f"Error saving contact areas for frame {frame_number}: {e}")
+
+        # Handle GRID data
         if self.options & DataFlag.GRID:
-            for diff_system in self.get_diffsystem():
-                grid_conc = diff_system._grid_concentrations
-                mol = diff_system._molecules[0]
-                if mol._name not in frame_out:
-                    frame_out[mol._name] = {
-                        "concentrations": self._convert_numpy_to_list(grid_conc)
-                    }
+            for diff_system in self.get_diff_systems():
+                try:
+                    # Ensure grid concentrations are converted to NumPy arrays
+                    grid_conc = np.array(diff_system._grid_concentrations, 
+                                         dtype=np.float64
+                                         )
+                    for mol in diff_system._molecules:
+                        mol_name = mol._name
+                        if self.path:
+                            mol_group = frame_group.require_group(mol_name)
+                            mol_group.create_dataset('concentrations', data=grid_conc)
+                        else:
+                            if mol_name not in frame_out:
+                                frame_out[mol_name] = {"concentrations": grid_conc.tolist()}
+                except Exception as e:
+                    print(f"Error saving grid concentrations: {e}")
 
-        if self.path:
-            with open(self.path, "r") as f:
-                out = json.load(f)
-                out["frames"].append(frame_out)
-            with open(self.path, "w") as f:
-                f.write(json.dumps(out))
-        else:
+        if not self.path:
             print(frame_out)
 
-    def _convert_numpy_to_list(self, obj):
-        """Convert numpy arrays to lists for JSON serialization."""
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, dict):
-            return {k: self._convert_numpy_to_list(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [self._convert_numpy_to_list(i) for i in obj]
-        else:
-            return obj
+    def close(self):
+        """Close the HDF5 file."""
+        if self.h5file:
+            print("Closing HDF5 file.")
+            self.h5file.close()
+            self.h5file = None
+
+    def __del__(self):
+        """Ensure HDF5 file is closed when object is deleted."""
+        self.close()

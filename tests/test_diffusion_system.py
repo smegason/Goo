@@ -9,7 +9,7 @@ def setup_blender():
     cellsA = goo.CellType("A")
     cellsA.homo_adhesion_strength = 100
     cell = cellsA.create_cell(
-        "A1", (0, 0, 0), color=(0.5, 0, 0), size=2, physics_enabled=False
+        "A1", (0, 0, 0), color=(0.5, 0, 0), size=2, physics_enabled=True
     )
 
     molA = goo.Molecule("molA", conc=0.05, D=0.5, gradient="constant")

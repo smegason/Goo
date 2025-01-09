@@ -222,7 +222,8 @@ def create_adhesion(
     if obj is None:
         if name is None or loc is None:
             raise ValueError(
-                "If obj is not provided, then both name and loc parameters must be provided."
+                "If obj is not provided, then both name and \
+                    loc parameters must be provided."
             )
         obj = bpy.data.objects.new(name, None)
         obj.location = loc
