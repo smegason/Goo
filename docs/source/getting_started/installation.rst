@@ -28,77 +28,59 @@ Dependencies
 ------------
 
 - python 3.7 or newer
+- bpy_ (bundled with Blender)
 - numpy_
 - scipy_
-- bpy_ (bundled with Blender)
+- antimony_
+- libroadrunner_
+- h5py_
 
-.. _numpy: http://www.numpy.org/
+
 .. _bpy: https://docs.blender.org/api/current/info_advanced_blender_as_bpy.html
-.. _scipy: https://pypi.org/project/scipy/
+.. _numpy: http://www.numpy.org/
+.. _scipy: https://scipy.org/
+.. _antimony: https://tellurium.readthedocs.io/en/latest/antimony.html
+.. _libroadrunner: https://www.libroadrunner.org/
+.. _h5py: https://www.h5py.org/
 
 Install dependencies in Blender
 ------------------------------------
 
-MacOS/Linux
-------------
-
 Blender comes with its own Python interpreter, which is isolated from the system's Python environment. 
-Goo requires minimal dependencies that need to be installed directly into Blender's Python environment. 
+Goo requires some additional packages that must installed and then be exposed to Blender.
 
-.. note::
+MacOS/Linux
+^^^^^^^^^^^
 
-   Blender's Python interpreter changes from Python 3.10 to 3.11 between 3.x and 4.x versions. Make sure to adapt your path accordingly. 
+For MacOS and Linux, Goo comes packaged with a Makefile to streamline dependency installation. To use it:
 
+1. Set the Makefile variables `BLENDER_PATH` and `BPY_PATH` to the paths of the Blender executable and its Python interpreter, respectively.
 
-To install Goo's dependencies from the terminal: 
-
-1. Find the paths of the Blender executable and its Python interpreter.
-
-   For macOS, it is usually in the Applications folder, e.g., `/Applications/Blender.app/Contents/MacOS/Blender` and `/Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11`.
-
-2. Create a new environment using Blender's Python interpreter:
+   For macOS, it is usually in the Applications folder, e.g.: 
 
    .. code-block:: bash
 
-      /Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.11 -m venv blender_venv
+      BLENDER_PATH = /Applications/Blender.app/Contents/MacOS/Blender
+      BPY_PATH = /Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10
 
-3. Activate the environment:
-
-   .. code-block:: bash
-
-      source blender_venv/bin/activate
-
-4. Install the dependencies:
+2. Set up the Blender environment:
 
    .. code-block:: bash
 
-      /Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.11 -m pip install numpy scipy typing_extensions
+      make setup
+   
+3. Allow Blender to access the dependency folder:
 
-5. Check that the dependencies are installed:
-
-   .. code-block:: bash
-
-      /Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.11 -m pip list
-
-6. Launch Blender by running this command in your terminal:
-
-   .. code-block:: bash
-
-      /Applications/Blender.app/Contents/MacOS/Blender
-
-
+   In Blender, go to `Edit > Preferences > File Paths > Scripts` and add `<your_root_path>/Goo/hook/scripts`.
 
 Windows
-------------
+^^^^^^^
 
-Blender comes with its own Python interpreter, which is isolated from the system's Python environment. 
-Goo requires a few additional Python packages that need to be installed directly into Blender's Python environment. 
-
-To install Goo's dependencies from a terminal: 
+For Windows, the setup must be done manually.
 
 1. Find the paths of the Blender executable and its Python interpreter.
 
-   For Windows, it is usually in the Program Files, e.g., `C:\\Program Files\\Blender Foundation\\Blender 4.0\\Blender.exe` and `C:\\Program Files\\Blender Foundation\\Blender 4.0\\4.0\\python\\bin\\python.exe`.
+   These are usually found in Program Files, e.g., `C:\\Program Files\\Blender Foundation\\Blender 4.0\\Blender.exe` and `C:\\Program Files\\Blender Foundation\\Blender 4.0\\4.0\\python\\bin\\python.exe`.
 
 2. Create a new virtual environment using Blender's Python interpreter:
 
@@ -107,29 +89,25 @@ To install Goo's dependencies from a terminal:
       C:\\Program Files\\Blender Foundation\\Blender 4.0\\4.0\\python\\bin\\python.exe -m venv .blender_env
 
 
-3. Activate the environment:
+3. Install dependencies into the virtual environment
 
    .. code-block:: bash
 
-      .blender_env\\Scripts\\activate
+      .blender_env\\bin\\python.exe -m pip install -r requirements.txt
 
-4. Install the dependencies:
-
-   .. code-block:: bash
-
-      C:\\Program Files\\Blender Foundation\\Blender 4.0\\4.0\\python\\bin\\python.exe -m pip install numpy scipy typing_extensions
-
-5. Check that the dependencies are installed:
+4. Check that the dependencies are installed:
 
    .. code-block:: bash
 
-      C:\\Program Files\\Blender Foundation\\Blender 4.0\\4.0\\python\\bin\\python.exe -m pip list
+      .blender_env\\bin\\python.exe -m pip list
 
-6. Launch Blender from within the activated virtual environment:
+5. Create a "hook" folder that enables the installed packages to be exposed to Blender.
 
    .. code-block:: bash
 
-       C:\\Program Files\\Blender Foundation\\Blender 4.0\\Blender.exe
+      mkdir hook\\scripts\\modules
+      xcopy .blender_venv\\lib\\python3.10\\site-packages\\* hook\\scripts\\modules /E /H /I
 
+6. Allow Blender to access the dependency folder:
 
-Blender supports virtual environment and the installed packages will be available to use for scripting in Blender. 
+   In Blender, go to `Edit > Preferences > File Paths > Scripts` and add `<your_root_path>/Goo/hook/scripts`.

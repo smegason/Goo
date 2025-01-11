@@ -14,6 +14,30 @@ Contributing to the codebase
 
 4. Install the `Blender developer's extension <https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development>`__ developed by Jacques Lucke inside VSCode. 
 
+Installing new packages
+-----------------------
+
+1. Activate the virtual environment created during installation and install desired packages:
+    .. code-block:: bash
+
+        .blender_env\\Scripts\\activate
+        pip install <package>
+
+2. Update the `hook/modules` folder:
+    macOS:
+
+    .. code-block:: bash
+
+        make update_modules
+
+    Windows:
+
+    .. code-block:: bash
+
+        rmdir /S /Q hook
+        mkdir hook\\scripts\\modules
+        xcopy .blender_venv\\lib\\python3.10\\site-packages\\* hook\\scripts\\modules /E /H /I
+ 
 
 Testing your code
 --------------------
@@ -22,19 +46,26 @@ We developed a suite of tests to ensure the correct functioning of the codebase.
 
 1. We use pytest from within Blender's Python interpreter to run tests. Make sure to install the `pytest` library in your Blender Python environment.
 
-2. A suite of test cases can be found inside the `\tests` folder.
+2. A suite of test cases can be found inside the `/tests` folder.
 
 3. To run the suite of tests, open a terminal in VSCode and run the following command from the codebase root directory. Make sure to replace the path to the Blender executable with the correct path on your system.
+    macOS: 
 
-macOS: 
-.. code-block:: bash
+    .. code-block:: bash
 
-    /Applications/Blender-4.0.app/Contents/MacOS/Blender --background  --python-expr "import pytest; pytest.main(['-v', './tests'])"
+        make test
 
-Windows: 
-.. code-block:: bash
+    or
 
-    "C:\Program Files\Blender Foundation\Blender 3.0\blender.exe" --background  --python-expr "import pytest; pytest.main(['-v', './tests'])"
+    .. code-block:: bash
+
+        /Applications/Blender-4.0.app/Contents/MacOS/Blender --background  --python-expr "import pytest; pytest.main(['-v', './tests'])"
+
+    Windows: 
+
+    .. code-block:: bash
+
+        "C:\Program Files\Blender Foundation\Blender 3.0\blender.exe" --background  --python-expr "import pytest; pytest.main(['-v', './tests'])"
 
 4. All tests should pass before submitting a pull request.
 

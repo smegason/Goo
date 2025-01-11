@@ -13,7 +13,9 @@ import os
 import sys
 
 # Blender python interpreter
-BL_PYTHON_PATH = "/Applications/Blender.app/Contents/Resources/3.3/python/bin/python3.10"
+BL_PYTHON_PATH = (
+    "/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10"
+)
 
 sys.path.insert(0, os.path.abspath("../../scripts/modules"))
 
@@ -65,5 +67,5 @@ html_logo = "_static/goo_logo_fun.png"  # Specify the path to your logo file
 
 # -- Options for Python code display ------------------------------------------------
 
-highlight_language = 'python'
-pygments_style = 'emacs'  # Or choose any other style you prefer
+highlight_language = "python"
+pygments_style = "emacs"  # Or choose any other style you prefer

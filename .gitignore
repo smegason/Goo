@@ -146,6 +146,9 @@ hook/
 
 # Sphinx documentation
 docs/build/
+# Sphinx sphinx-api auto-generated items
+docs/source/goo.*
+docs/source/modules.rst
 
 # mypy
 .mypy_cache/
