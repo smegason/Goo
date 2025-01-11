@@ -80,7 +80,8 @@ class DiffusionSystem:
         xgrid, ygrid, zgrid = self.grid_size
         xlim, ylim, zlim = (np.array(self.grid_size) - 1) / 2 * self.element_size
 
-        # Create x, y, z coordinates centered around 0 with specified range and space between grid points.
+        # Create x, y, z coordinates centered around 0 
+        # with specified range and space between grid points.
         x, y, z = np.mgrid[
             -xlim : xlim : complex(xgrid),
             -ylim : ylim : complex(ygrid),
@@ -160,16 +161,17 @@ class DiffusionSystem:
         return self._grid_concentrations[mol].ravel()[idx]
 
     def get_ball_concentrations(self, center, radius):
-        """Get concentrations of all molecules in a sphere with given center and radius."""
+        """Get concentrations of all molecules in a sphere 
+        with given center and radius."""
         idxs = self._kd_tree.query_ball_point(center, radius)
         signaling_concs = {}
         for mol, grid_concs in self._grid_concentrations.items():
             signaling_concs[mol] = np.sum(grid_concs.ravel()[idxs])
         return signaling_concs
 
-    # TODO: for direction hook, needs to output coords and values of coord for a given moleule.
     def get_coords_concentrations(self, mol, center, radius):
-        """Get a list of coordinates and a list of molecule concentration for each coordinate."""
+        """Get a list of coordinates and a list of molecule 
+        concentration for each coordinate."""
         idxs = self._kd_tree.query_ball_point(center, radius)
         coords = self._kd_tree.data[idxs]
         concs = self._grid_concentrations[mol].ravel()[idxs]

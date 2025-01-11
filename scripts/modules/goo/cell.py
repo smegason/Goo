@@ -251,7 +251,8 @@ class Cell(BlenderObject):
             return [matrix_world @ v.co for v in verts]
 
     def recenter(self, origin=True, forces=True):
-        """Recenter cell origin to center of mass of cell, and center forces to that same origin."""
+        """Recenter cell origin to center of mass of cell, 
+        and center forces to that same origin."""
         com = self.COM()
 
         # Recenter mesh origin to COM
@@ -273,8 +274,12 @@ class Cell(BlenderObject):
 
         Args:
             voxel_size: The resolution used for the remesher (smaller means more
-            polygons).  smooth: If true, the final cell faces will appear
-            smooth.
+            polygons).  smooth: If true, the final cell faces will appear smooth.
+
+        Note:
+            The `voxel_remesh()` operator is used to remesh the cell. This operator
+            is faster than using the remesh modifier, but it can only be used on
+            objects with a mesh data type.
         """
         # use of object ops is 2x faster than remeshing with modifiers
         self.obj.data.remesh_mode = "VOXEL"
@@ -459,7 +464,8 @@ class Cell(BlenderObject):
             self.direction = Vector(direction)
         elif self.direction is None:
             raise ValueError(
-                "Direction must be specified if cell's direction has not been previously set!"
+                "Direction must be specified if cell's direction \
+                    has not been previously set!"
             )
 
         motion_loc = self.loc + self.direction.normalized() * (2 + self.radius())
@@ -478,7 +484,8 @@ class Cell(BlenderObject):
             self.pressure = new_pressure
 
     def step_grn(self, diffsys: DiffusionSystem = None, dt=1):
-        """Calculate and update the metabolite concentrations of the gene regulatory network after 1 time step."""
+        """Calculate and update the metabolite concentrations 
+        of the gene regulatory network after 1 time step."""
         com = self.COM()
         radius = self.radius()
 
@@ -663,7 +670,7 @@ class CellType:
         self.name = name
         self.cells = []
 
-        if type(pattern) == str:
+        if type(pattern) is str:
             match pattern:
                 case "simple":
                     self.pattern = SimplePattern()
@@ -695,7 +702,7 @@ class CellType:
 
     # TODO: perhaps create better way of dealing with setting hierarchy
     # (pattern > CellType initialization > create_cell)
-    # Perhaps simply moving options that can be set later (i.e. color, growth_rate) solely into Cell
+    # Moving options that can be set later (i.e. color, growth_rate) solely into Cell
     def create_cell(
         self,
         name,
@@ -787,7 +794,9 @@ class CellPattern:
         self._cell = Cell()
 
     def retrieve_cell(self):
-        """Retrieves constructed cell, links cell to the scene, and resets the director."""
+        """Retrieves constructed cell, links cell to the scene, 
+        and resets the director.
+        """
         # Link cell to scene
         cell = self._cell
         bpy.context.scene.collection.objects.link(cell.obj)

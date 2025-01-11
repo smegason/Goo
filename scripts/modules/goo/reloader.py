@@ -3,7 +3,7 @@ import bpy
 
 
 def reset_modules():
-    """Resets the modules from the library. """
+    """Resets the modules from the library."""
     to_delete = []
     for modname, _ in sys.modules.items():
         if modname.startswith("goo"):
@@ -13,6 +13,7 @@ def reset_modules():
 
 
 def reset_scene():
+    """Resets the scene."""
     bpy.app.handlers.frame_change_pre.clear()
     bpy.app.handlers.frame_change_post.clear()
     bpy.context.scene.frame_set(1)

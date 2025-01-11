@@ -5,3 +5,5 @@ numpy==1.26.4
 scipy==1.14.0
 Sphinx==7.3.7
 typing_extensions==4.12.2
+h5py==3.12.1
+pytest==8.3.4

@@ -71,6 +71,15 @@ class PIDController(GrowthController):
         self.previous_pressure = pressure
 
     def step_growth(self, current_volume, dt):
+        """Step through the growth controller to calculate normal growth.
+
+        Args:
+            current_volume (float): Current volume of the cell.
+            dt (float): Time step.
+
+        Returns:
+                float: The pressure at the next time step.
+        """
         match self.growth_type:
             case GrowthType.LINEAR:
                 self.next_volume += self.growth_rate * dt

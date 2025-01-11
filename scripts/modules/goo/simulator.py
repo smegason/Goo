@@ -5,7 +5,7 @@ import bpy
 from enum import Enum, Flag, auto
 from typing import Union, List, Optional
 
-from goo.handler import Handler
+from goo.handler import Handler, StopHandler
 from goo.cell import Cell, CellType
 from goo.molecule import DiffusionSystem
 
@@ -47,10 +47,12 @@ class Simulator:
             self.diffsystem.total_time = physics_dt
 
     def set_seed(self, seed):
+        """Set the random seed for the simulation."""
         np.random.seed(seed)
         bpy.context.scene["seed"] = seed
 
     def setup_world(self, seed=1):
+        """Set up the Blender scene for the simulation."""
         # Enable addons
         for addon in self.addons:
             self.enable_addon(addon)
@@ -110,6 +112,7 @@ class Simulator:
         self.extend_scene()
 
     def enable_addon(self, addon):
+        """Enable an addon in Blender."""
         if addon not in bpy.context.preferences.addons:
             bpy.ops.preferences.addon_enable(module=addon)
             print(f"Addon '{addon}' has been enabled.")
@@ -117,9 +120,11 @@ class Simulator:
             print(f"Addon '{addon}' is already enabled.")
 
     def toggle_gravity(self, on):
+        """Toggle gravity in the scene."""
         bpy.context.scene.use_gravity = on
 
     def get_cells_func(self, celltypes=None):
+        """Get a function that returns all cells in the simulation."""
         celltypes = celltypes if celltypes else self.celltypes
 
         def get_cells():
@@ -128,6 +133,7 @@ class Simulator:
         return get_cells
 
     def get_diffsystem_func(self, diffsystem=None):
+        """Get a function that returns the diffusion system."""
         diffsystem = diffsystem if diffsystem is not None else self.diffsystem
 
         def get_diffsystem():
@@ -136,10 +142,12 @@ class Simulator:
         return get_diffsystem
 
     def get_cells(self, celltypes=None):
+        """Get all cells in the simulation."""
         celltypes = celltypes if celltypes else self.celltypes
         return [cell for celltype in celltypes for cell in celltype.cells]
 
     def extend_scene(self):
+        """Extend the scene to allow cloth physics to pass the default 250 frames."""
         cells = self.get_cells()
         for cell in cells:
             if cell.cloth_mod and cell.cloth_mod.point_cache.frame_end < self.time:
@@ -151,15 +159,21 @@ class Simulator:
         celltypes: list[CellType] = None,
         diffsystem: DiffusionSystem = None,
     ):
+        """Add a handler to the simulation."""
         handler.setup(
             self.get_cells_func(celltypes),
             self.get_diffsystem_func(diffsystem),
             self.physics_dt,
         )
+
         bpy.app.handlers.frame_change_post.append(handler.run)
 
     def add_handlers(self, handlers: list[Handler]):
-        # handlers.append(SceneExtensionHandler(bpy.context.scene.frame_end))
+        """Add multiple handlers to the simulation."""
+        # always include a stop handler
+        stop_handler = StopHandler()
+        bpy.app.handlers.frame_change_pre.append(stop_handler.run)
+        
         for handler in handlers:
             self.add_handler(handler)
 
@@ -224,7 +238,8 @@ class Simulator:
         bpy.context.scene.render.filepath = path
         print("\n----- RENDERING COMPLETED! -----")
 
-    def render_animation(self, path=None, end=250, camera=False):
+    def render_animation(self, path=None, end=bpy.context.scene.frame_end, camera=False):
+        """Render the simulation as an animation."""
         if not path:
             print("Save path not provided. Falling back on default path.")
             path = os.path.dirname(bpy.context.scene.render.filepath)
@@ -245,13 +260,13 @@ class Simulator:
             bpy.ops.render.opengl(animation=True, write_still=True)
         print("\n----- RENDERING COMPLETED! -----")
 
-    def run(self, end=250):
+    def run(self, end=bpy.context.scene.frame_end):
         """
         Run the simulation in the background without
-        updating the 3D Viewport in real time.
+        updating the 3D Viewport in real time. 
 
         Args:
-            end (int): End frame.
+            end (int): End frame. Defaults to the last frame of the scene.
         """
         print("----- SIMULATION START -----")
         for i in range(1, end + 1):
