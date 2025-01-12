@@ -4,8 +4,7 @@
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    ?=
-# SPHINXBUILD   ?= sphinx-build
-SPHINXBUILD = /Applications/Blender-4.1.app/Contents/MacOS/Blender --background --python blender_sphinx.py --
+SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
 
@@ -19,6 +18,9 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+clean:
+	rm -rf $(BUILDDIR)
 
 api:
 	sphinx-apidoc -e -o "$(SOURCEDIR)" ../scripts/modules/

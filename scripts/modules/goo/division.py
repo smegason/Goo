@@ -8,6 +8,7 @@ import numpy as np
 from goo.cell import Cell
 from goo.utils import *
 from goo.handler import Handler
+from goo.molecule import DiffusionSystem
 
 from typing_extensions import override
 
@@ -211,8 +212,13 @@ class DivisionHandler(Handler):
         self.sigma = sigma
 
     @override
-    def setup(self, get_cells: Callable[[], list[Cell]], dt: float):
-        super(DivisionHandler, self).setup(get_cells, dt)
+    def setup(
+        self,
+        get_cells: Callable[[], list[Cell]],
+        get_diffsystems: Callable[[], list[DiffusionSystem]],
+        dt: float,
+    ):
+        super(DivisionHandler, self).setup(get_cells, get_diffsystems, dt)
         for cell in self.get_cells():
             cell["divided"] = False
         self._cells_to_update = []
@@ -278,8 +284,8 @@ class TimeDivisionHandler(DivisionHandler):
         super(TimeDivisionHandler, self).__init__(division_logic, mu, sigma)
 
     @override
-    def setup(self, get_cells, dt):
-        super(TimeDivisionHandler, self).setup(get_cells, dt)
+    def setup(self, get_cells, get_diffsystem, dt):
+        super(TimeDivisionHandler, self).setup(get_cells, get_diffsystem, dt)
         for cell in self.get_cells():
             cell["last_division_time"] = 0
 

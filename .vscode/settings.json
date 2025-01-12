@@ -1,8 +1,0 @@
-{
-  "esbonio.sphinx.confDir": "",
-  "python.analysis.extraPaths": [
-    "./scripts/modules/goo",
-    "./scripts/modules"
-  ]
-}
-

@@ -1,4 +1,5 @@
 from functools import reduce
+from typing import Union
 
 import bpy
 import bmesh
@@ -8,11 +9,7 @@ from mathutils import *
 
 class BlenderObject:
     def __init__(self, obj: bpy.types.Object):
-        self._obj = obj
-
-    @property
-    def obj(self):
-        return self._obj
+        self.obj = obj
 
     @property
     def name(self):
@@ -32,6 +29,16 @@ class BlenderObject:
 
     def hide(self):
         self.obj.hide_set(True)
+
+    # ----- CUSTOM PROPERTIES -----
+    def __setitem__(self, k: str, v: Union[float, list[float], int, list[int], str]):
+        self.obj[k] = v
+
+    def __contains__(self, k: str):
+        return k in self.obj.keys()
+
+    def __getitem__(self, k):
+        return self.obj[k]
 
 
 class Axis:
@@ -87,6 +94,8 @@ def create_mesh(
             bmesh.ops.create_icosphere(
                 bm, subdivisions=subdivisions, radius=size, **kwargs
             )
+            # bmesh.ops.beautify_fill(bm, faces=bm.faces, edges=bm.edges)
+            bmesh.ops.triangulate(bm, faces=bm.faces[:])
         case "plane":
             bmesh.ops.create_grid(
                 bm, x_segments=1, y_segments=1, size=size / 2, **kwargs
@@ -95,9 +104,11 @@ def create_mesh(
             bmesh.ops.create_monkey(bm, **kwargs)
         case "cube":
             bmesh.ops.create_cube(bm, size=size, **kwargs)
+            # bmesh.ops.beautify_fill(bm, faces=bm.faces, edges=bm.edges)
+            # bmesh.ops.triangulate(bm, faces=bm.faces[:])
         case _:
             raise ValueError(
-                """mesh must be one of "icosphere", "plane", or "monkey"."""
+                """mesh must be one of "icosphere", "plane", "monkey" or "cube"."""
             )
 
     me = bpy.data.meshes.new(f"{name}_mesh")
@@ -113,73 +124,88 @@ def create_mesh(
 
 
 def create_material(name, color):
+    # Create a new material
     mat = bpy.data.materials.new(name=name)
     r, g, b = color
-    mat.diffuse_color = (r, g, b, 0.8)  # viewport color
-    mat.use_nodes = True
-    mat.blend_method = "BLEND"
+    mat.diffuse_color = (r, g, b, 1.0)
 
-    # get the material nodes
-    nodes = mat.node_tree.nodes
-    nodes.clear()
-
-    # create principled node for main color
-    node_main = nodes.new(type="ShaderNodeBsdfPrincipled")
-    node_main.location = -200, 100
-    node_main.inputs["Base Color"].default_value = (r, g, b, 0.8)
-    node_main.inputs["Metallic"].default_value = 0.036
-    node_main.inputs["Roughness"].default_value = 0.318
-    node_main.inputs["IOR"].default_value = 1.450
-
-    # specular
-    node_main.inputs["Anisotropic"].default_value = 0.041
-    node_main.inputs["Anisotropic Rotation"].default_value = 0.048
-    node_main.inputs["Alpha"].default_value = 0.414
-
-    # create noise texture source
-    node_noise = nodes.new(type="ShaderNodeTexNoise")
-    node_noise.inputs["Scale"].default_value = 0.600
-    node_noise.inputs["Detail"].default_value = 15.0
-    node_noise.inputs["Roughness"].default_value = 0.500
-    node_noise.inputs["Distortion"].default_value = 3.0
-
-    # create HSV
-    node_HSV = nodes.new(type="ShaderNodeHueSaturation")
-    node_HSV.inputs["Hue"].default_value = 0.800
-    node_HSV.inputs["Saturation"].default_value = 2.00
-    node_HSV.inputs["Value"].default_value = 2.00
-    node_HSV.inputs["Fac"].default_value = 1.00
-
-    # create second principled node for random color variation
-    node_random = nodes.new(type="ShaderNodeBsdfPrincipled")
-    node_random.location = -200, -100
-    node_random.inputs["Base Color"].default_value = (r, g, b, 1)
-    node_random.inputs["Metallic"].default_value = 0.0
-
-    node_random.inputs["Roughness"].default_value = 0.482
-    node_random.inputs["Anisotropic"].default_value = 0.0
-    node_random.inputs["Anisotropic Rotation"].default_value = 0.0
-    node_random.inputs["IOR"].default_value = 1.450
-    node_random.inputs["Alpha"].default_value = 0.555
-
-    # create mix shader node
-    node_mix = nodes.new(type="ShaderNodeMixShader")
-    node_mix.location = 0, 0
-    node_mix.inputs["Fac"].default_value = 0.079
-
-    # create output node
-    node_output = nodes.new(type="ShaderNodeOutputMaterial")
-    node_output.location = 200, 0
-
-    # link nodes
-    links = mat.node_tree.links
-    links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV
-    links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random
-    links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix
-    links.new(node_random.outputs[0], node_mix.inputs[2])  # link_random_mix
-    links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out
+    # Set material properties to create a matte finish
+    mat.metallic = 1.0  # No metallic reflection
+    mat.roughness = 1.0  # Maximum roughness for a matte finish
+    mat.specular_intensity = 1.0  # No specular reflection
+    mat.use_nodes = False  # Ensure nodes are not used
 
     return mat
+
+
+# def create_material(name, color):
+#     mat = bpy.data.materials.new(name=name)
+#     r, g, b = color
+#     mat.diffuse_color = (r, g, b, 0.8)  # viewport color
+#     mat.use_nodes = True
+#     mat.blend_method = "BLEND"
+
+#     # get the material nodes
+#     nodes = mat.node_tree.nodes
+#     nodes.clear()
+
+#     # create principled node for main color
+#     node_main = nodes.new(type="ShaderNodeBsdfPrincipled")
+#     node_main.location = -200, 100
+#     node_main.inputs["Base Color"].default_value = (r, g, b, 1)
+#     node_main.inputs["Metallic"].default_value = 1.0
+#     node_main.inputs["Roughness"].default_value = 1.0
+#     node_main.inputs["IOR"].default_value = 1.450
+
+#     # specular
+#     node_main.inputs["Anisotropic"].default_value = 0.041
+#     node_main.inputs["Anisotropic Rotation"].default_value = 0.048
+#     node_main.inputs["Alpha"].default_value = 0.414
+
+#     # create noise texture source
+#     node_noise = nodes.new(type="ShaderNodeTexNoise")
+#     node_noise.inputs["Scale"].default_value = 0.600
+#     node_noise.inputs["Detail"].default_value = 15.0
+#     node_noise.inputs["Roughness"].default_value = 1.0
+#     node_noise.inputs["Distortion"].default_value = 3.0
+
+#     # create HSV
+#     node_HSV = nodes.new(type="ShaderNodeHueSaturation")
+#     node_HSV.inputs["Hue"].default_value = 0.800
+#     node_HSV.inputs["Saturation"].default_value = 2.00
+#     node_HSV.inputs["Value"].default_value = 2.00
+#     node_HSV.inputs["Fac"].default_value = 1.00
+
+#     # create second principled node for random color variation
+#     node_random = nodes.new(type="ShaderNodeBsdfPrincipled")
+#     node_random.location = -200, -100
+#     node_random.inputs["Base Color"].default_value = (r, g, b, 1)
+#     node_random.inputs["Metallic"].default_value = 1.0
+
+#     node_random.inputs["Roughness"].default_value = 1.0
+#     node_random.inputs["Anisotropic"].default_value = 0.0
+#     node_random.inputs["Anisotropic Rotation"].default_value = 0.0
+#     node_random.inputs["IOR"].default_value = 1.450
+#     node_random.inputs["Alpha"].default_value = 0.555
+
+#     # create mix shader node
+#     node_mix = nodes.new(type="ShaderNodeMixShader")
+#     node_mix.location = 0, 0
+#     node_mix.inputs["Fac"].default_value = 0.079
+
+#     # create output node
+#     node_output = nodes.new(type="ShaderNodeOutputMaterial")
+#     node_output.location = 200, 0
+
+#     # link nodes
+#     links = mat.node_tree.links
+#     links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV
+#     links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random
+#     links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix
+#     links.new(node_random.outputs[0], node_mix.inputs[2])  # link_random_mix
+#     links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out
+
+#     return mat
 
 
 # --- PHYSICS MODIFIER CONSTRUCTORS ---
@@ -187,9 +213,9 @@ class PhysicsConstructor:
     def __init__(self, *mod_contructors: "ModConstructor"):
         self.mod_constructors = [*mod_contructors]
 
-    def __call__(self, obj: bpy.types.Object):
+    def __call__(self, bobj: BlenderObject):
         for mod_constructor in self.mod_constructors:
-            mod_constructor().construct(obj)
+            mod_constructor().construct(bobj.obj)
 
 
 class ModConstructor:
@@ -217,6 +243,8 @@ class ClothConstructor(ModConstructor):
         mod.settings.bending_model = "ANGULAR"
         mod.settings.mass = 1
         mod.settings.time_scale = 1
+        mod.point_cache.frame_start = bpy.context.scene.frame_start
+        mod.point_cache.frame_end = bpy.context.scene.frame_end
         # Cloth > Stiffness
         mod.settings.tension_stiffness = stiffness
         mod.settings.compression_stiffness = stiffness
@@ -233,20 +261,26 @@ class ClothConstructor(ModConstructor):
         mod.settings.use_pressure_volume = True
         mod.settings.target_volume = 1
         mod.settings.pressure_factor = 2
-        mod.settings.fluid_density = 1.05
+        # mod.settings.fluid_density = 1.05
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 6
+        mod.collision_settings.collision_quality = 4
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
         mod.collision_settings.friction = 0
-        mod.collision_settings.self_distance_min = 0.02
-        mod.collision_settings.distance_min = 0.02
+        mod.collision_settings.self_distance_min = 0.01
+        mod.collision_settings.distance_min = 0.01
         mod.collision_settings.self_impulse_clamp = 100
         mod.collision_settings.impulse_clamp = 100
 
         # Cloth > Field Weights
         mod.settings.effector_weights.gravity = 0
+
+
+class SimpleClothConstructor(ClothConstructor):
+    def setup_mod(self, mod):
+        super().setup_mod(mod)
+        mod.settings.mass = 10
 
 
 class YolkClothConstructor(ClothConstructor):
@@ -286,7 +320,7 @@ class YolkClothConstructor(ClothConstructor):
         mod.settings.pressure_factor = 2
         mod.settings.fluid_density = 1.15
         # Cloth > Collisions
-        mod.collision_settings.collision_quality = 6
+        mod.collision_settings.collision_quality = 10
         mod.collision_settings.use_collision = True
         mod.collision_settings.use_self_collision = True
         mod.collision_settings.self_friction = 0
@@ -306,7 +340,7 @@ class CollisionConstructor(ModConstructor):
         mod.settings.thickness_outer = 0.025
         mod.settings.thickness_inner = 0.25
         mod.settings.cloth_friction = 0
-        mod.settings.use_normal = True
+        mod.settings.use_normal = False
 
 
 class BoundaryCollisionConstructor(CollisionConstructor):
