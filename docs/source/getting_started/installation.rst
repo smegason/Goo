@@ -5,7 +5,7 @@ Installation
 
 1. Install Blender
 
-Goo runs within Blender, so you will first need to download Blender 4.0 from `here <https://www.blender.org/download/lts/4-1/>`__.
+Goo runs within Blender, so you will first need to download Blender 4.0 from `here <https://www.blender.org/download/lts/4-0/>`__.
 Goo currently support Blender 3.3 to 4.0. We aim to maintain Goo for future Blender LTS versions but might have a slight lag from their releases. 
 
 .. note::
@@ -13,7 +13,7 @@ Goo currently support Blender 3.3 to 4.0. We aim to maintain Goo for future Blen
    Goo is not currently not compatible with Blender 4.1 because of a dependency clash with the `RoadRunner Simulation Engine <https://libroadrunner.readthedocs.io/en/latest/index.html>`__. Use Blender 4.0 while we are working towards implementing biocircuitery in Goo. 
 
 
-2. Download the Goo library from `GitHub <https://github.com/smegason/Goo>`__. Download the zip file of the latest release, and unzip it in an empty folder. \n Alternatively, it can be downloaded from the command line as follows:
+2. Clone the Goo library from `GitHub <https://github.com/smegason/Goo>`__. Download the zip file of the latest release, and unzip it in an empty folder. \n Alternatively, it can be downloaded from the command line as follows:
 
    .. code-block:: bash
 
