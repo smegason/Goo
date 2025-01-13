@@ -2,6 +2,7 @@ from typing_extensions import Optional
 
 import numpy as np
 import bpy
+from mathutils import Vector
 from bpy.types import ClothModifier, CollisionModifier
 
 from .utils import *
@@ -267,7 +268,7 @@ class Cell(BlenderObject):
         for force in self.adhesion_forces:
             force.loc = self.loc
 
-    def remesh(self, voxel_size: float = 0.5, smooth: bool = False) -> None:
+    def remesh(self, voxel_size: float = 0.45, smooth: bool = True) -> None:
         """Remesh the underlying mesh representation of the cell.
 
         Remeshing is done using the built-in `voxel_remesh()`.
@@ -377,7 +378,7 @@ class Cell(BlenderObject):
         if self.cloth_mod and self.effectors:
             self.cloth_mod.settings.effector_weights.collection = self.effectors.col
 
-    def get_modifier(self, type) -> Optional[Modifier]:
+    def get_modifier(self, type) -> Optional[bpy.types.Modifier]:
         """Retrieves the first modifier of the specified type from the
         underlying object representation of the cell.
 
@@ -672,12 +673,14 @@ class CellType:
 
         if type(pattern) is str:
             match pattern:
+                case "standard": 
+                    self.pattern = StandardPattern()
                 case "simple":
                     self.pattern = SimplePattern()
                 case "yolk":
                     self.pattern = YolkPattern()
-                case _:
-                    self.pattern = StandardPattern()
+                case _:  # default to simple
+                    self.pattern = SimplePattern()
         else:
             self.pattern = pattern
         self.target_volume = target_volume
@@ -754,6 +757,7 @@ class CellType:
             )
         cell = self.pattern.retrieve_cell()
         cell.celltype = self
+        cell.remesh()
 
         self.cells.append(cell)
         return cell

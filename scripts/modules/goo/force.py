@@ -2,6 +2,7 @@ from typing import Optional
 from typing_extensions import override
 
 import bpy
+from mathutils import Vector
 from goo.utils import *
 
 
@@ -72,7 +73,7 @@ class Force(BlenderObject):
         if min_dist is None:
             self.obj.field.use_min_distance = False
         else:
-            self.obj.field.use_min_distance = False
+            self.obj.field.use_min_distance = True
             self.obj.field.distance_min = min_dist
 
     @property
@@ -87,7 +88,7 @@ class Force(BlenderObject):
         if max_dist is None:
             self.obj.field.use_max_distance = False
         else:
-            self.obj.field.use_max_distance = False
+            self.obj.field.use_max_distance = True
             self.obj.field.distance_max = max_dist
 
     @property
@@ -232,7 +233,7 @@ def create_adhesion(
     adhesion_force.strength = strength
     adhesion_force.shape = shape
     adhesion_force.min_dist = 0.6
-    adhesion_force.max_dist = 1.4
+    adhesion_force.max_dist = 1.6
     adhesion_force.falloff = 1
     return adhesion_force
 

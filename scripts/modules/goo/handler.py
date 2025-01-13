@@ -192,6 +192,8 @@ class RecenterHandler(Handler):
 
             if cell.motion_force:
                 cell.move()
+                
+            cell.cloth_mod.point_cache.frame_end = bpy.context.scene.frame_end
 
 
 class GrowthPIDHandler(Handler):
@@ -208,21 +210,24 @@ ForceDist = Enum("ForceDist", ["CONSTANT", "UNIFORM", "GAUSSIAN"])
 class RandomMotionHandler(Handler):
     """Handler for simulating random cell motion.
 
-    At every frame, the direction of motion is randomized, and the strength
-    of the motion force is randomly selected from a specified distribution.
+    At every frame, the direction of motion is is randomly selected 
+    from a specified distribution, and the strength is set by the user.
 
     Attributes:
-        distribution (ForceDist): Distribution of random strength of motion force.
-        max_strength (int): Maximum strength motion force.
+        distribution (ForceDist): Distribution of random location of motion force.
+        strength (int): Strength of the motion force.
+        persistence (tuple[float, float, float]): Persistent direction of motion force.
     """
 
     def __init__(
         self,
         distribution: ForceDist = ForceDist.UNIFORM,
-        max_strength: int = 0,
+        strength: int = 0,
+        persistence: tuple[float, float, float] = (0, 0, 0)
     ):
         self.distribution = distribution
-        self.max_strength = max_strength
+        self.strength = strength
+        self.persistence = persistence
 
     def run(self, scene, depsgraph):
         for cell in self.get_cells():
@@ -231,20 +236,29 @@ class RandomMotionHandler(Handler):
             if not cell.motion_force.enabled:
                 cell.motion_force.enable()
 
-            dir = Vector(np.random.uniform(low=-1, high=1, size=(3,)))
+            dir = cell.loc
             match self.distribution:
                 case ForceDist.CONSTANT:
-                    strength = self.max_strength
+                    # persistent motion in a single direction
+                    dir = self.persistence
                 case ForceDist.UNIFORM:
-                    strength = np.random.random_sample() * self.max_strength
+                    # sampled from continuous uniform distribution bounded [0, 1] 
+                    dir = Vector(self.persistence) \
+                        + Vector(np.random.uniform(low=-1, high=1, size=(3,)))
                 case ForceDist.GAUSSIAN:
-                    strength = np.random.normal() * self.max_strength
+                    dir = Vector(self.persistence) \
+                        + Vector(np.random.normal(loc=0, scale=1, size=(3,)))
                 case _:
                     raise ValueError(
                         "Motion noise distribution must be one of UNIFORM or GAUSSIAN."
                     )
-            cell.motion_force.strength = strength
+            if cell.celltype.motion_strength: 
+                cell.motion_force.strength = cell.celltype.motion_strength
+            else:  
+                cell.motion_force.strength = self.strength
+            # move motion force
             cell.move(dir)
+            cell.cloth_mod.point_cache.frame_end = bpy.context.scene.frame_end
 
 
 """Possible properties by which cells are colored."""

@@ -14,7 +14,7 @@ import sys
 
 # Blender python interpreter
 BL_PYTHON_PATH = (
-    "/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10"
+    "/Applications/Blender-4.0.app/Contents/Resources/4.0/python/bin/python3.10"
 )
 
 sys.path.insert(0, os.path.abspath("../../scripts/modules"))
@@ -69,3 +69,5 @@ html_logo = "_static/goo_logo_fun.png"  # Specify the path to your logo file
 
 highlight_language = "python"
 pygments_style = "emacs"  # Or choose any other style you prefer
+
+autodoc_mock_imports = ["bpy", "bmesh", "mathutils"]

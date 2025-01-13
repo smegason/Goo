@@ -3,7 +3,7 @@ from typing import Union
 
 import bpy
 import bmesh
-from bpy.types import Modifier
+from bpy.types import Modifier, ClothModifier
 from mathutils import *
 
 
@@ -138,76 +138,6 @@ def create_material(name, color):
     return mat
 
 
-# def create_material(name, color):
-#     mat = bpy.data.materials.new(name=name)
-#     r, g, b = color
-#     mat.diffuse_color = (r, g, b, 0.8)  # viewport color
-#     mat.use_nodes = True
-#     mat.blend_method = "BLEND"
-
-#     # get the material nodes
-#     nodes = mat.node_tree.nodes
-#     nodes.clear()
-
-#     # create principled node for main color
-#     node_main = nodes.new(type="ShaderNodeBsdfPrincipled")
-#     node_main.location = -200, 100
-#     node_main.inputs["Base Color"].default_value = (r, g, b, 1)
-#     node_main.inputs["Metallic"].default_value = 1.0
-#     node_main.inputs["Roughness"].default_value = 1.0
-#     node_main.inputs["IOR"].default_value = 1.450
-
-#     # specular
-#     node_main.inputs["Anisotropic"].default_value = 0.041
-#     node_main.inputs["Anisotropic Rotation"].default_value = 0.048
-#     node_main.inputs["Alpha"].default_value = 0.414
-
-#     # create noise texture source
-#     node_noise = nodes.new(type="ShaderNodeTexNoise")
-#     node_noise.inputs["Scale"].default_value = 0.600
-#     node_noise.inputs["Detail"].default_value = 15.0
-#     node_noise.inputs["Roughness"].default_value = 1.0
-#     node_noise.inputs["Distortion"].default_value = 3.0
-
-#     # create HSV
-#     node_HSV = nodes.new(type="ShaderNodeHueSaturation")
-#     node_HSV.inputs["Hue"].default_value = 0.800
-#     node_HSV.inputs["Saturation"].default_value = 2.00
-#     node_HSV.inputs["Value"].default_value = 2.00
-#     node_HSV.inputs["Fac"].default_value = 1.00
-
-#     # create second principled node for random color variation
-#     node_random = nodes.new(type="ShaderNodeBsdfPrincipled")
-#     node_random.location = -200, -100
-#     node_random.inputs["Base Color"].default_value = (r, g, b, 1)
-#     node_random.inputs["Metallic"].default_value = 1.0
-
-#     node_random.inputs["Roughness"].default_value = 1.0
-#     node_random.inputs["Anisotropic"].default_value = 0.0
-#     node_random.inputs["Anisotropic Rotation"].default_value = 0.0
-#     node_random.inputs["IOR"].default_value = 1.450
-#     node_random.inputs["Alpha"].default_value = 0.555
-
-#     # create mix shader node
-#     node_mix = nodes.new(type="ShaderNodeMixShader")
-#     node_mix.location = 0, 0
-#     node_mix.inputs["Fac"].default_value = 0.079
-
-#     # create output node
-#     node_output = nodes.new(type="ShaderNodeOutputMaterial")
-#     node_output.location = 200, 0
-
-#     # link nodes
-#     links = mat.node_tree.links
-#     links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV
-#     links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random
-#     links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix
-#     links.new(node_random.outputs[0], node_mix.inputs[2])  # link_random_mix
-#     links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out
-
-#     return mat
-
-
 # --- PHYSICS MODIFIER CONSTRUCTORS ---
 class PhysicsConstructor:
     def __init__(self, *mod_contructors: "ModConstructor"):
@@ -226,7 +156,7 @@ class ModConstructor:
         mod = obj.modifiers.new(name=self.name, type=self.type)
         self.setup_mod(mod)
 
-    def setup_mod(self, mod: bpy.types.Modifier):
+    def setup_mod(self, mod: Modifier):
         pass
 
 
@@ -234,7 +164,7 @@ class ClothConstructor(ModConstructor):
     name = "Cloth"
     type = "CLOTH"
 
-    def setup_mod(self, mod: bpy.types.ClothModifier):
+    def setup_mod(self, mod: ClothModifier):
         stiffness = 1
         pressure = 0.01
 
@@ -284,7 +214,7 @@ class SimpleClothConstructor(ClothConstructor):
 
 
 class YolkClothConstructor(ClothConstructor):
-    def setup_mod(self, mod: bpy.types.ClothModifier):
+    def setup_mod(self, mod: ClothModifier):
         stiffness = 5
         pressure = 5.2
 
@@ -366,7 +296,7 @@ class RemeshConstructor(ModConstructor):
 
     def setup_mod(self, mod: bpy.types.RemeshModifier):
         mod.mode = "VOXEL"
-        mod.voxel_size = 0.5
+        mod.voxel_size = 0.75
         mod.adaptivity = 0
         mod.use_remove_disconnected = True
         mod.use_smooth_shade = True

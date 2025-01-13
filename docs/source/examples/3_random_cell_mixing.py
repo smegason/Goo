@@ -31,12 +31,13 @@ def check_min_distance(new_point, points, min_distance):
 # Create cells within the sphere with minimum distance constraint
 num_cells = 6  # Number of cells
 radius = 15  # Sphere radius
-min_distance = 3  # Minimum distance between cells
+min_distance = 3  # Mnimum distance between cells
 
-goo.create_boundary((0, 0, 0), size=radius * 1.2)
+goo.create_boundary((0, 0, 0), size=radius)
 
-cellsA = goo.SimpleType("A")
-cellsA.homo_adhesion_strength = 500
+cellsA = goo.CellType("A", target_volume=100, pattern="simple")
+cellsA.homo_adhesion_strength = 150
+cellsA.motion_strength = 1500
 cells = []
 
 while len(cells) < num_cells:
@@ -45,17 +46,17 @@ while len(cells) < num_cells:
         cells.append(new_point)
         cell_name = f"cell_A{len(cells)}"
         color = tuple(np.random.random_sample(3))
-        cell = cellsA.create_cell(cell_name, new_point, color=color)
+        cell = cellsA.create_cell(cell_name, new_point, color=color, size=1.5)
         cell.stiffness = 1
         cell.pressure = 5
 
-sim = goo.Simulator([cellsA], time=500, physics_dt=1)
-sim.setup_world()
-sim.toggle_gravity(True)
+sim = goo.Simulator([cellsA], time=300, physics_dt=1)
+sim.setup_world(seed=2024)
 sim.add_handlers(
     [
-        goo.GrowthPIDHandler(target_volume=50),
+        goo.GrowthPIDHandler(),
         goo.RecenterHandler(),
-        goo.RandomMotionHandler(distribution=goo.ForceDist.CONSTANT, max_strength=2500),
+        goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=105, sigma=1),
+        goo.RandomMotionHandler(distribution=goo.ForceDist.UNIFORM),
     ]
 )
