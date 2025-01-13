@@ -5,12 +5,12 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Hardware recommendations" href="hardware.html" /><link rel="prev" title="Installation" href="installation.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.08.06 -->
         <title>Example scripts - Goo documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=83e35b93" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=387cc868" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=75810a84" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -89,19 +89,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -142,7 +129,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -288,8 +275,9 @@ Goo extends Blender towards agent-based simulations of cell mechanics, molecular
 Once you get a good grasp of the library, you will be able to write your own Goo scripts and specify lots of initial conditions for your simulations of cells.</p>
 <p>Goo scripts typically get ran from Blender’s scripting tab, though they can be ran from Visual Studio Code directly using the <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development">developer’s extension</a> developed by Jacques Lucke.</p>
 <p>Simulation scripts should start with the <cite>reset_scene()</cite> to start with a fresh scene - it removes all objects contained in the scene and resets simulation parameters to default.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">goo</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">goo</span>
 
+<span class="n">goo</span><span class="o">.</span><span class="n">reset_modules</span><span class="p">()</span>
 <span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -297,28 +285,28 @@ Once you get a good grasp of the library, you will be able to write your own Goo
 Stiffer cells will lead to less deformable cells. Higher adhesion strength will lead to larger cell deformation from their initial spherical shape.
 The ratio of stiffness to adhesion strength controls the resulting patterns cells make up (Garner, Tsai and Megason, 2022).
 Parameters are dimensionless in Goo.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cellsA</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
-<span class="n">cellsB</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">)</span>
-<span class="n">cellsC</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cellsA</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="n">cellsB</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="n">cellsC</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
 
-<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">15</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># ratio = 5</span>
-<span class="n">cellsB</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">100</span>
-<span class="n">cellsB</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># ratio = 50</span>
-<span class="n">cellsC</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">cellsC</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 500</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 1</span>
+<span class="n">cellsB</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">cellsB</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 500</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">2000</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 2000</span>
 </pre></div>
 </div>
 <p>Cell types can then be populated with actual cell instances using <cite>create_cell()</cite>.
 The initial location, size and shape of each cell need to be specified, or set randomly. A material (i.e. a color) can also be given, which comes handy to visualize cell types or track individual cells with a color.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 
 <span class="n">cellsB</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;B1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 <span class="n">cellsB</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;B2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 
-<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
-<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Until now, cells remain static meshes–no cell behaviours have been modelled yet. To do so, you need to call the simulator,
@@ -331,7 +319,7 @@ This is also where the total simulation time is specified, as well as the time s
 Molecular processes happen at faster time scale than cell mechanics; therefore <cite>physics_dt</cite> typically needs be set at least 10 times larger than <cite>molecular_dt</cite>.</p>
 </div>
 <p>The <cite>setup_world()</cite> function always needs be defined. It sets some general parameters (e.g. turning gravity off), units and length scales.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">,</span> <span class="n">cellsB</span><span class="p">,</span> <span class="n">cellsC</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">130</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">,</span> <span class="n">cellsB</span><span class="p">,</span> <span class="n">cellsC</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">2024</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -340,10 +328,10 @@ Handlers execute functions sequentially at every time step. They can take some p
 In this example, we model cell growth, homotypic adhesion, volume-based division (target volume of 50 <span class="math notranslate nohighlight">\(\mu m^3\)</span> with a std.dev. of 1) and gaussian random motion.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
    <span class="p">[</span>
-      <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span>  <span class="c1"># in um3</span>
-      <span class="n">goo</span><span class="o">.</span><span class="n">AdhesionLocationHandler</span><span class="p">(),</span>  <span class="c1"># no parameters needed</span>
-      <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>  <span class="c1"># in um3</span>
-      <span class="n">goo</span><span class="o">.</span><span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">GAUSSIAN</span><span class="p">,</span> <span class="n">max_strength</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+      <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(),</span>                                           <span class="c1"># in um3</span>
+      <span class="n">goo</span><span class="o">.</span><span class="n">RecenterHandler</span><span class="p">(),</span>
+      <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="c1"># in um3</span>
+      <span class="n">goo</span><span class="o">.</span><span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">GAUSSIAN</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
    <span class="p">]</span>
 <span class="p">)</span>
 </pre></div>
@@ -353,51 +341,51 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
 <p>The full list of handlers–cell behaviors the library currently supports–can be found in the codebase documentation.</p>
 </div>
 <p>Put together, this script models three cell doublets of varying stiffness and homotypic adhesion strength, all moving at the same strength for ~150 minutes. Heterotypic adhesion is ignored here.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
-<span class="kn">import</span> <span class="nn">goo</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">reload</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">goo</span>
 
 <span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
 <span class="n">goo</span><span class="o">.</span><span class="n">reset_modules</span><span class="p">()</span>
 <span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
 
-<span class="n">cellsA</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
-<span class="n">cellsB</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">)</span>
-<span class="n">cellsC</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>
+<span class="n">cellsA</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="n">cellsB</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="n">cellsC</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
 
-<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">15</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># ratio = 5</span>
-<span class="n">cellsB</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">100</span>
-<span class="n">cellsB</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># ratio = 50</span>
-<span class="n">cellsC</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">cellsC</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 500</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 1</span>
+<span class="n">cellsB</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">cellsB</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 500</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">2000</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># ratio = 2000</span>
 
-<span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;A2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 
 <span class="n">cellsB</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;B1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 <span class="n">cellsB</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;B2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 
-<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
-<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="o">+</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
+<span class="n">cellsC</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.6</span><span class="p">)</span>
 
-<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">,</span> <span class="n">cellsB</span><span class="p">,</span> <span class="n">cellsC</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">130</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">,</span> <span class="n">cellsB</span><span class="p">,</span> <span class="n">cellsC</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">2024</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
     <span class="p">[</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span>  <span class="c1"># in um3</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">AdhesionLocationHandler</span><span class="p">(),</span>  <span class="c1"># no parameters needed</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>  <span class="c1"># in um3</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">GAUSSIAN</span><span class="p">,</span> <span class="n">max_strength</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(),</span>                                             <span class="c1"># in um3</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">RecenterHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>   <span class="c1"># in um3</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">GAUSSIAN</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="mi">500</span><span class="p">),</span>
     <span class="p">]</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <p>Running this script in Blender should produce the following simulation:</p>
-<video controls="True" loop="True" preload="auto" width="810"><source src="../_images/doublets_1-130.mp4" type="video/mp4"></video></section>
-<section id="cell-division-based-a-threshold-volume">
-<h2>Cell division based a threshold volume<a class="headerlink" href="#cell-division-based-a-threshold-volume" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
-<span class="kn">import</span> <span class="nn">goo</span>
+<video controls="True" loop="True" preload="auto" width="810"><source src="../_images/1_growing_doublets.mp4" type="video/mp4"></video></section>
+<section id="cell-division-based-on-volume">
+<h2>Cell division based on volume<a class="headerlink" href="#cell-division-based-on-volume" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">reload</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">goo</span>
 
 
 <span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
@@ -405,31 +393,31 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
 <span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
 
 <span class="c1"># Defining cells</span>
-<span class="n">celltype</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;cellA&quot;</span><span class="p">)</span>
-<span class="n">celltype</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="n">cell</span> <span class="o">=</span> <span class="n">celltype</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;cell&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-<span class="n">cell</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">cell</span><span class="o">.</span><span class="n">pressure</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">celltype</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="n">celltype</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">2000</span>
 
-<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">(</span><span class="n">celltypes</span><span class="o">=</span><span class="p">[</span><span class="n">celltype</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
+<span class="n">cell1</span> <span class="o">=</span> <span class="n">celltype</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;cell1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">cell1</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">cell1</span><span class="o">.</span><span class="n">pressure</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">celltype</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">2025</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
     <span class="p">[</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">70</span><span class="p">),</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">AdhesionLocationHandler</span><span class="p">(),</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">RemeshHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(),</span>                                             <span class="c1"># in um3</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">RecenterHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>   <span class="c1"># in um3</span>
     <span class="p">]</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <p>Running this script in Blender should produce the following simulation:</p>
 <video controls="True" loop="True" preload="auto" width="810"><source src="../_images/division_cells0001-0150.mp4" type="video/mp4"></video></section>
-<section id="random-cell-motion-in-a-confined-sphere">
-<h2>Random cell motion in a confined sphere<a class="headerlink" href="#random-cell-motion-in-a-confined-sphere" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">reload</span>
-<span class="kn">import</span> <span class="nn">goo</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<section id="random-cell-mixing">
+<h2>Random cell mixing<a class="headerlink" href="#random-cell-mixing" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">reload</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">goo</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
 <span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
@@ -437,7 +425,7 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
 <span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">random_point_inside_sphere</span><span class="p">(</span><span class="n">radius</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_point_inside_sphere</span><span class="p">(</span><span class="n">radius</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a random point inside a sphere.&quot;&quot;&quot;</span>
     <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">radius</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cbrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">())</span>
     <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
@@ -448,7 +436,7 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
     <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
 
 
-<span class="k">def</span> <span class="nf">check_min_distance</span><span class="p">(</span><span class="n">new_point</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">min_distance</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_min_distance</span><span class="p">(</span><span class="n">new_point</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">min_distance</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the new point meets the minimum distance requirement.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
         <span class="n">distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_point</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">point</span><span class="p">))</span>
@@ -460,12 +448,13 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
 <span class="c1"># Create cells within the sphere with minimum distance constraint</span>
 <span class="n">num_cells</span> <span class="o">=</span> <span class="mi">6</span>  <span class="c1"># Number of cells</span>
 <span class="n">radius</span> <span class="o">=</span> <span class="mi">15</span>  <span class="c1"># Sphere radius</span>
-<span class="n">min_distance</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># Minimum distance between cells</span>
+<span class="n">min_distance</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># Mnimum distance between cells</span>
 
-<span class="n">goo</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">radius</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">create_boundary</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">radius</span><span class="p">)</span>
 
-<span class="n">cellsA</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">SimpleType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
-<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">cellsA</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">150</span>
+<span class="n">cellsA</span><span class="o">.</span><span class="n">motion_strength</span> <span class="o">=</span> <span class="mi">1500</span>
 <span class="n">cells</span> <span class="o">=</span> <span class="p">[]</span>
 
 <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_cells</span><span class="p">:</span>
@@ -474,22 +463,94 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
         <span class="n">cells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_point</span><span class="p">)</span>
         <span class="n">cell_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cell_A</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">color</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random_sample</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-        <span class="n">cell</span> <span class="o">=</span> <span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">cell_name</span><span class="p">,</span> <span class="n">new_point</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+        <span class="n">cell</span> <span class="o">=</span> <span class="n">cellsA</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">cell_name</span><span class="p">,</span> <span class="n">new_point</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
         <span class="n">cell</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">cell</span><span class="o">.</span><span class="n">pressure</span> <span class="o">=</span> <span class="mi">5</span>
 
-<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">()</span>
-<span class="n">sim</span><span class="o">.</span><span class="n">toggle_gravity</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">([</span><span class="n">cellsA</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">2024</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
     <span class="p">[</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(</span><span class="n">target_volume</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span> 
-        <span class="n">goo</span><span class="o">.</span><span class="n">AdhesionLocationHandler</span><span class="p">(),</span>
-        <span class="n">goo</span><span class="o">.</span><span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">goo</span><span class="o">.</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">CONSTANT</span><span class="p">,</span> <span class="n">max_strength</span><span class="o">=</span><span class="mi">2500</span><span class="p">),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">RecenterHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">105</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">RandomMotionHandler</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">goo</span><span class="o">.</span><span class="n">ForceDist</span><span class="o">.</span><span class="n">UNIFORM</span><span class="p">),</span>
     <span class="p">]</span>
 <span class="p">)</span>
 </pre></div>
 </div>
+<p>Running this script in Blender should produce the following simulation:</p>
+<video controls="True" loop="True" preload="auto" width="810"><source src="../_images/3_random_cell_mixing0001-0200.mp4" type="video/mp4"></video></section>
+<section id="blinking-cells">
+<h2>Blinking cells<a class="headerlink" href="#blinking-cells" title="Link to this heading">¶</a></h2>
+<p>In this example, we model cells that blink on and off, representing their gene concentration that is controlled by a gene regulatory network akin to a repressilator (Elowitz et al., 2000).
+To do so, we need to define a set of genes and their interactions. Here, gene X repress gene Z, gene Z repress gene Y, and gene Y repress gene X, and all genes degrades at a constant rate.
+Other than that, cells still homotypically adhere, move, grow and divide.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
+
+<span class="n">network1</span> <span class="o">=</span> <span class="n">GeneRegulatoryNetwork</span><span class="p">()</span>
+<span class="n">network1</span><span class="o">.</span><span class="n">load_circuits</span><span class="p">(</span>
+   <span class="n">DegFirstOrder</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+   <span class="n">DegFirstOrder</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+   <span class="n">DegFirstOrder</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+   <span class="n">ProdRepression</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">kcat</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+   <span class="n">ProdRepression</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">kcat</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+   <span class="n">ProdRepression</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">kcat</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">grn</span> <span class="o">=</span> <span class="n">network1</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">metabolites</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>When put all together, this is the script that models blinking cells:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">reload</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">goo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">goo.gene</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">goo.division</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">goo.handler</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">reload</span><span class="p">(</span><span class="n">goo</span><span class="p">)</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">reset_modules</span><span class="p">()</span>
+<span class="n">goo</span><span class="o">.</span><span class="n">reset_scene</span><span class="p">()</span>
+
+<span class="n">celltype</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">CellType</span><span class="p">(</span><span class="s2">&quot;cellA&quot;</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">,</span> <span class="n">target_volume</span><span class="o">=</span><span class="mi">70</span><span class="p">)</span>
+<span class="n">celltype</span><span class="o">.</span><span class="n">homo_adhesion_strength</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">celltype</span><span class="o">.</span><span class="n">create_cell</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;cell1&quot;</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">stiffness</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># Defining genes</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">Gene</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
+
+<span class="n">network1</span> <span class="o">=</span> <span class="n">GeneRegulatoryNetwork</span><span class="p">()</span>
+<span class="n">network1</span><span class="o">.</span><span class="n">load_circuits</span><span class="p">(</span>
+    <span class="n">DegFirstOrder</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+    <span class="n">DegFirstOrder</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+    <span class="n">DegFirstOrder</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+    <span class="n">ProdRepression</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">kcat</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+    <span class="n">ProdRepression</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">kcat</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+    <span class="n">ProdRepression</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">kcat</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">grn</span> <span class="o">=</span> <span class="n">network1</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">metabolites</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">}</span>
+
+<span class="n">sim</span> <span class="o">=</span> <span class="n">goo</span><span class="o">.</span><span class="n">Simulator</span><span class="p">(</span><span class="n">celltypes</span><span class="o">=</span><span class="p">[</span><span class="n">celltype</span><span class="p">],</span> <span class="n">time</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">physics_dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">setup_world</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">2025</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">add_handlers</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">GrowthPIDHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">SizeDivisionHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">BisectDivisionLogic</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">RecenterHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">RemeshHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">NetworkHandler</span><span class="p">(),</span>
+        <span class="n">goo</span><span class="o">.</span><span class="n">ColorizeHandler</span><span class="p">(</span><span class="n">goo</span><span class="o">.</span><span class="n">Colorizer</span><span class="o">.</span><span class="n">GENE</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Running this script in Blender should produce the following simulation:</p>
 </section>
 </section>
 
@@ -550,8 +611,9 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
             <ul>
 <li><a class="reference internal" href="#">Example scripts</a><ul>
 <li><a class="reference internal" href="#writing-your-first-simulation-script">Writing your first simulation script</a></li>
-<li><a class="reference internal" href="#cell-division-based-a-threshold-volume">Cell division based a threshold volume</a></li>
-<li><a class="reference internal" href="#random-cell-motion-in-a-confined-sphere">Random cell motion in a confined sphere</a></li>
+<li><a class="reference internal" href="#cell-division-based-on-volume">Cell division based on volume</a></li>
+<li><a class="reference internal" href="#random-cell-mixing">Random cell mixing</a></li>
+<li><a class="reference internal" href="#blinking-cells">Blinking cells</a></li>
 </ul>
 </li>
 </ul>
@@ -566,7 +628,7 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>

@@ -5,12 +5,12 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Installation" href="getting_started/installation.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.08.06 -->
         <title>Goo documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=83e35b93" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=387cc868" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=75810a84" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -89,19 +89,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -142,7 +129,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -282,9 +269,8 @@
           <section id="goo">
 <h1>Goo<a class="headerlink" href="#goo" title="Link to this heading">¶</a></h1>
 <p><strong>Goo is an open-source Python library to simulate cells, tissues and embryos in Blender.</strong></p>
-<p>It allows for the simulation of a collection of growing, self-replicating, autonomous and interacting agents in order to simulate biological tissues.
-Goo currently supports mechanical interactions of cells by adapting and extending the physics engine built into Blender,
-but will later support cell-cell communication and biocircuits including gene regulatory networks and signalling pathways.</p>
+<p>Goo was designed as a platform to model collections of growing, self-replicating, autonomous, and interacting agents, enabling the exploration of tissue organization.
+It connects together cellular biomechanics, molecular diffusion in the extracellular environment and gene regulatory networks at the cell-level.</p>
 <p>Users can takes advantage of Blender’s rendering engines to render simulations in their preferred format, lighting, background and so much more.</p>
 <p>Goo is hosted on Github at <a class="reference external" href="https://github.com/smegason/Goo">https://github.com/smegason/Goo</a>.</p>
 </section>
@@ -295,14 +281,13 @@ but will later support cell-cell communication and biocircuits including gene re
 <li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#dependencies">Dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#install-dependencies-in-blender">Install dependencies in Blender</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#macos-linux">MacOS/Linux</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#windows">Windows</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/example_scripts.html">Example scripts</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#writing-your-first-simulation-script">Writing your first simulation script</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#cell-division-based-a-threshold-volume">Cell division based a threshold volume</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#random-cell-motion-in-a-confined-sphere">Random cell motion in a confined sphere</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#cell-division-based-on-volume">Cell division based on volume</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#random-cell-mixing">Random cell mixing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/example_scripts.html#blinking-cells">Blinking cells</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/hardware.html">Hardware recommendations</a><ul>
@@ -330,6 +315,7 @@ but will later support cell-cell communication and biocircuits including gene re
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="developer_guide/developers.html">Developer’s guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="developer_guide/developers.html#contributing-to-the-codebase">Contributing to the codebase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/developers.html#installing-new-packages">Installing new packages</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer_guide/developers.html#testing-your-code">Testing your code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="developer_guide/developers.html#update-the-documentation">Update the documentation</a></li>
 </ul>
@@ -400,7 +386,7 @@ but will later support cell-cell communication and biocircuits including gene re
 </div><script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>

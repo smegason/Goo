@@ -9,9 +9,8 @@ Goo
     
 **Goo is an open-source Python library to simulate cells, tissues and embryos in Blender.**
 
-It allows for the simulation of a collection of growing, self-replicating, autonomous and interacting agents in order to simulate biological tissues. 
-Goo currently supports mechanical interactions of cells by adapting and extending the physics engine built into Blender, 
-but will later support cell-cell communication and biocircuits including gene regulatory networks and signalling pathways. 
+Goo was designed as a platform to model collections of growing, self-replicating, autonomous, and interacting agents, enabling the exploration of tissue organization.
+It connects together cellular biomechanics, molecular diffusion in the extracellular environment and gene regulatory networks at the cell-level. 
 
 Users can takes advantage of Blender's rendering engines to render simulations in their preferred format, lighting, background and so much more. 
 

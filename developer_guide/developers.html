@@ -5,12 +5,12 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Learning resources" href="learning_resources.html" /><link rel="prev" title="goo.utils" href="../user_guide/goo.utils.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.08.06 -->
         <title>Developer’s guide - Goo documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=83e35b93" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=387cc868" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=75810a84" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -89,19 +89,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -142,7 +129,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -287,19 +274,51 @@
 <ol class="arabic simple">
 <li><p>Fork the <a class="reference external" href="https://github.com/smegason/Goo">github repository</a>.</p></li>
 <li><p>Clone your fork repository within VSCode.</p></li>
-<li><p>Install libraries: follow the steps of the <a class="reference external" href="https://smegason.github.io/Goo/getting_started/installation.html">installation guide</a>.</p></li>
+<li><p>Install dependencies: follow the steps of the <a class="reference external" href="https://smegason.github.io/Goo/getting_started/installation.html">installation guide</a>.</p></li>
 <li><p>Install the <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development">Blender developer’s extension</a> developed by Jacques Lucke inside VSCode.</p></li>
 </ol>
+</section>
+<section id="installing-new-packages">
+<h2>Installing new packages<a class="headerlink" href="#installing-new-packages" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Activate the virtual environment created during installation and install desired packages:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.blender_env<span class="se">\\</span>Scripts<span class="se">\\</span>activate
+pip<span class="w"> </span>install<span class="w"> </span>&lt;package&gt;
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Update the <cite>hook/modules</cite> folder:</p></li>
+</ol>
+<p>macOS:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>update_modules
+</pre></div>
+</div>
+<p>Windows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rmdir<span class="w"> </span>/S<span class="w"> </span>/Q<span class="w"> </span>hook
+mkdir<span class="w"> </span>hook<span class="se">\\</span>scripts<span class="se">\\</span>modules
+xcopy<span class="w"> </span>.blender_venv<span class="se">\\</span>lib<span class="se">\\</span>python3.10<span class="se">\\</span>site-packages<span class="se">\\</span>*<span class="w"> </span>hook<span class="se">\\</span>scripts<span class="se">\\</span>modules<span class="w"> </span>/E<span class="w"> </span>/H<span class="w"> </span>/I
+</pre></div>
+</div>
 </section>
 <section id="testing-your-code">
 <h2>Testing your code<a class="headerlink" href="#testing-your-code" title="Link to this heading">¶</a></h2>
 <p>We developed a suite of tests to ensure the correct functioning of the codebase. They do not cover all possible cases, but they are a good starting point. Also, they do not test the realism and accuracy of the physics simulations.</p>
 <ol class="arabic simple">
-<li><p>We use pytest from within Blender’s Python interpreter to run tests.</p></li>
-<li><p>A suite of test cases can be found inside the <cite>tests</cite> folder.</p></li>
+<li><p>We use pytest from within Blender’s Python interpreter to run tests. Make sure to install the <cite>pytest</cite> library in your Blender Python environment.</p></li>
+<li><p>A suite of test cases can be found inside the <cite>/tests</cite> folder.</p></li>
 <li><p>To run the suite of tests, open a terminal in VSCode and run the following command from the codebase root directory. Make sure to replace the path to the Blender executable with the correct path on your system.</p></li>
 </ol>
+<p>macOS:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span><span class="nb">test</span>
+</pre></div>
+</div>
+<p>or</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender-4.0.app/Contents/MacOS/Blender<span class="w"> </span>--background<span class="w">  </span>--python-expr<span class="w"> </span><span class="s2">&quot;import pytest; pytest.main([&#39;-v&#39;, &#39;./tests&#39;])&quot;</span>
+</pre></div>
+</div>
+<p>Windows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;C:\Program Files\Blender Foundation\Blender 4.0\blender.exe&quot;</span><span class="w"> </span>--background<span class="w">  </span>--python-expr<span class="w"> </span><span class="s2">&quot;import pytest; pytest.main([&#39;-v&#39;, &#39;./tests&#39;])&quot;</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
@@ -327,8 +346,7 @@ Due to some dependencies from Blender (i.e. <cite>bpy</cite>), the build has to 
 <span class="c"># You can set these variables from the command line, and also</span>
 <span class="c"># from the environment for the first two.</span>
 <span class="nv">SPHINXOPTS</span><span class="w">    </span><span class="o">?=</span>
-<span class="c"># SPHINXBUILD   ?= sphinx-build</span>
-<span class="nv">SPHINXBUILD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/Applications/Blender-4.1.app/Contents/MacOS/Blender<span class="w"> </span>--background<span class="w"> </span>--python<span class="w"> </span>blender_sphinx.py<span class="w"> </span>--
+<span class="nv">SPHINXBUILD</span><span class="w">   </span><span class="o">?=</span><span class="w"> </span>sphinx-build
 <span class="nv">SOURCEDIR</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nb">source</span>
 <span class="nv">BUILDDIR</span><span class="w">      </span><span class="o">=</span><span class="w"> </span>build
 
@@ -342,6 +360,9 @@ Due to some dependencies from Blender (i.e. <cite>bpy</cite>), the build has to 
 <span class="c"># &quot;make mode&quot; option.  $(O) is meant as a shortcut for $(SPHINXOPTS).</span>
 <span class="nf">%</span><span class="o">:</span><span class="w"> </span><span class="n">Makefile</span>
 <span class="w">	</span>@<span class="k">$(</span>SPHINXBUILD<span class="k">)</span><span class="w"> </span>-M<span class="w"> </span><span class="nv">$@</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>SOURCEDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>BUILDDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">$(</span>SPHINXOPTS<span class="k">)</span><span class="w"> </span><span class="k">$(</span>O<span class="k">)</span>
+
+<span class="nf">clean</span><span class="o">:</span>
+<span class="w">	</span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="k">$(</span>BUILDDIR<span class="k">)</span>
 
 <span class="nf">api</span><span class="o">:</span>
 <span class="w">	</span>sphinx-apidoc<span class="w"> </span>-e<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>SOURCEDIR<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>../scripts/modules/
@@ -420,6 +441,7 @@ git<span class="w"> </span>push<span class="w"> </span>-f
             <ul>
 <li><a class="reference internal" href="#">Developer’s guide</a><ul>
 <li><a class="reference internal" href="#contributing-to-the-codebase">Contributing to the codebase</a></li>
+<li><a class="reference internal" href="#installing-new-packages">Installing new packages</a></li>
 <li><a class="reference internal" href="#testing-your-code">Testing your code</a></li>
 <li><a class="reference internal" href="#update-the-documentation">Update the documentation</a></li>
 </ul>
@@ -436,7 +458,7 @@ git<span class="w"> </span>push<span class="w"> </span>-f
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     </body>
