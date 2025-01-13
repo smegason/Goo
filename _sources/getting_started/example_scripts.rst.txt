@@ -18,6 +18,7 @@ Simulation scripts should start with the `reset_scene()` to start with a fresh s
 
    import goo
 
+   goo.reset_modules()
    goo.reset_scene()
 
 Then, you should declare cell types, along with some of their physical parameters such as surface stiffness, homotypic and heterotypic adhesion strength. 
@@ -27,16 +28,16 @@ Parameters are dimensionless in Goo.
 
 .. code-block:: python
 
-   cellsA = goo.CellType("A")
-   cellsB = goo.CellType("B")
-   cellsC = goo.CellType("C")
+   cellsA = goo.CellType("A", target_volume=70, pattern="simple")
+   cellsB = goo.CellType("B", target_volume=70, pattern="simple")
+   cellsC = goo.CellType("C", target_volume=70, pattern="simple")
 
-   cellsA.homo_adhesion_strength = 15
-   cellsA.stiffness = 3  # ratio = 5
-   cellsB.homo_adhesion_strength = 100
-   cellsB.stiffness = 2  # ratio = 50
-   cellsC.homo_adhesion_strength = 500
-   cellsC.stiffness = 1  # ratio = 500
+   cellsA.homo_adhesion_strength = 1
+   cellsA.stiffness = 1  # ratio = 1
+   cellsB.homo_adhesion_strength = 500
+   cellsB.stiffness = 1  # ratio = 500
+   cellsC.homo_adhesion_strength = 2000
+   cellsC.stiffness = 1  # ratio = 2000
 
 
 Cell types can then be populated with actual cell instances using `create_cell()`. 
@@ -44,14 +45,14 @@ The initial location, size and shape of each cell need to be specified, or set r
 
 .. code-block:: python
 
-   cellsA.create_cell("A1", (-10, +1.75, 0), color=(1, 1, 0), size=1.6)
-   cellsA.create_cell("A2", (-10, -1.75, 0), color=(1, 1, 0), size=1.6)
+   cellsA.create_cell("A1", (-20, +1.75, 0), color=(1, 1, 0), size=1.6)
+   cellsA.create_cell("A2", (-20, -1.75, 0), color=(1, 1, 0), size=1.6)
 
    cellsB.create_cell("B1", (0, +1.75, 0), color=(0, 1, 1), size=1.6)
    cellsB.create_cell("B2", (0, -1.75, 0), color=(0, 1, 1), size=1.6)
 
-   cellsC.create_cell("C1", (10, +1.75, 0), color=(1, 0, 1), size=1.6)
-   cellsC.create_cell("C2", (10, -1.75, 0), color=(1, 0, 1), size=1.6)
+   cellsC.create_cell("C1", (20, +1.75, 0), color=(1, 0, 1), size=1.6)
+   cellsC.create_cell("C2", (20, -1.75, 0), color=(1, 0, 1), size=1.6)
 
 
 Until now, cells remain static meshes–no cell behaviours have been modelled yet. To do so, you need to call the simulator, 
@@ -68,7 +69,7 @@ The `setup_world()` function always needs be defined. It sets some general param
 
 .. code-block:: python
 
-   sim = goo.Simulator([cellsA, cellsB, cellsC], time=130, physics_dt=1)
+   sim = goo.Simulator([cellsA, cellsB, cellsC], time=180, physics_dt=1)
    sim.setup_world(seed=2024)
 
 Lastly, cell behaviors–cell division, adhesion, motility, signal sensing and transduction–can be modelled in a modular fashion using handlers.
@@ -79,10 +80,10 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
 
    sim.add_handlers(
       [
-         goo.GrowthPIDHandler(target_volume=50),  # in um3
-         goo.AdhesionLocationHandler(),  # no parameters needed
-         goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=50, sigma=1),  # in um3
-         goo.RandomMotionHandler(goo.ForceDist.GAUSSIAN, max_strength=1000)
+         goo.GrowthPIDHandler(),                                           # in um3
+         goo.RecenterHandler(),
+         goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=60, sigma=1), # in um3
+         goo.RandomMotionHandler(goo.ForceDist.GAUSSIAN, strength=500)
       ]
    )
 
@@ -94,29 +95,20 @@ In this example, we model cell growth, homotypic adhesion, volume-based division
 Put together, this script models three cell doublets of varying stiffness and homotypic adhesion strength, all moving at the same strength for ~150 minutes. Heterotypic adhesion is ignored here.
 
 
-.. literalinclude:: ../examples/2_randomly_moving_doublets.py
+.. literalinclude:: ../examples/1_growing_doublets.py
    :language: python
 
 Running this script in Blender should produce the following simulation:
 
-.. video:: ../examples/doublets_1-130.mp4
+.. video:: ../examples/1_growing_doublets.mp4
    :width: 810
    :loop:
 
-.. .. raw:: html
-
-..     <div style="max-width: 100%; height: auto;">
-..         <video style="width: 100%; height: auto;" controls>
-..             <source src="/Users/antoine/Harvard/MegasonLab/github/Goo/docs/source/examples/adherent_cell_doublets0001-0300.mp4" type="video/mp4">
-..             Your browser does not support the video tag.
-..         </video>
-..     </div>
-
    
-Cell division based a threshold volume
-----------------------------------------
+Cell division based on volume
+------------------------------
 
-.. literalinclude:: ../examples/3_volume_dividing_cells.py
+.. literalinclude:: ../examples/2_volume_dividing_cells.py
    :language: python
 
 Running this script in Blender should produce the following simulation:
@@ -135,8 +127,47 @@ Running this script in Blender should produce the following simulation:
 ..    </div>
 
 
-Random cell motion in a confined sphere
------------------------------------------
+Random cell mixing
+-------------------
 
-.. literalinclude:: ../examples/5_random_cell_mixing.py
+.. literalinclude:: ../examples/3_random_cell_mixing.py
    :language: python
+
+Running this script in Blender should produce the following simulation:
+
+.. video:: ../examples/3_random_cell_mixing0001-0200.mp4
+   :width: 810
+   :loop:
+
+Blinking cells
+----------------
+
+In this example, we model cells that blink on and off, representing their gene concentration that is controlled by a gene regulatory network akin to a repressilator (Elowitz et al., 2000). 
+To do so, we need to define a set of genes and their interactions. Here, gene X repress gene Z, gene Z repress gene Y, and gene Y repress gene X, and all genes degrades at a constant rate.
+Other than that, cells still homotypically adhere, move, grow and divide. 
+
+.. code-block:: python
+
+   x = Gene("x")
+   y = Gene("y")
+   z = Gene("z")
+
+   network1 = GeneRegulatoryNetwork()
+   network1.load_circuits(
+      DegFirstOrder(x, 0.1),
+      DegFirstOrder(y, 0.1),
+      DegFirstOrder(z, 0.1),
+      ProdRepression(y, x, kcat=0.4, n=3),
+      ProdRepression(z, y, kcat=0.4, n=3),
+      ProdRepression(x, z, kcat=0.4, n=3),
+   )
+   cell.grn = network1
+   cell.metabolites = {x: 2, y: 0.1, z: 0.1}
+
+When put all together, this is the script that models blinking cells:
+
+.. literalinclude:: ../examples/4_blinking_cells.py
+   :language: python
+
+
+Running this script in Blender should produce the following simulation: 

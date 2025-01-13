@@ -5,12 +5,12 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Example scripts" href="example_scripts.html" /><link rel="prev" title="Goo" href="../index.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.08.06 -->
         <title>Installation - Goo documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=83e35b93" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=387cc868" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=75810a84" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -89,19 +89,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -142,7 +129,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -284,14 +271,14 @@
 <ol class="arabic simple">
 <li><p>Install Blender</p></li>
 </ol>
-<p>Goo runs within Blender, so you will first need to download Blender 4.0 from <a class="reference external" href="https://www.blender.org/download/lts/4-1/">here</a>.
+<p>Goo runs within Blender, so you will first need to download Blender 4.0 from <a class="reference external" href="https://www.blender.org/download/lts/4-0/">here</a>.
 Goo currently support Blender 3.3 to 4.0. We aim to maintain Goo for future Blender LTS versions but might have a slight lag from their releases.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Goo is not currently not compatible with Blender 4.1 because of a dependency clash with the <a class="reference external" href="https://libroadrunner.readthedocs.io/en/latest/index.html">RoadRunner Simulation Engine</a>. Use Blender 4.0 while we are working towards implementing biocircuitery in Goo.</p>
 </div>
 <ol class="arabic" start="2">
-<li><p>Download the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>. Download the zip file of the latest release, and unzip it in an empty folder. n Alternatively, it can be downloaded from the command line as follows:</p>
+<li><p>Clone the Goo library from <a class="reference external" href="https://github.com/smegason/Goo">GitHub</a>. Download the zip file of the latest release, and unzip it in an empty folder. n Alternatively, it can be downloaded from the command line as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>Goo
 <span class="nb">cd</span><span class="w"> </span>Goo
 wget<span class="w"> </span>&lt;Goo-latest-release&gt;.tar.gz
@@ -301,96 +288,78 @@ tar<span class="w"> </span>-xvf<span class="w"> </span>&lt;Goo-latest-release&gt
 </li>
 </ol>
 <ol class="arabic simple" start="2">
-<li><p>In Blender &lt; 4.0, go to Edit &gt; Preferences &gt; File Paths &gt; Scripts: add <cite>&lt;your_root_path&gt;/Goo/scripts</cite>. In Blender 4.0 and above, the script folder is now located at Edit &gt; Preferences &gt; File Paths &gt; Script Directories: add an entry with <cite>goo</cite> as name and <cite>&lt;your_root_path&gt;/Goo/scripts</cite> as path.</p></li>
+<li><p>In Blender, go to <cite>Edit &gt; Preferences &gt; File Paths &gt; Scripts</cite> and add <cite>&lt;your_root_path&gt;/Goo/scripts</cite>.</p></li>
 </ol>
 <section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>python 3.7 or newer</p></li>
-<li><p><a class="reference external" href="http://www.numpy.org/">numpy</a></p></li>
-<li><p><a class="reference external" href="https://pypi.org/project/scipy/">scipy</a></p></li>
 <li><p><a class="reference external" href="https://docs.blender.org/api/current/info_advanced_blender_as_bpy.html">bpy</a> (bundled with Blender)</p></li>
+<li><p><a class="reference external" href="http://www.numpy.org/">numpy</a></p></li>
+<li><p><a class="reference external" href="https://scipy.org/">scipy</a></p></li>
+<li><p><a class="reference external" href="https://tellurium.readthedocs.io/en/latest/antimony.html">antimony</a></p></li>
+<li><p><a class="reference external" href="https://www.libroadrunner.org/">libroadrunner</a></p></li>
+<li><p><a class="reference external" href="https://www.h5py.org/">h5py</a></p></li>
 </ul>
 </section>
 <section id="install-dependencies-in-blender">
 <h2>Install dependencies in Blender<a class="headerlink" href="#install-dependencies-in-blender" title="Link to this heading">¶</a></h2>
-</section>
-<section id="macos-linux">
-<h2>MacOS/Linux<a class="headerlink" href="#macos-linux" title="Link to this heading">¶</a></h2>
 <p>Blender comes with its own Python interpreter, which is isolated from the system’s Python environment.
-Goo requires minimal dependencies that need to be installed directly into Blender’s Python environment.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Blender’s Python interpreter changes from Python 3.10 to 3.11 between 3.x and 4.x versions. Make sure to adapt your path accordingly.</p>
-</div>
-<p>To install Goo’s dependencies from the terminal:</p>
+Goo requires some additional packages that must installed and then be exposed to Blender.</p>
+<section id="macos-linux">
+<h3>MacOS/Linux<a class="headerlink" href="#macos-linux" title="Link to this heading">¶</a></h3>
+<p>For MacOS and Linux, Goo comes packaged with a Makefile to streamline dependency installation. To use it:</p>
 <ol class="arabic">
-<li><p>Find the paths of the Blender executable and its Python interpreter.</p>
-<p>For macOS, it is usually in the Applications folder, e.g., <cite>/Applications/Blender.app/Contents/MacOS/Blender</cite> and <cite>/Applications/Blender.app/Contents/Resources/4.1/python/bin/python3.11</cite>.</p>
-</li>
-<li><p>Create a new environment using Blender’s Python interpreter:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.11<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>blender_venv
+<li><p>Set the Makefile variables <cite>BLENDER_PATH</cite> and <cite>BPY_PATH</cite> to the paths of the Blender executable and its Python interpreter, respectively.</p>
+<p>For macOS, it is usually in the Applications folder, e.g.:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BLENDER_PATH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/Applications/Blender.app/Contents/MacOS/Blender
+<span class="nv">BPY_PATH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.10
 </pre></div>
 </div>
 </li>
-<li><p>Activate the environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>blender_venv/bin/activate
+<li><p>Set up the Blender environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>setup
 </pre></div>
 </div>
 </li>
-<li><p>Install the dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.11<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>typing_extensions
-</pre></div>
-</div>
-</li>
-<li><p>Check that the dependencies are installed:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/Resources/4.0/python/bin/python3.11<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>list
-</pre></div>
-</div>
-</li>
-<li><p>Launch Blender by running this command in your terminal:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>/Applications/Blender.app/Contents/MacOS/Blender
-</pre></div>
-</div>
+<li><p>Allow Blender to access the dependency folder:</p>
+<p>In Blender, go to <cite>Edit &gt; Preferences &gt; File Paths &gt; Scripts</cite> and add <cite>&lt;your_root_path&gt;/Goo/hook/scripts</cite>.</p>
 </li>
 </ol>
 </section>
 <section id="windows">
-<h2>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h2>
-<p>Blender comes with its own Python interpreter, which is isolated from the system’s Python environment.
-Goo requires a few additional Python packages that need to be installed directly into Blender’s Python environment.</p>
-<p>To install Goo’s dependencies from a terminal:</p>
+<h3>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h3>
+<p>For Windows, the setup must be done manually.</p>
 <ol class="arabic">
 <li><p>Find the paths of the Blender executable and its Python interpreter.</p>
-<p>For Windows, it is usually in the Program Files, e.g., <cite>C:\Program Files\Blender Foundation\Blender 4.0\Blender.exe</cite> and <cite>C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe</cite>.</p>
+<p>These are usually found in Program Files, e.g., <cite>C:\Program Files\Blender Foundation\Blender 4.0\Blender.exe</cite> and <cite>C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe</cite>.</p>
 </li>
 <li><p>Create a new virtual environment using Blender’s Python interpreter:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">4</span>.0<span class="se">\\</span><span class="m">4</span>.0<span class="se">\\</span>python<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.blender_env
 </pre></div>
 </div>
 </li>
-<li><p>Activate the environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.blender_env<span class="se">\\</span>Scripts<span class="se">\\</span>activate
-</pre></div>
-</div>
-</li>
-<li><p>Install the dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">4</span>.0<span class="se">\\</span><span class="m">4</span>.0<span class="se">\\</span>python<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>typing_extensions
+<li><p>Install dependencies into the virtual environment</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.blender_env<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </pre></div>
 </div>
 </li>
 <li><p>Check that the dependencies are installed:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">4</span>.0<span class="se">\\</span><span class="m">4</span>.0<span class="se">\\</span>python<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>list
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.blender_env<span class="se">\\</span>bin<span class="se">\\</span>python.exe<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>list
 </pre></div>
 </div>
 </li>
-<li><p>Launch Blender from within the activated virtual environment:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\\</span>Program<span class="w"> </span>Files<span class="se">\\</span>Blender<span class="w"> </span>Foundation<span class="se">\\</span>Blender<span class="w"> </span><span class="m">4</span>.0<span class="se">\\</span>Blender.exe
+<li><p>Create a “hook” folder that enables the installed packages to be exposed to Blender.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>hook<span class="se">\\</span>scripts<span class="se">\\</span>modules
+xcopy<span class="w"> </span>.blender_venv<span class="se">\\</span>lib<span class="se">\\</span>python3.10<span class="se">\\</span>site-packages<span class="se">\\</span>*<span class="w"> </span>hook<span class="se">\\</span>scripts<span class="se">\\</span>modules<span class="w"> </span>/E<span class="w"> </span>/H<span class="w"> </span>/I
 </pre></div>
 </div>
+</li>
+<li><p>Allow Blender to access the dependency folder:</p>
+<p>In Blender, go to <cite>Edit &gt; Preferences &gt; File Paths &gt; Scripts</cite> and add <cite>&lt;your_root_path&gt;/Goo/hook/scripts</cite>.</p>
 </li>
 </ol>
-<p>Blender supports virtual environment and the installed packages will be available to use for scripting in Blender.</p>
+</section>
 </section>
 </section>
 
@@ -451,9 +420,11 @@ Goo requires a few additional Python packages that need to be installed directly
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li><a class="reference internal" href="#install-dependencies-in-blender">Install dependencies in Blender</a></li>
+<li><a class="reference internal" href="#install-dependencies-in-blender">Install dependencies in Blender</a><ul>
 <li><a class="reference internal" href="#macos-linux">MacOS/Linux</a></li>
 <li><a class="reference internal" href="#windows">Windows</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -468,7 +439,7 @@ Goo requires a few additional Python packages that need to be installed directly
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     </body>
