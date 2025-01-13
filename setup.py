@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='goo',
-    version='1.0.0',    
+    version='1.1.0',    
     description='Goo is a library to simulate 3D biological cells, tissues and\
           embryos in Blender.',
     url='https://github.com/smegason/goo',
