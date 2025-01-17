@@ -443,6 +443,11 @@ class Cell(BlenderObject):
         self.effectors.remove(force)
 
     def add_force(self, force: Force):
+        """Add a force that affects this cell.
+        
+        Args:
+            force: The force to add.
+        """
         if isinstance(force, AdhesionForce):
             self.adhesion_forces.append(force)
         elif isinstance(force, MotionForce):
@@ -451,6 +456,7 @@ class Cell(BlenderObject):
 
     # ===== Cell actions =====
     def divide(self, division_logic):
+        """Divide the cell into two daughter cells."""
         mother, daughter = division_logic.make_divide(self)
         mother.just_divided = True
         daughter.just_divided = True
@@ -514,6 +520,8 @@ class Cell(BlenderObject):
         """
         if property == "motion_direction":
             hook = create_direction_updater(self, gene)
+        if property == "motion_strength": 
+            hook = create_motion_strength_updater(self, gene)
         else:
             hook = create_scalar_updater(self, gene, property, "linear", gscale, pscale)
 
@@ -530,12 +538,25 @@ class Cell(BlenderObject):
 
 
 class PropertyUpdater:
+    """A class that updates a property of a cell based on a gene value.
+
+    Args:
+        getter: The getter function.
+        transformer: The transformer function.
+        setter: The setter function.
+        
+    Attributes:
+        getter: A function that retrieves the gene value from a diffusion system.
+        transformer: A function that transforms the gene value into a property value.
+        setter: A function that sets the property value of a cell.
+    """
     def __init__(self, getter, transformer, setter):
         self.getter = getter
         self.transformer = transformer
         self.setter = setter
 
     def __call__(self, diffsys: DiffusionSystem):
+        """Update the property of a cell based on the gene value."""
         gene_value = self.getter(diffsys)
         prop_value = self.transformer(gene_value)
         self.setter(prop_value)
@@ -549,15 +570,30 @@ def create_scalar_updater(
     gscale=(0, 1),
     pscale=(0, 1),
 ):
+    """Create a scalar updater that links a gene to a scalar property of a cell.
+
+    Args:
+        cell: The cell object.
+        gene: The gene that is linked to the property.
+        property: The property that is linked to the gene.
+        relationship: The relationship between the gene and the property.
+        gscale: The scale of the gene values.
+        pscale: The scale of the property values.
+    
+    Returns:
+        A PropertyUpdater object that can be used to update the property.
+    """
     gmin, gmax = gscale
     pmin, pmax = pscale
 
     # Simple gene getter
     def gene_getter(diffsys):
+        """Get the gene value from the diffusion system."""
         return cell.metabolites[gene]
 
     # Different transformers
     def linear_transformer(gene_value):
+        """Transform the gene value into a property value using a linear relationship."""
         if gene_value <= gmin:
             return pmin
         if gene_value >= gmax:
@@ -566,6 +602,7 @@ def create_scalar_updater(
 
     # Different property setters
     def set_motion_force(prop_value):
+        """Set the motion force of the cell."""
         cell.motion_force = prop_value
 
     match relationship:
@@ -587,18 +624,74 @@ def create_direction_updater(
     cell: Cell,
     gene: Gene,
 ):
+    """Create a direction updater that links a gene to the direction of a cell.
+    
+    Args:
+        cell: The cell object.
+        gene: The gene that is linked to the direction.
+    """
     def molecule_getter(diffsys: DiffusionSystem):
+        """Get the molecule values from the diffusion system."""
         return diffsys.get_coords_concentrations(gene, cell.COM(), cell.radius())
 
     def weighted_direction(molecule_values):
+        """Calculate the weighted direction of the cell based on the molecule values."""
         coords, concs = molecule_values
         direction = np.average(coords, axis=0, weights=concs)
         return direction - cell.loc
 
     def set_direction(direction):
+        """Set the direction of the cell."""
         cell.move(direction)
 
     return PropertyUpdater(molecule_getter, weighted_direction, set_direction)
+
+
+def create_motion_strength_updater(
+        cell: Cell, 
+        gene: Gene,
+        gscale=(0.5, 2),
+        pscale=(0, 1),
+): 
+    """Create a motion strength updater that links a gene to the motion strength of a cell.
+    
+    Args:
+        cell: The cell object.
+        gene: The gene that is linked to the motion strength.
+        gscale: The scale of the gene values.
+        pscale: The scale of the motion strength values.
+    
+    Returns:
+        A PropertyUpdater object that can be used to update the motion strength.
+    """
+    
+    gmin, gmax = gscale
+    pmin, pmax = pscale
+
+    def gene_conc_getter(diffsys: DiffusionSystem): 
+        """Get the gene concentration from the cell's gene regulatory network."""
+        gene_conc = cell.grn.concs.get(gene)
+        normalized_gene_conc = linear_transformer(gene_conc)
+        return normalized_gene_conc
+
+    def linear_transformer(gene_value):
+        """Normalize the gene value to a value between gscale min and max."""
+        if gene_value <= gmin:
+            return pmin
+        if gene_value >= gmax:
+            return pmax
+        return (gene_value - gmin) / (gmax - gmin) * (pmax - pmin) + pmin
+        
+    def weighted_motion_strength(gene_conc):
+        """Calculate the weighted motion strength of the cell based on the gene value."""
+        motion_strength = (gene_conc * cell.motion_force.init_strength)
+        return motion_strength
+
+    def set_motion_strength(motion_strength):
+        """Set the motion strength of the cell."""
+        cell.celltype.motion_strength = motion_strength
+
+    return PropertyUpdater(gene_conc_getter, weighted_motion_strength, set_motion_strength)
 
 
 def store_settings(mod: bpy.types.bpy_struct) -> dict:

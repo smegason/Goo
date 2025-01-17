@@ -8,9 +8,9 @@ goo.reset_scene()
 
 # Defining cells
 celltype = goo.CellType("A", target_volume=70, pattern="simple")
-celltype.homo_adhesion_strength = 2000
+celltype.homo_adhesion_strength = 500
 
-cell1 = celltype.create_cell(name="cell1", loc=(1.5, 0, 0), color=(0, 1, 1))
+cell1 = celltype.create_cell(name="cell1", loc=(0, 0, 0), color=(0, 1, 1))
 cell1.stiffness = 2
 cell1.pressure = 5
 
@@ -20,6 +20,7 @@ sim.add_handlers(
     [
         goo.GrowthPIDHandler(),                                             # in um3
         goo.RecenterHandler(),
-        goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=40, sigma=1),   # in um3
+        goo.RemeshHandler(),
+        goo.SizeDivisionHandler(goo.BisectDivisionLogic, mu=65, sigma=2),   # in um3
     ]
 )
