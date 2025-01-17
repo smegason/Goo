@@ -62,9 +62,13 @@ class StopHandler(Handler):
                   Stopping.")
             # bpy.app.handlers.frame_change_post.remove(self.run)
             bpy.ops.screen.animation_cancel(restore_frame=True) 
+            for cell in self.get_cells():
+                # freeze tissue at end of simulation
+                cell.disable_physics()
+                cell.remesh()
         else:
             frame_str = f"Calculating frame {scene.frame_current}"
-            total_length = len(frame_str) + 8  # Account for "=== " and " ==="
+            total_length = len(frame_str) + 8
             border_line = "=" * total_length
 
             print(border_line)

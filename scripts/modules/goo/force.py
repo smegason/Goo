@@ -136,6 +136,7 @@ class MotionForce(Force):
         super(MotionForce, self).__init__(obj, "FORCE")
         obj.field.shape = "PLANE"
         obj.field.apply_to_rotation = False
+        self.init_strength = None
 
     @override
     @property
@@ -249,6 +250,7 @@ def create_motion(name: str, loc: tuple, strength: int) -> MotionForce:
     obj = bpy.data.objects.new(name, None)
     obj.location = loc
     force = MotionForce(obj)
+    force.init_strength = strength
 
     force.strength = strength
     return force

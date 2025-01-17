@@ -24,9 +24,9 @@ Getting started
    
    getting_started/installation.rst
    getting_started/example_scripts.rst
-   getting_started/hardware.rst
-   getting_started/blender_on_o2.rst
    user_guide/api.rst
+   getting_started/hardware.rst   
+   
 
 Contributing
 ==================
@@ -49,7 +49,8 @@ Acknowledgments
 News
 ==================
 
-Goo v1.0 is here! This is the first stable release after refactoring the codebase to be more efficient and close to Python. `More information. <https://github.com/smegason/Goo/releases/tag/v1.0.0>`__
+Goo v1.1.0 is here! This release includes new features to simulate extracellular diffusion and gene regulatory networks. `More information. <https://github.com/smegason/Goo/releases/tag/v1.1.0>`__
 
+Goo v1.0 is here! This is the first stable release after refactoring the codebase to be more efficient and close to Python. `More information. <https://github.com/smegason/Goo/releases/tag/v1.0.0>`__
 
 Goo was presented at the 2023 Blender Conference in Amsterdam! `More information. <https://www.youtube.com/watch?v=FoMv7MnLFPc>`__

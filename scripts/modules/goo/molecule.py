@@ -10,7 +10,6 @@ from scipy.spatial import KDTree
 from goo.utils import *
 
 
-# TODO: move conc, gradient to diffusion system as molecule initialization
 class Molecule:
     """A molecule involved in the diffusion system.
 
@@ -178,6 +177,8 @@ class DiffusionSystem:
         return coords, concs
 
     def diffuse(self):
+        """Simulate the diffusion of molecules in the grid
+        using the Laplace operator."""
         for mol in self.molecules:
             conc = self._grid_concentrations[mol]
             laplacian = laplace(conc, mode="wrap")
@@ -187,6 +188,7 @@ class DiffusionSystem:
             self._grid_concentrations[mol] = conc
 
     def simulate_diffusion(self):
+        """Simulate the diffusion of molecules in the grid."""
         tot_time = self.total_time
         t_step = self.time_step
         num_steps = int(tot_time / t_step)
