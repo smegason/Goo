@@ -204,19 +204,21 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">API documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.growth.html">goo.growth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.gene.html">goo.gene</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.handler.html">goo.handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.boundary.html">goo.boundary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
@@ -337,9 +339,13 @@
 <span class="s2">                  Stopping.&quot;</span><span class="p">)</span>
             <span class="c1"># bpy.app.handlers.frame_change_post.remove(self.run)</span>
             <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">screen</span><span class="o">.</span><span class="n">animation_cancel</span><span class="p">(</span><span class="n">restore_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> 
+            <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cells</span><span class="p">():</span>
+                <span class="c1"># freeze tissue at end of simulation</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">disable_physics</span><span class="p">()</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">remesh</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">frame_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Calculating frame </span><span class="si">{</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_current</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="n">total_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">frame_str</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span>  <span class="c1"># Account for &quot;=== &quot; and &quot; ===&quot;</span>
+            <span class="n">total_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">frame_str</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span>
             <span class="n">border_line</span> <span class="o">=</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="n">total_length</span>
 
             <span class="nb">print</span><span class="p">(</span><span class="n">border_line</span><span class="p">)</span>

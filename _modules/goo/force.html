@@ -204,19 +204,21 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">API documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.growth.html">goo.growth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.gene.html">goo.gene</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.handler.html">goo.handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.boundary.html">goo.boundary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
@@ -415,6 +417,7 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">MotionForce</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;FORCE&quot;</span><span class="p">)</span>
         <span class="n">obj</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="s2">&quot;PLANE&quot;</span>
         <span class="n">obj</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">apply_to_rotation</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_strength</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@override</span>
     <span class="nd">@property</span>
@@ -540,6 +543,7 @@
     <span class="n">obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">obj</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">loc</span>
     <span class="n">force</span> <span class="o">=</span> <span class="n">MotionForce</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="n">force</span><span class="o">.</span><span class="n">init_strength</span> <span class="o">=</span> <span class="n">strength</span>
 
     <span class="n">force</span><span class="o">.</span><span class="n">strength</span> <span class="o">=</span> <span class="n">strength</span>
     <span class="k">return</span> <span class="n">force</span></div>

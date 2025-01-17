@@ -204,19 +204,21 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">API documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.growth.html">goo.growth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.gene.html">goo.gene</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.handler.html">goo.handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.boundary.html">goo.boundary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
@@ -272,7 +274,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">goo.utils</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 
-<span class="c1"># TODO: move conc, gradient to diffusion system as molecule initialization</span>
 <div class="viewcode-block" id="Molecule">
 <a class="viewcode-back" href="../../user_guide/goo.molecule.html#goo.molecule.Molecule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Molecule</span><span class="p">:</span>
@@ -462,6 +463,8 @@
 <div class="viewcode-block" id="DiffusionSystem.diffuse">
 <a class="viewcode-back" href="../../user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.diffuse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">diffuse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate the diffusion of molecules in the grid</span>
+<span class="sd">        using the Laplace operator.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">molecules</span><span class="p">:</span>
             <span class="n">conc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid_concentrations</span><span class="p">[</span><span class="n">mol</span><span class="p">]</span>
             <span class="n">laplacian</span> <span class="o">=</span> <span class="n">laplace</span><span class="p">(</span><span class="n">conc</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wrap&quot;</span><span class="p">)</span>
@@ -474,6 +477,7 @@
 <div class="viewcode-block" id="DiffusionSystem.simulate_diffusion">
 <a class="viewcode-back" href="../../user_guide/goo.molecule.html#goo.molecule.DiffusionSystem.simulate_diffusion">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">simulate_diffusion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate the diffusion of molecules in the grid.&quot;&quot;&quot;</span>
         <span class="n">tot_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_time</span>
         <span class="n">t_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step</span>
         <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tot_time</span> <span class="o">/</span> <span class="n">t_step</span><span class="p">)</span>

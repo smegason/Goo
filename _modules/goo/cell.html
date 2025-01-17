@@ -204,19 +204,21 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">API documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.growth.html">goo.growth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.gene.html">goo.gene</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.handler.html">goo.handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.boundary.html">goo.boundary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
@@ -769,6 +771,11 @@
 <div class="viewcode-block" id="Cell.add_force">
 <a class="viewcode-back" href="../../user_guide/goo.cell.html#goo.cell.Cell.add_force">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">add_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="n">Force</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a force that affects this cell.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            force: The force to add.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">force</span><span class="p">,</span> <span class="n">AdhesionForce</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">adhesion_forces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">force</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">force</span><span class="p">,</span> <span class="n">MotionForce</span><span class="p">):</span>
@@ -780,6 +787,7 @@
 <div class="viewcode-block" id="Cell.divide">
 <a class="viewcode-back" href="../../user_guide/goo.cell.html#goo.cell.Cell.divide">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">divide</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">division_logic</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Divide the cell into two daughter cells.&quot;&quot;&quot;</span>
         <span class="n">mother</span><span class="p">,</span> <span class="n">daughter</span> <span class="o">=</span> <span class="n">division_logic</span><span class="o">.</span><span class="n">make_divide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">mother</span><span class="o">.</span><span class="n">just_divided</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">daughter</span><span class="o">.</span><span class="n">just_divided</span> <span class="o">=</span> <span class="kc">True</span>
@@ -855,6 +863,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">property</span> <span class="o">==</span> <span class="s2">&quot;motion_direction&quot;</span><span class="p">:</span>
             <span class="n">hook</span> <span class="o">=</span> <span class="n">create_direction_updater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">property</span> <span class="o">==</span> <span class="s2">&quot;motion_strength&quot;</span><span class="p">:</span> 
+            <span class="n">hook</span> <span class="o">=</span> <span class="n">create_motion_strength_updater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">hook</span> <span class="o">=</span> <span class="n">create_scalar_updater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="nb">property</span><span class="p">,</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">gscale</span><span class="p">,</span> <span class="n">pscale</span><span class="p">)</span>
 
@@ -875,12 +885,25 @@
 <div class="viewcode-block" id="PropertyUpdater">
 <a class="viewcode-back" href="../../user_guide/goo.cell.html#goo.cell.PropertyUpdater">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PropertyUpdater</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class that updates a property of a cell based on a gene value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        getter: The getter function.</span>
+<span class="sd">        transformer: The transformer function.</span>
+<span class="sd">        setter: The setter function.</span>
+<span class="sd">        </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        getter: A function that retrieves the gene value from a diffusion system.</span>
+<span class="sd">        transformer: A function that transforms the gene value into a property value.</span>
+<span class="sd">        setter: A function that sets the property value of a cell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">getter</span><span class="p">,</span> <span class="n">transformer</span><span class="p">,</span> <span class="n">setter</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">getter</span> <span class="o">=</span> <span class="n">getter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">transformer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setter</span> <span class="o">=</span> <span class="n">setter</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">diffsys</span><span class="p">:</span> <span class="n">DiffusionSystem</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the property of a cell based on the gene value.&quot;&quot;&quot;</span>
         <span class="n">gene_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getter</span><span class="p">(</span><span class="n">diffsys</span><span class="p">)</span>
         <span class="n">prop_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">(</span><span class="n">gene_value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setter</span><span class="p">(</span><span class="n">prop_value</span><span class="p">)</span></div>
@@ -897,15 +920,30 @@
     <span class="n">gscale</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
     <span class="n">pscale</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a scalar updater that links a gene to a scalar property of a cell.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cell: The cell object.</span>
+<span class="sd">        gene: The gene that is linked to the property.</span>
+<span class="sd">        property: The property that is linked to the gene.</span>
+<span class="sd">        relationship: The relationship between the gene and the property.</span>
+<span class="sd">        gscale: The scale of the gene values.</span>
+<span class="sd">        pscale: The scale of the property values.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A PropertyUpdater object that can be used to update the property.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">gmin</span><span class="p">,</span> <span class="n">gmax</span> <span class="o">=</span> <span class="n">gscale</span>
     <span class="n">pmin</span><span class="p">,</span> <span class="n">pmax</span> <span class="o">=</span> <span class="n">pscale</span>
 
     <span class="c1"># Simple gene getter</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gene_getter</span><span class="p">(</span><span class="n">diffsys</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the gene value from the diffusion system.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">cell</span><span class="o">.</span><span class="n">metabolites</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span>
 
     <span class="c1"># Different transformers</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">linear_transformer</span><span class="p">(</span><span class="n">gene_value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the gene value into a property value using a linear relationship.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">gene_value</span> <span class="o">&lt;=</span> <span class="n">gmin</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">pmin</span>
         <span class="k">if</span> <span class="n">gene_value</span> <span class="o">&gt;=</span> <span class="n">gmax</span><span class="p">:</span>
@@ -914,6 +952,7 @@
 
     <span class="c1"># Different property setters</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_motion_force</span><span class="p">(</span><span class="n">prop_value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the motion force of the cell.&quot;&quot;&quot;</span>
         <span class="n">cell</span><span class="o">.</span><span class="n">motion_force</span> <span class="o">=</span> <span class="n">prop_value</span>
 
     <span class="k">match</span> <span class="n">relationship</span><span class="p">:</span>
@@ -938,18 +977,77 @@
     <span class="n">cell</span><span class="p">:</span> <span class="n">Cell</span><span class="p">,</span>
     <span class="n">gene</span><span class="p">:</span> <span class="n">Gene</span><span class="p">,</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a direction updater that links a gene to the direction of a cell.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        cell: The cell object.</span>
+<span class="sd">        gene: The gene that is linked to the direction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">molecule_getter</span><span class="p">(</span><span class="n">diffsys</span><span class="p">:</span> <span class="n">DiffusionSystem</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the molecule values from the diffusion system.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">diffsys</span><span class="o">.</span><span class="n">get_coords_concentrations</span><span class="p">(</span><span class="n">gene</span><span class="p">,</span> <span class="n">cell</span><span class="o">.</span><span class="n">COM</span><span class="p">(),</span> <span class="n">cell</span><span class="o">.</span><span class="n">radius</span><span class="p">())</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">weighted_direction</span><span class="p">(</span><span class="n">molecule_values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the weighted direction of the cell based on the molecule values.&quot;&quot;&quot;</span>
         <span class="n">coords</span><span class="p">,</span> <span class="n">concs</span> <span class="o">=</span> <span class="n">molecule_values</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">concs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">direction</span> <span class="o">-</span> <span class="n">cell</span><span class="o">.</span><span class="n">loc</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the direction of the cell.&quot;&quot;&quot;</span>
         <span class="n">cell</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">PropertyUpdater</span><span class="p">(</span><span class="n">molecule_getter</span><span class="p">,</span> <span class="n">weighted_direction</span><span class="p">,</span> <span class="n">set_direction</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_motion_strength_updater">
+<a class="viewcode-back" href="../../user_guide/goo.cell.html#goo.cell.create_motion_strength_updater">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_motion_strength_updater</span><span class="p">(</span>
+        <span class="n">cell</span><span class="p">:</span> <span class="n">Cell</span><span class="p">,</span> 
+        <span class="n">gene</span><span class="p">:</span> <span class="n">Gene</span><span class="p">,</span>
+        <span class="n">gscale</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">pscale</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="p">):</span> 
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a motion strength updater that links a gene to the motion strength of a cell.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        cell: The cell object.</span>
+<span class="sd">        gene: The gene that is linked to the motion strength.</span>
+<span class="sd">        gscale: The scale of the gene values.</span>
+<span class="sd">        pscale: The scale of the motion strength values.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A PropertyUpdater object that can be used to update the motion strength.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">gmin</span><span class="p">,</span> <span class="n">gmax</span> <span class="o">=</span> <span class="n">gscale</span>
+    <span class="n">pmin</span><span class="p">,</span> <span class="n">pmax</span> <span class="o">=</span> <span class="n">pscale</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">gene_conc_getter</span><span class="p">(</span><span class="n">diffsys</span><span class="p">:</span> <span class="n">DiffusionSystem</span><span class="p">):</span> 
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the gene concentration from the cell&#39;s gene regulatory network.&quot;&quot;&quot;</span>
+        <span class="n">gene_conc</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">grn</span><span class="o">.</span><span class="n">concs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+        <span class="n">normalized_gene_conc</span> <span class="o">=</span> <span class="n">linear_transformer</span><span class="p">(</span><span class="n">gene_conc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">normalized_gene_conc</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">linear_transformer</span><span class="p">(</span><span class="n">gene_value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize the gene value to a value between gscale min and max.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">gene_value</span> <span class="o">&lt;=</span> <span class="n">gmin</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pmin</span>
+        <span class="k">if</span> <span class="n">gene_value</span> <span class="o">&gt;=</span> <span class="n">gmax</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pmax</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">gene_value</span> <span class="o">-</span> <span class="n">gmin</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">gmax</span> <span class="o">-</span> <span class="n">gmin</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">pmax</span> <span class="o">-</span> <span class="n">pmin</span><span class="p">)</span> <span class="o">+</span> <span class="n">pmin</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">weighted_motion_strength</span><span class="p">(</span><span class="n">gene_conc</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the weighted motion strength of the cell based on the gene value.&quot;&quot;&quot;</span>
+        <span class="n">motion_strength</span> <span class="o">=</span> <span class="p">(</span><span class="n">gene_conc</span> <span class="o">*</span> <span class="n">cell</span><span class="o">.</span><span class="n">motion_force</span><span class="o">.</span><span class="n">init_strength</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">motion_strength</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_motion_strength</span><span class="p">(</span><span class="n">motion_strength</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the motion strength of the cell.&quot;&quot;&quot;</span>
+        <span class="n">cell</span><span class="o">.</span><span class="n">celltype</span><span class="o">.</span><span class="n">motion_strength</span> <span class="o">=</span> <span class="n">motion_strength</span>
+
+    <span class="k">return</span> <span class="n">PropertyUpdater</span><span class="p">(</span><span class="n">gene_conc_getter</span><span class="p">,</span> <span class="n">weighted_motion_strength</span><span class="p">,</span> <span class="n">set_motion_strength</span><span class="p">)</span></div>
 
 
 

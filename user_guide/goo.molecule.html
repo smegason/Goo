@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="goo.division" href="goo.division.html" /><link rel="prev" title="goo.cell" href="goo.cell.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="goo.gene" href="goo.gene.html" /><link rel="prev" title="goo.growth" href="goo.growth.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.08.06 -->
         <title>goo.molecule - Goo documentation</title>
@@ -205,19 +205,21 @@
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started/hardware.html">Hardware recommendations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">Documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">API documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="goo.cell.html">goo.cell</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.growth.html">goo.growth</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.gene.html">goo.gene</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.handler.html">goo.handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="goo.reloader.html">goo.reloader</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.boundary.html">goo.boundary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../developer_guide/developers.html">Developer’s guide</a></li>
@@ -295,7 +297,9 @@ It also handles the secretion and sensing of molecular signals by cells.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.molecule.DiffusionSystem.diffuse">
 <span class="sig-name descname"><span class="pre">diffuse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/molecule.html#DiffusionSystem.diffuse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.molecule.DiffusionSystem.diffuse" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Simulate the diffusion of molecules in the grid
+using the Laplace operator.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.molecule.DiffusionSystem.get_ball_concentrations">
@@ -320,7 +324,8 @@ concentration for each coordinate.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.molecule.DiffusionSystem.simulate_diffusion">
 <span class="sig-name descname"><span class="pre">simulate_diffusion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/molecule.html#DiffusionSystem.simulate_diffusion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.molecule.DiffusionSystem.simulate_diffusion" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Simulate the diffusion of molecules in the grid.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="goo.molecule.DiffusionSystem.update_concentration">
@@ -354,23 +359,23 @@ concentration for each coordinate.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="goo.division.html">
+          <a class="next-page" href="goo.gene.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">goo.division</div>
+                <div class="title">goo.gene</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="goo.cell.html">
+          <a class="prev-page" href="goo.growth.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">goo.cell</div>
+                <div class="title">goo.growth</div>
                 
               </div>
             </a>

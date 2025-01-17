@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="goo.reloader" href="goo.reloader.html" /><link rel="prev" title="goo.force" href="goo.force.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="goo.simulator" href="goo.simulator.html" /><link rel="prev" title="goo.gene" href="goo.gene.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.08.06 -->
         <title>goo.handler - Goo documentation</title>
@@ -205,19 +205,21 @@
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started/hardware.html">Hardware recommendations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">Documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">API documentation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="goo.cell.html">goo.cell</a></li>
-<li class="toctree-l2"><a class="reference internal" href="goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.growth.html">goo.growth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.molecule.html">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.gene.html">goo.gene</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">goo.handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="goo.reloader.html">goo.reloader</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="goo.boundary.html">goo.boundary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../developer_guide/developers.html">Developer’s guide</a></li>
@@ -270,7 +272,7 @@
 <span id="goo-handler"></span><h1>goo.handler<a class="headerlink" href="#module-goo.handler" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="goo.handler.ColorizeHandler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.handler.</span></span><span class="sig-name descname"><span class="pre">ColorizeHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colorizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#goo.handler.Colorizer" title="goo.handler.Colorizer"><span class="pre">Colorizer</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Colorizer.PRESSURE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Gene</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#ColorizeHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.ColorizeHandler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">goo.handler.</span></span><span class="sig-name descname"><span class="pre">ColorizeHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">colorizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#goo.handler.Colorizer" title="goo.handler.Colorizer"><span class="pre">Colorizer</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Colorizer.PRESSURE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="goo.gene.html#goo.gene.Gene" title="goo.gene.Gene"><span class="pre">Gene</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/goo/handler.html#ColorizeHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#goo.handler.ColorizeHandler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#goo.handler.Handler" title="goo.handler.Handler"><code class="xref py py-class docutils literal notranslate"><span class="pre">Handler</span></code></a></p>
 <p>Handler for coloring cells based off of a specified property.</p>
 <p>Cells are colored on a blue-red spectrum, based on the relative value
@@ -287,7 +289,7 @@ pressure is colored purple.</p>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>colorizer</strong> (<a class="reference internal" href="#goo.handler.Colorizer" title="goo.handler.Colorizer"><em>Colorizer</em></a>)</p></li>
-<li><p><strong>gene</strong> (<em>Gene</em><em> | </em><em>str</em>)</p></li>
+<li><p><strong>gene</strong> (<a class="reference internal" href="goo.gene.html#goo.gene.Gene" title="goo.gene.Gene"><em>Gene</em></a><em> | </em><em>str</em>)</p></li>
 <li><p><strong>range</strong> (<em>tuple</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -756,23 +758,23 @@ upon specified events (e.g. post-frame change).</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="goo.reloader.html">
+          <a class="next-page" href="goo.simulator.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">goo.reloader</div>
+                <div class="title">goo.simulator</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="goo.force.html">
+          <a class="prev-page" href="goo.gene.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">goo.force</div>
+                <div class="title">goo.gene</div>
                 
               </div>
             </a>

@@ -204,19 +204,21 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started/example_scripts.html">Example scripts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/blender_on_o2.html">Running Goo on O2</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">Documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/api.html">API documentation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API documentation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.cell.html">goo.cell</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.division.html">goo.division</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.force.html">goo.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.growth.html">goo.growth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.molecule.html">goo.molecule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.gene.html">goo.gene</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.handler.html">goo.handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.simulator.html">goo.simulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.reloader.html">goo.reloader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.boundary.html">goo.boundary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/goo.utils.html">goo.utils</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/hardware.html">Hardware recommendations</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../developer_guide/developers.html">Developer’s guide</a></li>
@@ -422,76 +424,6 @@
 
     <span class="k">return</span> <span class="n">mat</span></div>
 
-
-
-<span class="c1"># def create_material(name, color):</span>
-<span class="c1">#     mat = bpy.data.materials.new(name=name)</span>
-<span class="c1">#     r, g, b = color</span>
-<span class="c1">#     mat.diffuse_color = (r, g, b, 0.8)  # viewport color</span>
-<span class="c1">#     mat.use_nodes = True</span>
-<span class="c1">#     mat.blend_method = &quot;BLEND&quot;</span>
-
-<span class="c1">#     # get the material nodes</span>
-<span class="c1">#     nodes = mat.node_tree.nodes</span>
-<span class="c1">#     nodes.clear()</span>
-
-<span class="c1">#     # create principled node for main color</span>
-<span class="c1">#     node_main = nodes.new(type=&quot;ShaderNodeBsdfPrincipled&quot;)</span>
-<span class="c1">#     node_main.location = -200, 100</span>
-<span class="c1">#     node_main.inputs[&quot;Base Color&quot;].default_value = (r, g, b, 1)</span>
-<span class="c1">#     node_main.inputs[&quot;Metallic&quot;].default_value = 1.0</span>
-<span class="c1">#     node_main.inputs[&quot;Roughness&quot;].default_value = 1.0</span>
-<span class="c1">#     node_main.inputs[&quot;IOR&quot;].default_value = 1.450</span>
-
-<span class="c1">#     # specular</span>
-<span class="c1">#     node_main.inputs[&quot;Anisotropic&quot;].default_value = 0.041</span>
-<span class="c1">#     node_main.inputs[&quot;Anisotropic Rotation&quot;].default_value = 0.048</span>
-<span class="c1">#     node_main.inputs[&quot;Alpha&quot;].default_value = 0.414</span>
-
-<span class="c1">#     # create noise texture source</span>
-<span class="c1">#     node_noise = nodes.new(type=&quot;ShaderNodeTexNoise&quot;)</span>
-<span class="c1">#     node_noise.inputs[&quot;Scale&quot;].default_value = 0.600</span>
-<span class="c1">#     node_noise.inputs[&quot;Detail&quot;].default_value = 15.0</span>
-<span class="c1">#     node_noise.inputs[&quot;Roughness&quot;].default_value = 1.0</span>
-<span class="c1">#     node_noise.inputs[&quot;Distortion&quot;].default_value = 3.0</span>
-
-<span class="c1">#     # create HSV</span>
-<span class="c1">#     node_HSV = nodes.new(type=&quot;ShaderNodeHueSaturation&quot;)</span>
-<span class="c1">#     node_HSV.inputs[&quot;Hue&quot;].default_value = 0.800</span>
-<span class="c1">#     node_HSV.inputs[&quot;Saturation&quot;].default_value = 2.00</span>
-<span class="c1">#     node_HSV.inputs[&quot;Value&quot;].default_value = 2.00</span>
-<span class="c1">#     node_HSV.inputs[&quot;Fac&quot;].default_value = 1.00</span>
-
-<span class="c1">#     # create second principled node for random color variation</span>
-<span class="c1">#     node_random = nodes.new(type=&quot;ShaderNodeBsdfPrincipled&quot;)</span>
-<span class="c1">#     node_random.location = -200, -100</span>
-<span class="c1">#     node_random.inputs[&quot;Base Color&quot;].default_value = (r, g, b, 1)</span>
-<span class="c1">#     node_random.inputs[&quot;Metallic&quot;].default_value = 1.0</span>
-
-<span class="c1">#     node_random.inputs[&quot;Roughness&quot;].default_value = 1.0</span>
-<span class="c1">#     node_random.inputs[&quot;Anisotropic&quot;].default_value = 0.0</span>
-<span class="c1">#     node_random.inputs[&quot;Anisotropic Rotation&quot;].default_value = 0.0</span>
-<span class="c1">#     node_random.inputs[&quot;IOR&quot;].default_value = 1.450</span>
-<span class="c1">#     node_random.inputs[&quot;Alpha&quot;].default_value = 0.555</span>
-
-<span class="c1">#     # create mix shader node</span>
-<span class="c1">#     node_mix = nodes.new(type=&quot;ShaderNodeMixShader&quot;)</span>
-<span class="c1">#     node_mix.location = 0, 0</span>
-<span class="c1">#     node_mix.inputs[&quot;Fac&quot;].default_value = 0.079</span>
-
-<span class="c1">#     # create output node</span>
-<span class="c1">#     node_output = nodes.new(type=&quot;ShaderNodeOutputMaterial&quot;)</span>
-<span class="c1">#     node_output.location = 200, 0</span>
-
-<span class="c1">#     # link nodes</span>
-<span class="c1">#     links = mat.node_tree.links</span>
-<span class="c1">#     links.new(node_noise.outputs[1], node_HSV.inputs[4])  # link_noise_HSV</span>
-<span class="c1">#     links.new(node_HSV.outputs[0], node_random.inputs[0])  # link_HSV_random</span>
-<span class="c1">#     links.new(node_main.outputs[0], node_mix.inputs[1])  # link_main_mix</span>
-<span class="c1">#     links.new(node_random.outputs[0], node_mix.inputs[2])  # link_random_mix</span>
-<span class="c1">#     links.new(node_mix.outputs[0], node_output.inputs[0])  # link_mix_out</span>
-
-<span class="c1">#     return mat</span>
 
 
 <span class="c1"># --- PHYSICS MODIFIER CONSTRUCTORS ---</span>
